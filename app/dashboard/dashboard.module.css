@@ -182,6 +182,10 @@
   gap: 0.56rem;
 }
 
+.dashboardKpiGrid .kpiActionCard {
+  display: none;
+}
+
 .kpiCard,
 .panel,
 .chartPanel {
@@ -197,6 +201,32 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+}
+
+.kpiActionCard {
+  text-decoration: none;
+  color: var(--text);
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.36rem;
+  border-style: dashed;
+}
+
+.kpiActionCard:hover {
+  border-color: color-mix(in srgb, var(--text) 20%, transparent);
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.kpiActionIcon {
+  width: 1.02rem;
+  height: 1.02rem;
+}
+
+.kpiActionText {
+  font-size: 1.02rem;
+  line-height: 1.1;
+  font-weight: 560;
+  letter-spacing: -0.01em;
 }
 
 .kpiLabel {
@@ -750,6 +780,14 @@
 @media (max-width: 760px) {
   .main {
     padding-inline: 0.82rem;
+  }
+
+  .dashboardKpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboardKpiGrid .kpiActionCard {
+    display: flex;
   }
 
   .panelHead {

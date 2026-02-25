@@ -329,7 +329,10 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
         {activeView === "dashboard" ? (
           <>
-            <section className={styles.kpiGrid} aria-label="Overview stats">
+            <section
+              className={`${styles.kpiGrid} ${styles.dashboardKpiGrid}`}
+              aria-label="Overview stats"
+            >
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Total workouts</p>
                 <p className={styles.kpiValue}>{data.overview.totalWorkouts}</p>
@@ -367,6 +370,16 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                 <p className={styles.kpiValue}>{data.overview.totalWeightLifted} lb</p>
                 <p className={styles.kpiSubtle}>Accumulated across all logged weighted sets</p>
               </article>
+
+              <Link
+                href="/workouts/new"
+                className={`${styles.kpiCard} ${styles.kpiActionCard}`}
+                aria-label="Log workout"
+              >
+                <Plus className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
+                <span className={styles.kpiActionText}>Log workout</span>
+                <span className={styles.kpiSubtle}>Quick start a new session</span>
+              </Link>
             </section>
 
             <section className={styles.panel}>
