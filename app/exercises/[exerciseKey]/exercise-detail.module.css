@@ -1,0 +1,220 @@
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 0.95rem;
+  background:
+    radial-gradient(
+      980px 360px at 88% -12%,
+      color-mix(in srgb, var(--text) 8%, transparent),
+      transparent 70%
+    ),
+    var(--bg);
+}
+
+.stage {
+  width: min(100%, 86rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.72rem;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.topActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.backLink,
+.actionLink {
+  border-radius: 999px;
+  min-height: 2rem;
+  padding: 0 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.76rem;
+}
+
+.backLink:hover,
+.actionLink:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.summaryCard,
+.kpiCard,
+.panel {
+  border-radius: 0.86rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+}
+
+.summaryCard {
+  padding: 0.84rem;
+}
+
+.label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0.28rem 0 0;
+  font-size: clamp(1.35rem, 5vw, 2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 560;
+}
+
+.subtitle {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.kpiRailWrap {
+  overflow-x: auto;
+  padding-bottom: 0.12rem;
+}
+
+.kpiRail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(13rem, 1fr);
+  gap: 0.56rem;
+  min-width: max-content;
+}
+
+.kpiCard {
+  padding: 0.78rem;
+  min-height: 8.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.kpiLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.kpiValue {
+  margin: 0;
+  font-size: clamp(1.7rem, 7vw, 2.38rem);
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+}
+
+.kpiSubtle {
+  margin: auto 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.panel {
+  padding: 0.82rem;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+  font-weight: 560;
+}
+
+.panelSubtitle {
+  margin: 0.2rem 0 0.7rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.chartFrame {
+  width: 100%;
+  height: 15rem;
+}
+
+.tableWrap {
+  margin-top: 0.56rem;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.36rem;
+  min-width: 48rem;
+}
+
+.table th {
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 0 0.48rem;
+}
+
+.table td {
+  border-top: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  background: color-mix(in srgb, var(--bg) 34%, var(--surface));
+  padding: 0.58rem 0.48rem;
+  color: color-mix(in srgb, var(--text) 92%, var(--muted));
+  font-size: 0.82rem;
+}
+
+.table td:first-child {
+  border-left: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  border-top-left-radius: 0.62rem;
+  border-bottom-left-radius: 0.62rem;
+}
+
+.table td:last-child {
+  border-right: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+  border-top-right-radius: 0.62rem;
+  border-bottom-right-radius: 0.62rem;
+}
+
+.tableLink {
+  color: var(--text);
+  font-size: 0.73rem;
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  border-radius: 999px;
+  padding: 0.2rem 0.56rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.tableLink:hover {
+  border-color: color-mix(in srgb, var(--text) 24%, transparent);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+@media (max-width: 760px) {
+  .topRow {
+    flex-wrap: wrap;
+  }
+
+  .topActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

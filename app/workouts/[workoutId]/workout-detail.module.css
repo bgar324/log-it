@@ -1,0 +1,185 @@
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 0.95rem;
+  background:
+    radial-gradient(
+      980px 360px at 88% -12%,
+      color-mix(in srgb, var(--text) 8%, transparent),
+      transparent 70%
+    ),
+    var(--bg);
+}
+
+.stage {
+  width: min(100%, 58rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.backLink,
+.actionLink {
+  border-radius: 999px;
+  min-height: 2rem;
+  padding: 0 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.76rem;
+}
+
+.backLink:hover,
+.actionLink:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.topActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.summaryCard,
+.exerciseCard {
+  border-radius: 0.86rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+}
+
+.summaryCard {
+  padding: 0.84rem;
+}
+
+.label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0.28rem 0 0;
+  font-size: clamp(1.35rem, 5vw, 1.95rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 560;
+}
+
+.metaRow {
+  margin-top: 0.62rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+}
+
+.metaPill {
+  border-radius: 0.58rem;
+  padding: 0.32rem 0.5rem;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.04rem;
+  min-width: 7rem;
+}
+
+.metaPillLabel {
+  color: var(--muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metaPillValue {
+  color: color-mix(in srgb, var(--text) 92%, var(--muted));
+  font-size: 0.77rem;
+}
+
+.exerciseList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.56rem;
+}
+
+.exerciseCard {
+  padding: 0.75rem;
+}
+
+.exerciseHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.exerciseOrder {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.exerciseName {
+  margin: 0.1rem 0 0;
+  font-size: 1.02rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.exerciseVolume {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.77rem;
+}
+
+.tableWrap {
+  margin-top: 0.58rem;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 30rem;
+}
+
+.table th {
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 0.18rem 0.2rem 0.45rem;
+}
+
+.table td {
+  border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  padding: 0.5rem 0.2rem;
+  font-size: 0.81rem;
+}
+
+@media (min-width: 760px) {
+  .shell {
+    padding: 1.1rem;
+  }
+
+  .summaryCard {
+    padding: 0.95rem;
+  }
+
+  .exerciseCard {
+    padding: 0.82rem;
+  }
+}

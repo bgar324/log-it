@@ -1,0 +1,306 @@
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 0.95rem;
+}
+
+.page {
+  width: min(100%, 56rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.72rem;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.brand {
+  font-size: 1.6rem;
+  font-weight: 560;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.topActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
+}
+
+.signout {
+  border: none;
+  border-radius: 0.5rem;
+  min-height: 2rem;
+  padding: 0 0.64rem;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.signout:hover {
+  filter: brightness(0.97);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.7rem, 6vw, 2.2rem);
+  line-height: 1.03;
+  letter-spacing: -0.02em;
+  font-weight: 560;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.nav {
+  display: flex;
+  gap: 0.42rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
+}
+
+.navLink {
+  border: none;
+  border-radius: 0.5rem;
+  min-height: 2rem;
+  padding: 0 0.7rem;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.76rem;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.navLink[data-active="true"] {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.navIcon {
+  width: 0.84rem;
+  height: 0.84rem;
+}
+
+.actionsRow {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.primaryButton,
+.secondaryButton {
+  border: none;
+  border-radius: 0.54rem;
+  min-height: 2.6rem;
+  padding: 0 0.88rem;
+  font-family: inherit;
+  font-size: 0.84rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+}
+
+.primaryButton {
+  background: var(--button-bg);
+  color: var(--button-text);
+}
+
+.secondaryButton {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  color: var(--text);
+}
+
+.buttonIcon {
+  width: 0.88rem;
+  height: 0.88rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.52rem;
+}
+
+.statCard {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border-radius: 0.72rem;
+  padding: 0.72rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.statLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+}
+
+.statValue {
+  margin: 0;
+  font-size: clamp(1.5rem, 7vw, 2.1rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-weight: 560;
+}
+
+.section {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border-radius: 0.72rem;
+  padding: 0.72rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: -0.005em;
+  font-weight: 550;
+}
+
+.sectionSub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.79rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.row {
+  background: color-mix(in srgb, var(--bg) 26%, transparent);
+  border-radius: 0.56rem;
+  padding: 0.6rem;
+  display: grid;
+  gap: 0.28rem;
+}
+
+.rowHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.rowTitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 550;
+  letter-spacing: -0.006em;
+}
+
+.rowMeta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.metaWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.metaPill {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: color-mix(in srgb, var(--text) 84%, var(--muted));
+  padding: 0.2rem 0.45rem;
+  font-size: 0.71rem;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.timelineMonth {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chart {
+  min-height: 12rem;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.28rem;
+  align-items: end;
+}
+
+.chartCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.chartValue {
+  font-size: 0.67rem;
+  color: var(--muted);
+}
+
+.chartBar {
+  width: 100%;
+  max-width: 2rem;
+  border-radius: 0.34rem;
+  background: color-mix(in srgb, var(--text) 28%, transparent);
+}
+
+.chartLabel {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 680px) {
+  .shell {
+    padding: 1.25rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

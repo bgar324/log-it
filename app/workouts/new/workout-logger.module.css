@@ -1,0 +1,468 @@
+.loggerShell {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 0.95rem;
+  padding-bottom: calc(0.95rem + env(safe-area-inset-bottom));
+}
+
+.loggerStage {
+  width: min(100%, 36rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.72rem;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.backLink {
+  border-radius: 999px;
+  min-height: 2rem;
+  padding: 0 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.backLink:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.8rem, 7vw, 2.35rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  font-weight: 560;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.62rem;
+  padding: 2px;
+}
+
+.card {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border-radius: 0.72rem;
+  padding: 0.78rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.metaGrid {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.input {
+  border: none;
+  border-radius: 0.52rem;
+  background: var(--field-bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem;
+  width: 100%;
+  min-height: 2.55rem;
+  padding: 0.64rem 0.74rem;
+}
+
+.input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.datePickerWrapper {
+  width: 100%;
+}
+
+.datePickerCalendar {
+}
+
+.dateTimeInput {
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.datePickerWrapper :global(.react-datepicker__input-container) {
+  display: block;
+  width: 100%;
+}
+
+.datePickerPopper {
+  z-index: 60;
+}
+
+.datePickerPopper :global(.react-datepicker) {
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  border-radius: 0.82rem;
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+  color: var(--text);
+  box-shadow: 0 16px 30px color-mix(in srgb, #000 28%, transparent);
+  overflow: hidden;
+}
+
+.datePickerPopper :global(.react-datepicker__header) {
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg));
+  padding-top: 0.56rem;
+}
+
+.datePickerPopper :global(.react-datepicker__current-month) {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+}
+
+.datePickerPopper :global(.react-datepicker__day-names) {
+  margin-top: 0.35rem;
+}
+
+.datePickerPopper :global(.react-datepicker__day-name) {
+  color: var(--muted);
+  font-size: 0.7rem;
+  width: 2rem;
+  line-height: 2rem;
+}
+
+.datePickerPopper :global(.react-datepicker__month) {
+  margin: 0.42rem 0.5rem 0.5rem;
+}
+
+.datePickerPopper :global(.react-datepicker__day) {
+  border-radius: 0.5rem;
+  width: 2rem;
+  line-height: 2rem;
+  margin: 0.12rem;
+  color: color-mix(in srgb, var(--text) 90%, var(--muted));
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.datePickerPopper :global(.react-datepicker__day:hover) {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text);
+}
+
+.datePickerPopper :global(.react-datepicker__day--today) {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 20%, transparent);
+  font-weight: 560;
+}
+
+.datePickerPopper :global(.react-datepicker__day--selected),
+.datePickerPopper :global(.react-datepicker__day--keyboard-selected) {
+  background: color-mix(in srgb, var(--text) 84%, var(--bg));
+  color: var(--bg);
+}
+
+.datePickerPopper :global(.react-datepicker__navigation) {
+  top: 0.58rem;
+}
+
+.datePickerPopper :global(.react-datepicker__navigation-icon::before) {
+  border-color: var(--muted);
+}
+
+.datePickerPopper :global(.react-datepicker__time-container) {
+  border-left: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  width: 6.8rem;
+}
+
+.datePickerPopper :global(.react-datepicker__time) {
+  background: transparent;
+}
+
+.datePickerPopper :global(.react-datepicker__time-box) {
+  width: 6.8rem;
+}
+
+.datePickerPopper :global(.react-datepicker__time-list) {
+  scrollbar-width: thin;
+}
+
+.datePickerPopper :global(.react-datepicker__time-list-item) {
+  height: 2.05rem;
+  line-height: 2.05rem;
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
+}
+
+.datePickerPopper :global(.react-datepicker__time-list-item:hover) {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.datePickerPopper :global(.react-datepicker__time-list-item--selected) {
+  background: color-mix(in srgb, var(--text) 84%, var(--bg));
+  color: var(--bg);
+  font-weight: 560;
+}
+
+.exerciseSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.62rem;
+}
+
+.exerciseCard {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border-radius: 0.72rem;
+  padding: 0.78rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.58rem;
+}
+
+.exerciseHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.exerciseTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 550;
+  letter-spacing: -0.005em;
+}
+
+.iconButton {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  width: 2.05rem;
+  height: 2.05rem;
+  border-radius: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.iconButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.iconButton:hover:not(:disabled) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.icon {
+  width: 1rem;
+  height: 1rem;
+  stroke: currentColor;
+}
+
+.inlineRow {
+  display: block;
+}
+
+.actionButton {
+  border: none;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  color: var(--text);
+  min-height: 2.55rem;
+  padding: 0 0.7rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.actionButton:hover {
+  filter: brightness(0.97);
+}
+
+.actionIcon {
+  width: 0.88rem;
+  height: 0.88rem;
+  stroke: currentColor;
+}
+
+.spinningIcon {
+  width: 0.85rem;
+  height: 0.85rem;
+  stroke: currentColor;
+  animation: spin 0.85s linear infinite;
+}
+
+.setsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.58rem;
+  padding-block: 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.setsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.setsTitle {
+  margin: 0;
+  font-size: 0.84rem;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.setRow {
+  display: grid;
+  grid-template-columns: auto minmax(4.8rem, 0.95fr) minmax(4.8rem, 0.85fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  min-width: 24rem;
+}
+
+.setRowHeader {
+  padding: 0 0.1rem;
+  margin-bottom: 2px;
+}
+
+.setHeadLabel {
+  color: var(--muted);
+  font-size: 0.64rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.setRow > .iconButton {
+  justify-self: center;
+}
+
+.setNumber {
+  margin: 0;
+  min-width: 1.4rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.secondaryButton {
+  border: none;
+  border-radius: 0.56rem;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+  min-height: 2.75rem;
+  padding: 0 0.85rem;
+  font-family: inherit;
+  font-size: 0.84rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.44rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.secondaryButton:hover {
+  filter: brightness(0.97);
+}
+
+.formError {
+  margin: 0;
+  background: color-mix(in srgb, #9e1f1f 12%, var(--field-bg));
+  color: color-mix(in srgb, var(--text) 90%, #9e1f1f);
+  border-radius: 0.56rem;
+  padding: 0.62rem 0.7rem;
+  font-size: 0.82rem;
+}
+
+.saveButton {
+  border: none;
+  border-radius: 0.58rem;
+  background: var(--button-bg);
+  color: var(--button-text);
+  min-height: 2.95rem;
+  width: 100%;
+  padding: 0 0.95rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.saveButton:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+@media (min-width: 620px) {
+  .loggerShell {
+    padding: 1.4rem;
+  }
+
+  .loggerStage {
+    width: min(100%, 50rem);
+  }
+
+  .input {
+    font-size: 0.9rem;
+  }
+
+  .metaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .setRow {
+    min-width: 0;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
