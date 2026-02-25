@@ -20,6 +20,31 @@ type ExerciseDraft = {
   sets: ExerciseSetDraft[];
 };
 
+type ExerciseInsight = {
+  exerciseName: string;
+  normalizedName: string;
+  sessionsCount: number;
+  lastPerformedAt: string | null;
+  lastSession: {
+    workoutId: string;
+    workoutTitle: string;
+    performedAt: string;
+    setCount: number;
+    totalReps: number;
+    bestWeight: number | null;
+    bestWeightReps: number | null;
+    totalVolume: number;
+  } | null;
+  allTimeBestWeight: number | null;
+};
+
+type ExerciseInsightState = {
+  status: "idle" | "loading" | "ready" | "error";
+  lookupKey?: string;
+  data?: ExerciseInsight;
+  error?: string;
+};
+
 const INITIAL_EXERCISE_ID = "exercise-1";
 const INITIAL_SET_ID = "set-1";
 
@@ -126,9 +151,86 @@ function sanitizeRepsInput(value: string) {
   return value.replace(/\D/g, "");
 }
 
+function normalizeExerciseLookupKey(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function toOptionalPositiveNumber(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function summarizeDraftSets(exercise: ExerciseDraft) {
+  let setCount = 0;
+  let totalReps = 0;
+  let totalVolume = 0;
+  let bestWeight: number | null = null;
+
+  for (const setItem of exercise.sets) {
+    const reps = Number.parseInt(setItem.reps.trim(), 10);
+
+    if (!Number.isInteger(reps) || reps <= 0) {
+      continue;
+    }
+
+    setCount += 1;
+    totalReps += reps;
+
+    const weight = toOptionalPositiveNumber(setItem.weightLb);
+
+    if (weight === null) {
+      continue;
+    }
+
+    totalVolume += weight * reps;
+    bestWeight = bestWeight === null ? weight : Math.max(bestWeight, weight);
+  }
+
+  return {
+    setCount,
+    totalReps,
+    totalVolume: Math.round(totalVolume),
+    bestWeight,
+  };
+}
+
+function formatExerciseInsightDate(value: string) {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
+function formatDelta(value: number, suffix: string) {
+  const rounded = Number.isInteger(value) ? value : Number(value.toFixed(1));
+  const sign = rounded > 0 ? "+" : "";
+  return `${sign}${rounded} ${suffix}`;
+}
+
 export function WorkoutLogger() {
   const router = useRouter();
   const idCounterRef = useRef({ exercise: 1, set: 1 });
+  const insightCacheRef = useRef<Record<string, ExerciseInsight>>({});
+  const latestInsightLookupRef = useRef<Record<string, string>>({});
 
   const [title, setTitle] = useState("Gym session");
   const [performedAt, setPerformedAt] = useState(
@@ -137,6 +239,9 @@ export function WorkoutLogger() {
   const [exercises, setExercises] = useState<ExerciseDraft[]>([
     createExerciseDraft(INITIAL_EXERCISE_ID, INITIAL_SET_ID),
   ]);
+  const [exerciseInsightById, setExerciseInsightById] = useState<
+    Record<string, ExerciseInsightState>
+  >({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const performedAtDate = useMemo(
@@ -180,6 +285,18 @@ export function WorkoutLogger() {
 
       return current.filter((exercise) => exercise.id !== id);
     });
+
+    setExerciseInsightById((current) => {
+      if (!(id in current)) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+
+    delete latestInsightLookupRef.current[id];
   }
 
   function addSet(exerciseId: string) {
@@ -216,13 +333,102 @@ export function WorkoutLogger() {
     }));
   }
 
-  function handleExerciseNameBlur(exerciseId: string, rawValue: string) {
+  async function fetchExerciseInsight(exerciseId: string, exerciseName: string) {
+    const lookupKey = normalizeExerciseLookupKey(exerciseName);
+
+    if (!lookupKey) {
+      setExerciseInsightById((current) => ({
+        ...current,
+        [exerciseId]: { status: "idle" },
+      }));
+      delete latestInsightLookupRef.current[exerciseId];
+      return;
+    }
+
+    const cached = insightCacheRef.current[lookupKey];
+
+    if (cached) {
+      setExerciseInsightById((current) => ({
+        ...current,
+        [exerciseId]: {
+          status: "ready",
+          lookupKey,
+          data: cached,
+        },
+      }));
+      return;
+    }
+
+    latestInsightLookupRef.current[exerciseId] = lookupKey;
+
+    setExerciseInsightById((current) => ({
+      ...current,
+      [exerciseId]: {
+        status: "loading",
+        lookupKey,
+      },
+    }));
+
+    try {
+      const response = await fetch(
+        `/api/workouts/insights?exercise=${encodeURIComponent(exerciseName)}`,
+        {
+          cache: "no-store",
+        },
+      );
+      const payload = (await response.json()) as
+        | ExerciseInsight
+        | { error?: string };
+
+      if (!response.ok || !("normalizedName" in payload)) {
+        throw new Error(
+          "error" in payload ? (payload.error ?? "Unable to compare exercise.") : "Unable to compare exercise.",
+        );
+      }
+
+      const responseLookupKey = normalizeExerciseLookupKey(payload.normalizedName);
+      insightCacheRef.current[responseLookupKey] = payload;
+
+      if (latestInsightLookupRef.current[exerciseId] !== lookupKey) {
+        return;
+      }
+
+      setExerciseInsightById((current) => ({
+        ...current,
+        [exerciseId]: {
+          status: "ready",
+          lookupKey,
+          data: payload,
+        },
+      }));
+    } catch (error) {
+      if (latestInsightLookupRef.current[exerciseId] !== lookupKey) {
+        return;
+      }
+
+      setExerciseInsightById((current) => ({
+        ...current,
+        [exerciseId]: {
+          status: "error",
+          lookupKey,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to compare exercise.",
+        },
+      }));
+    }
+  }
+
+  async function handleExerciseNameBlur(exerciseId: string, rawValue: string) {
     const normalized = normalizeExerciseDisplayName(rawValue);
 
     updateExercise(exerciseId, (current) => ({
       ...current,
       name: normalized,
     }));
+
+    await fetchExerciseInsight(exerciseId, normalized);
   }
 
   function buildPayload() {
@@ -417,6 +623,19 @@ export function WorkoutLogger() {
                           ...current,
                           name: value,
                         }));
+
+                        setExerciseInsightById((current) => {
+                          const previous = current[exercise.id];
+
+                          if (!previous || previous.status === "idle") {
+                            return current;
+                          }
+
+                          return {
+                            ...current,
+                            [exercise.id]: { status: "idle" },
+                          };
+                        });
                       }}
                       onBlur={(event) =>
                         handleExerciseNameBlur(exercise.id, event.target.value)
@@ -428,6 +647,102 @@ export function WorkoutLogger() {
                     />
                   </div>
                 </div>
+
+                {(() => {
+                  const insightState = exerciseInsightById[exercise.id];
+
+                  if (!insightState || insightState.status === "idle") {
+                    return null;
+                  }
+
+                  if (insightState.status === "loading") {
+                    return (
+                      <p className={styles.compareHint}>
+                        Comparing with previous sessions...
+                      </p>
+                    );
+                  }
+
+                  if (insightState.status === "error") {
+                    return (
+                      <p className={styles.compareHint}>
+                        Could not load comparison right now.
+                      </p>
+                    );
+                  }
+
+                  const insight = insightState.data;
+
+                  if (!insight || !insight.lastSession) {
+                    return (
+                      <p className={styles.compareHint}>
+                        No previous logs for this exercise yet.
+                      </p>
+                    );
+                  }
+
+                  const draftSummary = summarizeDraftSets(exercise);
+                  const volumeDelta =
+                    draftSummary.totalVolume - insight.lastSession.totalVolume;
+                  const lastBestWeight = insight.lastSession.bestWeight ?? 0;
+                  const draftBestWeight = draftSummary.bestWeight ?? 0;
+                  const bestWeightDelta = draftBestWeight - lastBestWeight;
+
+                  return (
+                    <section className={styles.compareCard}>
+                      <div className={styles.compareHead}>
+                        <p className={styles.compareTitle}>Comparison</p>
+                        <p className={styles.compareMeta}>
+                          Last hit {formatExerciseInsightDate(insight.lastSession.performedAt)}
+                        </p>
+                      </div>
+
+                      <div className={styles.compareGrid}>
+                        <div className={styles.compareItem}>
+                          <p className={styles.compareLabel}>Last session</p>
+                          <p className={styles.compareValue}>
+                            {insight.lastSession.setCount} sets · {insight.lastSession.totalReps} reps
+                          </p>
+                        </div>
+                        <div className={styles.compareItem}>
+                          <p className={styles.compareLabel}>Last volume</p>
+                          <p className={styles.compareValue}>
+                            {insight.lastSession.totalVolume} lb
+                          </p>
+                        </div>
+                        <div className={styles.compareItem}>
+                          <p className={styles.compareLabel}>Last best weight</p>
+                          <p className={styles.compareValue}>
+                            {insight.lastSession.bestWeight !== null
+                              ? insight.lastSession.bestWeightReps !== null
+                                ? `${insight.lastSession.bestWeight} lb x ${insight.lastSession.bestWeightReps}`
+                                : `${insight.lastSession.bestWeight} lb`
+                              : "--"}
+                          </p>
+                        </div>
+                        <div className={styles.compareItem}>
+                          <p className={styles.compareLabel}>All-time best</p>
+                          <p className={styles.compareValue}>
+                            {insight.allTimeBestWeight !== null
+                              ? `${insight.allTimeBestWeight} lb`
+                              : "--"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {draftSummary.setCount > 0 ? (
+                        <p className={styles.compareDelta}>
+                          Volume vs last: {formatDelta(volumeDelta, "lb")} ·
+                          Best vs last: {formatDelta(bestWeightDelta, "lb")}
+                        </p>
+                      ) : (
+                        <p className={styles.compareDelta}>
+                          Add reps and weight to compare this session live.
+                        </p>
+                      )}
+                    </section>
+                  );
+                })()}
 
                 <div className={styles.setsStack}>
                   <div className={styles.setsHead}>

@@ -291,6 +291,76 @@
   display: block;
 }
 
+.compareHint {
+  margin: -0.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.compareCard {
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 0.56rem;
+  background: color-mix(in srgb, var(--bg) 30%, var(--surface));
+  padding: 0.62rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.compareHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.compareTitle {
+  margin: 0;
+  font-size: 0.77rem;
+  color: var(--muted);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.compareMeta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.compareGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.44rem;
+}
+
+.compareItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.compareLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.67rem;
+  letter-spacing: 0.04em;
+}
+
+.compareValue {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.compareDelta {
+  margin: 0;
+  color: color-mix(in srgb, var(--text) 86%, var(--muted));
+  font-size: 0.77rem;
+  line-height: 1.35;
+}
+
 .actionButton {
   border: none;
   border-radius: 0.5rem;
@@ -433,6 +503,12 @@
 .saveButton:disabled {
   opacity: 0.7;
   cursor: progress;
+}
+
+@media (max-width: 420px) {
+  .compareGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (min-width: 620px) {
