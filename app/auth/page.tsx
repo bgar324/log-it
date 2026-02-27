@@ -52,7 +52,7 @@ export default async function AuthPage({
           </div>
 
           <h1 className="title auth-title">
-            {mode === "register" ? "Create account" : "Sign in"}
+            {mode === "register" ? "create account" : "sign in"}
           </h1>
 
           {errorMessage ? (
