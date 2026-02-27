@@ -416,29 +416,6 @@ function pickBestExerciseSuggestion(rawQuery: string, suggestions: string[]) {
   return bestName;
 }
 
-function buildInlineSuggestionHint(
-  rawValue: string,
-  suggestion: string | undefined,
-) {
-  if (!suggestion) {
-    return null;
-  }
-
-  const currentValue = toSafeString(rawValue);
-  const currentLookupKey = normalizeExerciseLookupKey(currentValue);
-  const suggestionLookupKey = normalizeExerciseLookupKey(suggestion);
-
-  if (!currentLookupKey || currentLookupKey === suggestionLookupKey) {
-    return null;
-  }
-
-  if (suggestion.toLowerCase().startsWith(currentValue.toLowerCase())) {
-    return suggestion.slice(currentValue.length);
-  }
-
-  return `${suggestion}`;
-}
-
 function toOptionalPositiveNumber(value: string) {
   const trimmed = value.trim();
 
@@ -859,38 +836,6 @@ export function WorkoutLogger() {
     void fetchExerciseInsight(exerciseId, normalizedSuggestion);
   }
 
-  function handleExerciseNameKeyDown(
-    event: React.KeyboardEvent<HTMLInputElement>,
-    exerciseId: string,
-    suggestion: string | undefined,
-  ) {
-    if (!suggestion) {
-      return;
-    }
-
-    const key = event.key;
-    if (key !== "Tab" && key !== "ArrowRight") {
-      return;
-    }
-
-    if (key === "ArrowRight") {
-      const input = event.currentTarget;
-      const selectionStart = input.selectionStart ?? input.value.length;
-      const selectionEnd = input.selectionEnd ?? input.value.length;
-      const isCursorAtEnd =
-        selectionStart === input.value.length &&
-        selectionEnd === input.value.length;
-
-      if (!isCursorAtEnd) {
-        return;
-      }
-    }
-
-    event.preventDefault();
-    clearPendingSuggestionLookup(exerciseId);
-    acceptExerciseSuggestion(exerciseId, suggestion);
-  }
-
   async function fetchExerciseInsight(exerciseId: string, exerciseName: string) {
     const lookupKey = normalizeExerciseLookupKey(exerciseName);
 
@@ -1185,52 +1130,63 @@ export function WorkoutLogger() {
                   </label>
                   <div className={styles.inlineRow}>
                     {(() => {
-                      const inlineSuggestionHint = buildInlineSuggestionHint(
+                      const suggestedName = exerciseSuggestionById[exercise.id];
+                      const currentLookupKey = normalizeExerciseLookupKey(
                         exercise.name,
-                        exerciseSuggestionById[exercise.id],
                       );
-
-                      if (!inlineSuggestionHint) {
-                        return null;
-                      }
+                      const suggestionLookupKey = normalizeExerciseLookupKey(
+                        suggestedName ?? "",
+                      );
+                      const suggestionForAction =
+                        suggestedName &&
+                        currentLookupKey &&
+                        currentLookupKey !== suggestionLookupKey
+                          ? suggestedName
+                          : null;
 
                       return (
-                        <span
-                          className={styles.inlineSuggestionGhost}
-                          aria-hidden="true"
-                        >
-                          <span className={styles.inlineSuggestionTyped}>
-                            {exercise.name}
-                          </span>
-                          <span className={styles.inlineSuggestionText}>
-                            {inlineSuggestionHint}
-                          </span>
-                        </span>
+                        <>
+                          <input
+                            id={`exercise-name-${exercise.id}`}
+                            className={styles.input}
+                            value={exercise.name}
+                            onChange={(event) =>
+                              handleExerciseNameChange(exercise.id, event.target.value)
+                            }
+                            onBlur={(event) =>
+                              void handleExerciseNameBlur(exercise.id, event.target.value)
+                            }
+                            autoComplete="off"
+                            spellCheck={true}
+                            autoCapitalize="words"
+                            autoCorrect="on"
+                            placeholder="Barbell bench press"
+                          />
+                          {suggestionForAction ? (
+                            <p className={styles.didYouMean}>
+                              Did you mean?{" "}
+                              <button
+                                type="button"
+                                className={styles.didYouMeanSuggestion}
+                                onPointerDown={(event) => {
+                                  // Keep input focus so blur handlers do not clear the suggestion first.
+                                  event.preventDefault();
+                                }}
+                                onClick={() => {
+                                  clearPendingSuggestionLookup(exercise.id);
+                                  acceptExerciseSuggestion(
+                                    exercise.id,
+                                    suggestionForAction,
+                                  );
+                                }}
+                              >
+                                {suggestionForAction}
+                              </button>
+                            </p>
+                          ) : null}
+                        </>
                       );
                     })()}
-                    <input
-                      id={`exercise-name-${exercise.id}`}
-                      className={`${styles.input} ${styles.inlineSuggestionInput}`}
-                      value={exercise.name}
-                      onChange={(event) =>
-                        handleExerciseNameChange(exercise.id, event.target.value)
-                      }
-                      onKeyDown={(event) =>
-                        handleExerciseNameKeyDown(
-                          event,
-                          exercise.id,
-                          exerciseSuggestionById[exercise.id],
-                        )
-                      }
-                      onBlur={(event) =>
-                        void handleExerciseNameBlur(exercise.id, event.target.value)
-                      }
-                      autoComplete="off"
-                      spellCheck={true}
-                      autoCapitalize="words"
-                      autoCorrect="on"
-                      placeholder="Barbell bench press"
-                    />
                   </div>
                 </div>
 

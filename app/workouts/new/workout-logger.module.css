@@ -295,39 +295,33 @@
 }
 
 .inlineRow {
-  position: relative;
   display: block;
-  border-radius: 0.52rem;
-  background: var(--field-bg);
 }
 
-.inlineSuggestionGhost {
-  position: absolute;
-  inset: 0;
-  padding: 0.64rem 0.74rem;
-  display: flex;
-  align-items: center;
-  pointer-events: none;
-  font-size: 1rem;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  z-index: 1;
+.didYouMean {
+  margin: 0.36rem 0 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
 }
 
-.inlineSuggestionTyped {
-  color: transparent;
+.didYouMeanSuggestion {
+  border: none;
+  background: none;
+  padding: 0;
+  color: color-mix(in srgb, var(--text) 92%, var(--muted));
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
-.inlineSuggestionText {
-  color: color-mix(in srgb, var(--muted) 76%, var(--text));
-}
-
-.inlineSuggestionInput {
-  position: relative;
-  z-index: 2;
-  background: transparent;
+.didYouMeanSuggestion:hover {
+  color: var(--text);
 }
 
 .compareHint {
@@ -560,10 +554,6 @@
   }
 
   .input {
-    font-size: 0.9rem;
-  }
-
-  .inlineSuggestionGhost {
     font-size: 0.9rem;
   }
 
