@@ -36,12 +36,8 @@ export default async function Home() {
 
           <p className="tos">
             By continuing, you agree to our{" "}
-            <Link href="/legal#terms" className="legal-inline-link">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/legal#privacy" className="legal-inline-link">
-              Privacy Policy
+            <Link href="/legal" className="legal-inline-link">
+              Terms of Conditions
             </Link>
             .
           </p>

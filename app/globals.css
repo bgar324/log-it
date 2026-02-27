@@ -396,9 +396,9 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.52rem;
-  background: var(--field-bg);
-  border-radius: 0.65rem;
-  padding: 0.85rem 0.9rem;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
 }
 
 .legal-heading {

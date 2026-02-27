@@ -54,11 +54,6 @@ export default async function AuthPage({
           <h1 className="title auth-title">
             {mode === "register" ? "Create account" : "Sign in"}
           </h1>
-          <p className="subtitle">
-            {mode === "register"
-              ? "Set up your account to start logging workouts."
-              : "Open your logbook and continue where you left off."}
-          </p>
 
           {errorMessage ? (
             <p className="auth-alert" role="alert">
@@ -87,12 +82,8 @@ export default async function AuthPage({
 
           <p className="tos">
             By continuing, you agree to our{" "}
-            <Link href="/legal#terms" className="legal-inline-link">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/legal#privacy" className="legal-inline-link">
-              Privacy Policy
+            <Link href="/legal" className="legal-inline-link">
+              Terms of Conditions
             </Link>
             .
           </p>
