@@ -3,7 +3,7 @@
 import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import styles from "./workout-logger.module.css";
@@ -45,8 +45,32 @@ type ExerciseInsightState = {
   error?: string;
 };
 
+type WorkoutDraftSnapshot = {
+  title: string;
+  performedAt: string;
+  exercises: Array<{
+    name: string;
+    sets: Array<{
+      reps: string;
+      weightLb: string;
+    }>;
+  }>;
+};
+
+type WorkoutDraftStoragePayload = WorkoutDraftSnapshot & {
+  savedAt: string;
+};
+
+type ExerciseSuggestionsPayload = {
+  suggestions?: string[];
+  error?: string;
+};
+
 const INITIAL_EXERCISE_ID = "exercise-1";
 const INITIAL_SET_ID = "set-1";
+const WORKOUT_DRAFT_STORAGE_KEY = "logit-workout-draft-v1";
+const WORKOUT_AUTOSAVE_DELAY_MS = 350;
+const EXERCISE_SUGGESTION_DEBOUNCE_MS = 140;
 
 const COMMON_WORD_FIXES: Record<string, string> = {
   dumbell: "dumbbell",
@@ -151,8 +175,268 @@ function sanitizeRepsInput(value: string) {
   return value.replace(/\D/g, "");
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 function normalizeExerciseLookupKey(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function formatAutosaveClock(value: string) {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
+function createWorkoutDraftSnapshot(
+  title: string,
+  performedAt: string,
+  exercises: ExerciseDraft[],
+): WorkoutDraftSnapshot {
+  return {
+    title,
+    performedAt,
+    exercises: exercises.map((exercise) => ({
+      name: toSafeString(exercise.name),
+      sets:
+        exercise.sets.length > 0
+          ? exercise.sets.map((setItem) => ({
+              reps: sanitizeRepsInput(toSafeString(setItem.reps)),
+              weightLb: sanitizeWeightInput(toSafeString(setItem.weightLb)),
+            }))
+          : [{ reps: "", weightLb: "" }],
+    })),
+  };
+}
+
+function persistWorkoutDraft(snapshot: WorkoutDraftSnapshot) {
+  const payload: WorkoutDraftStoragePayload = {
+    ...snapshot,
+    savedAt: new Date().toISOString(),
+  };
+
+  try {
+    window.localStorage.setItem(
+      WORKOUT_DRAFT_STORAGE_KEY,
+      JSON.stringify(payload),
+    );
+    return payload.savedAt;
+  } catch {
+    return null;
+  }
+}
+
+function parseStoredWorkoutDraft(rawValue: string | null) {
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as unknown;
+
+    if (!isRecord(parsed)) {
+      return null;
+    }
+
+    const title =
+      typeof parsed.title === "string" ? parsed.title : "Gym session";
+    const performedAtSource =
+      typeof parsed.performedAt === "string" ? parsed.performedAt : "";
+    const performedAt = toLocalDateTimeInputValue(
+      parseLocalDateTimeInputValue(performedAtSource),
+    );
+    const savedAt = typeof parsed.savedAt === "string" ? parsed.savedAt : null;
+    const rawExercises = Array.isArray(parsed.exercises) ? parsed.exercises : [];
+    const exercises = rawExercises
+      .map((rawExercise) => {
+        if (!isRecord(rawExercise)) {
+          return null;
+        }
+
+        const name = toSafeString(rawExercise.name);
+        const rawSets = Array.isArray(rawExercise.sets) ? rawExercise.sets : [];
+        const sets = rawSets
+          .map((rawSet) => {
+            if (!isRecord(rawSet)) {
+              return null;
+            }
+
+            return {
+              reps: sanitizeRepsInput(toSafeString(rawSet.reps)),
+              weightLb: sanitizeWeightInput(toSafeString(rawSet.weightLb)),
+            };
+          })
+          .filter(
+            (
+              setItem,
+            ): setItem is { reps: string; weightLb: string } =>
+              setItem !== null,
+          );
+
+        return {
+          name,
+          sets: sets.length > 0 ? sets : [{ reps: "", weightLb: "" }],
+        };
+      })
+      .filter(
+        (
+          exercise,
+        ): exercise is WorkoutDraftSnapshot["exercises"][number] =>
+          exercise !== null,
+      );
+
+    if (exercises.length === 0) {
+      exercises.push({
+        name: "",
+        sets: [{ reps: "", weightLb: "" }],
+      });
+    }
+
+    return {
+      title,
+      performedAt,
+      exercises,
+      savedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function hydrateExercisesFromSnapshot(
+  exercises: WorkoutDraftSnapshot["exercises"],
+) {
+  let setCounter = 0;
+  const hydrated = exercises.map((exercise, exerciseIndex) => ({
+    id: `exercise-${exerciseIndex + 1}`,
+    name: exercise.name,
+    sets: exercise.sets.map((setItem) => {
+      setCounter += 1;
+      return {
+        id: `set-${setCounter}`,
+        reps: setItem.reps,
+        weightLb: setItem.weightLb,
+      };
+    }),
+  }));
+
+  return {
+    exercises:
+      hydrated.length > 0
+        ? hydrated
+        : [createExerciseDraft(INITIAL_EXERCISE_ID, INITIAL_SET_ID)],
+    counters: {
+      exercise: Math.max(hydrated.length, 1),
+      set: Math.max(setCounter, 1),
+    },
+  };
+}
+
+function scoreExerciseSuggestionMatch(queryKey: string, candidateKey: string) {
+  if (!queryKey || queryKey === candidateKey) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  const queryTokens = queryKey.split(" ").filter(Boolean);
+
+  if (
+    queryTokens.length === 0 ||
+    queryTokens.some((token) => !candidateKey.includes(token))
+  ) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  let score = 0;
+
+  if (candidateKey.startsWith(queryKey)) {
+    score += 280;
+  } else if (candidateKey.includes(queryKey)) {
+    score += 190;
+  }
+
+  for (const token of queryTokens) {
+    const tokenIndex = candidateKey.indexOf(token);
+    if (tokenIndex === -1) {
+      continue;
+    }
+
+    const startsWord = tokenIndex === 0 || candidateKey[tokenIndex - 1] === " ";
+    score += startsWord ? 45 : 22;
+  }
+
+  const lengthPenalty = Math.max(0, candidateKey.length - queryKey.length);
+  score -= lengthPenalty * 0.5;
+
+  return score;
+}
+
+function pickBestExerciseSuggestion(rawQuery: string, suggestions: string[]) {
+  const lookupKey = normalizeExerciseLookupKey(rawQuery);
+
+  if (!lookupKey) {
+    return null;
+  }
+
+  let bestName: string | null = null;
+  let bestScore = Number.NEGATIVE_INFINITY;
+
+  for (const suggestion of suggestions) {
+    const candidateName = suggestion.trim().replace(/\s+/g, " ");
+
+    if (!candidateName) {
+      continue;
+    }
+
+    const candidateKey = normalizeExerciseLookupKey(candidateName);
+    const score = scoreExerciseSuggestionMatch(lookupKey, candidateKey);
+
+    if (!Number.isFinite(score)) {
+      continue;
+    }
+
+    if (
+      score > bestScore ||
+      (score === bestScore &&
+        bestName !== null &&
+        candidateName.length < bestName.length)
+    ) {
+      bestName = candidateName;
+      bestScore = score;
+    }
+  }
+
+  return bestName;
+}
+
+function buildInlineSuggestionHint(
+  rawValue: string,
+  suggestion: string | undefined,
+) {
+  if (!suggestion) {
+    return null;
+  }
+
+  const currentValue = toSafeString(rawValue);
+  const currentLookupKey = normalizeExerciseLookupKey(currentValue);
+  const suggestionLookupKey = normalizeExerciseLookupKey(suggestion);
+
+  if (!currentLookupKey || currentLookupKey === suggestionLookupKey) {
+    return null;
+  }
+
+  if (suggestion.toLowerCase().startsWith(currentValue.toLowerCase())) {
+    return suggestion.slice(currentValue.length);
+  }
+
+  return `${suggestion}`;
 }
 
 function toOptionalPositiveNumber(value: string) {
@@ -231,6 +515,11 @@ export function WorkoutLogger() {
   const idCounterRef = useRef({ exercise: 1, set: 1 });
   const insightCacheRef = useRef<Record<string, ExerciseInsight>>({});
   const latestInsightLookupRef = useRef<Record<string, string>>({});
+  const autosaveReadyRef = useRef(false);
+  const latestDraftSnapshotRef = useRef<WorkoutDraftSnapshot | null>(null);
+  const suggestionCacheRef = useRef<Record<string, string[]>>({});
+  const latestSuggestionLookupRef = useRef<Record<string, string>>({});
+  const suggestionDebounceTimeoutRef = useRef<Record<string, number>>({});
 
   const [title, setTitle] = useState("Gym session");
   const [performedAt, setPerformedAt] = useState(
@@ -242,12 +531,93 @@ export function WorkoutLogger() {
   const [exerciseInsightById, setExerciseInsightById] = useState<
     Record<string, ExerciseInsightState>
   >({});
+  const [exerciseSuggestionById, setExerciseSuggestionById] = useState<
+    Record<string, string>
+  >({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [didRestoreDraft, setDidRestoreDraft] = useState(false);
+  const [lastDraftSavedAt, setLastDraftSavedAt] = useState<string | null>(null);
   const performedAtDate = useMemo(
     () => parseLocalDateTimeInputValue(performedAt),
     [performedAt],
   );
+
+  useEffect(() => {
+    const rawDraft = window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY);
+    const storedDraft = parseStoredWorkoutDraft(rawDraft);
+
+    if (storedDraft) {
+      const hydrated = hydrateExercisesFromSnapshot(storedDraft.exercises);
+      setTitle(storedDraft.title);
+      setPerformedAt(storedDraft.performedAt);
+      setExercises(hydrated.exercises);
+      idCounterRef.current = hydrated.counters;
+      setDidRestoreDraft(true);
+
+      if (storedDraft.savedAt) {
+        setLastDraftSavedAt(storedDraft.savedAt);
+      }
+    } else if (rawDraft) {
+      window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    }
+
+    autosaveReadyRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    latestDraftSnapshotRef.current = createWorkoutDraftSnapshot(
+      title,
+      performedAt,
+      exercises,
+    );
+  }, [title, performedAt, exercises]);
+
+  useEffect(() => {
+    if (!autosaveReadyRef.current) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const snapshot = createWorkoutDraftSnapshot(title, performedAt, exercises);
+      latestDraftSnapshotRef.current = snapshot;
+      const savedAt = persistWorkoutDraft(snapshot);
+
+      if (savedAt) {
+        setLastDraftSavedAt(savedAt);
+      }
+    }, WORKOUT_AUTOSAVE_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [title, performedAt, exercises]);
+
+  useEffect(() => {
+    function handlePageHide() {
+      if (!autosaveReadyRef.current || !latestDraftSnapshotRef.current) {
+        return;
+      }
+
+      persistWorkoutDraft(latestDraftSnapshotRef.current);
+    }
+
+    window.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, []);
+
+  useEffect(() => {
+    const pendingSuggestionTimeouts = suggestionDebounceTimeoutRef.current;
+
+    return () => {
+      for (const timeoutId of Object.values(pendingSuggestionTimeouts)) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
 
   function nextExerciseId() {
     idCounterRef.current.exercise += 1;
@@ -296,7 +666,24 @@ export function WorkoutLogger() {
       return next;
     });
 
+    setExerciseSuggestionById((current) => {
+      if (!(id in current)) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+
+    const pendingSuggestionTimeout = suggestionDebounceTimeoutRef.current[id];
+    if (pendingSuggestionTimeout !== undefined) {
+      window.clearTimeout(pendingSuggestionTimeout);
+      delete suggestionDebounceTimeoutRef.current[id];
+    }
+
     delete latestInsightLookupRef.current[id];
+    delete latestSuggestionLookupRef.current[id];
   }
 
   function addSet(exerciseId: string) {
@@ -331,6 +718,177 @@ export function WorkoutLogger() {
         setItem.id === setId ? { ...setItem, [field]: value } : setItem,
       ),
     }));
+  }
+
+  function setExerciseSuggestion(exerciseId: string, suggestion: string | null) {
+    setExerciseSuggestionById((current) => {
+      if (!suggestion) {
+        if (!(exerciseId in current)) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[exerciseId];
+        return next;
+      }
+
+      if (current[exerciseId] === suggestion) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [exerciseId]: suggestion,
+      };
+    });
+  }
+
+  function resetExerciseInsightState(exerciseId: string) {
+    setExerciseInsightById((current) => {
+      const previous = current[exerciseId];
+
+      if (!previous || previous.status === "idle") {
+        return current;
+      }
+
+      return {
+        ...current,
+        [exerciseId]: { status: "idle" },
+      };
+    });
+  }
+
+  function clearPendingSuggestionLookup(exerciseId: string) {
+    const pendingTimeout = suggestionDebounceTimeoutRef.current[exerciseId];
+
+    if (pendingTimeout !== undefined) {
+      window.clearTimeout(pendingTimeout);
+      delete suggestionDebounceTimeoutRef.current[exerciseId];
+    }
+  }
+
+  async function fetchExerciseSuggestions(exerciseId: string, query: string) {
+    const lookupKey = normalizeExerciseLookupKey(query);
+
+    if (!lookupKey) {
+      setExerciseSuggestion(exerciseId, null);
+      delete latestSuggestionLookupRef.current[exerciseId];
+      return;
+    }
+
+    const cachedSuggestions = suggestionCacheRef.current[lookupKey];
+
+    if (cachedSuggestions) {
+      const bestSuggestion = pickBestExerciseSuggestion(query, cachedSuggestions);
+      setExerciseSuggestion(exerciseId, bestSuggestion);
+      return;
+    }
+
+    latestSuggestionLookupRef.current[exerciseId] = lookupKey;
+
+    try {
+      const response = await fetch(
+        `/api/workouts/exercise-suggestions?query=${encodeURIComponent(query)}`,
+        {
+          cache: "no-store",
+        },
+      );
+      const payload = (await response.json()) as ExerciseSuggestionsPayload;
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Unable to load suggestions.");
+      }
+
+      const suggestions = Array.isArray(payload.suggestions)
+        ? payload.suggestions
+            .map((item) => toSafeString(item).trim())
+            .filter((item) => item !== "")
+        : [];
+      suggestionCacheRef.current[lookupKey] = suggestions;
+
+      if (latestSuggestionLookupRef.current[exerciseId] !== lookupKey) {
+        return;
+      }
+
+      const bestSuggestion = pickBestExerciseSuggestion(query, suggestions);
+      setExerciseSuggestion(exerciseId, bestSuggestion);
+    } catch {
+      if (latestSuggestionLookupRef.current[exerciseId] !== lookupKey) {
+        return;
+      }
+
+      setExerciseSuggestion(exerciseId, null);
+    }
+  }
+
+  function queueExerciseSuggestionLookup(exerciseId: string, rawValue: string) {
+    clearPendingSuggestionLookup(exerciseId);
+
+    if (!rawValue.trim()) {
+      setExerciseSuggestion(exerciseId, null);
+      delete latestSuggestionLookupRef.current[exerciseId];
+      return;
+    }
+
+    suggestionDebounceTimeoutRef.current[exerciseId] = window.setTimeout(() => {
+      delete suggestionDebounceTimeoutRef.current[exerciseId];
+      void fetchExerciseSuggestions(exerciseId, rawValue);
+    }, EXERCISE_SUGGESTION_DEBOUNCE_MS);
+  }
+
+  function handleExerciseNameChange(exerciseId: string, rawValue: string) {
+    updateExercise(exerciseId, (current) => ({
+      ...current,
+      name: rawValue,
+    }));
+
+    resetExerciseInsightState(exerciseId);
+    queueExerciseSuggestionLookup(exerciseId, rawValue);
+  }
+
+  function acceptExerciseSuggestion(exerciseId: string, suggestion: string) {
+    const normalizedSuggestion = normalizeExerciseDisplayName(suggestion);
+    setExerciseSuggestion(exerciseId, null);
+    delete latestSuggestionLookupRef.current[exerciseId];
+
+    updateExercise(exerciseId, (current) => ({
+      ...current,
+      name: normalizedSuggestion,
+    }));
+
+    void fetchExerciseInsight(exerciseId, normalizedSuggestion);
+  }
+
+  function handleExerciseNameKeyDown(
+    event: React.KeyboardEvent<HTMLInputElement>,
+    exerciseId: string,
+    suggestion: string | undefined,
+  ) {
+    if (!suggestion) {
+      return;
+    }
+
+    const key = event.key;
+    if (key !== "Tab" && key !== "ArrowRight") {
+      return;
+    }
+
+    if (key === "ArrowRight") {
+      const input = event.currentTarget;
+      const selectionStart = input.selectionStart ?? input.value.length;
+      const selectionEnd = input.selectionEnd ?? input.value.length;
+      const isCursorAtEnd =
+        selectionStart === input.value.length &&
+        selectionEnd === input.value.length;
+
+      if (!isCursorAtEnd) {
+        return;
+      }
+    }
+
+    event.preventDefault();
+    clearPendingSuggestionLookup(exerciseId);
+    acceptExerciseSuggestion(exerciseId, suggestion);
   }
 
   async function fetchExerciseInsight(exerciseId: string, exerciseName: string) {
@@ -421,6 +979,10 @@ export function WorkoutLogger() {
   }
 
   async function handleExerciseNameBlur(exerciseId: string, rawValue: string) {
+    clearPendingSuggestionLookup(exerciseId);
+    setExerciseSuggestion(exerciseId, null);
+    delete latestSuggestionLookupRef.current[exerciseId];
+
     const normalized = normalizeExerciseDisplayName(rawValue);
 
     updateExercise(exerciseId, (current) => ({
@@ -518,6 +1080,8 @@ export function WorkoutLogger() {
         return;
       }
 
+      window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+
       router.push("/workouts");
       router.refresh();
     } catch {
@@ -526,6 +1090,8 @@ export function WorkoutLogger() {
       setIsSaving(false);
     }
   }
+
+  const autosaveClock = lastDraftSavedAt ? formatAutosaveClock(lastDraftSavedAt) : "";
 
   return (
     <main className={styles.loggerShell}>
@@ -539,6 +1105,12 @@ export function WorkoutLogger() {
 
         <header className={styles.header}>
           <h1 className={styles.title}>Log workout</h1>
+          <p className={styles.autosaveMeta}>
+            {didRestoreDraft ? "Draft restored. " : ""}
+            {autosaveClock
+              ? `Autosaved at ${autosaveClock}.`
+              : "Autosaves on this device while you log."}
+          </p>
         </header>
 
         <form className={styles.form} onSubmit={handleSubmit}>
@@ -612,34 +1184,48 @@ export function WorkoutLogger() {
                     Exercise name
                   </label>
                   <div className={styles.inlineRow}>
+                    {(() => {
+                      const inlineSuggestionHint = buildInlineSuggestionHint(
+                        exercise.name,
+                        exerciseSuggestionById[exercise.id],
+                      );
+
+                      if (!inlineSuggestionHint) {
+                        return null;
+                      }
+
+                      return (
+                        <span
+                          className={styles.inlineSuggestionGhost}
+                          aria-hidden="true"
+                        >
+                          <span className={styles.inlineSuggestionTyped}>
+                            {exercise.name}
+                          </span>
+                          <span className={styles.inlineSuggestionText}>
+                            {inlineSuggestionHint}
+                          </span>
+                        </span>
+                      );
+                    })()}
                     <input
                       id={`exercise-name-${exercise.id}`}
-                      className={styles.input}
+                      className={`${styles.input} ${styles.inlineSuggestionInput}`}
                       value={exercise.name}
-                      onChange={(event) => {
-                        const value = event.target.value;
-
-                        updateExercise(exercise.id, (current) => ({
-                          ...current,
-                          name: value,
-                        }));
-
-                        setExerciseInsightById((current) => {
-                          const previous = current[exercise.id];
-
-                          if (!previous || previous.status === "idle") {
-                            return current;
-                          }
-
-                          return {
-                            ...current,
-                            [exercise.id]: { status: "idle" },
-                          };
-                        });
-                      }}
-                      onBlur={(event) =>
-                        handleExerciseNameBlur(exercise.id, event.target.value)
+                      onChange={(event) =>
+                        handleExerciseNameChange(exercise.id, event.target.value)
                       }
+                      onKeyDown={(event) =>
+                        handleExerciseNameKeyDown(
+                          event,
+                          exercise.id,
+                          exerciseSuggestionById[exercise.id],
+                        )
+                      }
+                      onBlur={(event) =>
+                        void handleExerciseNameBlur(exercise.id, event.target.value)
+                      }
+                      autoComplete="off"
                       spellCheck={true}
                       autoCapitalize="words"
                       autoCorrect="on"

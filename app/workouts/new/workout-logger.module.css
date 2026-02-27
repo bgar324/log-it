@@ -51,6 +51,13 @@
   font-weight: 560;
 }
 
+.autosaveMeta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -288,7 +295,39 @@
 }
 
 .inlineRow {
+  position: relative;
   display: block;
+  border-radius: 0.52rem;
+  background: var(--field-bg);
+}
+
+.inlineSuggestionGhost {
+  position: absolute;
+  inset: 0;
+  padding: 0.64rem 0.74rem;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  font-size: 1rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 1;
+}
+
+.inlineSuggestionTyped {
+  color: transparent;
+}
+
+.inlineSuggestionText {
+  color: color-mix(in srgb, var(--muted) 76%, var(--text));
+}
+
+.inlineSuggestionInput {
+  position: relative;
+  z-index: 2;
+  background: transparent;
 }
 
 .compareHint {
@@ -521,6 +560,10 @@
   }
 
   .input {
+    font-size: 0.9rem;
+  }
+
+  .inlineSuggestionGhost {
     font-size: 0.9rem;
   }
 
