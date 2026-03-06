@@ -92,6 +92,9 @@ export default async function WorkoutDetailPage({
             Back to workouts
           </Link>
           <div className={styles.topActions}>
+            <Link href={`/workouts/${workout.id}/edit`} className={styles.actionLink}>
+              Edit workout
+            </Link>
             <ThemeToggle />
           </div>
         </header>

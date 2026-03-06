@@ -14,9 +14,12 @@ import styles from "./exercise-detail.module.css";
 type ExerciseDetailChartProps = {
   series: Array<{
     label: string;
-    bestWeight: number;
     performedAtLabel: string;
+    bestWeight: number;
+    topSetReps: number;
+    estimatedOneRepMax: number;
   }>;
+  metric: "weight" | "strength";
 };
 
 const CHART_GRID_STROKE = "color-mix(in srgb, var(--text) 14%, transparent)";
@@ -30,7 +33,23 @@ const TOOLTIP_CONTENT_STYLE = {
 };
 const TOOLTIP_LABEL_STYLE = { color: "var(--muted)" };
 
-export function ExerciseDetailChart({ series }: ExerciseDetailChartProps) {
+function toDisplayNumber(value: number) {
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+
+  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+}
+
+export function ExerciseDetailChart({
+  series,
+  metric,
+}: ExerciseDetailChartProps) {
+  const dataKey = metric === "weight" ? "bestWeight" : "estimatedOneRepMax";
+  const stroke = metric === "weight"
+    ? "var(--text)"
+    : "color-mix(in srgb, #7bc469 78%, var(--text))";
+
   return (
     <div className={styles.chartFrame}>
       <ResponsiveContainer width="100%" height="100%">
@@ -46,22 +65,44 @@ export function ExerciseDetailChart({ series }: ExerciseDetailChartProps) {
             tick={{ fill: "var(--muted)", fontSize: 11 }}
           />
           <YAxis
-            allowDecimals={false}
+            allowDecimals={true}
             tickLine={false}
             axisLine={false}
-            width={36}
+            width={46}
             tick={{ fill: "var(--muted)", fontSize: 11 }}
           />
           <Tooltip
             cursor={TOOLTIP_CURSOR}
             contentStyle={TOOLTIP_CONTENT_STYLE}
             labelStyle={TOOLTIP_LABEL_STYLE}
-            formatter={(value) => [`${value} lb`, "Best weight"]}
+            labelFormatter={(label, payload) => {
+              if (!payload || payload.length === 0) {
+                return label;
+              }
+
+              const point = payload[0]?.payload as ExerciseDetailChartProps["series"][number];
+              return point.performedAtLabel;
+            }}
+            formatter={(rawValue, _name, item) => {
+              const point = item.payload as ExerciseDetailChartProps["series"][number];
+              const value = typeof rawValue === "number" ? rawValue : Number(rawValue);
+
+              if (metric === "weight") {
+                return [`${toDisplayNumber(value)} lb`, "Best top set"];
+              }
+
+              const topSetWeight = toDisplayNumber(point.bestWeight);
+
+              return [
+                `${toDisplayNumber(value)} lb`,
+                `Est. 1RM (${topSetWeight} lb x ${point.topSetReps})`,
+              ];
+            }}
           />
           <Line
             type="monotone"
-            dataKey="bestWeight"
-            stroke="var(--text)"
+            dataKey={dataKey}
+            stroke={stroke}
             strokeWidth={2}
             dot={{ r: 2 }}
             activeDot={{ r: 4 }}

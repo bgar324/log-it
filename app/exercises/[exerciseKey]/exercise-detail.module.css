@@ -130,6 +130,12 @@
   padding: 0.82rem;
 }
 
+.panelGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.72rem;
+}
+
 .panelTitle {
   margin: 0;
   font-size: 1rem;
@@ -216,5 +222,11 @@
   .topActions {
     width: 100%;
     justify-content: flex-start;
+  }
+}
+
+@media (min-width: 980px) {
+  .panelGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

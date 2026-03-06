@@ -217,6 +217,7 @@ export default async function ExerciseDetailPage({
       totalReps: number;
       weightedSetCount: number;
       bestWeight: number;
+      topSetReps: number;
       totalLoad: number;
     }
   >();
@@ -232,6 +233,7 @@ export default async function ExerciseDetailPage({
       totalReps: 0,
       weightedSetCount: 0,
       bestWeight: 0,
+      topSetReps: 0,
       totalLoad: 0,
     };
 
@@ -243,7 +245,14 @@ export default async function ExerciseDetailPage({
 
       if (weight !== null) {
         session.weightedSetCount += 1;
-        session.bestWeight = Math.max(session.bestWeight, weight);
+
+        if (weight > session.bestWeight) {
+          session.bestWeight = weight;
+          session.topSetReps = set.reps;
+        } else if (weight === session.bestWeight) {
+          session.topSetReps = Math.max(session.topSetReps, set.reps);
+        }
+
         session.totalLoad += weight * set.reps;
       }
     }
@@ -270,7 +279,11 @@ export default async function ExerciseDetailPage({
     .map((session) => ({
       label: formatShortDate(session.performedAt),
       performedAtLabel: formatDateTime(session.performedAt),
-      bestWeight: Math.round(session.bestWeight),
+      bestWeight: Number(session.bestWeight.toFixed(2)),
+      topSetReps: session.topSetReps,
+      estimatedOneRepMax: Number(
+        (session.bestWeight * (1 + session.topSetReps / 30)).toFixed(1),
+      ),
     }));
 
   return (
@@ -332,10 +345,22 @@ export default async function ExerciseDetailPage({
           </div>
         </section>
 
-        <section className={styles.panel}>
-          <h2 className={styles.panelTitle}>Weight over time</h2>
-          <p className={styles.panelSubtitle}>Best top-set weight each time this exercise was trained.</p>
-          <ExerciseDetailChart series={chartSeries} />
+        <section className={styles.panelGrid}>
+          <section className={styles.panel}>
+            <h2 className={styles.panelTitle}>Weight over time</h2>
+            <p className={styles.panelSubtitle}>
+              Best top-set weight each time this exercise was trained.
+            </p>
+            <ExerciseDetailChart series={chartSeries} metric="weight" />
+          </section>
+
+          <section className={styles.panel}>
+            <h2 className={styles.panelTitle}>Strength trend (weight + reps)</h2>
+            <p className={styles.panelSubtitle}>
+              Top-set estimated 1RM (Epley), so extra reps at the same weight still count as progress.
+            </p>
+            <ExerciseDetailChart series={chartSeries} metric="strength" />
+          </section>
         </section>
 
         <section className={styles.panel}>

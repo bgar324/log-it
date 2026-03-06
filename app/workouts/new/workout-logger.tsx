@@ -57,12 +57,27 @@ type WorkoutDraftSnapshot = {
   }>;
 };
 
+export type WorkoutLoggerInitialData = WorkoutDraftSnapshot;
+
+type WorkoutLoggerMode = "create" | "edit";
+
+type WorkoutLoggerProps = {
+  mode?: WorkoutLoggerMode;
+  workoutId?: string;
+  initialData?: WorkoutLoggerInitialData;
+};
+
 type WorkoutDraftStoragePayload = WorkoutDraftSnapshot & {
   savedAt: string;
 };
 
 type ExerciseSuggestionsPayload = {
   suggestions?: string[];
+  error?: string;
+};
+
+type WorkoutSubmitResponse = {
+  id?: string;
   error?: string;
 };
 
@@ -129,6 +144,26 @@ function parseLocalDateTimeInputValue(value: string) {
   }
 
   return new Date(year, month - 1, day, hours, minutes, 0, 0);
+}
+
+function normalizePerformedAtInput(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return toLocalDateTimeInputValue(new Date());
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parsed = new Date(trimmed);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return toLocalDateTimeInputValue(new Date());
+  }
+
+  return toLocalDateTimeInputValue(parsed);
 }
 
 function toSafeString(value: unknown) {
@@ -340,6 +375,29 @@ function hydrateExercisesFromSnapshot(
   };
 }
 
+function createInitialLoggerState(initialData?: WorkoutLoggerInitialData) {
+  if (!initialData) {
+    return {
+      title: "Gym session",
+      performedAt: toLocalDateTimeInputValue(new Date()),
+      exercises: [createExerciseDraft(INITIAL_EXERCISE_ID, INITIAL_SET_ID)],
+      counters: {
+        exercise: 1,
+        set: 1,
+      },
+    };
+  }
+
+  const hydrated = hydrateExercisesFromSnapshot(initialData.exercises);
+
+  return {
+    title: toSafeString(initialData.title).trim() || "Gym session",
+    performedAt: normalizePerformedAtInput(initialData.performedAt),
+    exercises: hydrated.exercises,
+    counters: hydrated.counters,
+  };
+}
+
 function scoreExerciseSuggestionMatch(queryKey: string, candidateKey: string) {
   if (!queryKey || queryKey === candidateKey) {
     return Number.NEGATIVE_INFINITY;
@@ -487,9 +545,18 @@ function formatDelta(value: number, suffix: string) {
   return `${sign}${rounded} ${suffix}`;
 }
 
-export function WorkoutLogger() {
+export function WorkoutLogger({
+  mode = "create",
+  workoutId,
+  initialData,
+}: WorkoutLoggerProps) {
+  const isEditMode = mode === "edit" && Boolean(workoutId);
+  const initialState = useMemo(
+    () => createInitialLoggerState(initialData),
+    [initialData],
+  );
   const router = useRouter();
-  const idCounterRef = useRef({ exercise: 1, set: 1 });
+  const idCounterRef = useRef(initialState.counters);
   const insightCacheRef = useRef<Record<string, ExerciseInsight>>({});
   const latestInsightLookupRef = useRef<Record<string, string>>({});
   const autosaveReadyRef = useRef(false);
@@ -498,13 +565,11 @@ export function WorkoutLogger() {
   const latestSuggestionLookupRef = useRef<Record<string, string>>({});
   const suggestionDebounceTimeoutRef = useRef<Record<string, number>>({});
 
-  const [title, setTitle] = useState("Gym session");
-  const [performedAt, setPerformedAt] = useState(
-    toLocalDateTimeInputValue(new Date()),
+  const [title, setTitle] = useState(initialState.title);
+  const [performedAt, setPerformedAt] = useState(initialState.performedAt);
+  const [exercises, setExercises] = useState<ExerciseDraft[]>(
+    initialState.exercises,
   );
-  const [exercises, setExercises] = useState<ExerciseDraft[]>([
-    createExerciseDraft(INITIAL_EXERCISE_ID, INITIAL_SET_ID),
-  ]);
   const [exerciseInsightById, setExerciseInsightById] = useState<
     Record<string, ExerciseInsightState>
   >({});
@@ -521,6 +586,10 @@ export function WorkoutLogger() {
   );
 
   useEffect(() => {
+    if (isEditMode) {
+      return;
+    }
+
     const rawDraft = window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY);
     const storedDraft = parseStoredWorkoutDraft(rawDraft);
 
@@ -540,17 +609,25 @@ export function WorkoutLogger() {
     }
 
     autosaveReadyRef.current = true;
-  }, []);
+  }, [isEditMode]);
 
   useEffect(() => {
+    if (isEditMode) {
+      return;
+    }
+
     latestDraftSnapshotRef.current = createWorkoutDraftSnapshot(
       title,
       performedAt,
       exercises,
     );
-  }, [title, performedAt, exercises]);
+  }, [isEditMode, title, performedAt, exercises]);
 
   useEffect(() => {
+    if (isEditMode) {
+      return;
+    }
+
     if (!autosaveReadyRef.current) {
       return;
     }
@@ -568,9 +645,13 @@ export function WorkoutLogger() {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [title, performedAt, exercises]);
+  }, [isEditMode, title, performedAt, exercises]);
 
   useEffect(() => {
+    if (isEditMode) {
+      return;
+    }
+
     function handlePageHide() {
       if (!autosaveReadyRef.current || !latestDraftSnapshotRef.current) {
         return;
@@ -584,7 +665,7 @@ export function WorkoutLogger() {
     return () => {
       window.removeEventListener("pagehide", handlePageHide);
     };
-  }, []);
+  }, [isEditMode]);
 
   useEffect(() => {
     const pendingSuggestionTimeouts = suggestionDebounceTimeoutRef.current;
@@ -1010,52 +1091,80 @@ export function WorkoutLogger() {
     setIsSaving(true);
 
     try {
+      const requestBody = isEditMode
+        ? {
+            ...payload.value,
+            workoutId,
+          }
+        : payload.value;
       const response = await fetch("/api/workouts", {
-        method: "POST",
+        method: isEditMode ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload.value),
+        body: JSON.stringify(requestBody),
       });
 
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json()) as WorkoutSubmitResponse;
 
       if (!response.ok) {
-        setFormError(data.error ?? "Unable to save workout.");
+        setFormError(
+          data.error ??
+            (isEditMode
+              ? "Unable to update workout."
+              : "Unable to save workout."),
+        );
         return;
       }
 
-      window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+      if (!isEditMode) {
+        window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+      }
 
-      router.push("/workouts");
+      const resolvedWorkoutId = data.id ?? workoutId;
+
+      if (isEditMode && resolvedWorkoutId) {
+        router.push(`/workouts/${resolvedWorkoutId}`);
+      } else {
+        router.push("/workouts");
+      }
       router.refresh();
     } catch {
-      setFormError("Unable to save workout.");
+      setFormError(
+        isEditMode ? "Unable to update workout." : "Unable to save workout.",
+      );
     } finally {
       setIsSaving(false);
     }
   }
 
   const autosaveClock = lastDraftSavedAt ? formatAutosaveClock(lastDraftSavedAt) : "";
+  const backHref = isEditMode ? `/workouts/${workoutId}` : "/dashboard?view=workouts";
+  const backLabel = isEditMode ? "Back to workout" : "Back to workouts";
+  const pageTitle = isEditMode ? "Edit workout" : "Log workout";
+  const autosaveMeta = isEditMode
+    ? "Update sets, reps, and weight to keep this workout accurate."
+    : `${didRestoreDraft ? "Draft restored. " : ""}${
+        autosaveClock
+          ? `Autosaved at ${autosaveClock}.`
+          : "Autosaves on this device while you log."
+      }`;
+  const savingLabel = isEditMode ? "Saving changes..." : "Saving workout...";
+  const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
   return (
     <main className={styles.loggerShell}>
       <section className={styles.loggerStage} aria-label="Workout logger">
         <div className={styles.topRow}>
-          <Link href="/dashboard?view=workouts" className={styles.backLink}>
-            Back to workouts
+          <Link href={backHref} className={styles.backLink}>
+            {backLabel}
           </Link>
           <ThemeToggle />
         </div>
 
         <header className={styles.header}>
-          <h1 className={styles.title}>Log workout</h1>
-          <p className={styles.autosaveMeta}>
-            {didRestoreDraft ? "Draft restored. " : ""}
-            {autosaveClock
-              ? `Autosaved at ${autosaveClock}.`
-              : "Autosaves on this device while you log."}
-          </p>
+          <h1 className={styles.title}>{pageTitle}</h1>
+          <p className={styles.autosaveMeta}>{autosaveMeta}</p>
         </header>
 
         <form className={styles.form} onSubmit={handleSubmit}>
@@ -1405,7 +1514,7 @@ export function WorkoutLogger() {
                   aria-hidden="true"
                   strokeWidth={1.9}
                 />
-                Saving workout...
+                {savingLabel}
               </>
             ) : (
               <>
@@ -1414,7 +1523,7 @@ export function WorkoutLogger() {
                   aria-hidden="true"
                   strokeWidth={1.9}
                 />
-                Save workout
+                {submitLabel}
               </>
             )}
           </button>

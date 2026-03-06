@@ -16,6 +16,7 @@ type RawWorkoutExercise = {
 };
 
 type RawWorkoutPayload = {
+  workoutId?: unknown;
   title?: unknown;
   performedAt?: unknown;
   exercises?: unknown;
@@ -38,9 +39,12 @@ type ParsedWorkout = {
   exercises: ParsedExercise[];
 };
 
+type WorkoutDbClient = Prisma.TransactionClient | typeof prisma;
 type WeightColumnName = "weightLb" | "weightKg";
-type SqlReader = Pick<typeof prisma, "$queryRaw">;
-type SqlWriter = Pick<typeof prisma, "$queryRaw" | "$executeRawUnsafe">;
+type SqlReader = Pick<WorkoutDbClient, "$queryRaw">;
+type SqlWriter = Pick<WorkoutDbClient, "$queryRaw" | "$executeRawUnsafe">;
+
+const WORKOUT_NOT_FOUND_ERROR = "WORKOUT_NOT_FOUND";
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -173,6 +177,14 @@ function computeWorkoutTotalWeightLb(payload: ParsedWorkout) {
   return total;
 }
 
+function toNormalizedExerciseKey(exercise: { normalizedName: string; name: string }) {
+  const normalizedName =
+    toOptionalTrimmedString(exercise.normalizedName) ??
+    normalizeExerciseName(exercise.name);
+
+  return normalizedName;
+}
+
 function isUnknownWeightLbValidationError(error: unknown) {
   return (
     error instanceof Prisma.PrismaClientValidationError &&
@@ -229,13 +241,127 @@ async function insertWorkoutSetsFallback(
   }
 }
 
+async function upsertWorkoutExercises(
+  db: WorkoutDbClient,
+  userId: string,
+  workoutLogId: string,
+  payload: ParsedWorkout,
+) {
+  for (const [exerciseIndex, exerciseInput] of payload.exercises.entries()) {
+    const exerciseRecord = await db.exercise.upsert({
+      where: {
+        userId_normalizedName: {
+          userId,
+          normalizedName: exerciseInput.normalizedName,
+        },
+      },
+      create: {
+        userId,
+        name: exerciseInput.name,
+        normalizedName: exerciseInput.normalizedName,
+        lastPerformedAt: payload.performedAt,
+      },
+      update: {
+        name: exerciseInput.name,
+      },
+      select: { id: true },
+    });
+
+    await db.exercise.updateMany({
+      where: {
+        id: exerciseRecord.id,
+        OR: [{ lastPerformedAt: null }, { lastPerformedAt: { lt: payload.performedAt } }],
+      },
+      data: {
+        lastPerformedAt: payload.performedAt,
+      },
+    });
+
+    const workoutExercise = await db.workoutExercise.create({
+      data: {
+        workoutLogId,
+        exerciseId: exerciseRecord.id,
+        name: exerciseInput.name,
+        normalizedName: exerciseInput.normalizedName,
+        order: exerciseIndex + 1,
+      },
+      select: { id: true },
+    });
+
+    try {
+      await db.workoutSet.createMany({
+        data: exerciseInput.sets.map((setInput, setIndex) => ({
+          workoutExerciseId: workoutExercise.id,
+          order: setIndex + 1,
+          reps: setInput.reps,
+          weightLb: setInput.weightLb,
+        })),
+      });
+    } catch (error) {
+      if (isUnknownWeightLbValidationError(error)) {
+        await insertWorkoutSetsFallback(db, workoutExercise.id, exerciseInput.sets);
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
+async function syncExerciseLastPerformedAt(
+  db: WorkoutDbClient,
+  userId: string,
+  normalizedName: string,
+) {
+  const latestSession = await db.workoutExercise.findFirst({
+    where: {
+      workoutLog: {
+        userId,
+      },
+      normalizedName,
+    },
+    orderBy: [{ workoutLog: { performedAt: "desc" } }, { createdAt: "desc" }],
+    select: {
+      name: true,
+      workoutLog: {
+        select: {
+          performedAt: true,
+        },
+      },
+    },
+  });
+
+  if (!latestSession) {
+    await db.exercise.updateMany({
+      where: {
+        userId,
+        normalizedName,
+      },
+      data: {
+        lastPerformedAt: null,
+      },
+    });
+    return;
+  }
+
+  await db.exercise.updateMany({
+    where: {
+      userId,
+      normalizedName,
+    },
+    data: {
+      name: latestSession.name,
+      lastPerformedAt: latestSession.workoutLog.performedAt,
+    },
+  });
+}
+
 async function persistWorkout(userId: string, payload: ParsedWorkout) {
   const totalWeightLb = computeWorkoutTotalWeightLb(payload);
-  let workoutLog: { id: string } | null = null;
+  let workoutLogId: string | null = null;
 
   try {
     try {
-      workoutLog = await prisma.workoutLog.create({
+      const createdWorkout = await prisma.workoutLog.create({
         data: {
           userId,
           title: payload.title,
@@ -247,12 +373,13 @@ async function persistWorkout(userId: string, payload: ParsedWorkout) {
           id: true,
         },
       });
+      workoutLogId = createdWorkout.id;
     } catch (error) {
       if (!isUnknownTotalWeightValidationError(error)) {
         throw error;
       }
 
-      workoutLog = await prisma.workoutLog.create({
+      const createdWorkout = await prisma.workoutLog.create({
         data: {
           userId,
           title: payload.title,
@@ -263,78 +390,24 @@ async function persistWorkout(userId: string, payload: ParsedWorkout) {
           id: true,
         },
       });
+      workoutLogId = createdWorkout.id;
     }
 
-    if (!workoutLog) {
+    if (!workoutLogId) {
       throw new Error("Workout log could not be created.");
     }
 
-    for (const [exerciseIndex, exerciseInput] of payload.exercises.entries()) {
-      const exerciseRecord = await prisma.exercise.upsert({
-        where: {
-          userId_normalizedName: {
-            userId,
-            normalizedName: exerciseInput.normalizedName,
-          },
-        },
-        create: {
-          userId,
-          name: exerciseInput.name,
-          normalizedName: exerciseInput.normalizedName,
-          lastPerformedAt: payload.performedAt,
-        },
-        update: {
-          name: exerciseInput.name,
-        },
-        select: { id: true },
-      });
+    await upsertWorkoutExercises(prisma, userId, workoutLogId, payload);
 
-      await prisma.exercise.updateMany({
-        where: {
-          id: exerciseRecord.id,
-          OR: [{ lastPerformedAt: null }, { lastPerformedAt: { lt: payload.performedAt } }],
-        },
-        data: {
-          lastPerformedAt: payload.performedAt,
-        },
-      });
-
-      const workoutExercise = await prisma.workoutExercise.create({
-        data: {
-          workoutLogId: workoutLog.id,
-          exerciseId: exerciseRecord.id,
-          name: exerciseInput.name,
-          normalizedName: exerciseInput.normalizedName,
-          order: exerciseIndex + 1,
-        },
-        select: { id: true },
-      });
-
-      try {
-        await prisma.workoutSet.createMany({
-          data: exerciseInput.sets.map((setInput, setIndex) => ({
-            workoutExerciseId: workoutExercise.id,
-            order: setIndex + 1,
-            reps: setInput.reps,
-            weightLb: setInput.weightLb,
-          })),
-        });
-      } catch (error) {
-        if (isUnknownWeightLbValidationError(error)) {
-          await insertWorkoutSetsFallback(prisma, workoutExercise.id, exerciseInput.sets);
-        } else {
-          throw error;
-        }
-      }
-    }
-
-    return workoutLog;
+    return {
+      id: workoutLogId,
+    };
   } catch (error) {
-    if (workoutLog) {
+    if (workoutLogId) {
       await prisma.workoutLog
         .delete({
           where: {
-            id: workoutLog.id,
+            id: workoutLogId,
           },
         })
         .catch(() => undefined);
@@ -342,6 +415,153 @@ async function persistWorkout(userId: string, payload: ParsedWorkout) {
 
     throw error;
   }
+}
+
+async function updateWorkout(workoutId: string, userId: string, payload: ParsedWorkout) {
+  const totalWeightLb = computeWorkoutTotalWeightLb(payload);
+
+  const transactionResult = await prisma.$transaction(
+    async (tx) => {
+      const existingWorkout = await tx.workoutLog.findFirst({
+        where: {
+          id: workoutId,
+          userId,
+        },
+        select: {
+          id: true,
+          exercises: {
+            select: {
+              name: true,
+              normalizedName: true,
+            },
+          },
+        },
+      });
+
+      if (!existingWorkout) {
+        throw new Error(WORKOUT_NOT_FOUND_ERROR);
+      }
+
+      const affectedExerciseKeys = new Set<string>();
+
+      for (const exercise of existingWorkout.exercises) {
+        const normalizedKey = toNormalizedExerciseKey(exercise);
+
+        if (normalizedKey) {
+          affectedExerciseKeys.add(normalizedKey);
+        }
+      }
+
+      for (const exercise of payload.exercises) {
+        affectedExerciseKeys.add(exercise.normalizedName);
+      }
+
+      try {
+        await tx.workoutLog.update({
+          where: {
+            id: existingWorkout.id,
+          },
+          data: {
+            title: payload.title,
+            totalWeightLb,
+            performedAt: payload.performedAt,
+            status: "COMPLETED",
+          },
+        });
+      } catch (error) {
+        if (!isUnknownTotalWeightValidationError(error)) {
+          throw error;
+        }
+
+        await tx.workoutLog.update({
+          where: {
+            id: existingWorkout.id,
+          },
+          data: {
+            title: payload.title,
+            performedAt: payload.performedAt,
+            status: "COMPLETED",
+          },
+        });
+      }
+
+      await tx.workoutExercise.deleteMany({
+        where: {
+          workoutLogId: existingWorkout.id,
+        },
+      });
+
+      await upsertWorkoutExercises(tx, userId, existingWorkout.id, payload);
+
+      return {
+        id: existingWorkout.id,
+        affectedExerciseKeys: Array.from(affectedExerciseKeys),
+      };
+    },
+    {
+      timeout: 20_000,
+      maxWait: 5_000,
+    },
+  );
+
+  await Promise.all(
+    transactionResult.affectedExerciseKeys.map(async (normalizedName) => {
+      try {
+        await syncExerciseLastPerformedAt(prisma, userId, normalizedName);
+      } catch (error) {
+        console.error("exercise sync failure after workout update:", {
+          workoutId: transactionResult.id,
+          normalizedName,
+          error,
+        });
+      }
+    }),
+  );
+
+  return {
+    id: transactionResult.id,
+  };
+}
+
+function toWorkoutWriteErrorResponse(error: unknown, fallbackMessage: string) {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  ) {
+    return NextResponse.json(
+      { error: "Duplicate set or exercise order detected. Refresh and try again." },
+      { status: 409 },
+    );
+  }
+
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === "P2021" || error.code === "P2022")
+  ) {
+    return NextResponse.json(
+      { error: "Database schema mismatch. Run prisma generate + db push and retry." },
+      { status: 503 },
+    );
+  }
+
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2028"
+  ) {
+    return NextResponse.json(
+      { error: "Database transaction timed out. Please retry." },
+      { status: 503 },
+    );
+  }
+
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    return NextResponse.json(
+      { error: "Database unavailable. Check DATABASE_URL and restart dev server." },
+      { status: 503 },
+    );
+  }
+
+  return NextResponse.json({ error: fallbackMessage }, { status: 500 });
 }
 
 export async function POST(request: NextRequest) {
@@ -368,34 +588,47 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ id: created.id }, { status: 201 });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      return NextResponse.json(
-        { error: "Duplicate set or exercise order detected. Refresh and try again." },
-        { status: 409 },
-      );
-    }
-
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === "P2021" || error.code === "P2022")
-    ) {
-      return NextResponse.json(
-        { error: "Database schema mismatch. Run prisma generate + db push and retry." },
-        { status: 503 },
-      );
-    }
-
-    if (error instanceof Prisma.PrismaClientInitializationError) {
-      return NextResponse.json(
-        { error: "Database unavailable. Check DATABASE_URL and restart dev server." },
-        { status: 503 },
-      );
-    }
-
     console.error("workout create failure:", error);
-    return NextResponse.json({ error: "Unable to save workout." }, { status: 500 });
+    return toWorkoutWriteErrorResponse(error, "Unable to save workout.");
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  const user = await getSessionUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+
+    if (!isObject(body)) {
+      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    }
+
+    const rawPayload = body as RawWorkoutPayload;
+    const workoutId = toOptionalTrimmedString(rawPayload.workoutId);
+
+    if (!workoutId) {
+      return NextResponse.json({ error: "Workout id is required." }, { status: 400 });
+    }
+
+    const parsed = normalizePayload(rawPayload);
+
+    if ("error" in parsed) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const updated = await updateWorkout(workoutId, user.id, parsed.value);
+
+    return NextResponse.json({ id: updated.id }, { status: 200 });
+  } catch (error) {
+    if (error instanceof Error && error.message === WORKOUT_NOT_FOUND_ERROR) {
+      return NextResponse.json({ error: "Workout not found." }, { status: 404 });
+    }
+
+    console.error("workout update failure:", error);
+    return toWorkoutWriteErrorResponse(error, "Unable to update workout.");
   }
 }
