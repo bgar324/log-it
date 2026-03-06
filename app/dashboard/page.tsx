@@ -80,6 +80,12 @@ function dateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+function monthKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
 function shortDate(date: Date) {
   return SHORT_DATE_FORMATTER.format(date);
 }
@@ -155,6 +161,7 @@ export default async function DashboardPage({
     personalBestSets,
     exerciseLogs,
     progressLogs,
+    calendarLogs,
   ] = await Promise.all([
     prisma.workoutLog.count({ where: { userId: user.id } }),
     prisma.workoutLog.count({
@@ -251,7 +258,7 @@ export default async function DashboardPage({
       orderBy: {
         weightLb: "desc",
       },
-      take: 5,
+      take: 40,
       select: {
         id: true,
         weightLb: true,
@@ -307,6 +314,14 @@ export default async function DashboardPage({
       select: {
         performedAt: true,
         totalWeightLb: true,
+      },
+    }),
+    prisma.workoutLog.findMany({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        performedAt: true,
       },
     }),
   ]);
@@ -378,12 +393,84 @@ export default async function DashboardPage({
     entries,
   }));
 
-  const personalBests = personalBestSets.map((set) => ({
-    id: set.id,
-    lift: set.workoutExercise.name,
-    weight: Math.round(toWeightValue(set.weightLb) ?? 0),
-    dateLabel: monthDateLabel(set.workoutExercise.workoutLog.performedAt),
-  }));
+  const personalBests: DashboardClientData["overview"]["personalBests"] = [];
+  const seenPersonalBestExerciseKeys = new Set<string>();
+
+  for (const set of personalBestSets) {
+    const lift = set.workoutExercise.name.trim();
+    const exerciseKey = normalizeExerciseName(lift);
+
+    if (!exerciseKey || seenPersonalBestExerciseKeys.has(exerciseKey)) {
+      continue;
+    }
+
+    seenPersonalBestExerciseKeys.add(exerciseKey);
+    personalBests.push({
+      id: set.id,
+      lift,
+      weight: Math.round(toWeightValue(set.weightLb) ?? 0),
+      dateLabel: monthDateLabel(set.workoutExercise.workoutLog.performedAt),
+    });
+
+    if (personalBests.length >= 5) {
+      break;
+    }
+  }
+
+  const workoutDayCountMap = new Map<string, number>();
+  const workoutMonthCountMap = new Map<string, number>();
+
+  for (const log of calendarLogs) {
+    const day = dateKey(log.performedAt);
+    const month = monthKey(log.performedAt);
+
+    workoutDayCountMap.set(day, (workoutDayCountMap.get(day) ?? 0) + 1);
+    workoutMonthCountMap.set(month, (workoutMonthCountMap.get(month) ?? 0) + 1);
+  }
+
+  const workoutCalendarDayCounts = Array.from(workoutDayCountMap.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([day, count]) => ({
+      dateKey: day,
+      count,
+    }));
+
+  const sortedMonthKeys = Array.from(workoutMonthCountMap.keys()).sort();
+
+  const workoutCalendarMonths: DashboardClientData["overview"]["workoutCalendar"]["monthCounts"] =
+    sortedMonthKeys.length > 0
+      ? (() => {
+          const [firstYear, firstMonth] = sortedMonthKeys[0].split("-").map(Number);
+          const [lastYear, lastMonth] = sortedMonthKeys[sortedMonthKeys.length - 1]
+            .split("-")
+            .map(Number);
+          const firstMonthDate = new Date(firstYear, firstMonth - 1, 1);
+          const lastMonthDate = new Date(lastYear, lastMonth - 1, 1);
+          const months: DashboardClientData["overview"]["workoutCalendar"]["monthCounts"] = [];
+
+          for (
+            const cursor = new Date(firstMonthDate);
+            cursor.getTime() <= lastMonthDate.getTime();
+            cursor.setMonth(cursor.getMonth() + 1)
+          ) {
+            const key = monthKey(cursor);
+
+            months.push({
+              monthKey: key,
+              label: monthLabel(cursor),
+              count: workoutMonthCountMap.get(key) ?? 0,
+            });
+          }
+
+          return months;
+        })()
+      : [
+          {
+            monthKey: monthKey(now),
+            label: monthLabel(now),
+            count: 0,
+          },
+        ];
 
   const exerciseSummaryMap = new Map<
     string,
@@ -503,6 +590,12 @@ export default async function DashboardPage({
       monthChange,
       weeklyBars,
       personalBests,
+      workoutCalendar: {
+        dayCounts: workoutCalendarDayCounts,
+        monthCounts: workoutCalendarMonths,
+        latestMonthKey:
+          workoutCalendarMonths[workoutCalendarMonths.length - 1]?.monthKey ?? null,
+      },
     },
     workouts,
     workoutMonths,

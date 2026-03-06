@@ -44,6 +44,18 @@ export type DashboardClientData = {
       weight: number;
       dateLabel: string;
     }>;
+    workoutCalendar: {
+      dayCounts: Array<{
+        dateKey: string;
+        count: number;
+      }>;
+      monthCounts: Array<{
+        monthKey: string;
+        label: string;
+        count: number;
+      }>;
+      latestMonthKey: string | null;
+    };
   };
   workouts: Array<{
     id: string;
@@ -154,6 +166,27 @@ function daysAgoLabel(days: number) {
   return `${days} days ago`;
 }
 
+const WEEKDAY_CHIPS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function parseMonthKey(monthKey: string) {
+  const [yearPart, monthPart] = monthKey.split("-");
+  const year = Number.parseInt(yearPart, 10);
+  const month = Number.parseInt(monthPart, 10);
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return null;
+  }
+
+  return {
+    year,
+    month,
+  };
+}
+
+function dateKeyForParts(year: number, month: number, day: number) {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 type MetricHeaderProps = {
   columns: string[];
   rowClassName?: string;
@@ -199,6 +232,83 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
     return data.exercises.filter((exercise) => exercise.name.toLowerCase().includes(query));
   }, [data.exercises, exerciseSearch]);
+  const calendarMonthOptions = data.overview.workoutCalendar.monthCounts;
+  const [selectedCalendarMonthKey, setSelectedCalendarMonthKey] = useState(() => {
+    const preferredKey = data.overview.workoutCalendar.latestMonthKey;
+
+    if (preferredKey && calendarMonthOptions.some((month) => month.monthKey === preferredKey)) {
+      return preferredKey;
+    }
+
+    return calendarMonthOptions[calendarMonthOptions.length - 1].monthKey;
+  });
+  const calendarMonthIndex = useMemo(
+    () =>
+      Math.max(
+        0,
+        calendarMonthOptions.findIndex((month) => month.monthKey === selectedCalendarMonthKey),
+      ),
+    [calendarMonthOptions, selectedCalendarMonthKey],
+  );
+  const selectedCalendarMonth = calendarMonthOptions[calendarMonthIndex];
+  const workoutDaysByDateKey = useMemo(
+    () =>
+      new Map(
+        data.overview.workoutCalendar.dayCounts.map((entry) => [
+          entry.dateKey,
+          entry.count,
+        ]),
+      ),
+    [data.overview.workoutCalendar.dayCounts],
+  );
+  const calendarCells = useMemo(() => {
+    const parsedMonth = parseMonthKey(selectedCalendarMonth.monthKey);
+
+    if (!parsedMonth) {
+      return [];
+    }
+
+    const firstDay = new Date(parsedMonth.year, parsedMonth.month - 1, 1);
+    const daysInMonth = new Date(parsedMonth.year, parsedMonth.month, 0).getDate();
+    const leadingEmptySlots = firstDay.getDay();
+    const cells: Array<{
+      key: string;
+      dayNumber: number | null;
+      workoutCount: number;
+    }> = [];
+
+    for (let index = 0; index < leadingEmptySlots; index += 1) {
+      cells.push({
+        key: `empty-start-${index}`,
+        dayNumber: null,
+        workoutCount: 0,
+      });
+    }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const currentDateKey = dateKeyForParts(parsedMonth.year, parsedMonth.month, day);
+
+      cells.push({
+        key: currentDateKey,
+        dayNumber: day,
+        workoutCount: workoutDaysByDateKey.get(currentDateKey) ?? 0,
+      });
+    }
+
+    const trailingSlots = (7 - (cells.length % 7)) % 7;
+
+    for (let index = 0; index < trailingSlots; index += 1) {
+      cells.push({
+        key: `empty-end-${index}`,
+        dayNumber: null,
+        workoutCount: 0,
+      });
+    }
+
+    return cells;
+  }, [selectedCalendarMonth.monthKey, workoutDaysByDateKey]);
+  const canGoToPreviousCalendarMonth = calendarMonthIndex > 0;
+  const canGoToNextCalendarMonth = calendarMonthIndex < calendarMonthOptions.length - 1;
 
   function switchView(view: DashboardView) {
     if (view === activeView) {
@@ -207,6 +317,28 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
     setActiveView(view);
     window.history.replaceState(window.history.state, "", toViewHref(view));
+  }
+
+  function goToPreviousCalendarMonth() {
+    if (!canGoToPreviousCalendarMonth) {
+      return;
+    }
+
+    const previous = calendarMonthOptions[calendarMonthIndex - 1];
+    if (previous) {
+      setSelectedCalendarMonthKey(previous.monthKey);
+    }
+  }
+
+  function goToNextCalendarMonth() {
+    if (!canGoToNextCalendarMonth) {
+      return;
+    }
+
+    const next = calendarMonthOptions[calendarMonthIndex + 1];
+    if (next) {
+      setSelectedCalendarMonthKey(next.monthKey);
+    }
   }
 
   async function handleProfileSave(event: FormEvent<HTMLFormElement>) {
@@ -424,26 +556,98 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               )}
             </section>
 
-            <section className={styles.panel}>
-              <h2 className={styles.panelTitle}>Personal bests</h2>
+            <section className={styles.dashboardInsightGrid}>
+              <section className={styles.panel}>
+                <h2 className={styles.panelTitle}>Personal bests</h2>
 
-              {data.overview.personalBests.length > 0 ? (
-                <div className={styles.metricList}>
-                  <MetricHeader
-                    columns={["Exercise", "Best weight", "Date"]}
-                    rowClassName={styles.personalBestRow}
-                  />
-                  {data.overview.personalBests.map((row) => (
-                    <div key={row.id} className={`${styles.metricRow} ${styles.personalBestRow}`}>
-                      <span className={styles.metricMain}>{row.lift}</span>
-                      <span>{row.weight} lb</span>
-                      <span className={styles.metricSubtle}>{row.dateLabel}</span>
-                    </div>
+                {data.overview.personalBests.length > 0 ? (
+                  <div className={styles.metricList}>
+                    <MetricHeader
+                      columns={["Exercise", "Best weight", "Date"]}
+                      rowClassName={styles.personalBestRow}
+                    />
+                    {data.overview.personalBests.map((row) => (
+                      <div key={row.id} className={`${styles.metricRow} ${styles.personalBestRow}`}>
+                        <span className={styles.metricMain}>{row.lift}</span>
+                        <span>{row.weight} lb</span>
+                        <span className={styles.metricSubtle}>{row.dateLabel}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className={styles.empty}>No weighted sets yet.</p>
+                )}
+              </section>
+
+              <section className={styles.panel}>
+                <div className={styles.calendarHead}>
+                  <h2 className={styles.panelTitle}>Workout calendar</h2>
+                  <div className={styles.calendarNav}>
+                    <button
+                      type="button"
+                      className={styles.calendarNavButton}
+                      onClick={goToPreviousCalendarMonth}
+                      disabled={!canGoToPreviousCalendarMonth}
+                      aria-label="Previous month"
+                    >
+                      Prev
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.calendarNavButton}
+                      onClick={goToNextCalendarMonth}
+                      disabled={!canGoToNextCalendarMonth}
+                      aria-label="Next month"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+
+                <p className={styles.panelSubtitle}>
+                  {selectedCalendarMonth.label} · {selectedCalendarMonth.count} workouts
+                </p>
+
+                <div className={styles.calendarWeekdayRow} aria-hidden="true">
+                  {WEEKDAY_CHIPS.map((day) => (
+                    <span key={day} className={styles.calendarWeekday}>
+                      {day}
+                    </span>
                   ))}
                 </div>
-              ) : (
-                <p className={styles.empty}>No weighted sets yet.</p>
-              )}
+
+                <div className={styles.calendarGrid} role="grid" aria-label="Workout days by month">
+                  {calendarCells.map((cell) =>
+                    cell.dayNumber === null ? (
+                      <span
+                        key={cell.key}
+                        className={styles.calendarDayEmpty}
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <div
+                        key={cell.key}
+                        role="gridcell"
+                        className={`${styles.calendarDay} ${
+                          cell.workoutCount > 0 ? styles.calendarDayActive : ""
+                        }`}
+                        title={
+                          cell.workoutCount > 0
+                            ? `${cell.workoutCount} workout${
+                                cell.workoutCount === 1 ? "" : "s"
+                              } logged`
+                            : "No workout logged"
+                        }
+                      >
+                        <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
+                        {cell.workoutCount > 1 ? (
+                          <span className={styles.calendarDayCount}>{cell.workoutCount}</span>
+                        ) : null}
+                      </div>
+                    ),
+                  )}
+                </div>
+              </section>
             </section>
           </>
         ) : null}
