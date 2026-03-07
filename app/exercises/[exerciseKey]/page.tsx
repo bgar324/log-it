@@ -79,7 +79,10 @@ type ExerciseLogRow = {
   }>;
 };
 
-async function fetchExerciseLogs(userId: string, exerciseKey: string): Promise<ExerciseLogRow[]> {
+async function fetchExerciseLogs(
+  userId: string,
+  exerciseKey: string,
+): Promise<ExerciseLogRow[]> {
   const baseSelect = {
     id: true,
     name: true,
@@ -104,7 +107,10 @@ async function fetchExerciseLogs(userId: string, exerciseKey: string): Promise<E
       workoutLog: {
         userId,
       },
-      OR: [{ normalizedName: exerciseKey }, { exercise: { normalizedName: exerciseKey } }],
+      OR: [
+        { normalizedName: exerciseKey },
+        { exercise: { normalizedName: exerciseKey } },
+      ],
     },
     orderBy: {
       workoutLog: {
@@ -174,7 +180,8 @@ async function resolveNormalizedExerciseKey(userId: string, rawParam: string) {
   });
 
   for (const exercise of workoutExercises) {
-    const normalizedName = exercise.normalizedName || normalizeExerciseName(exercise.name);
+    const normalizedName =
+      exercise.normalizedName || normalizeExerciseName(exercise.name);
 
     if (!normalizedName) {
       continue;
@@ -195,7 +202,10 @@ export default async function ExerciseDetailPage({
 }) {
   const { exerciseKey: rawExerciseKey } = await params;
   const user = await requireSessionUser();
-  const normalizedKey = await resolveNormalizedExerciseKey(user.id, rawExerciseKey);
+  const normalizedKey = await resolveNormalizedExerciseKey(
+    user.id,
+    rawExerciseKey,
+  );
 
   if (!normalizedKey) {
     notFound();
@@ -264,15 +274,32 @@ export default async function ExerciseDetailPage({
     (a, b) => b.performedAt.getTime() - a.performedAt.getTime(),
   );
 
-  const totalSetCount = sessions.reduce((sum, session) => sum + session.setCount, 0);
-  const totalReps = sessions.reduce((sum, session) => sum + session.totalReps, 0);
-  const weightedSetCount = sessions.reduce((sum, session) => sum + session.weightedSetCount, 0);
-  const totalLoad = sessions.reduce((sum, session) => sum + session.totalLoad, 0);
-  const bestWeight = sessions.reduce((max, session) => Math.max(max, session.bestWeight), 0);
+  const totalSetCount = sessions.reduce(
+    (sum, session) => sum + session.setCount,
+    0,
+  );
+  const totalReps = sessions.reduce(
+    (sum, session) => sum + session.totalReps,
+    0,
+  );
+  const weightedSetCount = sessions.reduce(
+    (sum, session) => sum + session.weightedSetCount,
+    0,
+  );
+  const totalLoad = sessions.reduce(
+    (sum, session) => sum + session.totalLoad,
+    0,
+  );
+  const bestWeight = sessions.reduce(
+    (max, session) => Math.max(max, session.bestWeight),
+    0,
+  );
   const lastHit = sessions[0].performedAt;
   const daysSinceLastHit = daysBetweenDays(new Date(), lastHit);
-  const averageRepsPerSet = totalSetCount > 0 ? Number((totalReps / totalSetCount).toFixed(1)) : 0;
-  const averageLoadPerSession = sessions.length > 0 ? Number((totalLoad / sessions.length).toFixed(1)) : 0;
+  const averageRepsPerSet =
+    totalSetCount > 0 ? Number((totalReps / totalSetCount).toFixed(1)) : 0;
+  const averageLoadPerSession =
+    sessions.length > 0 ? Number((totalLoad / sessions.length).toFixed(1)) : 0;
 
   const chartSeries = [...sessions]
     .sort((a, b) => a.performedAt.getTime() - b.performedAt.getTime())
@@ -293,20 +320,15 @@ export default async function ExerciseDetailPage({
           <Link href="/dashboard?view=progress" className={styles.backLink}>
             Back to progress
           </Link>
-
-          <div className={styles.topActions}>
-            <ThemeToggle />
-            <Link href="/workouts/new" className={styles.actionLink}>
-              Log workout
-            </Link>
-          </div>
+          <ThemeToggle />
         </header>
 
         <section className={styles.summaryCard}>
           <p className={styles.label}>Exercise</p>
           <h1 className={styles.title}>{displayName}</h1>
           <p className={styles.subtitle}>
-            Last hit {formatDateTime(lastHit)} ({daysAgoLabel(daysSinceLastHit)})
+            Last hit {formatDateTime(lastHit)} ({daysAgoLabel(daysSinceLastHit)}
+            )
           </p>
         </section>
 
@@ -315,32 +337,44 @@ export default async function ExerciseDetailPage({
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Sessions</p>
               <p className={styles.kpiValue}>{sessions.length}</p>
-              <p className={styles.kpiSubtle}>Distinct workout logs containing this movement</p>
+              <p className={styles.kpiSubtle}>
+                Distinct workout logs containing this movement
+              </p>
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Sets</p>
               <p className={styles.kpiValue}>{totalSetCount}</p>
-              <p className={styles.kpiSubtle}>{weightedSetCount} weighted sets tracked</p>
+              <p className={styles.kpiSubtle}>
+                {weightedSetCount} weighted sets tracked
+              </p>
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Reps</p>
               <p className={styles.kpiValue}>{totalReps}</p>
-              <p className={styles.kpiSubtle}>{averageRepsPerSet} avg reps per set</p>
+              <p className={styles.kpiSubtle}>
+                {averageRepsPerSet} avg reps per set
+              </p>
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Best weight</p>
               <p className={styles.kpiValue}>{Math.round(bestWeight)} lb</p>
-              <p className={styles.kpiSubtle}>Top recorded load for a single set</p>
+              <p className={styles.kpiSubtle}>
+                Top recorded load for a single set
+              </p>
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Total load</p>
               <p className={styles.kpiValue}>{Math.round(totalLoad)}</p>
-              <p className={styles.kpiSubtle}>Accumulated weight * reps across all sessions</p>
+              <p className={styles.kpiSubtle}>
+                Accumulated weight * reps across all sessions
+              </p>
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Avg load/session</p>
               <p className={styles.kpiValue}>{averageLoadPerSession}</p>
-              <p className={styles.kpiSubtle}>Average session-level tonnage for this movement</p>
+              <p className={styles.kpiSubtle}>
+                Average session-level tonnage for this movement
+              </p>
             </article>
           </div>
         </section>
@@ -355,9 +389,12 @@ export default async function ExerciseDetailPage({
           </section>
 
           <section className={styles.panel}>
-            <h2 className={styles.panelTitle}>Strength trend (weight + reps)</h2>
+            <h2 className={styles.panelTitle}>
+              Strength trend (weight + reps)
+            </h2>
             <p className={styles.panelSubtitle}>
-              Top-set estimated 1RM (Epley), so extra reps at the same weight still count as progress.
+              Top-set estimated 1RM (Epley), so extra reps at the same weight
+              still count as progress.
             </p>
             <ExerciseDetailChart series={chartSeries} metric="strength" />
           </section>
@@ -389,7 +426,10 @@ export default async function ExerciseDetailPage({
                     <td>{Math.round(session.bestWeight)} lb</td>
                     <td>{Math.round(session.totalLoad)}</td>
                     <td>
-                      <Link href={`/workouts/${session.workoutId}`} className={styles.tableLink}>
+                      <Link
+                        href={`/workouts/${session.workoutId}`}
+                        className={styles.tableLink}
+                      >
                         View
                       </Link>
                     </td>

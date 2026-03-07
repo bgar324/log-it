@@ -521,6 +521,61 @@
   scrollbar-width: thin;
 }
 
+.paginationRow {
+  margin-top: 0.58rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.paginationMeta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.paginationControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.paginationButton {
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  min-height: 1.9rem;
+  padding: 0 0.62rem;
+  font-family: inherit;
+  font-size: 0.71rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.paginationButton:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--text) 24%, transparent);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.paginationButton:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.paginationPage {
+  color: var(--muted);
+  font-size: 0.71rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .metricHeader,
 .metricRow {
   width: max(100%, 34rem);
@@ -932,6 +987,15 @@
     width: 100%;
     min-height: 2.5rem;
     font-size: 1rem;
+  }
+
+  .paginationButton {
+    min-height: 2.12rem;
+    font-size: 0.78rem;
+  }
+
+  .paginationPage {
+    font-size: 0.77rem;
   }
 
   .profileInput {

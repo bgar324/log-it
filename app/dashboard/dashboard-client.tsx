@@ -102,6 +102,7 @@ export type DashboardClientData = {
 const ProgressCharts = dynamic(
   () => import("./progress-charts").then((module) => module.ProgressCharts),
 );
+const PROGRESS_EXERCISES_PER_PAGE = 5;
 
 type DashboardClientProps = {
   initialView: DashboardView;
@@ -210,6 +211,7 @@ function MetricHeader({ columns, rowClassName }: MetricHeaderProps) {
 export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const [activeView, setActiveView] = useState<DashboardView>(initialView);
   const [exerciseSearch, setExerciseSearch] = useState("");
+  const [progressExercisePage, setProgressExercisePage] = useState(1);
   const [profile, setProfile] = useState(data.user);
   const [firstNameInput, setFirstNameInput] = useState(data.user.firstName ?? "");
   const [lastNameInput, setLastNameInput] = useState(data.user.lastName ?? "");
@@ -232,6 +234,26 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
     return data.exercises.filter((exercise) => exercise.name.toLowerCase().includes(query));
   }, [data.exercises, exerciseSearch]);
+  const totalProgressExercisePages = Math.max(
+    1,
+    Math.ceil(filteredProgressExercises.length / PROGRESS_EXERCISES_PER_PAGE),
+  );
+  const currentProgressExercisePage = Math.min(
+    progressExercisePage,
+    totalProgressExercisePages,
+  );
+  const progressExerciseRangeStart =
+    filteredProgressExercises.length === 0
+      ? 0
+      : (currentProgressExercisePage - 1) * PROGRESS_EXERCISES_PER_PAGE;
+  const paginatedProgressExercises = filteredProgressExercises.slice(
+    progressExerciseRangeStart,
+    progressExerciseRangeStart + PROGRESS_EXERCISES_PER_PAGE,
+  );
+  const progressExerciseRangeEnd = Math.min(
+    progressExerciseRangeStart + paginatedProgressExercises.length,
+    filteredProgressExercises.length,
+  );
   const calendarMonthOptions = data.overview.workoutCalendar.monthCounts;
   const [selectedCalendarMonthKey, setSelectedCalendarMonthKey] = useState(() => {
     const preferredKey = data.overview.workoutCalendar.latestMonthKey;
@@ -339,6 +361,21 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     if (next) {
       setSelectedCalendarMonthKey(next.monthKey);
     }
+  }
+
+  function handleExerciseSearchChange(rawValue: string) {
+    setExerciseSearch(rawValue);
+    setProgressExercisePage(1);
+  }
+
+  function goToPreviousProgressExercisePage() {
+    setProgressExercisePage((current) => Math.max(current - 1, 1));
+  }
+
+  function goToNextProgressExercisePage() {
+    setProgressExercisePage((current) =>
+      Math.min(current + 1, totalProgressExercisePages),
+    );
   }
 
   async function handleProfileSave(event: FormEvent<HTMLFormElement>) {
@@ -654,9 +691,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
         {activeView === "workouts" ? (
           <section className={styles.plainSection}>
-            <Link href="/workouts/new" className={`${styles.inlineAction} ${styles.mobileOnlyAction}`}>
-              Log workout
-            </Link>
 
             {data.workoutMonths.length > 0 ? (
               <div className={styles.timeline}>
@@ -719,37 +753,72 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                 <input
                   type="search"
                   value={exerciseSearch}
-                  onChange={(event) => setExerciseSearch(event.target.value)}
+                  onChange={(event) => handleExerciseSearchChange(event.target.value)}
                   placeholder="Search exercise"
                   className={styles.searchInput}
                   aria-label="Search exercises"
                 />
               </div>
               {filteredProgressExercises.length > 0 ? (
-                <div className={styles.metricList}>
-                  <MetricHeader
-                    columns={["Exercise", "Sessions", "Sets", "Reps", "Best weight"]}
-                    rowClassName={styles.exerciseRow}
-                  />
-                  {filteredProgressExercises.map((exercise) => (
-                    <Link
-                      key={exercise.key}
-                      href={`/exercises/${encodeURIComponent(exercise.routeKey)}`}
-                      className={`${styles.metricRow} ${styles.exerciseRow} ${styles.clickableMetricRow}`}
-                    >
-                      <div>
-                        <p className={styles.metricMain}>{exercise.name}</p>
-                        <p className={styles.metricSubtle}>
-                          Last {exercise.lastPerformedAtLabel} · {daysAgoLabel(exercise.daysSinceLastHit)}
-                        </p>
+                <>
+                  <div className={styles.metricList}>
+                    <MetricHeader
+                      columns={["Exercise", "Sessions", "Sets", "Reps", "Best weight"]}
+                      rowClassName={styles.exerciseRow}
+                    />
+                    {paginatedProgressExercises.map((exercise) => (
+                      <Link
+                        key={exercise.key}
+                        href={`/exercises/${encodeURIComponent(exercise.routeKey)}`}
+                        className={`${styles.metricRow} ${styles.exerciseRow} ${styles.clickableMetricRow}`}
+                      >
+                        <div>
+                          <p className={styles.metricMain}>{exercise.name}</p>
+                          <p className={styles.metricSubtle}>
+                            Last {exercise.lastPerformedAtLabel} · {daysAgoLabel(exercise.daysSinceLastHit)}
+                          </p>
+                        </div>
+                        <span>{exercise.sessionCount} sessions</span>
+                        <span>{exercise.setCount} sets</span>
+                        <span>{exercise.totalReps} reps</span>
+                        <span>{exercise.bestWeight} lb</span>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className={styles.paginationRow}>
+                    <p className={styles.paginationMeta}>
+                      Showing {progressExerciseRangeStart + 1}-{progressExerciseRangeEnd} of{" "}
+                      {filteredProgressExercises.length}
+                    </p>
+
+                    {totalProgressExercisePages > 1 ? (
+                      <div className={styles.paginationControls}>
+                        <button
+                          type="button"
+                          className={styles.paginationButton}
+                          onClick={goToPreviousProgressExercisePage}
+                          disabled={currentProgressExercisePage === 1}
+                          aria-label="Go to previous exercise page"
+                        >
+                          Prev
+                        </button>
+                        <span className={styles.paginationPage}>
+                          Page {currentProgressExercisePage} of {totalProgressExercisePages}
+                        </span>
+                        <button
+                          type="button"
+                          className={styles.paginationButton}
+                          onClick={goToNextProgressExercisePage}
+                          disabled={currentProgressExercisePage === totalProgressExercisePages}
+                          aria-label="Go to next exercise page"
+                        >
+                          Next
+                        </button>
                       </div>
-                      <span>{exercise.sessionCount} sessions</span>
-                      <span>{exercise.setCount} sets</span>
-                      <span>{exercise.totalReps} reps</span>
-                      <span>{exercise.bestWeight} lb</span>
-                    </Link>
-                  ))}
-                </div>
+                    ) : null}
+                  </div>
+                </>
               ) : (
                 <p className={styles.empty}>
                   {data.exercises.length > 0
