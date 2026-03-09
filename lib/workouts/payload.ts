@@ -8,7 +8,7 @@ import {
   normalizeExerciseName,
   normalizeWorkoutTypeName,
   normalizeWorkoutTypeSlug,
-  toIsoFromLocalDateTime,
+  toDatabaseDateTimeFromLocalInput,
 } from "../workout-utils";
 
 type RawWorkoutSet = {
@@ -46,7 +46,7 @@ export type ParsedWorkout = {
   title: string;
   workoutType: string | null;
   workoutTypeSlug: string | null;
-  performedAt: Date;
+  performedAt: string;
   weightUnit: WeightUnit;
   exercises: ParsedExercise[];
 };
@@ -116,7 +116,7 @@ export function normalizeWorkoutPayload(raw: RawWorkoutPayload) {
   const workoutType = workoutTypeValue
     ? normalizeWorkoutTypeName(workoutTypeValue)
     : null;
-  const performedAtIso = toIsoFromLocalDateTime(String(raw.performedAt ?? ""));
+  const performedAt = toDatabaseDateTimeFromLocalInput(String(raw.performedAt ?? ""));
   const weightUnit = normalizeWeightUnit(raw.weightUnit);
 
   if (!Array.isArray(raw.exercises)) {
@@ -178,7 +178,7 @@ export function normalizeWorkoutPayload(raw: RawWorkoutPayload) {
       title,
       workoutType,
       workoutTypeSlug: workoutType ? normalizeWorkoutTypeSlug(workoutType) : null,
-      performedAt: new Date(performedAtIso),
+      performedAt,
       weightUnit,
       exercises,
     } satisfies ParsedWorkout,

@@ -33,16 +33,31 @@ export function normalizeWorkoutTypeSlug(value: string) {
   return toCanonicalSlug(value);
 }
 
-export function toIsoFromLocalDateTime(value: string) {
+function padDateTimePart(value: number, length = 2) {
+  return String(value).padStart(length, "0");
+}
+
+export function formatDatabaseDateTimeValue(value: Date) {
+  return [
+    `${value.getFullYear()}-${padDateTimePart(value.getMonth() + 1)}-${padDateTimePart(
+      value.getDate(),
+    )}`,
+    `${padDateTimePart(value.getHours())}:${padDateTimePart(value.getMinutes())}:${padDateTimePart(
+      value.getSeconds(),
+    )}.${padDateTimePart(value.getMilliseconds(), 3)}`,
+  ].join("T");
+}
+
+export function toDatabaseDateTimeFromLocalInput(value: string) {
   if (!value) {
-    return new Date().toISOString();
+    return formatDatabaseDateTimeValue(new Date());
   }
 
   const parsed = new Date(value);
 
   if (Number.isNaN(parsed.getTime())) {
-    return new Date().toISOString();
+    return formatDatabaseDateTimeValue(new Date());
   }
 
-  return parsed.toISOString();
+  return formatDatabaseDateTimeValue(parsed);
 }
