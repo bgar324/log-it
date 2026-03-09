@@ -87,6 +87,7 @@ export type DashboardClientData = {
     currentWeek: number;
     weekDelta: number;
     avgWeekly: number;
+    totalWeightLifted: number;
     weeklySeries: Array<{
       label: string;
       sessions: number;

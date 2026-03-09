@@ -247,6 +247,7 @@ export default async function DashboardPage({
     workoutsThisWeek,
     totalExercises,
     totalSets,
+    totalWeightLiftedAggregate,
     workoutsThisMonth,
     workoutsPreviousMonth,
     trendLogs,
@@ -278,6 +279,14 @@ export default async function DashboardPage({
             userId: user.id,
           },
         },
+      },
+    }),
+    prisma.workoutLog.aggregate({
+      where: {
+        userId: user.id,
+      },
+      _sum: {
+        totalWeightLb: true,
       },
     }),
     prisma.workoutLog.count({
@@ -391,6 +400,11 @@ export default async function DashboardPage({
       : workoutsThisMonth > 0
         ? 100
         : 0;
+  const totalWeightLifted =
+    convertStoredWeightToDisplay(
+      totalWeightLiftedAggregate._sum.totalWeightLb,
+      weightUnit,
+    ) ?? 0;
   const todaySplitDay =
     workoutSplit.id !== null
       ? workoutSplit.days.find((day) => day.weekday === getWeekdayForDate(now)) ?? null
@@ -711,6 +725,7 @@ export default async function DashboardPage({
       currentWeek,
       weekDelta,
       avgWeekly: Number(avgWeekly.toFixed(1)),
+      totalWeightLifted,
       weeklySeries,
     },
     calendar: {

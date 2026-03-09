@@ -201,6 +201,10 @@
   display: none;
 }
 
+.progressKpiGrid {
+  grid-template-columns: 1fr;
+}
+
 .kpiCard,
 .panel,
 .chartPanel {
@@ -967,6 +971,10 @@
   }
 
   .dashboardKpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .progressKpiGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

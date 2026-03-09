@@ -691,20 +691,28 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
         {activeView === "progress" ? (
           <>
-            <section className={styles.kpiGrid} aria-label="Progress summary">
+            <section className={`${styles.kpiGrid} ${styles.progressKpiGrid}`} aria-label="Progress summary">
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>This week</p>
                 <p className={styles.kpiValue}>{data.progress.currentWeek}</p>
+                <p className={styles.kpiSubtle}>Sessions logged since Monday.</p>
               </article>
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Week delta</p>
                 <p className={styles.kpiValue}>
                   {data.progress.weekDelta >= 0 ? `+${data.progress.weekDelta}` : data.progress.weekDelta}
                 </p>
+                <p className={styles.kpiSubtle}>Compared with the previous week.</p>
               </article>
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>12 week avg</p>
                 <p className={styles.kpiValue}>{data.progress.avgWeekly}</p>
+                <p className={styles.kpiSubtle}>Average weekly sessions across the last 12 weeks.</p>
+              </article>
+              <article className={styles.kpiCard}>
+                <p className={styles.kpiLabel}>Total weight lifted</p>
+                <p className={styles.kpiValue}>{formatWeight(data.progress.totalWeightLifted)}</p>
+                <p className={styles.kpiSubtle}>Accumulated across all logged weighted sets</p>
               </article>
             </section>
 
