@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Logit
 
-## Getting Started
+Logit is a lightweight workout journal built with Next.js App Router and Prisma.
+It focuses on fast workout entry, exercise history, and progress views without
+turning the product into a full social or coaching platform.
 
-First, run the development server:
+## Stack
+
+- Next.js 16
+- React 19
+- Prisma + PostgreSQL
+- Recharts
+
+## Core Features
+
+- Email/password auth with signed session cookies
+- Workout logging with autosave on create
+- Exercise suggestions and previous-session comparison while logging
+- Dashboard views for weekly activity, history, and exercise progress
+- Exercise detail pages with top-set and estimated 1RM trends
+- Profile-level weight unit preference (`LB` or `KG`)
+- Workout detail actions for edit, duplicate, and delete
+
+## Local Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create env files with your Postgres connection details:
+
+```bash
+cp .env.local .env
+```
+
+3. Apply migrations:
+
+```bash
+npm run db:deploy
+```
+
+4. Start the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database Workflow
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Use Prisma migrations as the default workflow:
 
-## Learn More
+```bash
+npm run db:migrate
+npm run db:deploy
+npm run db:status
+```
 
-To learn more about Next.js, take a look at the following resources:
+`npm run prisma:push` is still available for quick local prototyping, but the
+tracked migration history should be the source of truth.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+If you already have an existing database that matches the current schema and
+need to baseline it against this repo, mark the baseline migration as applied:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npx prisma migrate resolve --applied 20260308120000_baseline
+```
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev
+npm run lint
+npm run test
+npm run build
+npm run db:migrate
+npm run db:deploy
+npm run db:status
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Testing
+
+The repo uses a lightweight TypeScript-to-Node test flow for pure modules:
+
+```bash
+npm run test
+```
+
+Current coverage focuses on:
+
+- weight conversion helpers
+- workout payload normalization and validation
+
+## Product Notes
+
+- All persisted workout weights are stored in pounds for consistency.
+- User-facing weight display and workout entry respect the profile preference.
+- Duplicating a workout creates a new workout at the current time and opens it
+  in the edit flow.
+
+## Deployment
+
+Before deploying, make sure:
+
+1. `AUTH_SECRET` is set.
+2. `DATABASE_URL` and `DIRECT_URL` point at the correct Postgres instance.
+3. `npm run db:deploy` has been run for the target environment.
+4. `npm run build` passes locally.

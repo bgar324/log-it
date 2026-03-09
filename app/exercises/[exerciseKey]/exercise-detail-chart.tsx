@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { getWeightUnitLabel, type WeightUnit } from "@/lib/weight-unit";
 import styles from "./exercise-detail.module.css";
 
 type ExerciseDetailChartProps = {
@@ -20,6 +21,7 @@ type ExerciseDetailChartProps = {
     estimatedOneRepMax: number;
   }>;
   metric: "weight" | "strength";
+  weightUnit: WeightUnit;
 };
 
 const CHART_GRID_STROKE = "color-mix(in srgb, var(--text) 14%, transparent)";
@@ -44,11 +46,13 @@ function toDisplayNumber(value: number) {
 export function ExerciseDetailChart({
   series,
   metric,
+  weightUnit,
 }: ExerciseDetailChartProps) {
   const dataKey = metric === "weight" ? "bestWeight" : "estimatedOneRepMax";
   const stroke = metric === "weight"
     ? "var(--text)"
     : "color-mix(in srgb, #7bc469 78%, var(--text))";
+  const unitLabel = getWeightUnitLabel(weightUnit);
 
   return (
     <div className={styles.chartFrame}>
@@ -88,14 +92,14 @@ export function ExerciseDetailChart({
               const value = typeof rawValue === "number" ? rawValue : Number(rawValue);
 
               if (metric === "weight") {
-                return [`${toDisplayNumber(value)} lb`, "Best top set"];
+                return [`${toDisplayNumber(value)} ${unitLabel}`, "Best top set"];
               }
 
               const topSetWeight = toDisplayNumber(point.bestWeight);
 
               return [
-                `${toDisplayNumber(value)} lb`,
-                `Est. 1RM (${topSetWeight} lb x ${point.topSetReps})`,
+                `${toDisplayNumber(value)} ${unitLabel}`,
+                `Est. 1RM (${topSetWeight} ${unitLabel} x ${point.topSetReps})`,
               ];
             }}
           />

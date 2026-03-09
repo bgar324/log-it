@@ -3,21 +3,14 @@ import { notFound } from "next/navigation";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  convertStoredWeightToDisplay,
+  formatWeightWithUnit,
+} from "@/lib/weight-unit";
+import { WorkoutDetailActions } from "./workout-detail-actions";
 import styles from "./workout-detail.module.css";
 
 type WorkoutPageParams = Promise<{ workoutId: string }>;
-
-function toWeightValue(value: { toNumber: () => number } | number | null) {
-  if (value === null) {
-    return null;
-  }
-
-  if (typeof value === "number") {
-    return value;
-  }
-
-  return value.toNumber();
-}
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -75,13 +68,14 @@ export default async function WorkoutDetailPage({
     notFound();
   }
 
+  const unit = user.preferredWeightUnit;
   const totalSets = workout.exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
-  const totalWeightLb = Math.round(toWeightValue(workout.totalWeightLb) ?? 0);
+  const totalWeight = convertStoredWeightToDisplay(workout.totalWeightLb, unit) ?? 0;
   const summaryItems = [
     { label: "Date", value: formatDate(workout.performedAt) },
     { label: "Exercises", value: `${workout.exercises.length}` },
     { label: "Sets", value: `${totalSets}` },
-    { label: "Total volume", value: `${totalWeightLb} lb` },
+    { label: "Total volume", value: formatWeightWithUnit(totalWeight, unit) },
   ];
 
   return (
@@ -95,6 +89,7 @@ export default async function WorkoutDetailPage({
             <Link href={`/workouts/${workout.id}/edit`} className={styles.actionLink}>
               Edit workout
             </Link>
+            <WorkoutDetailActions workoutId={workout.id} />
             <ThemeToggle />
           </div>
         </header>
@@ -115,7 +110,7 @@ export default async function WorkoutDetailPage({
         <section className={styles.exerciseList}>
           {workout.exercises.map((exercise) => {
             const exerciseVolume = exercise.sets.reduce((sum, set) => {
-              const weight = toWeightValue(set.weightLb);
+              const weight = convertStoredWeightToDisplay(set.weightLb, unit);
 
               if (weight === null) {
                 return sum;
@@ -131,7 +126,9 @@ export default async function WorkoutDetailPage({
                     <p className={styles.exerciseOrder}>Exercise {exercise.order}</p>
                     <h2 className={styles.exerciseName}>{exercise.name}</h2>
                   </div>
-                  <p className={styles.exerciseVolume}>{Math.round(exerciseVolume)} lb volume</p>
+                  <p className={styles.exerciseVolume}>
+                    {formatWeightWithUnit(exerciseVolume, unit)} volume
+                  </p>
                 </header>
 
                 <div className={styles.tableWrap}>
@@ -147,7 +144,14 @@ export default async function WorkoutDetailPage({
                       {exercise.sets.map((set) => (
                         <tr key={set.id}>
                           <td>#{set.order}</td>
-                          <td>{set.weightLb !== null ? `${toWeightValue(set.weightLb)} lb` : "--"}</td>
+                          <td>
+                            {set.weightLb !== null
+                              ? formatWeightWithUnit(
+                                  convertStoredWeightToDisplay(set.weightLb, unit) ?? 0,
+                                  unit,
+                                )
+                              : "--"}
+                          </td>
                           <td>{set.reps}</td>
                         </tr>
                       ))}

@@ -8,7 +8,12 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ComponentType, FormEvent, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ComponentType, FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  formatWeightWithUnit,
+  type WeightUnit,
+} from "@/lib/weight-unit";
 import { ThemeToggle } from "../components/theme-toggle";
 import { DashboardUserMenu } from "./dashboard-user-menu";
 import styles from "./dashboard.module.css";
@@ -25,6 +30,7 @@ export type DashboardClientData = {
     email: string;
     firstName: string | null;
     lastName: string | null;
+    preferredWeightUnit: WeightUnit;
     joinedAtLabel: string;
   };
   overview: {
@@ -209,12 +215,16 @@ function MetricHeader({ columns, rowClassName }: MetricHeaderProps) {
 }
 
 export function DashboardClient({ initialView, data }: DashboardClientProps) {
+  const router = useRouter();
   const [activeView, setActiveView] = useState<DashboardView>(initialView);
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [progressExercisePage, setProgressExercisePage] = useState(1);
   const [profile, setProfile] = useState(data.user);
   const [firstNameInput, setFirstNameInput] = useState(data.user.firstName ?? "");
   const [lastNameInput, setLastNameInput] = useState(data.user.lastName ?? "");
+  const [preferredWeightUnitInput, setPreferredWeightUnitInput] = useState<WeightUnit>(
+    data.user.preferredWeightUnit,
+  );
   const [saveState, setSaveState] = useState<{
     kind: "idle" | "saving" | "success" | "error";
     message: string;
@@ -224,6 +234,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     const trimmed = (profile.firstName ?? "").trim();
     return trimmed || profile.username;
   }, [profile.firstName, profile.username]);
+  const displayWeightUnit = profile.preferredWeightUnit;
   const recentSessions = data.workouts.slice(0, 5);
   const filteredProgressExercises = useMemo(() => {
     const query = exerciseSearch.trim().toLowerCase();
@@ -332,6 +343,17 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const canGoToPreviousCalendarMonth = calendarMonthIndex > 0;
   const canGoToNextCalendarMonth = calendarMonthIndex < calendarMonthOptions.length - 1;
 
+  useEffect(() => {
+    setProfile(data.user);
+    setFirstNameInput(data.user.firstName ?? "");
+    setLastNameInput(data.user.lastName ?? "");
+    setPreferredWeightUnitInput(data.user.preferredWeightUnit);
+  }, [data.user]);
+
+  function formatWeight(value: number) {
+    return formatWeightWithUnit(value, displayWeightUnit);
+  }
+
   function switchView(view: DashboardView) {
     if (view === activeView) {
       return;
@@ -392,6 +414,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
         body: JSON.stringify({
           firstName: firstNameInput,
           lastName: lastNameInput,
+          preferredWeightUnit: preferredWeightUnitInput,
         }),
       });
 
@@ -401,6 +424,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
             user: {
               firstName: string | null;
               lastName: string | null;
+              preferredWeightUnit: WeightUnit;
             };
           }
         | {
@@ -419,7 +443,9 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       }));
       setFirstNameInput(payload.user.firstName ?? "");
       setLastNameInput(payload.user.lastName ?? "");
+      setPreferredWeightUnitInput(payload.user.preferredWeightUnit);
       setSaveState({ kind: "success", message: "Profile updated." });
+      router.refresh();
     } catch (error) {
       setSaveState({
         kind: "error",
@@ -525,7 +551,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Exercises logged</p>
                 <p className={styles.kpiValue}>{data.overview.totalExercises}</p>
-                <p className={styles.kpiSubtle}>Unique exercise entries across sessions</p>
+                <p className={styles.kpiSubtle}>Unique movements in your catalog</p>
               </article>
 
               <article className={styles.kpiCard}>
@@ -536,7 +562,9 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Total weight lifted</p>
-                <p className={styles.kpiValue}>{data.overview.totalWeightLifted} lb</p>
+                <p className={styles.kpiValue}>
+                  {formatWeight(data.overview.totalWeightLifted)}
+                </p>
                 <p className={styles.kpiSubtle}>Accumulated across all logged weighted sets</p>
               </article>
 
@@ -577,7 +605,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                           <td>{session.performedAtLabel}</td>
                           <td>{session.title}</td>
                           <td>{session.setCount}</td>
-                          <td>{session.volume} lb</td>
+                          <td>{formatWeight(session.volume)}</td>
                           <td>
                             <Link href={`/workouts/${session.id}`} className={styles.tableLink}>
                               View
@@ -606,7 +634,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                     {data.overview.personalBests.map((row) => (
                       <div key={row.id} className={`${styles.metricRow} ${styles.personalBestRow}`}>
                         <span className={styles.metricMain}>{row.lift}</span>
-                        <span>{row.weight} lb</span>
+                        <span>{formatWeight(row.weight)}</span>
                         <span className={styles.metricSubtle}>{row.dateLabel}</span>
                       </div>
                     ))}
@@ -710,7 +738,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                           </div>
                           <span>{workout.exerciseCount} ex</span>
                           <span>{workout.setCount} sets</span>
-                          <span>{workout.volume} lb</span>
+                          <span>{formatWeight(workout.volume)}</span>
                           <Link href={`/workouts/${workout.id}`} className={styles.metricAction}>
                             View
                           </Link>
@@ -745,7 +773,10 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               </article>
             </section>
 
-            <ProgressCharts weeklySeries={data.progress.weeklySeries} />
+            <ProgressCharts
+              weeklySeries={data.progress.weeklySeries}
+              weightUnit={displayWeightUnit}
+            />
 
             <section className={styles.panel}>
               <div className={styles.panelHead}>
@@ -781,7 +812,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                         <span>{exercise.sessionCount} sessions</span>
                         <span>{exercise.setCount} sets</span>
                         <span>{exercise.totalReps} reps</span>
-                        <span>{exercise.bestWeight} lb</span>
+                        <span>{formatWeight(exercise.bestWeight)}</span>
                       </Link>
                     ))}
                   </div>
@@ -870,6 +901,21 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               <label className={styles.profileField}>
                 <span>Joined</span>
                 <input className={styles.profileInput} value={profile.joinedAtLabel} readOnly />
+              </label>
+
+              <label className={styles.profileField} htmlFor="profileWeightUnit">
+                <span>Weight unit</span>
+                <select
+                  id="profileWeightUnit"
+                  className={styles.profileInput}
+                  value={preferredWeightUnitInput}
+                  onChange={(event) =>
+                    setPreferredWeightUnitInput(event.target.value as WeightUnit)
+                  }
+                >
+                  <option value="LB">Pounds (lb)</option>
+                  <option value="KG">Kilograms (kg)</option>
+                </select>
               </label>
 
               <div className={styles.profileActions}>

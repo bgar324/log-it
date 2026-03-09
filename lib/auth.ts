@@ -23,6 +23,7 @@ type SessionUser = {
   username: string;
   firstName: string | null;
   lastName: string | null;
+  preferredWeightUnit: "LB" | "KG";
   createdAt: Date;
 };
 
@@ -121,6 +122,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       username: true,
       firstName: true,
       lastName: true,
+      preferredWeightUnit: true,
       createdAt: true,
     },
   });

@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { isWeightUnit } from "@/lib/weight-unit";
 import { prisma } from "@/lib/prisma";
 
 function toOptionalName(value: unknown) {
@@ -32,9 +33,17 @@ export async function PATCH(request: NextRequest) {
 
     const firstName = toOptionalName(body.firstName);
     const lastName = toOptionalName(body.lastName);
+    const preferredWeightUnit = body.preferredWeightUnit;
 
     if ((firstName ?? "").length > 40 || (lastName ?? "").length > 40) {
       return NextResponse.json({ ok: false, error: "Name fields must be 40 characters or fewer." }, { status: 400 });
+    }
+
+    if (!isWeightUnit(preferredWeightUnit)) {
+      return NextResponse.json(
+        { ok: false, error: "Preferred weight unit must be LB or KG." },
+        { status: 400 },
+      );
     }
 
     const updated = await prisma.user.update({
@@ -44,10 +53,12 @@ export async function PATCH(request: NextRequest) {
       data: {
         firstName,
         lastName,
+        preferredWeightUnit,
       },
       select: {
         firstName: true,
         lastName: true,
+        preferredWeightUnit: true,
       },
     });
 

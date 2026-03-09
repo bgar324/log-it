@@ -39,8 +39,24 @@
   font-size: 0.76rem;
 }
 
+.actionButton {
+  border-radius: 999px;
+  min-height: 2rem;
+  padding: 0 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  background: transparent;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
 .backLink:hover,
-.actionLink:hover {
+.actionLink:hover,
+.actionButton:hover {
   background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
@@ -48,6 +64,30 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.detailActionsGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.dangerActionButton {
+  border-color: color-mix(in srgb, #a43838 35%, transparent);
+  color: #a43838;
+}
+
+.dangerActionButton:hover {
+  background: color-mix(in srgb, #a43838 12%, transparent);
+}
+
+.actionError {
+  margin: 0;
+  color: #a43838;
+  font-size: 0.74rem;
 }
 
 .summaryCard,

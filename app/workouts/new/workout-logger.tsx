@@ -6,6 +6,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import { ThemeToggle } from "@/app/components/theme-toggle";
+import {
+  convertStoredWeightToDisplay,
+  formatWeightWithUnit,
+  getWeightUnitLabel,
+  type WeightUnit,
+} from "@/lib/weight-unit";
 import styles from "./workout-logger.module.css";
 
 type ExerciseSetDraft = {
@@ -65,9 +71,11 @@ type WorkoutLoggerProps = {
   mode?: WorkoutLoggerMode;
   workoutId?: string;
   initialData?: WorkoutLoggerInitialData;
+  weightUnit: WeightUnit;
 };
 
 type WorkoutDraftStoragePayload = WorkoutDraftSnapshot & {
+  weightUnit: WeightUnit;
   savedAt: string;
 };
 
@@ -83,7 +91,7 @@ type WorkoutSubmitResponse = {
 
 const INITIAL_EXERCISE_ID = "exercise-1";
 const INITIAL_SET_ID = "set-1";
-const WORKOUT_DRAFT_STORAGE_KEY = "logit-workout-draft-v1";
+const WORKOUT_DRAFT_STORAGE_KEY = "logit-workout-draft-v2";
 const WORKOUT_AUTOSAVE_DELAY_MS = 350;
 const EXERCISE_SUGGESTION_DEBOUNCE_MS = 140;
 
@@ -252,9 +260,13 @@ function createWorkoutDraftSnapshot(
   };
 }
 
-function persistWorkoutDraft(snapshot: WorkoutDraftSnapshot) {
+function persistWorkoutDraft(
+  snapshot: WorkoutDraftSnapshot,
+  weightUnit: WeightUnit,
+) {
   const payload: WorkoutDraftStoragePayload = {
     ...snapshot,
+    weightUnit,
     savedAt: new Date().toISOString(),
   };
 
@@ -269,7 +281,10 @@ function persistWorkoutDraft(snapshot: WorkoutDraftSnapshot) {
   }
 }
 
-function parseStoredWorkoutDraft(rawValue: string | null) {
+function parseStoredWorkoutDraft(
+  rawValue: string | null,
+  currentWeightUnit: WeightUnit,
+) {
   if (!rawValue) {
     return null;
   }
@@ -289,6 +304,15 @@ function parseStoredWorkoutDraft(rawValue: string | null) {
       parseLocalDateTimeInputValue(performedAtSource),
     );
     const savedAt = typeof parsed.savedAt === "string" ? parsed.savedAt : null;
+    const weightUnit =
+      parsed.weightUnit === "LB" || parsed.weightUnit === "KG"
+        ? parsed.weightUnit
+        : null;
+
+    if (weightUnit !== currentWeightUnit) {
+      return null;
+    }
+
     const rawExercises = Array.isArray(parsed.exercises) ? parsed.exercises : [];
     const exercises = rawExercises
       .map((rawExercise) => {
@@ -549,6 +573,7 @@ export function WorkoutLogger({
   mode = "create",
   workoutId,
   initialData,
+  weightUnit,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const initialState = useMemo(
@@ -556,6 +581,8 @@ export function WorkoutLogger({
     [initialData],
   );
   const router = useRouter();
+  const weightUnitLabel = getWeightUnitLabel(weightUnit);
+  const weightUnitName = weightUnit === "KG" ? "kilograms" : "pounds";
   const idCounterRef = useRef(initialState.counters);
   const insightCacheRef = useRef<Record<string, ExerciseInsight>>({});
   const latestInsightLookupRef = useRef<Record<string, string>>({});
@@ -591,7 +618,7 @@ export function WorkoutLogger({
     }
 
     const rawDraft = window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY);
-    const storedDraft = parseStoredWorkoutDraft(rawDraft);
+    const storedDraft = parseStoredWorkoutDraft(rawDraft, weightUnit);
 
     if (storedDraft) {
       const hydrated = hydrateExercisesFromSnapshot(storedDraft.exercises);
@@ -609,7 +636,7 @@ export function WorkoutLogger({
     }
 
     autosaveReadyRef.current = true;
-  }, [isEditMode]);
+  }, [isEditMode, weightUnit]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -635,7 +662,7 @@ export function WorkoutLogger({
     const timeoutId = window.setTimeout(() => {
       const snapshot = createWorkoutDraftSnapshot(title, performedAt, exercises);
       latestDraftSnapshotRef.current = snapshot;
-      const savedAt = persistWorkoutDraft(snapshot);
+      const savedAt = persistWorkoutDraft(snapshot, weightUnit);
 
       if (savedAt) {
         setLastDraftSavedAt(savedAt);
@@ -645,7 +672,7 @@ export function WorkoutLogger({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [isEditMode, title, performedAt, exercises]);
+  }, [isEditMode, title, performedAt, exercises, weightUnit]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -657,7 +684,7 @@ export function WorkoutLogger({
         return;
       }
 
-      persistWorkoutDraft(latestDraftSnapshotRef.current);
+      persistWorkoutDraft(latestDraftSnapshotRef.current, weightUnit);
     }
 
     window.addEventListener("pagehide", handlePageHide);
@@ -665,7 +692,7 @@ export function WorkoutLogger({
     return () => {
       window.removeEventListener("pagehide", handlePageHide);
     };
-  }, [isEditMode]);
+  }, [isEditMode, weightUnit]);
 
   useEffect(() => {
     const pendingSuggestionTimeouts = suggestionDebounceTimeoutRef.current;
@@ -1067,6 +1094,7 @@ export function WorkoutLogger({
       value: {
         title,
         performedAt,
+        weightUnit,
         exercises: normalizedExercises,
       },
     };
@@ -1143,12 +1171,12 @@ export function WorkoutLogger({
   const backLabel = isEditMode ? "Back to workout" : "Back to workouts";
   const pageTitle = isEditMode ? "Edit workout" : "Log workout";
   const autosaveMeta = isEditMode
-    ? "Update sets, reps, and weight to keep this workout accurate."
+    ? `Update sets, reps, and weight in ${weightUnitName} to keep this workout accurate.`
     : `${didRestoreDraft ? "Draft restored. " : ""}${
         autosaveClock
           ? `Autosaved at ${autosaveClock}.`
           : "Autosaves on this device while you log."
-      }`;
+      } All weights are in ${weightUnitName}.`;
   const savingLabel = isEditMode ? "Saving changes..." : "Saving workout...";
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
@@ -1333,11 +1361,29 @@ export function WorkoutLogger({
                   }
 
                   const draftSummary = summarizeDraftSets(exercise);
-                  const volumeDelta =
-                    draftSummary.totalVolume - insight.lastSession.totalVolume;
-                  const lastBestWeight = insight.lastSession.bestWeight ?? 0;
+                  const lastVolume =
+                    convertStoredWeightToDisplay(
+                      insight.lastSession.totalVolume,
+                      weightUnit,
+                    ) ?? 0;
+                  const lastBestWeight =
+                    insight.lastSession.bestWeight === null
+                      ? null
+                      : (convertStoredWeightToDisplay(
+                          insight.lastSession.bestWeight,
+                          weightUnit,
+                        ) ?? 0);
+                  const allTimeBestWeight =
+                    insight.allTimeBestWeight === null
+                      ? null
+                      : (convertStoredWeightToDisplay(
+                          insight.allTimeBestWeight,
+                          weightUnit,
+                        ) ?? 0);
+                  const volumeDelta = draftSummary.totalVolume - lastVolume;
                   const draftBestWeight = draftSummary.bestWeight ?? 0;
-                  const bestWeightDelta = draftBestWeight - lastBestWeight;
+                  const bestWeightDelta =
+                    draftBestWeight - (lastBestWeight ?? 0);
 
                   return (
                     <section className={styles.compareCard}>
@@ -1358,24 +1404,24 @@ export function WorkoutLogger({
                         <div className={styles.compareItem}>
                           <p className={styles.compareLabel}>Last volume</p>
                           <p className={styles.compareValue}>
-                            {insight.lastSession.totalVolume} lb
+                            {formatWeightWithUnit(lastVolume, weightUnit)}
                           </p>
                         </div>
                         <div className={styles.compareItem}>
                           <p className={styles.compareLabel}>Last best weight</p>
                           <p className={styles.compareValue}>
-                            {insight.lastSession.bestWeight !== null
+                            {lastBestWeight !== null
                               ? insight.lastSession.bestWeightReps !== null
-                                ? `${insight.lastSession.bestWeight} lb x ${insight.lastSession.bestWeightReps}`
-                                : `${insight.lastSession.bestWeight} lb`
+                                ? `${formatWeightWithUnit(lastBestWeight, weightUnit)} x ${insight.lastSession.bestWeightReps}`
+                                : formatWeightWithUnit(lastBestWeight, weightUnit)
                               : "--"}
                           </p>
                         </div>
                         <div className={styles.compareItem}>
                           <p className={styles.compareLabel}>All-time best</p>
                           <p className={styles.compareValue}>
-                            {insight.allTimeBestWeight !== null
-                              ? `${insight.allTimeBestWeight} lb`
+                            {allTimeBestWeight !== null
+                              ? formatWeightWithUnit(allTimeBestWeight, weightUnit)
                               : "--"}
                           </p>
                         </div>
@@ -1383,8 +1429,8 @@ export function WorkoutLogger({
 
                       {draftSummary.setCount > 0 ? (
                         <p className={styles.compareDelta}>
-                          Volume vs last: {formatDelta(volumeDelta, "lb")} ·
-                          Best vs last: {formatDelta(bestWeightDelta, "lb")}
+                          Volume vs last: {formatDelta(volumeDelta, weightUnitLabel)} ·
+                          Best vs last: {formatDelta(bestWeightDelta, weightUnitLabel)}
                         </p>
                       ) : (
                         <p className={styles.compareDelta}>
@@ -1417,7 +1463,9 @@ export function WorkoutLogger({
                     aria-hidden="true"
                   >
                     <span className={styles.setHeadLabel}>Set</span>
-                    <span className={styles.setHeadLabel}>Weight (lb)</span>
+                    <span className={styles.setHeadLabel}>
+                      Weight ({weightUnitLabel})
+                    </span>
                     <span className={styles.setHeadLabel}>Reps</span>
                     <span className={styles.setHeadLabel}>Action</span>
                   </div>
@@ -1434,9 +1482,9 @@ export function WorkoutLogger({
                         spellCheck={false}
                         enterKeyHint="next"
                         className={styles.input}
-                        placeholder="Lb"
+                        placeholder={weightUnitLabel}
                         value={setItem.weightLb}
-                        aria-label={`Weight in pounds for set ${setIndex + 1}`}
+                        aria-label={`Weight in ${weightUnitName} for set ${setIndex + 1}`}
                         onChange={(event) =>
                           updateSet(
                             exercise.id,

@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "rootDir": ".",
+    "outDir": ".tests-dist",
+    "noEmit": false,
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": [
+    "tests/**/*.ts",
+    "lib/weight-unit.ts",
+    "lib/workout-utils.ts",
+    "lib/workouts/payload.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

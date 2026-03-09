@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { getWeightUnitLabel, type WeightUnit } from "@/lib/weight-unit";
 import styles from "./dashboard.module.css";
 
 type ProgressChartsProps = {
@@ -20,6 +21,7 @@ type ProgressChartsProps = {
     sessions: number;
     volume: number;
   }>;
+  weightUnit: WeightUnit;
 };
 
 const CHART_GRID_STROKE = "color-mix(in srgb, var(--text) 14%, transparent)";
@@ -33,8 +35,9 @@ const TOOLTIP_CONTENT_STYLE = {
 };
 const TOOLTIP_LABEL_STYLE = { color: "var(--muted)" };
 
-export function ProgressCharts({ weeklySeries }: ProgressChartsProps) {
+export function ProgressCharts({ weeklySeries, weightUnit }: ProgressChartsProps) {
   const sessionsGradientId = useId().replace(/:/g, "");
+  const unitLabel = getWeightUnitLabel(weightUnit);
 
   return (
     <section className={styles.chartGrid} aria-label="Progress charts">
@@ -87,7 +90,9 @@ export function ProgressCharts({ weeklySeries }: ProgressChartsProps) {
 
       <article className={styles.chartPanel}>
         <h2 className={styles.panelTitle}>Volume trend</h2>
-        <p className={styles.panelSubtitle}>Total weekly load (lb * reps).</p>
+        <p className={styles.panelSubtitle}>
+          Total weekly load ({unitLabel} * reps).
+        </p>
 
         <div className={styles.chartFrame}>
           <ResponsiveContainer width="100%" height="100%">
@@ -113,6 +118,16 @@ export function ProgressCharts({ weeklySeries }: ProgressChartsProps) {
                 cursor={TOOLTIP_CURSOR}
                 contentStyle={TOOLTIP_CONTENT_STYLE}
                 labelStyle={TOOLTIP_LABEL_STYLE}
+                formatter={(value, name) => {
+                  if (name !== "volume") {
+                    return value;
+                  }
+
+                  const displayValue =
+                    typeof value === "number" ? value : Number(value);
+
+                  return [`${displayValue} ${unitLabel}`, "Volume"];
+                }}
               />
               <Line
                 type="monotone"

@@ -4,23 +4,17 @@ import { ThemeToggle } from "@/app/components/theme-toggle";
 import { requireSessionUser } from "@/lib/auth";
 import { isUuidLikeKey, toExerciseRouteKey } from "@/lib/exercise-route-key";
 import { prisma } from "@/lib/prisma";
+import {
+  convertStoredWeightToDisplay,
+  formatWeightValue,
+  formatWeightWithUnit,
+  getWeightUnitLabel,
+} from "@/lib/weight-unit";
 import { normalizeExerciseName } from "@/lib/workout-utils";
 import { ExerciseDetailChart } from "./exercise-detail-chart";
 import styles from "./exercise-detail.module.css";
 
 type ExerciseDetailParams = Promise<{ exerciseKey: string }>;
-
-function toWeightValue(value: { toNumber: () => number } | number | null) {
-  if (value === null) {
-    return null;
-  }
-
-  if (typeof value === "number") {
-    return value;
-  }
-
-  return value.toNumber();
-}
 
 function startOfDay(date: Date) {
   const value = new Date(date);
@@ -217,6 +211,8 @@ export default async function ExerciseDetailPage({
     notFound();
   }
 
+  const weightUnit = user.preferredWeightUnit;
+  const unitLabel = getWeightUnitLabel(weightUnit);
   const sessionsByWorkout = new Map<
     string,
     {
@@ -248,7 +244,7 @@ export default async function ExerciseDetailPage({
     };
 
     for (const set of exerciseLog.sets) {
-      const weight = toWeightValue(set.weightLb);
+      const weight = convertStoredWeightToDisplay(set.weightLb, weightUnit);
 
       session.setCount += 1;
       session.totalReps += set.reps;
@@ -357,21 +353,27 @@ export default async function ExerciseDetailPage({
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Best weight</p>
-              <p className={styles.kpiValue}>{Math.round(bestWeight)} lb</p>
+              <p className={styles.kpiValue}>
+                {formatWeightWithUnit(bestWeight, weightUnit)}
+              </p>
               <p className={styles.kpiSubtle}>
                 Top recorded load for a single set
               </p>
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Total load</p>
-              <p className={styles.kpiValue}>{Math.round(totalLoad)}</p>
+              <p className={styles.kpiValue}>
+                {formatWeightWithUnit(totalLoad, weightUnit)}
+              </p>
               <p className={styles.kpiSubtle}>
-                Accumulated weight * reps across all sessions
+                Accumulated {unitLabel} * reps across all sessions
               </p>
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Avg load/session</p>
-              <p className={styles.kpiValue}>{averageLoadPerSession}</p>
+              <p className={styles.kpiValue}>
+                {formatWeightWithUnit(averageLoadPerSession, weightUnit)}
+              </p>
               <p className={styles.kpiSubtle}>
                 Average session-level tonnage for this movement
               </p>
@@ -385,7 +387,11 @@ export default async function ExerciseDetailPage({
             <p className={styles.panelSubtitle}>
               Best top-set weight each time this exercise was trained.
             </p>
-            <ExerciseDetailChart series={chartSeries} metric="weight" />
+            <ExerciseDetailChart
+              series={chartSeries}
+              metric="weight"
+              weightUnit={weightUnit}
+            />
           </section>
 
           <section className={styles.panel}>
@@ -396,7 +402,11 @@ export default async function ExerciseDetailPage({
               Top-set estimated 1RM (Epley), so extra reps at the same weight
               still count as progress.
             </p>
-            <ExerciseDetailChart series={chartSeries} metric="strength" />
+            <ExerciseDetailChart
+              series={chartSeries}
+              metric="strength"
+              weightUnit={weightUnit}
+            />
           </section>
         </section>
 
@@ -423,8 +433,8 @@ export default async function ExerciseDetailPage({
                     <td>{formatDateTime(session.performedAt)}</td>
                     <td>{session.setCount}</td>
                     <td>{session.totalReps}</td>
-                    <td>{Math.round(session.bestWeight)} lb</td>
-                    <td>{Math.round(session.totalLoad)}</td>
+                    <td>{formatWeightWithUnit(session.bestWeight, weightUnit)}</td>
+                    <td>{formatWeightValue(session.totalLoad)} {unitLabel}</td>
                     <td>
                       <Link
                         href={`/workouts/${session.workoutId}`}

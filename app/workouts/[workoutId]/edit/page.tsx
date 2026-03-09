@@ -2,30 +2,9 @@ import { notFound } from "next/navigation";
 import { WorkoutLogger, type WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { formatWeightInputValueFromPounds, toWeightNumber } from "@/lib/weight-unit";
 
 type EditWorkoutPageParams = Promise<{ workoutId: string }>;
-
-function toWeightValue(value: { toNumber: () => number } | number | null) {
-  if (value === null) {
-    return null;
-  }
-
-  if (typeof value === "number") {
-    return value;
-  }
-
-  return value.toNumber();
-}
-
-function toWeightInputValue(value: { toNumber: () => number } | number | null) {
-  const parsed = toWeightValue(value);
-
-  if (parsed === null) {
-    return "";
-  }
-
-  return `${parsed}`;
-}
 
 export default async function EditWorkoutPage({
   params,
@@ -75,7 +54,10 @@ export default async function EditWorkoutPage({
       name: exercise.name,
       sets: exercise.sets.map((setItem) => ({
         reps: `${setItem.reps}`,
-        weightLb: toWeightInputValue(setItem.weightLb),
+        weightLb: formatWeightInputValueFromPounds(
+          toWeightNumber(setItem.weightLb),
+          user.preferredWeightUnit,
+        ),
       })),
     })),
   };
@@ -85,6 +67,7 @@ export default async function EditWorkoutPage({
       mode="edit"
       workoutId={workout.id}
       initialData={initialData}
+      weightUnit={user.preferredWeightUnit}
     />
   );
 }

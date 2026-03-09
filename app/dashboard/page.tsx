@@ -1,6 +1,7 @@
 import { requireSessionUser } from "@/lib/auth";
 import { toExerciseRouteKey } from "@/lib/exercise-route-key";
 import { prisma } from "@/lib/prisma";
+import { convertStoredWeightToDisplay, toWeightNumber } from "@/lib/weight-unit";
 import { normalizeExerciseName } from "@/lib/workout-utils";
 import { DashboardClient, type DashboardView, type DashboardClientData } from "./dashboard-client";
 
@@ -109,18 +110,6 @@ function daysBetweenDays(from: Date, to: Date) {
   return Math.max(0, Math.floor((fromStart - toStart) / dayMs));
 }
 
-function toWeightValue(value: { toNumber: () => number } | number | null) {
-  if (value === null) {
-    return null;
-  }
-
-  if (typeof value === "number") {
-    return value;
-  }
-
-  return value.toNumber();
-}
-
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -129,6 +118,7 @@ export default async function DashboardPage({
   const params = await searchParams;
   const initialView = normalizeView(params.view);
   const user = await requireSessionUser();
+  const weightUnit = user.preferredWeightUnit;
 
   const now = new Date();
   const weekStart = startOfWeek(now);
@@ -172,11 +162,9 @@ export default async function DashboardPage({
         },
       },
     }),
-    prisma.workoutExercise.count({
+    prisma.exercise.count({
       where: {
-        workoutLog: {
-          userId: user.id,
-        },
+        userId: user.id,
       },
     }),
     prisma.workoutSet.count({
@@ -332,7 +320,11 @@ export default async function DashboardPage({
       : workoutsThisMonth > 0
         ? 100
         : 0;
-  const totalWeightLifted = Math.round(toWeightValue(totalWeightLiftedAggregate._sum.totalWeightLb) ?? 0);
+  const totalWeightLifted =
+    convertStoredWeightToDisplay(
+      totalWeightLiftedAggregate._sum.totalWeightLb,
+      weightUnit,
+    ) ?? 0;
 
   const trendCountByDay = new Map<string, number>();
 
@@ -348,7 +340,8 @@ export default async function DashboardPage({
 
   const recentLogSummaries = recentLogs.map((log) => {
     const setCount = log.exercises.reduce((sum, exercise) => sum + exercise._count.sets, 0);
-    const volume = Math.round(toWeightValue(log.totalWeightLb) ?? 0);
+    const volume =
+      convertStoredWeightToDisplay(log.totalWeightLb, weightUnit) ?? 0;
 
     return {
       id: log.id,
@@ -408,7 +401,7 @@ export default async function DashboardPage({
     personalBests.push({
       id: set.id,
       lift,
-      weight: Math.round(toWeightValue(set.weightLb) ?? 0),
+      weight: convertStoredWeightToDisplay(set.weightLb, weightUnit) ?? 0,
       dateLabel: monthDateLabel(set.workoutExercise.workoutLog.performedAt),
     });
 
@@ -496,7 +489,10 @@ export default async function DashboardPage({
 
     const setCount = item.sets.length;
     const totalReps = item.sets.reduce((sum, set) => sum + set.reps, 0);
-    const bestWeight = item.sets.reduce((max, set) => Math.max(max, toWeightValue(set.weightLb) ?? 0), 0);
+    const bestWeight = item.sets.reduce(
+      (max, set) => Math.max(max, toWeightNumber(set.weightLb) ?? 0),
+      0,
+    );
 
     if (!current) {
       exerciseSummaryMap.set(key, {
@@ -530,7 +526,7 @@ export default async function DashboardPage({
       sessionCount: item.sessions.size,
       setCount: item.setCount,
       totalReps: item.totalReps,
-      bestWeight: Math.round(item.bestWeight),
+      bestWeight: convertStoredWeightToDisplay(item.bestWeight, weightUnit) ?? 0,
       lastPerformedAtLabel: shortDate(item.lastPerformedAt),
       daysSinceLastHit: daysBetweenDays(now, item.lastPerformedAt),
     }))
@@ -548,7 +544,7 @@ export default async function DashboardPage({
   for (const log of progressLogs) {
     const week = startOfWeek(log.performedAt);
     const key = dateKey(week);
-    const sessionVolume = toWeightValue(log.totalWeightLb) ?? 0;
+    const sessionVolume = toWeightNumber(log.totalWeightLb) ?? 0;
 
     const current = progressCounts.get(key) ?? { sessions: 0, volume: 0 };
 
@@ -564,7 +560,7 @@ export default async function DashboardPage({
     return {
       label: shortDate(weekStartDate),
       sessions: current?.sessions ?? 0,
-      volume: Math.round(current?.volume ?? 0),
+      volume: convertStoredWeightToDisplay(current?.volume ?? 0, weightUnit) ?? 0,
     };
   });
 
@@ -579,6 +575,7 @@ export default async function DashboardPage({
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      preferredWeightUnit: user.preferredWeightUnit,
       joinedAtLabel: monthLabel(user.createdAt),
     },
     overview: {

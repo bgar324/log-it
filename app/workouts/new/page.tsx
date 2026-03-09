@@ -2,7 +2,7 @@ import { WorkoutLogger } from "./workout-logger";
 import { requireSessionUser } from "@/lib/auth";
 
 export default async function NewWorkoutPage() {
-  await requireSessionUser();
+  const user = await requireSessionUser();
 
-  return <WorkoutLogger />;
+  return <WorkoutLogger weightUnit={user.preferredWeightUnit} />;
 }
