@@ -532,11 +532,6 @@ export function WorkoutLogger({
       return;
     }
 
-    if (initialData) {
-      autosaveReadyRef.current = true;
-      return;
-    }
-
     const rawDraft = window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY);
     const storedDraft = parseStoredWorkoutDraft(rawDraft, weightUnit);
 
@@ -552,8 +547,13 @@ export function WorkoutLogger({
       if (storedDraft.savedAt) {
         setLastDraftSavedAt(storedDraft.savedAt);
       }
-    } else if (rawDraft) {
-      window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    } else {
+      setDidRestoreDraft(false);
+      setLastDraftSavedAt(null);
+
+      if (rawDraft) {
+        window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+      }
     }
 
     autosaveReadyRef.current = true;
