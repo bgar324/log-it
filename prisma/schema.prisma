@@ -18,6 +18,16 @@ enum WorkoutLogStatus {
   COMPLETED
 }
 
+enum SplitWeekday {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
 model User {
   id                  String       @id @default(cuid())
   email               String       @unique
@@ -30,6 +40,7 @@ model User {
   updatedAt           DateTime     @updatedAt
   workoutLogs         WorkoutLog[]
   exercises           Exercise[]
+  workoutSplit        WorkoutSplit?
 }
 
 model Exercise {
@@ -51,6 +62,8 @@ model WorkoutLog {
   id              String            @id @default(cuid())
   userId          String
   title           String
+  workoutType     String?
+  workoutTypeSlug String?
   status          WorkoutLogStatus  @default(COMPLETED)
   totalWeightLb   Decimal           @default(0)
   performedAt     DateTime          @default(now())
@@ -61,6 +74,7 @@ model WorkoutLog {
 
   @@index([userId, performedAt])
   @@index([userId, createdAt])
+  @@index([userId, workoutTypeSlug])
 }
 
 model WorkoutExercise {
@@ -92,4 +106,42 @@ model WorkoutSet {
 
   @@unique([workoutExerciseId, order])
   @@index([weightLb])
+}
+
+model WorkoutSplit {
+  id        String            @id @default(cuid())
+  userId    String            @unique
+  name      String            @default("Weekly Split")
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  days      WorkoutSplitDay[]
+}
+
+model WorkoutSplitDay {
+  id          String                 @id @default(cuid())
+  splitId     String
+  weekday     SplitWeekday
+  workoutType String
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  split       WorkoutSplit           @relation(fields: [splitId], references: [id], onDelete: Cascade)
+  exercises   WorkoutSplitExercise[]
+
+  @@unique([splitId, weekday])
+}
+
+model WorkoutSplitExercise {
+  id                  String          @id @default(cuid())
+  splitDayId          String
+  order               Int
+  exerciseDisplayName String
+  exerciseSlug        String
+  sets                Int
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  splitDay            WorkoutSplitDay @relation(fields: [splitDayId], references: [id], onDelete: Cascade)
+
+  @@unique([splitDayId, order])
+  @@index([splitDayId, exerciseSlug])
 }

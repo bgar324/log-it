@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { WorkoutLogger, type WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import { formatWeightInputValueFromPounds, toWeightNumber } from "@/lib/weight-unit";
 
 type EditWorkoutPageParams = Promise<{ workoutId: string }>;
@@ -14,34 +15,79 @@ export default async function EditWorkoutPage({
   const { workoutId } = await params;
   const user = await requireSessionUser();
 
-  const workout = await prisma.workoutLog.findFirst({
-    where: {
-      id: workoutId,
-      userId: user.id,
-    },
-    select: {
-      id: true,
-      title: true,
-      performedAt: true,
-      exercises: {
-        orderBy: {
-          order: "asc",
+  const workout = await (async () => {
+    try {
+      return await prisma.workoutLog.findFirst({
+        where: {
+          id: workoutId,
+          userId: user.id,
         },
         select: {
-          name: true,
-          sets: {
+          id: true,
+          title: true,
+          workoutType: true,
+          performedAt: true,
+          exercises: {
             orderBy: {
               order: "asc",
             },
             select: {
-              reps: true,
-              weightLb: true,
+              name: true,
+              sets: {
+                orderBy: {
+                  order: "asc",
+                },
+                select: {
+                  reps: true,
+                  weightLb: true,
+                },
+              },
             },
           },
         },
-      },
-    },
-  });
+      });
+    } catch (error) {
+      if (!isPrismaSchemaMismatchError(error)) {
+        throw error;
+      }
+
+      const legacyWorkout = await prisma.workoutLog.findFirst({
+        where: {
+          id: workoutId,
+          userId: user.id,
+        },
+        select: {
+          id: true,
+          title: true,
+          performedAt: true,
+          exercises: {
+            orderBy: {
+              order: "asc",
+            },
+            select: {
+              name: true,
+              sets: {
+                orderBy: {
+                  order: "asc",
+                },
+                select: {
+                  reps: true,
+                  weightLb: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return legacyWorkout
+        ? {
+            ...legacyWorkout,
+            workoutType: null,
+          }
+        : null;
+    }
+  })();
 
   if (!workout) {
     notFound();
@@ -49,6 +95,7 @@ export default async function EditWorkoutPage({
 
   const initialData: WorkoutLoggerInitialData = {
     title: workout.title,
+    workoutType: workout.workoutType ?? "",
     performedAt: workout.performedAt.toISOString(),
     exercises: workout.exercises.map((exercise) => ({
       name: exercise.name,

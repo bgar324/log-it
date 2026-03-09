@@ -1,14 +1,20 @@
 import { requireSessionUser } from "@/lib/auth";
 import { toExerciseRouteKey } from "@/lib/exercise-route-key";
 import { prisma } from "@/lib/prisma";
+import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
+import { getUserWorkoutSplit } from "@/lib/workout-splits/service";
+import { getWeekdayForDate } from "@/lib/workout-splits/shared";
 import { convertStoredWeightToDisplay, toWeightNumber } from "@/lib/weight-unit";
 import { normalizeExerciseName } from "@/lib/workout-utils";
-import { DashboardClient, type DashboardView, type DashboardClientData } from "./dashboard-client";
+import { DashboardClient } from "./dashboard-client";
+import type { DashboardClientData, DashboardView } from "./dashboard-types";
 
 const DASHBOARD_VIEWS: DashboardView[] = [
   "dashboard",
   "workouts",
   "progress",
+  "calendar",
+  "split",
   "profile",
 ];
 
@@ -110,6 +116,104 @@ function daysBetweenDays(from: Date, to: Date) {
   return Math.max(0, Math.floor((fromStart - toStart) / dayMs));
 }
 
+async function loadRecentLogs(userId: string) {
+  try {
+    return await prisma.workoutLog.findMany({
+      where: { userId },
+      orderBy: { performedAt: "desc" },
+      take: 80,
+      select: {
+        id: true,
+        title: true,
+        workoutType: true,
+        totalWeightLb: true,
+        performedAt: true,
+        exercises: {
+          select: {
+            _count: {
+              select: {
+                sets: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  } catch (error) {
+    if (!isPrismaSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    const logs = await prisma.workoutLog.findMany({
+      where: { userId },
+      orderBy: { performedAt: "desc" },
+      take: 80,
+      select: {
+        id: true,
+        title: true,
+        totalWeightLb: true,
+        performedAt: true,
+        exercises: {
+          select: {
+            _count: {
+              select: {
+                sets: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return logs.map((log) => ({
+      ...log,
+      workoutType: null,
+    }));
+  }
+}
+
+async function loadCalendarLogs(userId: string) {
+  try {
+    return await prisma.workoutLog.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        performedAt: "desc",
+      },
+      select: {
+        id: true,
+        title: true,
+        workoutType: true,
+        performedAt: true,
+      },
+    });
+  } catch (error) {
+    if (!isPrismaSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    const logs = await prisma.workoutLog.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        performedAt: "desc",
+      },
+      select: {
+        id: true,
+        title: true,
+        performedAt: true,
+      },
+    });
+
+    return logs.map((log) => ({
+      ...log,
+      workoutType: null,
+    }));
+  }
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -143,7 +247,6 @@ export default async function DashboardPage({
     workoutsThisWeek,
     totalExercises,
     totalSets,
-    totalWeightLiftedAggregate,
     workoutsThisMonth,
     workoutsPreviousMonth,
     trendLogs,
@@ -152,6 +255,7 @@ export default async function DashboardPage({
     exerciseLogs,
     progressLogs,
     calendarLogs,
+    workoutSplit,
   ] = await Promise.all([
     prisma.workoutLog.count({ where: { userId: user.id } }),
     prisma.workoutLog.count({
@@ -174,14 +278,6 @@ export default async function DashboardPage({
             userId: user.id,
           },
         },
-      },
-    }),
-    prisma.workoutLog.aggregate({
-      where: {
-        userId: user.id,
-      },
-      _sum: {
-        totalWeightLb: true,
       },
     }),
     prisma.workoutLog.count({
@@ -212,26 +308,7 @@ export default async function DashboardPage({
         performedAt: true,
       },
     }),
-    prisma.workoutLog.findMany({
-      where: { userId: user.id },
-      orderBy: { performedAt: "desc" },
-      take: 80,
-      select: {
-        id: true,
-        title: true,
-        totalWeightLb: true,
-        performedAt: true,
-        exercises: {
-          select: {
-            _count: {
-              select: {
-                sets: true,
-              },
-            },
-          },
-        },
-      },
-    }),
+    loadRecentLogs(user.id),
     prisma.workoutSet.findMany({
       where: {
         weightLb: {
@@ -304,14 +381,8 @@ export default async function DashboardPage({
         totalWeightLb: true,
       },
     }),
-    prisma.workoutLog.findMany({
-      where: {
-        userId: user.id,
-      },
-      select: {
-        performedAt: true,
-      },
-    }),
+    loadCalendarLogs(user.id),
+    getUserWorkoutSplit(user.id),
   ]);
 
   const monthChange =
@@ -320,11 +391,27 @@ export default async function DashboardPage({
       : workoutsThisMonth > 0
         ? 100
         : 0;
-  const totalWeightLifted =
-    convertStoredWeightToDisplay(
-      totalWeightLiftedAggregate._sum.totalWeightLb,
-      weightUnit,
-    ) ?? 0;
+  const todaySplitDay =
+    workoutSplit.id !== null
+      ? workoutSplit.days.find((day) => day.weekday === getWeekdayForDate(now)) ?? null
+      : null;
+  const todayPlan =
+    todaySplitDay === null
+      ? {
+          workoutType: "No split",
+          subtitle: "Set up your weekly split to preload today's workout.",
+        }
+      : todaySplitDay.workoutTypeSlug === "rest"
+        ? {
+            workoutType: todaySplitDay.workoutType,
+            subtitle: "Recovery day on your current split.",
+          }
+        : {
+            workoutType: todaySplitDay.workoutType,
+            subtitle: `${todaySplitDay.exercises.length} planned exercise${
+              todaySplitDay.exercises.length === 1 ? "" : "s"
+            } ready to preload.`,
+          };
 
   const trendCountByDay = new Map<string, number>();
 
@@ -346,6 +433,7 @@ export default async function DashboardPage({
     return {
       id: log.id,
       title: log.title,
+      workoutType: log.workoutType,
       month: monthLabel(log.performedAt),
       performedAtLabel: monthDateLabel(log.performedAt),
       timelineLabel: timelineDateLabel(log.performedAt),
@@ -358,6 +446,7 @@ export default async function DashboardPage({
   const workouts = recentLogSummaries.slice(0, 30).map((log) => ({
     id: log.id,
     title: log.title,
+    workoutType: log.workoutType,
     performedAtLabel: log.performedAtLabel,
     exerciseCount: log.exerciseCount,
     setCount: log.setCount,
@@ -372,6 +461,7 @@ export default async function DashboardPage({
     monthEntries.push({
       id: log.id,
       title: log.title,
+      workoutType: log.workoutType,
       performedAtLabel: log.timelineLabel,
       exerciseCount: log.exerciseCount,
       setCount: log.setCount,
@@ -412,6 +502,10 @@ export default async function DashboardPage({
 
   const workoutDayCountMap = new Map<string, number>();
   const workoutMonthCountMap = new Map<string, number>();
+  const workoutLogsByDate = new Map<
+    string,
+    DashboardClientData["calendar"]["logsByDate"][number]["logs"]
+  >();
 
   for (const log of calendarLogs) {
     const day = dateKey(log.performedAt);
@@ -419,6 +513,15 @@ export default async function DashboardPage({
 
     workoutDayCountMap.set(day, (workoutDayCountMap.get(day) ?? 0) + 1);
     workoutMonthCountMap.set(month, (workoutMonthCountMap.get(month) ?? 0) + 1);
+
+    const dayLogs = workoutLogsByDate.get(day) ?? [];
+    dayLogs.push({
+      id: log.id,
+      title: log.title,
+      workoutType: log.workoutType,
+      performedAtLabel: timelineDateLabel(log.performedAt),
+    });
+    workoutLogsByDate.set(day, dayLogs);
   }
 
   const workoutCalendarDayCounts = Array.from(workoutDayCountMap.entries())
@@ -464,6 +567,13 @@ export default async function DashboardPage({
             count: 0,
           },
         ];
+
+  const calendarLogsByDate = Array.from(workoutLogsByDate.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([day, logs]) => ({
+      dateKey: day,
+      logs,
+    }));
 
   const exerciseSummaryMap = new Map<
     string,
@@ -583,7 +693,7 @@ export default async function DashboardPage({
       workoutsThisWeek,
       totalExercises,
       totalSets,
-      totalWeightLifted,
+      todayPlan,
       monthChange,
       weeklyBars,
       personalBests,
@@ -603,6 +713,10 @@ export default async function DashboardPage({
       avgWeekly: Number(avgWeekly.toFixed(1)),
       weeklySeries,
     },
+    calendar: {
+      logsByDate: calendarLogsByDate,
+    },
+    split: workoutSplit,
   };
 
   return <DashboardClient initialView={initialView} data={data} />;

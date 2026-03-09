@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import {
   convertStoredWeightToDisplay,
   formatWeightWithUnit,
@@ -30,39 +31,89 @@ export default async function WorkoutDetailPage({
   const { workoutId } = await params;
   const user = await requireSessionUser();
 
-  const workout = await prisma.workoutLog.findFirst({
-    where: {
-      id: workoutId,
-      userId: user.id,
-    },
-    select: {
-      id: true,
-      title: true,
-      performedAt: true,
-      totalWeightLb: true,
-      exercises: {
-        orderBy: {
-          order: "asc",
+  const workout = await (async () => {
+    try {
+      return await prisma.workoutLog.findFirst({
+        where: {
+          id: workoutId,
+          userId: user.id,
         },
         select: {
           id: true,
-          order: true,
-          name: true,
-          sets: {
+          title: true,
+          workoutType: true,
+          performedAt: true,
+          totalWeightLb: true,
+          exercises: {
             orderBy: {
               order: "asc",
             },
             select: {
               id: true,
               order: true,
-              reps: true,
-              weightLb: true,
+              name: true,
+              sets: {
+                orderBy: {
+                  order: "asc",
+                },
+                select: {
+                  id: true,
+                  order: true,
+                  reps: true,
+                  weightLb: true,
+                },
+              },
             },
           },
         },
-      },
-    },
-  });
+      });
+    } catch (error) {
+      if (!isPrismaSchemaMismatchError(error)) {
+        throw error;
+      }
+
+      const legacyWorkout = await prisma.workoutLog.findFirst({
+        where: {
+          id: workoutId,
+          userId: user.id,
+        },
+        select: {
+          id: true,
+          title: true,
+          performedAt: true,
+          totalWeightLb: true,
+          exercises: {
+            orderBy: {
+              order: "asc",
+            },
+            select: {
+              id: true,
+              order: true,
+              name: true,
+              sets: {
+                orderBy: {
+                  order: "asc",
+                },
+                select: {
+                  id: true,
+                  order: true,
+                  reps: true,
+                  weightLb: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return legacyWorkout
+        ? {
+            ...legacyWorkout,
+            workoutType: null,
+          }
+        : null;
+    }
+  })();
 
   if (!workout) {
     notFound();
@@ -72,6 +123,9 @@ export default async function WorkoutDetailPage({
   const totalSets = workout.exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
   const totalWeight = convertStoredWeightToDisplay(workout.totalWeightLb, unit) ?? 0;
   const summaryItems = [
+    ...(workout.workoutType
+      ? [{ label: "Type", value: workout.workoutType }]
+      : []),
     { label: "Date", value: formatDate(workout.performedAt) },
     { label: "Exercises", value: `${workout.exercises.length}` },
     { label: "Sets", value: `${totalSets}` },

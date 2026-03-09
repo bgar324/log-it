@@ -24,6 +24,7 @@ test("normalizeWorkoutPayload keeps pound inputs unchanged", () => {
   const value = expectParsedWorkout(
     normalizeWorkoutPayload({
       title: "Push Day",
+      workoutType: "Push",
       performedAt: "2026-03-08T08:30",
       weightUnit: "LB",
       exercises: [
@@ -39,6 +40,8 @@ test("normalizeWorkoutPayload keeps pound inputs unchanged", () => {
   );
 
   assert.equal(value.weightUnit, "LB");
+  assert.equal(value.workoutType, "Push");
+  assert.equal(value.workoutTypeSlug, "push");
   assert.equal(value.exercises[0]?.normalizedName, "bench press");
   assert.equal(value.exercises[0]?.sets[0]?.weightLb, "135");
   assert.equal(computeWorkoutTotalWeightLb(value).toString(), "1111.5");
@@ -48,6 +51,7 @@ test("normalizeWorkoutPayload converts kilogram inputs to stored pounds", () => 
   const value = expectParsedWorkout(
     normalizeWorkoutPayload({
       title: "Leg Day",
+      workoutType: "Lower Body",
       performedAt: "2026-03-08T08:30",
       weightUnit: "KG",
       exercises: [
@@ -60,6 +64,7 @@ test("normalizeWorkoutPayload converts kilogram inputs to stored pounds", () => 
   );
 
   assert.equal(value.weightUnit, "KG");
+  assert.equal(value.workoutTypeSlug, "lower-body");
   assert.equal(value.exercises[0]?.sets[0]?.weightLb, "220.4623");
   assert.ok(
     Math.abs(Number(computeWorkoutTotalWeightLb(value).toString()) - 1102.3115) <

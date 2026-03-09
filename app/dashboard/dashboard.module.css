@@ -176,6 +176,21 @@
   height: 0.82rem;
 }
 
+.tableCellTitle,
+.tableCellMeta {
+  display: block;
+}
+
+.tableCellTitle {
+  font-weight: 560;
+}
+
+.tableCellMeta {
+  margin-top: 0.14rem;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
 .kpiGrid {
   display: grid;
   grid-template-columns: 1fr;

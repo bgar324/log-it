@@ -7,6 +7,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import {
+  normalizeExerciseDisplayName,
+  normalizeExerciseLookupKey,
+  pickBestExerciseSuggestion,
+} from "@/lib/exercise-autofill";
+import {
   convertStoredWeightToDisplay,
   formatWeightWithUnit,
   getWeightUnitLabel,
@@ -53,6 +58,7 @@ type ExerciseInsightState = {
 
 type WorkoutDraftSnapshot = {
   title: string;
+  workoutType: string;
   performedAt: string;
   exercises: Array<{
     name: string;
@@ -94,17 +100,6 @@ const INITIAL_SET_ID = "set-1";
 const WORKOUT_DRAFT_STORAGE_KEY = "logit-workout-draft-v2";
 const WORKOUT_AUTOSAVE_DELAY_MS = 350;
 const EXERCISE_SUGGESTION_DEBOUNCE_MS = 140;
-
-const COMMON_WORD_FIXES: Record<string, string> = {
-  dumbell: "dumbbell",
-  barbel: "barbell",
-  barbelll: "barbell",
-  pulldwon: "pulldown",
-  shoudler: "shoulder",
-  deltiod: "deltoid",
-  tricep: "triceps",
-  bicep: "biceps",
-};
 
 function createSetDraft(id: string): ExerciseSetDraft {
   return {
@@ -178,23 +173,6 @@ function toSafeString(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
-function normalizeExerciseDisplayName(value: unknown) {
-  const trimmed = toSafeString(value).trim().replace(/\s+/g, " ");
-
-  if (!trimmed) {
-    return "";
-  }
-
-  return trimmed
-    .split(" ")
-    .map((word) => {
-      const lower = word.toLowerCase();
-      const fixed = COMMON_WORD_FIXES[lower] ?? lower;
-      return fixed.charAt(0).toUpperCase() + fixed.slice(1);
-    })
-    .join(" ");
-}
-
 function sanitizeWeightInput(value: string) {
   const normalized = value.replace(/,/g, ".").replace(/[^0-9.]/g, "");
 
@@ -222,10 +200,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function normalizeExerciseLookupKey(value: string) {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
 function formatAutosaveClock(value: string) {
   const parsed = new Date(value);
 
@@ -241,11 +215,13 @@ function formatAutosaveClock(value: string) {
 
 function createWorkoutDraftSnapshot(
   title: string,
+  workoutType: string,
   performedAt: string,
   exercises: ExerciseDraft[],
 ): WorkoutDraftSnapshot {
   return {
     title,
+    workoutType,
     performedAt,
     exercises: exercises.map((exercise) => ({
       name: toSafeString(exercise.name),
@@ -298,6 +274,8 @@ function parseStoredWorkoutDraft(
 
     const title =
       typeof parsed.title === "string" ? parsed.title : "Gym session";
+    const workoutType =
+      typeof parsed.workoutType === "string" ? parsed.workoutType : "";
     const performedAtSource =
       typeof parsed.performedAt === "string" ? parsed.performedAt : "";
     const performedAt = toLocalDateTimeInputValue(
@@ -361,6 +339,7 @@ function parseStoredWorkoutDraft(
 
     return {
       title,
+      workoutType,
       performedAt,
       exercises,
       savedAt,
@@ -403,6 +382,7 @@ function createInitialLoggerState(initialData?: WorkoutLoggerInitialData) {
   if (!initialData) {
     return {
       title: "Gym session",
+      workoutType: "",
       performedAt: toLocalDateTimeInputValue(new Date()),
       exercises: [createExerciseDraft(INITIAL_EXERCISE_ID, INITIAL_SET_ID)],
       counters: {
@@ -416,86 +396,11 @@ function createInitialLoggerState(initialData?: WorkoutLoggerInitialData) {
 
   return {
     title: toSafeString(initialData.title).trim() || "Gym session",
+    workoutType: toSafeString(initialData.workoutType).trim(),
     performedAt: normalizePerformedAtInput(initialData.performedAt),
     exercises: hydrated.exercises,
     counters: hydrated.counters,
   };
-}
-
-function scoreExerciseSuggestionMatch(queryKey: string, candidateKey: string) {
-  if (!queryKey || queryKey === candidateKey) {
-    return Number.NEGATIVE_INFINITY;
-  }
-
-  const queryTokens = queryKey.split(" ").filter(Boolean);
-
-  if (
-    queryTokens.length === 0 ||
-    queryTokens.some((token) => !candidateKey.includes(token))
-  ) {
-    return Number.NEGATIVE_INFINITY;
-  }
-
-  let score = 0;
-
-  if (candidateKey.startsWith(queryKey)) {
-    score += 280;
-  } else if (candidateKey.includes(queryKey)) {
-    score += 190;
-  }
-
-  for (const token of queryTokens) {
-    const tokenIndex = candidateKey.indexOf(token);
-    if (tokenIndex === -1) {
-      continue;
-    }
-
-    const startsWord = tokenIndex === 0 || candidateKey[tokenIndex - 1] === " ";
-    score += startsWord ? 45 : 22;
-  }
-
-  const lengthPenalty = Math.max(0, candidateKey.length - queryKey.length);
-  score -= lengthPenalty * 0.5;
-
-  return score;
-}
-
-function pickBestExerciseSuggestion(rawQuery: string, suggestions: string[]) {
-  const lookupKey = normalizeExerciseLookupKey(rawQuery);
-
-  if (!lookupKey) {
-    return null;
-  }
-
-  let bestName: string | null = null;
-  let bestScore = Number.NEGATIVE_INFINITY;
-
-  for (const suggestion of suggestions) {
-    const candidateName = suggestion.trim().replace(/\s+/g, " ");
-
-    if (!candidateName) {
-      continue;
-    }
-
-    const candidateKey = normalizeExerciseLookupKey(candidateName);
-    const score = scoreExerciseSuggestionMatch(lookupKey, candidateKey);
-
-    if (!Number.isFinite(score)) {
-      continue;
-    }
-
-    if (
-      score > bestScore ||
-      (score === bestScore &&
-        bestName !== null &&
-        candidateName.length < bestName.length)
-    ) {
-      bestName = candidateName;
-      bestScore = score;
-    }
-  }
-
-  return bestName;
 }
 
 function toOptionalPositiveNumber(value: string) {
@@ -593,6 +498,7 @@ export function WorkoutLogger({
   const suggestionDebounceTimeoutRef = useRef<Record<string, number>>({});
 
   const [title, setTitle] = useState(initialState.title);
+  const [workoutType, setWorkoutType] = useState(initialState.workoutType);
   const [performedAt, setPerformedAt] = useState(initialState.performedAt);
   const [exercises, setExercises] = useState<ExerciseDraft[]>(
     initialState.exercises,
@@ -613,7 +519,21 @@ export function WorkoutLogger({
   );
 
   useEffect(() => {
+    setTitle(initialState.title);
+    setWorkoutType(initialState.workoutType);
+    setPerformedAt(initialState.performedAt);
+    setExercises(initialState.exercises);
+    idCounterRef.current = initialState.counters;
+  }, [initialState]);
+
+  useEffect(() => {
     if (isEditMode) {
+      autosaveReadyRef.current = true;
+      return;
+    }
+
+    if (initialData) {
+      autosaveReadyRef.current = true;
       return;
     }
 
@@ -623,6 +543,7 @@ export function WorkoutLogger({
     if (storedDraft) {
       const hydrated = hydrateExercisesFromSnapshot(storedDraft.exercises);
       setTitle(storedDraft.title);
+      setWorkoutType(storedDraft.workoutType);
       setPerformedAt(storedDraft.performedAt);
       setExercises(hydrated.exercises);
       idCounterRef.current = hydrated.counters;
@@ -636,7 +557,7 @@ export function WorkoutLogger({
     }
 
     autosaveReadyRef.current = true;
-  }, [isEditMode, weightUnit]);
+  }, [initialData, isEditMode, weightUnit]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -645,10 +566,11 @@ export function WorkoutLogger({
 
     latestDraftSnapshotRef.current = createWorkoutDraftSnapshot(
       title,
+      workoutType,
       performedAt,
       exercises,
     );
-  }, [isEditMode, title, performedAt, exercises]);
+  }, [isEditMode, title, workoutType, performedAt, exercises]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -660,7 +582,12 @@ export function WorkoutLogger({
     }
 
     const timeoutId = window.setTimeout(() => {
-      const snapshot = createWorkoutDraftSnapshot(title, performedAt, exercises);
+      const snapshot = createWorkoutDraftSnapshot(
+        title,
+        workoutType,
+        performedAt,
+        exercises,
+      );
       latestDraftSnapshotRef.current = snapshot;
       const savedAt = persistWorkoutDraft(snapshot, weightUnit);
 
@@ -672,7 +599,7 @@ export function WorkoutLogger({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [isEditMode, title, performedAt, exercises, weightUnit]);
+  }, [isEditMode, title, workoutType, performedAt, exercises, weightUnit]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -1093,6 +1020,7 @@ export function WorkoutLogger({
     return {
       value: {
         title,
+        workoutType,
         performedAt,
         weightUnit,
         exercises: normalizedExercises,
@@ -1211,6 +1139,19 @@ export function WorkoutLogger({
             </div>
 
             <div className={styles.metaGrid}>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="workout-type">
+                  Workout type
+                </label>
+                <input
+                  id="workout-type"
+                  className={styles.input}
+                  value={workoutType}
+                  onChange={(event) => setWorkoutType(event.target.value)}
+                  placeholder="Push"
+                />
+              </div>
+
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="workout-performed-at">
                   Date & time

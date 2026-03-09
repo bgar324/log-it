@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Blocks,
+  CalendarDays,
   ChartLine,
   Dumbbell,
   LayoutDashboard,
@@ -14,96 +16,12 @@ import {
   formatWeightWithUnit,
   type WeightUnit,
 } from "@/lib/weight-unit";
+import { DashboardCalendarView } from "./dashboard-calendar-view";
+import type { DashboardClientData, DashboardView } from "./dashboard-types";
 import { ThemeToggle } from "../components/theme-toggle";
 import { DashboardUserMenu } from "./dashboard-user-menu";
+import { SplitManager } from "./split-manager";
 import styles from "./dashboard.module.css";
-
-export type DashboardView =
-  | "dashboard"
-  | "workouts"
-  | "progress"
-  | "profile";
-
-export type DashboardClientData = {
-  user: {
-    username: string;
-    email: string;
-    firstName: string | null;
-    lastName: string | null;
-    preferredWeightUnit: WeightUnit;
-    joinedAtLabel: string;
-  };
-  overview: {
-    totalWorkouts: number;
-    workoutsThisWeek: number;
-    totalExercises: number;
-    totalSets: number;
-    totalWeightLifted: number;
-    monthChange: number;
-    weeklyBars: Array<{
-      label: string;
-      count: number;
-    }>;
-    personalBests: Array<{
-      id: string;
-      lift: string;
-      weight: number;
-      dateLabel: string;
-    }>;
-    workoutCalendar: {
-      dayCounts: Array<{
-        dateKey: string;
-        count: number;
-      }>;
-      monthCounts: Array<{
-        monthKey: string;
-        label: string;
-        count: number;
-      }>;
-      latestMonthKey: string | null;
-    };
-  };
-  workouts: Array<{
-    id: string;
-    title: string;
-    performedAtLabel: string;
-    exerciseCount: number;
-    setCount: number;
-    volume: number;
-  }>;
-  workoutMonths: Array<{
-    month: string;
-    entries: Array<{
-      id: string;
-      title: string;
-      performedAtLabel: string;
-      exerciseCount: number;
-      setCount: number;
-      volume: number;
-    }>;
-  }>;
-  exercises: Array<{
-    key: string;
-    routeKey: string;
-    name: string;
-    sessionCount: number;
-    setCount: number;
-    totalReps: number;
-    bestWeight: number;
-    lastPerformedAtLabel: string;
-    daysSinceLastHit: number;
-  }>;
-  progress: {
-    currentWeek: number;
-    weekDelta: number;
-    avgWeekly: number;
-    weeklySeries: Array<{
-      label: string;
-      sessions: number;
-      volume: number;
-    }>;
-  };
-};
 
 const ProgressCharts = dynamic(
   () => import("./progress-charts").then((module) => module.ProgressCharts),
@@ -123,6 +41,8 @@ const NAV_ITEMS: Array<{
   { view: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { view: "workouts", label: "Workouts", icon: Dumbbell },
   { view: "progress", label: "Progress", icon: ChartLine },
+  { view: "calendar", label: "Calendar", icon: CalendarDays },
+  { view: "split", label: "Workout Split", icon: Blocks },
 ];
 
 const VIEW_CONTENT: Record<DashboardView, { title: string; subtitle: string }> = {
@@ -137,6 +57,14 @@ const VIEW_CONTENT: Record<DashboardView, { title: string; subtitle: string }> =
   progress: {
     title: "Progress",
     subtitle: "Trend lines plus movement-level filtering across your exercise catalog.",
+  },
+  calendar: {
+    title: "Calendar",
+    subtitle: "See the planned split, log directly from any day, and compare schedule vs. what you completed.",
+  },
+  split: {
+    title: "Workout Split",
+    subtitle: "Build your seven-day template once and reuse it every time you open the logger.",
   },
   profile: {
     title: "Profile",
@@ -440,6 +368,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
         ...current,
         firstName: payload.user.firstName,
         lastName: payload.user.lastName,
+        preferredWeightUnit: payload.user.preferredWeightUnit,
       }));
       setFirstNameInput(payload.user.firstName ?? "");
       setLastNameInput(payload.user.lastName ?? "");
@@ -561,11 +490,9 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               </article>
 
               <article className={styles.kpiCard}>
-                <p className={styles.kpiLabel}>Total weight lifted</p>
-                <p className={styles.kpiValue}>
-                  {formatWeight(data.overview.totalWeightLifted)}
-                </p>
-                <p className={styles.kpiSubtle}>Accumulated across all logged weighted sets</p>
+                <p className={styles.kpiLabel}>Today</p>
+                <p className={styles.kpiValue}>{data.overview.todayPlan.workoutType}</p>
+                <p className={styles.kpiSubtle}>{data.overview.todayPlan.subtitle}</p>
               </article>
 
               <Link
@@ -603,7 +530,12 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                       {recentSessions.map((session) => (
                         <tr key={session.id}>
                           <td>{session.performedAtLabel}</td>
-                          <td>{session.title}</td>
+                          <td>
+                            <span className={styles.tableCellTitle}>{session.title}</span>
+                            {session.workoutType ? (
+                              <span className={styles.tableCellMeta}>{session.workoutType}</span>
+                            ) : null}
+                          </td>
                           <td>{session.setCount}</td>
                           <td>{formatWeight(session.volume)}</td>
                           <td>
@@ -734,7 +666,10 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                         <article key={workout.id} className={`${styles.metricRow} ${styles.workoutRow}`}>
                           <div>
                             <p className={styles.metricMain}>{workout.title}</p>
-                            <p className={styles.metricSubtle}>{workout.performedAtLabel}</p>
+                            <p className={styles.metricSubtle}>
+                              {workout.performedAtLabel}
+                              {workout.workoutType ? ` · ${workout.workoutType}` : ""}
+                            </p>
                           </div>
                           <span>{workout.exerciseCount} ex</span>
                           <span>{workout.setCount} sets</span>
@@ -859,6 +794,23 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               )}
             </section>
           </>
+        ) : null}
+
+        {activeView === "calendar" ? (
+          <section className={styles.plainSection}>
+            <DashboardCalendarView
+              split={data.split}
+              monthCounts={data.overview.workoutCalendar.monthCounts}
+              latestMonthKey={data.overview.workoutCalendar.latestMonthKey}
+              logsByDate={data.calendar.logsByDate}
+            />
+          </section>
+        ) : null}
+
+        {activeView === "split" ? (
+          <section className={styles.plainSection}>
+            <SplitManager initialSplit={data.split} />
+          </section>
         ) : null}
 
         {activeView === "profile" ? (

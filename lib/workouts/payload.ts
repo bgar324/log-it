@@ -4,7 +4,12 @@ import {
   normalizeWeightUnit,
   type WeightUnit,
 } from "../weight-unit";
-import { normalizeExerciseName, toIsoFromLocalDateTime } from "../workout-utils";
+import {
+  normalizeExerciseName,
+  normalizeWorkoutTypeName,
+  normalizeWorkoutTypeSlug,
+  toIsoFromLocalDateTime,
+} from "../workout-utils";
 
 type RawWorkoutSet = {
   reps?: unknown;
@@ -20,6 +25,7 @@ type RawWorkoutExercise = {
 export type RawWorkoutPayload = {
   workoutId?: unknown;
   title?: unknown;
+  workoutType?: unknown;
   performedAt?: unknown;
   weightUnit?: unknown;
   exercises?: unknown;
@@ -38,6 +44,8 @@ export type ParsedExercise = {
 
 export type ParsedWorkout = {
   title: string;
+  workoutType: string | null;
+  workoutTypeSlug: string | null;
   performedAt: Date;
   weightUnit: WeightUnit;
   exercises: ParsedExercise[];
@@ -104,6 +112,10 @@ function toWeightLbString(value: string, unit: WeightUnit) {
 
 export function normalizeWorkoutPayload(raw: RawWorkoutPayload) {
   const title = toOptionalTrimmedString(raw.title) ?? "Untitled workout";
+  const workoutTypeValue = toOptionalTrimmedString(raw.workoutType);
+  const workoutType = workoutTypeValue
+    ? normalizeWorkoutTypeName(workoutTypeValue)
+    : null;
   const performedAtIso = toIsoFromLocalDateTime(String(raw.performedAt ?? ""));
   const weightUnit = normalizeWeightUnit(raw.weightUnit);
 
@@ -164,6 +176,8 @@ export function normalizeWorkoutPayload(raw: RawWorkoutPayload) {
   return {
     value: {
       title,
+      workoutType,
+      workoutTypeSlug: workoutType ? normalizeWorkoutTypeSlug(workoutType) : null,
       performedAt: new Date(performedAtIso),
       weightUnit,
       exercises,
