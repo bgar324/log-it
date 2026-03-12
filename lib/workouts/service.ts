@@ -2,7 +2,6 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { isPrismaSchemaMismatchError } from "../schema-compat";
 import {
-  formatDatabaseDateTimeValue,
   normalizeExerciseName,
   normalizeWorkoutTypeSlug,
 } from "../workout-utils";
@@ -107,7 +106,7 @@ async function upsertExerciseRecord(
   db: WorkoutDbClient,
   userId: string,
   exerciseInput: ParsedExercise,
-  performedAt: Date | string,
+  performedAt: Date,
 ) {
   const exerciseRecord = await db.exercise.upsert({
     where: {
@@ -449,7 +448,7 @@ export async function duplicateWorkout(workoutId: string, userId: string) {
           (sourceWorkout.workoutType
             ? normalizeWorkoutTypeSlug(sourceWorkout.workoutType)
             : null),
-        performedAt: formatDatabaseDateTimeValue(new Date()),
+        performedAt: new Date(),
         weightUnit: "LB",
         exercises: sourceWorkout.exercises.map((exercise) => ({
           name: exercise.name,

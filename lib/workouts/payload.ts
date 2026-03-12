@@ -46,7 +46,7 @@ export type ParsedWorkout = {
   title: string;
   workoutType: string | null;
   workoutTypeSlug: string | null;
-  performedAt: string;
+  performedAt: Date;
   weightUnit: WeightUnit;
   exercises: ParsedExercise[];
 };

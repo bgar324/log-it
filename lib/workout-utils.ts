@@ -49,15 +49,77 @@ export function formatDatabaseDateTimeValue(value: Date) {
 }
 
 export function toDatabaseDateTimeFromLocalInput(value: string) {
-  if (!value) {
-    return formatDatabaseDateTimeValue(new Date());
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return new Date();
   }
 
-  const parsed = new Date(value);
+  const localDateTimeMatch =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/.exec(
+      trimmed,
+    );
+
+  if (localDateTimeMatch) {
+    const [
+      ,
+      yearText,
+      monthText,
+      dayText,
+      hourText,
+      minuteText,
+      secondText = "0",
+      millisecondText = "0",
+    ] = localDateTimeMatch;
+    const year = Number.parseInt(yearText, 10);
+    const month = Number.parseInt(monthText, 10);
+    const day = Number.parseInt(dayText, 10);
+    const hour = Number.parseInt(hourText, 10);
+    const minute = Number.parseInt(minuteText, 10);
+    const second = Number.parseInt(secondText, 10);
+    const millisecond = Number.parseInt(
+      millisecondText.padEnd(3, "0"),
+      10,
+    );
+
+    if (
+      Number.isInteger(year) &&
+      Number.isInteger(month) &&
+      Number.isInteger(day) &&
+      Number.isInteger(hour) &&
+      Number.isInteger(minute) &&
+      Number.isInteger(second) &&
+      Number.isInteger(millisecond)
+    ) {
+      const parsedLocalDateTime = new Date(
+        year,
+        month - 1,
+        day,
+        hour,
+        minute,
+        second,
+        millisecond,
+      );
+
+      if (
+        parsedLocalDateTime.getFullYear() === year &&
+        parsedLocalDateTime.getMonth() === month - 1 &&
+        parsedLocalDateTime.getDate() === day &&
+        parsedLocalDateTime.getHours() === hour &&
+        parsedLocalDateTime.getMinutes() === minute &&
+        parsedLocalDateTime.getSeconds() === second &&
+        parsedLocalDateTime.getMilliseconds() === millisecond
+      ) {
+        return parsedLocalDateTime;
+      }
+    }
+  }
+
+  const parsed = new Date(trimmed);
 
   if (Number.isNaN(parsed.getTime())) {
-    return formatDatabaseDateTimeValue(new Date());
+    return new Date();
   }
 
-  return formatDatabaseDateTimeValue(parsed);
+  return parsed;
 }

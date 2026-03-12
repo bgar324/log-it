@@ -42,7 +42,12 @@ test("normalizeWorkoutPayload keeps pound inputs unchanged", () => {
   assert.equal(value.weightUnit, "LB");
   assert.equal(value.workoutType, "Push");
   assert.equal(value.workoutTypeSlug, "push");
-  assert.equal(value.performedAt, "2026-03-08T08:30:00.000");
+  assert.ok(value.performedAt instanceof Date);
+  assert.equal(value.performedAt.getFullYear(), 2026);
+  assert.equal(value.performedAt.getMonth(), 2);
+  assert.equal(value.performedAt.getDate(), 8);
+  assert.equal(value.performedAt.getHours(), 8);
+  assert.equal(value.performedAt.getMinutes(), 30);
   assert.equal(value.exercises[0]?.normalizedName, "bench press");
   assert.equal(value.exercises[0]?.sets[0]?.weightLb, "135");
   assert.equal(computeWorkoutTotalWeightLb(value).toString(), "1111.5");
