@@ -1,31 +1,35 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatDatabaseDateTimeValue, toDatabaseDateTimeFromLocalInput } from "../../../lib/workout-utils";
+import { getWeekdayForDate, parseDateKey } from "../../../lib/workout-splits/shared";
 import {
-  createSplitLocalDateTime,
-  getWeekdayForDate,
-  parseDateKey,
-} from "../../../lib/workout-splits/shared";
+  formatDatabaseDateValue,
+  getCurrentPacificDate,
+  toDatabaseDateFromInput,
+} from "../../../lib/workout-utils";
 
-test("local date helpers preserve the intended scheduled date and time without timezone drift", () => {
-  const parsedDateTime = toDatabaseDateTimeFromLocalInput("2026-07-15T06:45:09.125");
+test("date helpers preserve the intended scheduled date without timezone drift", () => {
+  const parsedDate = toDatabaseDateFromInput("2026-07-15");
 
-  assert.equal(
-    formatDatabaseDateTimeValue(parsedDateTime),
-    "2026-07-15T06:45:09.125",
-  );
+  assert.equal(formatDatabaseDateValue(parsedDate), "2026-07-15");
 
-  const parsedDate = parseDateKey("2026-07-15");
+  const parsedDateKey = parseDateKey("2026-07-15");
 
-  assert.ok(parsedDate);
+  assert.ok(parsedDateKey);
 
-  if (!parsedDate) {
+  if (!parsedDateKey) {
     throw new Error("Expected date to parse.");
   }
 
-  assert.equal(getWeekdayForDate(parsedDate), "WEDNESDAY");
+  assert.equal(getWeekdayForDate(parsedDateKey), "WEDNESDAY");
+});
+
+test("Pacific today stays on the Pacific calendar around midnight boundaries", () => {
   assert.equal(
-    createSplitLocalDateTime(parsedDate, new Date(2026, 6, 15, 19, 5, 0, 0)),
-    "2026-07-15T19:05",
+    formatDatabaseDateValue(getCurrentPacificDate(new Date("2026-03-13T06:30:00.000Z"))),
+    "2026-03-12",
+  );
+  assert.equal(
+    formatDatabaseDateValue(getCurrentPacificDate(new Date("2026-03-13T08:30:00.000Z"))),
+    "2026-03-13",
   );
 });

@@ -4,10 +4,11 @@ import {
   formatWorkoutForClipboard,
   formatWorkoutSplitForClipboard,
 } from "../lib/workout-export";
+import { createDatabaseDate } from "../lib/workout-utils";
 
 test("formatWorkoutForClipboard produces compact plain-text output", () => {
   const formatted = formatWorkoutForClipboard({
-    performedAt: new Date(2026, 2, 12, 8, 30),
+    performedAt: createDatabaseDate(2026, 3, 12),
     workoutType: "Pull",
     title: "Pull Day",
     weightUnit: "LB",

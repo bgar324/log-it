@@ -1,3 +1,11 @@
+import {
+  addDaysToDatabaseDate,
+  createDatabaseDate,
+  formatDatabaseDateValue,
+  formatDatabaseMonthValue,
+  normalizeDatabaseDate,
+} from "../workout-utils";
+
 export const SPLIT_WEEKDAYS = [
   "MONDAY",
   "TUESDAY",
@@ -120,14 +128,11 @@ export function reorderSplitDays<T extends { weekday: SplitWeekdayValue }>(
 }
 
 export function dateKeyFromDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return formatDatabaseDateValue(date);
 }
 
 export function monthKeyFromDate(date: Date) {
-  return dateKeyFromDate(date).slice(0, 7);
+  return formatDatabaseMonthValue(date);
 }
 
 export function parseDateKey(value: string) {
@@ -146,12 +151,12 @@ export function parseDateKey(value: string) {
     return null;
   }
 
-  const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+  const date = createDatabaseDate(year, month, day);
 
   if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
   ) {
     return null;
   }
@@ -160,40 +165,28 @@ export function parseDateKey(value: string) {
 }
 
 export function getWeekdayForDate(date: Date): SplitWeekdayValue {
-  return JS_DAY_TO_WEEKDAY[date.getDay()] ?? "MONDAY";
-}
-
-export function createSplitLocalDateTime(date: Date, referenceDate = new Date()) {
-  const hours =
-    dateKeyFromDate(date) === dateKeyFromDate(referenceDate)
-      ? String(referenceDate.getHours()).padStart(2, "0")
-      : "08";
-  const minutes =
-    dateKeyFromDate(date) === dateKeyFromDate(referenceDate)
-      ? String(referenceDate.getMinutes()).padStart(2, "0")
-      : "00";
-
-  return `${dateKeyFromDate(date)}T${hours}:${minutes}`;
+  return JS_DAY_TO_WEEKDAY[normalizeDatabaseDate(date).getUTCDay()] ?? "MONDAY";
 }
 
 export function getStartOfMonth(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
+  const normalized = normalizeDatabaseDate(date);
+  return createDatabaseDate(
+    normalized.getUTCFullYear(),
+    normalized.getUTCMonth() + 1,
+    1,
+  );
 }
 
 export function getMonthGridStart(date: Date) {
   const firstDay = getStartOfMonth(date);
-  const offset = (firstDay.getDay() + 6) % 7;
-  const gridStart = new Date(firstDay);
-  gridStart.setDate(firstDay.getDate() - offset);
-  return gridStart;
+  const offset = (firstDay.getUTCDay() + 6) % 7;
+  return addDaysToDatabaseDate(firstDay, -offset);
 }
 
 export function getMonthGrid(date: Date) {
   const gridStart = getMonthGridStart(date);
 
   return Array.from({ length: 42 }, (_, index) => {
-    const currentDate = new Date(gridStart);
-    currentDate.setDate(gridStart.getDate() + index);
-    return currentDate;
+    return addDaysToDatabaseDate(gridStart, index);
   });
 }

@@ -115,7 +115,7 @@
 .datePickerCalendar {
 }
 
-.dateTimeInput {
+.dateInput {
   width: 100%;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
@@ -200,40 +200,6 @@
 
 .datePickerPopper :global(.react-datepicker__navigation-icon::before) {
   border-color: var(--muted);
-}
-
-.datePickerPopper :global(.react-datepicker__time-container) {
-  border-left: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
-  width: 6.8rem;
-}
-
-.datePickerPopper :global(.react-datepicker__time) {
-  background: transparent;
-}
-
-.datePickerPopper :global(.react-datepicker__time-box) {
-  width: 6.8rem;
-}
-
-.datePickerPopper :global(.react-datepicker__time-list) {
-  scrollbar-width: thin;
-}
-
-.datePickerPopper :global(.react-datepicker__time-list-item) {
-  height: 2.05rem;
-  line-height: 2.05rem;
-  font-size: 0.8rem;
-  color: color-mix(in srgb, var(--text) 88%, var(--muted));
-}
-
-.datePickerPopper :global(.react-datepicker__time-list-item:hover) {
-  background: color-mix(in srgb, var(--text) 10%, transparent);
-}
-
-.datePickerPopper :global(.react-datepicker__time-list-item--selected) {
-  background: color-mix(in srgb, var(--text) 84%, var(--bg));
-  color: var(--bg);
-  font-weight: 560;
 }
 
 .exerciseSection {

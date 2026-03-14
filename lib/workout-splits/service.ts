@@ -1,5 +1,6 @@
 import { prisma } from "../prisma";
 import { isPrismaSchemaMismatchError } from "../schema-compat";
+import { formatDatabaseDateValue } from "../workout-utils";
 import { normalizeWorkoutTypeSlug } from "../workout-utils";
 import type { WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger";
 import type { ParsedWorkoutSplit } from "./payload";
@@ -7,7 +8,6 @@ import {
   DEFAULT_WORKOUT_SPLIT_NAME,
   REST_DAY_WORKOUT_TYPE,
   SPLIT_WEEKDAYS,
-  createSplitLocalDateTime,
   getWeekdayForDate,
   sortSplitDays,
   type SplitWeekdayValue,
@@ -204,7 +204,7 @@ export function buildWorkoutLoggerInitialDataFromSplit(
   return {
     title: buildSplitWorkoutTitle(split, day),
     workoutType: day.workoutType,
-    performedAt: createSplitLocalDateTime(date),
+    performedAt: formatDatabaseDateValue(date),
     exercises: day.exercises.map((exercise) => ({
       name: exercise.exerciseDisplayName,
       sets: Array.from({ length: exercise.sets }, () => ({

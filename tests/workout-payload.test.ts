@@ -4,6 +4,7 @@ import {
   computeWorkoutTotalWeightLb,
   normalizeWorkoutPayload,
 } from "../lib/workouts/payload";
+import { formatDatabaseDateValue } from "../lib/workout-utils";
 
 type ParsedWorkoutResult = ReturnType<typeof normalizeWorkoutPayload>;
 type ParsedWorkoutValue = Exclude<ParsedWorkoutResult, { error: string }>["value"];
@@ -25,7 +26,7 @@ test("normalizeWorkoutPayload keeps pound inputs unchanged", () => {
     normalizeWorkoutPayload({
       title: "Push Day",
       workoutType: "Push",
-      performedAt: "2026-03-08T08:30",
+      performedAt: "2026-03-08",
       weightUnit: "LB",
       exercises: [
         {
@@ -43,11 +44,7 @@ test("normalizeWorkoutPayload keeps pound inputs unchanged", () => {
   assert.equal(value.workoutType, "Push");
   assert.equal(value.workoutTypeSlug, "push");
   assert.ok(value.performedAt instanceof Date);
-  assert.equal(value.performedAt.getFullYear(), 2026);
-  assert.equal(value.performedAt.getMonth(), 2);
-  assert.equal(value.performedAt.getDate(), 8);
-  assert.equal(value.performedAt.getHours(), 8);
-  assert.equal(value.performedAt.getMinutes(), 30);
+  assert.equal(formatDatabaseDateValue(value.performedAt), "2026-03-08");
   assert.equal(value.exercises[0]?.normalizedName, "bench press");
   assert.equal(value.exercises[0]?.sets[0]?.weightLb, "135");
   assert.equal(computeWorkoutTotalWeightLb(value).toString(), "1111.5");
@@ -58,7 +55,7 @@ test("normalizeWorkoutPayload converts kilogram inputs to stored pounds", () => 
     normalizeWorkoutPayload({
       title: "Leg Day",
       workoutType: "Lower Body",
-      performedAt: "2026-03-08T08:30",
+      performedAt: "2026-03-08",
       weightUnit: "KG",
       exercises: [
         {
@@ -81,7 +78,7 @@ test("normalizeWorkoutPayload converts kilogram inputs to stored pounds", () => 
 test("normalizeWorkoutPayload rejects exercises without valid sets", () => {
   const parsed = normalizeWorkoutPayload({
     title: "Push Day",
-    performedAt: "2026-03-08T08:30",
+    performedAt: "2026-03-08",
     weightUnit: "LB",
     exercises: [
       {

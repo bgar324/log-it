@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { isPrismaSchemaMismatchError } from "../schema-compat";
 import {
+  getCurrentPacificDate,
   normalizeExerciseName,
   normalizeWorkoutTypeSlug,
 } from "../workout-utils";
@@ -448,7 +449,7 @@ export async function duplicateWorkout(workoutId: string, userId: string) {
           (sourceWorkout.workoutType
             ? normalizeWorkoutTypeSlug(sourceWorkout.workoutType)
             : null),
-        performedAt: new Date(),
+        performedAt: getCurrentPacificDate(),
         weightUnit: "LB",
         exercises: sourceWorkout.exercises.map((exercise) => ({
           name: exercise.name,

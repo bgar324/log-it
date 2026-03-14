@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { normalizeExerciseName } from "@/lib/workout-utils";
+import { formatDatabaseDateValue, normalizeExerciseName } from "@/lib/workout-utils";
 
 type SessionAggregate = {
   workoutId: string;
@@ -145,12 +145,13 @@ export async function GET(request: NextRequest) {
       exerciseName,
       normalizedName,
       sessionsCount: sessions.length,
-      lastPerformedAt: lastSession?.performedAt.toISOString() ?? null,
+      lastPerformedAt:
+        lastSession === null ? null : formatDatabaseDateValue(lastSession.performedAt),
       lastSession: lastSession
         ? {
             workoutId: lastSession.workoutId,
             workoutTitle: lastSession.workoutTitle,
-            performedAt: lastSession.performedAt.toISOString(),
+            performedAt: formatDatabaseDateValue(lastSession.performedAt),
             setCount: lastSession.setCount,
             totalReps: lastSession.totalReps,
             bestWeight:

@@ -3,11 +3,11 @@ import test from "node:test";
 import { getWorkoutTypeColor } from "../lib/workout-splits/colors";
 import { normalizeWorkoutSplitPayload } from "../lib/workout-splits/payload";
 import {
-  createSplitLocalDateTime,
   getWeekdayForDate,
   parseDateKey,
   reorderSplitDays,
 } from "../lib/workout-splits/shared";
+import { formatDatabaseDateValue } from "../lib/workout-utils";
 import { normalizeExerciseSlug } from "../lib/workout-utils";
 
 test("normalizeExerciseSlug creates a canonical kebab-case slug", () => {
@@ -57,7 +57,7 @@ test("getWorkoutTypeColor is deterministic and honors the default push hue", () 
   assert.match(custom.background, /hsl\(/);
 });
 
-test("date helpers map dates to split weekdays and local input values", () => {
+test("date helpers map dates to split weekdays and date-only values", () => {
   const date = parseDateKey("2026-03-09");
 
   assert.ok(date);
@@ -67,7 +67,7 @@ test("date helpers map dates to split weekdays and local input values", () => {
   }
 
   assert.equal(getWeekdayForDate(date), "MONDAY");
-  assert.equal(createSplitLocalDateTime(date, new Date("2026-03-09T16:45:00")), "2026-03-09T16:45");
+  assert.equal(formatDatabaseDateValue(date), "2026-03-09");
 });
 
 test("reorderSplitDays moves a template into a new weekday slot", () => {

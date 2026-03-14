@@ -12,6 +12,12 @@ import {
   pickBestExerciseSuggestion,
 } from "@/lib/exercise-autofill";
 import {
+  formatDatabaseDateLabel,
+  formatDatabaseDateValue,
+  getCurrentPacificDate,
+  toDatabaseDateFromInput,
+} from "@/lib/workout-utils";
+import {
   convertStoredWeightToDisplay,
   formatWeightWithUnit,
   getWeightUnitLabel,
@@ -82,7 +88,6 @@ type WorkoutLoggerProps = {
 
 type WorkoutDraftStoragePayload = WorkoutDraftSnapshot & {
   weightUnit: WeightUnit;
-  savedAt: string;
 };
 
 type ExerciseSuggestionsPayload = {
@@ -117,56 +122,14 @@ function createExerciseDraft(id: string, setId: string): ExerciseDraft {
   };
 }
 
-function toLocalDateTimeInputValue(date: Date) {
-  const offsetMs = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-}
-
-function parseLocalDateTimeInputValue(value: string) {
-  const [datePart, timePart] = value.split("T");
-
-  if (!datePart || !timePart) {
-    return new Date();
-  }
-
-  const [year, month, day] = datePart
-    .split("-")
-    .map((part) => Number.parseInt(part, 10));
-  const [hours, minutes] = timePart
-    .split(":")
-    .map((part) => Number.parseInt(part, 10));
-
-  if (
-    !Number.isInteger(year) ||
-    !Number.isInteger(month) ||
-    !Number.isInteger(day) ||
-    !Number.isInteger(hours) ||
-    !Number.isInteger(minutes)
-  ) {
-    return new Date();
-  }
-
-  return new Date(year, month - 1, day, hours, minutes, 0, 0);
-}
-
 function normalizePerformedAtInput(value: string) {
   const trimmed = value.trim();
 
   if (!trimmed) {
-    return toLocalDateTimeInputValue(new Date());
+    return formatDatabaseDateValue(getCurrentPacificDate());
   }
 
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) {
-    return trimmed;
-  }
-
-  const parsed = new Date(trimmed);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return toLocalDateTimeInputValue(new Date());
-  }
-
-  return toLocalDateTimeInputValue(parsed);
+  return formatDatabaseDateValue(toDatabaseDateFromInput(trimmed));
 }
 
 function toSafeString(value: unknown) {
@@ -200,19 +163,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function formatAutosaveClock(value: string) {
-  const parsed = new Date(value);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
-}
-
 function createWorkoutDraftSnapshot(
   title: string,
   workoutType: string,
@@ -243,7 +193,6 @@ function persistWorkoutDraft(
   const payload: WorkoutDraftStoragePayload = {
     ...snapshot,
     weightUnit,
-    savedAt: new Date().toISOString(),
   };
 
   try {
@@ -251,9 +200,9 @@ function persistWorkoutDraft(
       WORKOUT_DRAFT_STORAGE_KEY,
       JSON.stringify(payload),
     );
-    return payload.savedAt;
+    return true;
   } catch {
-    return null;
+    return false;
   }
 }
 
@@ -278,10 +227,9 @@ function parseStoredWorkoutDraft(
       typeof parsed.workoutType === "string" ? parsed.workoutType : "";
     const performedAtSource =
       typeof parsed.performedAt === "string" ? parsed.performedAt : "";
-    const performedAt = toLocalDateTimeInputValue(
-      parseLocalDateTimeInputValue(performedAtSource),
+    const performedAt = formatDatabaseDateValue(
+      toDatabaseDateFromInput(performedAtSource),
     );
-    const savedAt = typeof parsed.savedAt === "string" ? parsed.savedAt : null;
     const weightUnit =
       parsed.weightUnit === "LB" || parsed.weightUnit === "KG"
         ? parsed.weightUnit
@@ -342,7 +290,6 @@ function parseStoredWorkoutDraft(
       workoutType,
       performedAt,
       exercises,
-      savedAt,
     };
   } catch {
     return null;
@@ -383,7 +330,7 @@ function createInitialLoggerState(initialData?: WorkoutLoggerInitialData) {
     return {
       title: "Gym session",
       workoutType: "",
-      performedAt: toLocalDateTimeInputValue(new Date()),
+      performedAt: formatDatabaseDateValue(getCurrentPacificDate()),
       exercises: [createExerciseDraft(INITIAL_EXERCISE_ID, INITIAL_SET_ID)],
       counters: {
         exercise: 1,
@@ -454,18 +401,15 @@ function summarizeDraftSets(exercise: ExerciseDraft) {
 }
 
 function formatExerciseInsightDate(value: string) {
-  const parsed = new Date(value);
-
-  if (Number.isNaN(parsed.getTime())) {
+  if (!value.trim()) {
     return "";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return formatDatabaseDateLabel(toDatabaseDateFromInput(value), {
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(parsed);
+    year: "numeric",
+  });
 }
 
 function formatDelta(value: number, suffix: string) {
@@ -512,9 +456,8 @@ export function WorkoutLogger({
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [didRestoreDraft, setDidRestoreDraft] = useState(false);
-  const [lastDraftSavedAt, setLastDraftSavedAt] = useState<string | null>(null);
   const performedAtDate = useMemo(
-    () => parseLocalDateTimeInputValue(performedAt),
+    () => toDatabaseDateFromInput(performedAt),
     [performedAt],
   );
 
@@ -543,13 +486,8 @@ export function WorkoutLogger({
       setExercises(hydrated.exercises);
       idCounterRef.current = hydrated.counters;
       setDidRestoreDraft(true);
-
-      if (storedDraft.savedAt) {
-        setLastDraftSavedAt(storedDraft.savedAt);
-      }
     } else {
       setDidRestoreDraft(false);
-      setLastDraftSavedAt(null);
 
       if (rawDraft) {
         window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
@@ -589,11 +527,7 @@ export function WorkoutLogger({
         exercises,
       );
       latestDraftSnapshotRef.current = snapshot;
-      const savedAt = persistWorkoutDraft(snapshot, weightUnit);
-
-      if (savedAt) {
-        setLastDraftSavedAt(savedAt);
-      }
+      persistWorkoutDraft(snapshot, weightUnit);
     }, WORKOUT_AUTOSAVE_DELAY_MS);
 
     return () => {
@@ -1094,17 +1028,12 @@ export function WorkoutLogger({
     }
   }
 
-  const autosaveClock = lastDraftSavedAt ? formatAutosaveClock(lastDraftSavedAt) : "";
   const backHref = isEditMode ? `/workouts/${workoutId}` : "/dashboard?view=workouts";
   const backLabel = isEditMode ? "Back to workout" : "Back to workouts";
   const pageTitle = isEditMode ? "Edit workout" : "Log workout";
   const autosaveMeta = isEditMode
     ? `Update sets, reps, and weight in ${weightUnitName} to keep this workout accurate.`
-    : `${didRestoreDraft ? "Draft restored. " : ""}${
-        autosaveClock
-          ? `Autosaved at ${autosaveClock}.`
-          : "Autosaves on this device while you log."
-      } All weights are in ${weightUnitName}.`;
+    : `${didRestoreDraft ? "Draft restored. " : ""}Autosaves on this device while you log. All weights are in ${weightUnitName}.`;
   const savingLabel = isEditMode ? "Saving changes..." : "Saving workout...";
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
@@ -1154,23 +1083,21 @@ export function WorkoutLogger({
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="workout-performed-at">
-                  Date & time
+                  Date
                 </label>
                 <DatePicker
                   id="workout-performed-at"
                   selected={performedAtDate}
                   onChange={(value: Date | null) => {
                     if (value) {
-                      setPerformedAt(toLocalDateTimeInputValue(value));
+                      setPerformedAt(formatDatabaseDateValue(value));
                     }
                   }}
-                  showTimeSelect
-                  timeIntervals={5}
-                  dateFormat="MM/dd/yyyy, hh:mm aa"
+                  dateFormat="MM/dd/yyyy"
                   calendarClassName={styles.datePickerCalendar}
                   wrapperClassName={styles.datePickerWrapper}
                   popperClassName={styles.datePickerPopper}
-                  className={`${styles.input} ${styles.dateTimeInput}`}
+                  className={`${styles.input} ${styles.dateInput}`}
                   showPopperArrow={false}
                 />
               </div>

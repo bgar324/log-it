@@ -51,7 +51,8 @@ npm run test:features
 Put new files in `tests/suites/integrity/` when the test validates a critical invariant, for example:
 - workout totals matching exported data
 - no duplicate weekdays after split reordering
-- local date/time inputs preserving the intended schedule
+- date-only workout inputs preserving the intended schedule
+- Pacific day-boundary handling
 
 Prefer pure logic tests over UI snapshots. They are faster, more stable, and better at catching data integrity regressions.
 
@@ -60,6 +61,7 @@ Prefer pure logic tests over UI snapshots. They are faster, more stable, and bet
 - Core helpers and payload parsers.
 - Workout export formatting.
 - Integrity invariants for scheduling and workout math.
+- Date-only workout storage and Pacific day boundaries.
 - Feature-level workout service behavior:
   create, edit, delete, and duplicate.
 

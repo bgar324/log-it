@@ -5,7 +5,19 @@ import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import { getUserWorkoutSplit } from "@/lib/workout-splits/service";
 import { getWeekdayForDate } from "@/lib/workout-splits/shared";
 import { convertStoredWeightToDisplay, toWeightNumber } from "@/lib/weight-unit";
-import { normalizeExerciseName } from "@/lib/workout-utils";
+import {
+  addDaysToDatabaseDate,
+  addMonthsToDatabaseDate,
+  createDatabaseDate,
+  daysBetweenDatabaseDates,
+  formatDatabaseDateLabel,
+  formatDatabaseDateValue,
+  formatDatabaseMonthValue,
+  getCurrentPacificDate,
+  normalizeExerciseName,
+  startOfDatabaseMonth,
+  startOfDatabaseWeek,
+} from "@/lib/workout-utils";
 import { DashboardClient } from "./dashboard-client";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
 
@@ -19,31 +31,8 @@ const DASHBOARD_VIEWS: DashboardView[] = [
 
 type SearchParams = Promise<{ view?: string }>;
 
-const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
-
-const MONTH_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  month: "2-digit",
-  day: "2-digit",
-  year: "2-digit",
-});
-
-const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  month: "long",
-  year: "numeric",
-});
-
-const TIMELINE_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
-
 const WEEKDAY_SHORT_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
   weekday: "short",
 });
 
@@ -65,54 +54,46 @@ function normalizeView(value: string | undefined): DashboardView {
     : "dashboard";
 }
 
-function startOfDay(date: Date) {
-  const value = new Date(date);
-  value.setHours(0, 0, 0, 0);
-  return value;
-}
-
-function startOfWeek(date: Date) {
-  const value = startOfDay(date);
-  const day = value.getDay();
-  const distanceFromMonday = (day + 6) % 7;
-  value.setDate(value.getDate() - distanceFromMonday);
-  return value;
-}
-
 function dateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return formatDatabaseDateValue(date);
 }
 
 function monthKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
+  return formatDatabaseMonthValue(date);
 }
 
 function shortDate(date: Date) {
-  return SHORT_DATE_FORMATTER.format(date);
+  return formatDatabaseDateLabel(date, {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function monthDateLabel(date: Date) {
-  return MONTH_DATE_FORMATTER.format(date);
+  return formatDatabaseDateLabel(date, {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  });
 }
 
 function monthLabel(date: Date) {
-  return MONTH_LABEL_FORMATTER.format(date);
+  return formatDatabaseDateLabel(date, {
+    month: "long",
+    year: "numeric",
+  });
 }
 
 function timelineDateLabel(date: Date) {
-  return TIMELINE_DATE_FORMATTER.format(date);
+  return formatDatabaseDateLabel(date, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function daysBetweenDays(from: Date, to: Date) {
-  const dayMs = 1000 * 60 * 60 * 24;
-  const fromStart = startOfDay(from).getTime();
-  const toStart = startOfDay(to).getTime();
-  return Math.max(0, Math.floor((fromStart - toStart) / dayMs));
+  return daysBetweenDatabaseDates(from, to);
 }
 
 async function loadRecentLogs(userId: string) {
@@ -195,23 +176,17 @@ export default async function DashboardPage({
   const user = await requireSessionUser();
   const weightUnit = user.preferredWeightUnit;
 
-  const now = new Date();
-  const weekStart = startOfWeek(now);
+  const now = getCurrentPacificDate();
+  const weekStart = startOfDatabaseWeek(now);
   const weekDays = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + index);
-    return date;
+    return addDaysToDatabaseDate(weekStart, index);
   });
 
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const previousMonthEnd = new Date(monthStart);
-
-  const trendStart = startOfDay(new Date(now));
-  trendStart.setDate(trendStart.getDate() - 55);
-
-  const progressStart = new Date(weekStart);
-  progressStart.setDate(progressStart.getDate() - 7 * 11);
+  const monthStart = startOfDatabaseMonth(now);
+  const previousMonthStart = addMonthsToDatabaseDate(monthStart, -1);
+  const previousMonthEnd = monthStart;
+  const trendStart = addDaysToDatabaseDate(now, -55);
+  const progressStart = addDaysToDatabaseDate(weekStart, -(7 * 11));
 
   const [
     totalWorkouts,
@@ -512,14 +487,14 @@ export default async function DashboardPage({
           const [lastYear, lastMonth] = sortedMonthKeys[sortedMonthKeys.length - 1]
             .split("-")
             .map(Number);
-          const firstMonthDate = new Date(firstYear, firstMonth - 1, 1);
-          const lastMonthDate = new Date(lastYear, lastMonth - 1, 1);
+          const firstMonthDate = createDatabaseDate(firstYear, firstMonth, 1);
+          const lastMonthDate = createDatabaseDate(lastYear, lastMonth, 1);
           const months: DashboardClientData["overview"]["workoutCalendar"]["monthCounts"] = [];
 
           for (
             const cursor = new Date(firstMonthDate);
             cursor.getTime() <= lastMonthDate.getTime();
-            cursor.setMonth(cursor.getMonth() + 1)
+            cursor.setUTCMonth(cursor.getUTCMonth() + 1)
           ) {
             const key = monthKey(cursor);
 
@@ -609,15 +584,13 @@ export default async function DashboardPage({
     .slice(0, 80);
 
   const progressWeeks = Array.from({ length: 12 }, (_, index) => {
-    const date = new Date(progressStart);
-    date.setDate(progressStart.getDate() + index * 7);
-    return date;
+    return addDaysToDatabaseDate(progressStart, index * 7);
   });
 
   const progressCounts = new Map<string, { sessions: number; volume: number }>();
 
   for (const log of progressLogs) {
-    const week = startOfWeek(log.performedAt);
+    const week = startOfDatabaseWeek(log.performedAt);
     const key = dateKey(week);
     const sessionVolume = toWeightNumber(log.totalWeightLb) ?? 0;
 

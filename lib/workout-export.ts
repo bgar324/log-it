@@ -3,6 +3,7 @@ import {
   formatWeightValue,
   type WeightUnit,
 } from "./weight-unit";
+import { formatDatabaseDateLabel } from "./workout-utils";
 import {
   REST_DAY_WORKOUT_TYPE,
   sortSplitDays,
@@ -29,11 +30,6 @@ type WorkoutClipboardPayload = {
   weightUnit: WeightUnit;
   exercises: WorkoutClipboardExercise[];
 };
-
-const WORKOUT_CLIPBOARD_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  month: "numeric",
-  day: "numeric",
-});
 
 const FULL_WEEKDAY_LABELS: Record<SplitWeekdayValue, string> = {
   MONDAY: "Monday",
@@ -76,7 +72,10 @@ export function formatWorkoutForClipboard(workout: WorkoutClipboardPayload) {
     workout.workoutType,
     normalizeLine(workout.title, "Workout"),
   );
-  const heading = `${WORKOUT_CLIPBOARD_DATE_FORMATTER.format(workout.performedAt)}: ${workoutLabel}`;
+  const heading = `${formatDatabaseDateLabel(workout.performedAt, {
+    month: "numeric",
+    day: "numeric",
+  })}: ${workoutLabel}`;
   const sections = workout.exercises.map((exercise) => {
     const exerciseName = normalizeLine(exercise.name, "Exercise");
     const setLines = exercise.sets.length

@@ -9,6 +9,7 @@ import {
   pickBestExerciseSuggestion,
 } from "@/lib/exercise-autofill";
 import { formatWorkoutSplitForClipboard } from "@/lib/workout-export";
+import { getCurrentPacificDate } from "@/lib/workout-utils";
 import {
   getWeekdayForDate,
   reorderSplitDays,
@@ -61,7 +62,7 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
   const router = useRouter();
   const [split, setSplit] = useState(initialSplit);
   const [selectedWeekday, setSelectedWeekday] = useState<SplitWeekdayValue>(
-    getWeekdayForDate(new Date()),
+    getWeekdayForDate(getCurrentPacificDate()),
   );
   const [saveState, setSaveState] = useState<SaveState>({
     kind: "idle",

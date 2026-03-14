@@ -10,23 +10,19 @@ import {
   formatWeightWithUnit,
   getWeightUnitLabel,
 } from "@/lib/weight-unit";
-import { normalizeExerciseName } from "@/lib/workout-utils";
+import {
+  daysBetweenDatabaseDates,
+  formatDatabaseDateLabel,
+  getCurrentPacificDate,
+  normalizeExerciseName,
+} from "@/lib/workout-utils";
 import { ExerciseDetailChart } from "./exercise-detail-chart";
 import styles from "./exercise-detail.module.css";
 
 type ExerciseDetailParams = Promise<{ exerciseKey: string }>;
 
-function startOfDay(date: Date) {
-  const value = new Date(date);
-  value.setHours(0, 0, 0, 0);
-  return value;
-}
-
 function daysBetweenDays(from: Date, to: Date) {
-  const dayMs = 1000 * 60 * 60 * 24;
-  const fromStart = startOfDay(from).getTime();
-  const toStart = startOfDay(to).getTime();
-  return Math.max(0, Math.floor((fromStart - toStart) / dayMs));
+  return daysBetweenDatabaseDates(from, to);
 }
 
 function daysAgoLabel(days: number) {
@@ -41,21 +37,19 @@ function daysAgoLabel(days: number) {
   return `${days} days ago`;
 }
 
-function formatDateTime(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(value: Date) {
+  return formatDatabaseDateLabel(value, {
     month: "short",
     day: "numeric",
     year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(value);
+  });
 }
 
 function formatShortDate(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+  return formatDatabaseDateLabel(value, {
     month: "short",
     day: "numeric",
-  }).format(value);
+  });
 }
 
 type ExerciseLogRow = {
@@ -291,7 +285,7 @@ export default async function ExerciseDetailPage({
     0,
   );
   const lastHit = sessions[0].performedAt;
-  const daysSinceLastHit = daysBetweenDays(new Date(), lastHit);
+  const daysSinceLastHit = daysBetweenDays(getCurrentPacificDate(), lastHit);
   const averageRepsPerSet =
     totalSetCount > 0 ? Number((totalReps / totalSetCount).toFixed(1)) : 0;
   const averageLoadPerSession =
@@ -301,7 +295,7 @@ export default async function ExerciseDetailPage({
     .sort((a, b) => a.performedAt.getTime() - b.performedAt.getTime())
     .map((session) => ({
       label: formatShortDate(session.performedAt),
-      performedAtLabel: formatDateTime(session.performedAt),
+      performedAtLabel: formatDate(session.performedAt),
       bestWeight: Number(session.bestWeight.toFixed(2)),
       topSetReps: session.topSetReps,
       estimatedOneRepMax: Number(
@@ -323,7 +317,7 @@ export default async function ExerciseDetailPage({
           <p className={styles.label}>Exercise</p>
           <h1 className={styles.title}>{displayName}</h1>
           <p className={styles.subtitle}>
-            Last hit {formatDateTime(lastHit)} ({daysAgoLabel(daysSinceLastHit)}
+            Last hit {formatDate(lastHit)} ({daysAgoLabel(daysSinceLastHit)}
             )
           </p>
         </section>
@@ -430,7 +424,7 @@ export default async function ExerciseDetailPage({
                 {sessions.map((session) => (
                   <tr key={session.workoutId}>
                     <td>{session.workoutTitle}</td>
-                    <td>{formatDateTime(session.performedAt)}</td>
+                    <td>{formatDate(session.performedAt)}</td>
                     <td>{session.setCount}</td>
                     <td>{session.totalReps}</td>
                     <td>{formatWeightWithUnit(session.bestWeight, weightUnit)}</td>

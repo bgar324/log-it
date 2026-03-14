@@ -4,6 +4,7 @@ import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import { formatWeightInputValueFromPounds, toWeightNumber } from "@/lib/weight-unit";
+import { formatDatabaseDateValue } from "@/lib/workout-utils";
 
 type EditWorkoutPageParams = Promise<{ workoutId: string }>;
 
@@ -96,7 +97,7 @@ export default async function EditWorkoutPage({
   const initialData: WorkoutLoggerInitialData = {
     title: workout.title,
     workoutType: workout.workoutType ?? "",
-    performedAt: workout.performedAt.toISOString(),
+    performedAt: formatDatabaseDateValue(workout.performedAt),
     exercises: workout.exercises.map((exercise) => ({
       name: exercise.name,
       sets: exercise.sets.map((setItem) => ({

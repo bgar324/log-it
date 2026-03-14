@@ -9,19 +9,18 @@ import {
   convertStoredWeightToDisplay,
   formatWeightWithUnit,
 } from "@/lib/weight-unit";
+import { formatDatabaseDateLabel } from "@/lib/workout-utils";
 import { WorkoutDetailActions } from "./workout-detail-actions";
 import styles from "./workout-detail.module.css";
 
 type WorkoutPageParams = Promise<{ workoutId: string }>;
 
 function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+  return formatDatabaseDateLabel(value, {
     month: "short",
     day: "numeric",
     year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(value);
+  });
 }
 
 export default async function WorkoutDetailPage({

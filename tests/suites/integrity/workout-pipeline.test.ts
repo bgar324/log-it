@@ -5,6 +5,7 @@ import {
   normalizeWorkoutPayload,
 } from "../../../lib/workouts/payload";
 import { formatWorkoutForClipboard } from "../../../lib/workout-export";
+import { formatDatabaseDateValue } from "../../../lib/workout-utils";
 
 type ParsedWorkoutResult = ReturnType<typeof normalizeWorkoutPayload>;
 type ParsedWorkoutValue = Exclude<ParsedWorkoutResult, { error: string }>["value"];
@@ -26,7 +27,7 @@ test("workout logging pipeline keeps totals, normalized names, and clipboard exp
     normalizeWorkoutPayload({
       title: " Evening Pull ",
       workoutType: " Pull ",
-      performedAt: "2026-03-12T18:05",
+      performedAt: "2026-03-12",
       weightUnit: "KG",
       exercises: [
         {
@@ -47,6 +48,7 @@ test("workout logging pipeline keeps totals, normalized names, and clipboard exp
   assert.equal(parsed.title, "Evening Pull");
   assert.equal(parsed.workoutType, "Pull");
   assert.equal(parsed.workoutTypeSlug, "pull");
+  assert.equal(formatDatabaseDateValue(parsed.performedAt), "2026-03-12");
   assert.equal(parsed.exercises[0]?.normalizedName, "lat pulldown");
   assert.equal(parsed.exercises[1]?.sets[0]?.weightLb, null);
 
@@ -71,7 +73,7 @@ test("workout parsing strips corrupt rows but preserves a valid workout core", (
   const parsed = expectParsedWorkout(
     normalizeWorkoutPayload({
       title: "   ",
-      performedAt: "2026-04-02T06:30",
+      performedAt: "2026-04-02",
       weightUnit: "stone",
       exercises: [
         {

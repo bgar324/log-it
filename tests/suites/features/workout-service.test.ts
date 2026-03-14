@@ -10,6 +10,11 @@ import {
   WORKOUT_NOT_FOUND_ERROR,
 } from "../../../lib/workouts/service";
 import type { ParsedWorkout } from "../../../lib/workouts/payload";
+import {
+  createDatabaseDate,
+  formatDatabaseDateValue,
+  getCurrentPacificDate,
+} from "../../../lib/workout-utils";
 
 type TransactionMock = {
   workoutLog: {
@@ -40,7 +45,7 @@ const BASE_WORKOUT: ParsedWorkout = {
   title: "Pull Day",
   workoutType: "Pull",
   workoutTypeSlug: "pull",
-  performedAt: new Date("2026-03-12T18:05:00.000Z"),
+  performedAt: createDatabaseDate(2026, 3, 12),
   weightUnit: "LB",
   exercises: [
     {
@@ -177,6 +182,12 @@ test("createWorkout writes the workout log, exercises, sets, and exercise catalo
     ),
     "1905",
   );
+  assert.equal(
+    formatDatabaseDateValue(
+      (createdWorkout?.data as { performedAt: Date }).performedAt,
+    ),
+    "2026-03-12",
+  );
 
   const firstExercise = calls.workoutExerciseCreate[0];
   const firstExerciseData = firstExercise?.data as {
@@ -226,7 +237,7 @@ test("updateWorkout replaces exercises and resynchronizes affected exercise reco
     title: "Upper Reload",
     workoutType: "Upper",
     workoutTypeSlug: "upper",
-    performedAt: new Date("2026-03-13T18:05:00.000Z"),
+    performedAt: createDatabaseDate(2026, 3, 13),
     weightUnit: "LB",
     exercises: [
       {
@@ -291,6 +302,10 @@ test("updateWorkout replaces exercises and resynchronizes affected exercise reco
   assert.equal(updatedWorkout.title, "Upper Reload");
   assert.equal(decimalString(updatedWorkout.totalWeightLb), "760");
   assert.equal(updatedWorkout.workoutType, "Upper");
+  assert.equal(
+    formatDatabaseDateValue(updatedWorkout.performedAt as Date),
+    "2026-03-13",
+  );
 });
 
 test("updateWorkout throws a not-found error when the target workout does not exist", async () => {
@@ -335,7 +350,7 @@ test("deleteWorkout removes the workout and prunes orphaned exercise records", a
 
 test("duplicateWorkout clones the source workout into a new workout record", async () => {
   const { tx, calls } = createDefaultTransactionMock();
-  const before = Date.now();
+  const pacificDateBefore = formatDatabaseDateValue(getCurrentPacificDate());
 
   tx.workoutLog.findFirst = async (args) => {
     calls.workoutLogFindFirst.push(args as Record<string, unknown>);
@@ -356,7 +371,7 @@ test("duplicateWorkout clones the source workout into a new workout record", asy
   withMockedTransaction(async (callback) => callback(tx));
 
   const result = await duplicateWorkout("workout-1", "user-1");
-  const after = Date.now();
+  const pacificDateAfter = formatDatabaseDateValue(getCurrentPacificDate());
 
   assert.deepEqual(result, { id: "workout-created" });
   assert.equal(calls.workoutLogCreate.length, 1);
@@ -368,8 +383,11 @@ test("duplicateWorkout clones the source workout into a new workout record", asy
   assert.equal(decimalString(createdWorkout.totalWeightLb), "1125");
 
   const performedAt = createdWorkout.performedAt as Date;
-  assert.ok(performedAt.getTime() >= before);
-  assert.ok(performedAt.getTime() <= after);
+  assert.ok(
+    [pacificDateBefore, pacificDateAfter].includes(
+      formatDatabaseDateValue(performedAt),
+    ),
+  );
 
   const createdExercise = calls.workoutExerciseCreate[0]?.data as {
     normalizedName?: string;

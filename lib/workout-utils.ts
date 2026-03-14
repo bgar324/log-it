@@ -33,93 +33,184 @@ export function normalizeWorkoutTypeSlug(value: string) {
   return toCanonicalSlug(value);
 }
 
-function padDateTimePart(value: number, length = 2) {
+export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
+
+function padDatePart(value: number, length = 2) {
   return String(value).padStart(length, "0");
 }
 
-export function formatDatabaseDateTimeValue(value: Date) {
-  return [
-    `${value.getFullYear()}-${padDateTimePart(value.getMonth() + 1)}-${padDateTimePart(
-      value.getDate(),
-    )}`,
-    `${padDateTimePart(value.getHours())}:${padDateTimePart(value.getMinutes())}:${padDateTimePart(
-      value.getSeconds(),
-    )}.${padDateTimePart(value.getMilliseconds(), 3)}`,
-  ].join("T");
+function parseDateParts(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+
+  if (!match) {
+    return null;
+  }
+
+  const [, yearPart, monthPart, dayPart] = match;
+  const year = Number.parseInt(yearPart, 10);
+  const month = Number.parseInt(monthPart, 10);
+  const day = Number.parseInt(dayPart, 10);
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return null;
+  }
+
+  return { year, month, day };
 }
 
-export function toDatabaseDateTimeFromLocalInput(value: string) {
+function createFormatter(options: Intl.DateTimeFormatOptions, locale = "en-US") {
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: "UTC",
+    ...options,
+  });
+}
+
+const PACIFIC_DATE_PARTS_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: PACIFIC_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+export function createDatabaseDate(year: number, month: number, day: number) {
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+}
+
+export function getDatabaseDateParts(date: Date) {
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate(),
+  };
+}
+
+export function normalizeDatabaseDate(date: Date) {
+  const { year, month, day } = getDatabaseDateParts(date);
+  return createDatabaseDate(year, month, day);
+}
+
+export function formatDatabaseDateValue(value: Date) {
+  const { year, month, day } = getDatabaseDateParts(normalizeDatabaseDate(value));
+  return `${year}-${padDatePart(month)}-${padDatePart(day)}`;
+}
+
+export function formatDatabaseMonthValue(value: Date) {
+  const { year, month } = getDatabaseDateParts(normalizeDatabaseDate(value));
+  return `${year}-${padDatePart(month)}`;
+}
+
+export function formatDatabaseDateLabel(
+  value: Date,
+  options: Intl.DateTimeFormatOptions,
+  locale = "en-US",
+) {
+  return createFormatter(options, locale).format(normalizeDatabaseDate(value));
+}
+
+export function addDaysToDatabaseDate(date: Date, days: number) {
+  const normalized = normalizeDatabaseDate(date);
+
+  return new Date(
+    Date.UTC(
+      normalized.getUTCFullYear(),
+      normalized.getUTCMonth(),
+      normalized.getUTCDate() + days,
+      12,
+      0,
+      0,
+      0,
+    ),
+  );
+}
+
+export function addMonthsToDatabaseDate(date: Date, months: number) {
+  const normalized = normalizeDatabaseDate(date);
+
+  return new Date(
+    Date.UTC(
+      normalized.getUTCFullYear(),
+      normalized.getUTCMonth() + months,
+      normalized.getUTCDate(),
+      12,
+      0,
+      0,
+      0,
+    ),
+  );
+}
+
+export function startOfDatabaseWeek(date: Date) {
+  const normalized = normalizeDatabaseDate(date);
+  const distanceFromMonday = (normalized.getUTCDay() + 6) % 7;
+  return addDaysToDatabaseDate(normalized, -distanceFromMonday);
+}
+
+export function startOfDatabaseMonth(date: Date) {
+  const { year, month } = getDatabaseDateParts(normalizeDatabaseDate(date));
+  return createDatabaseDate(year, month, 1);
+}
+
+export function daysBetweenDatabaseDates(from: Date, to: Date) {
+  const fromDate = normalizeDatabaseDate(from);
+  const toDate = normalizeDatabaseDate(to);
+  const dayMs = 1000 * 60 * 60 * 24;
+
+  return Math.max(
+    0,
+    Math.floor((fromDate.getTime() - toDate.getTime()) / dayMs),
+  );
+}
+
+export function getCurrentPacificDate(referenceDate = new Date()) {
+  const parts = PACIFIC_DATE_PARTS_FORMATTER.formatToParts(referenceDate);
+  const year = Number.parseInt(parts.find((part) => part.type === "year")?.value ?? "", 10);
+  const month = Number.parseInt(parts.find((part) => part.type === "month")?.value ?? "", 10);
+  const day = Number.parseInt(parts.find((part) => part.type === "day")?.value ?? "", 10);
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return normalizeDatabaseDate(referenceDate);
+  }
+
+  return createDatabaseDate(year, month, day);
+}
+
+export function toDatabaseDateFromInput(
+  value: string,
+  fallbackDate = getCurrentPacificDate(),
+) {
   const trimmed = value.trim();
 
   if (!trimmed) {
-    return new Date();
+    return normalizeDatabaseDate(fallbackDate);
   }
 
-  const localDateTimeMatch =
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/.exec(
-      trimmed,
-    );
+  const exactDateParts = parseDateParts(trimmed);
 
-  if (localDateTimeMatch) {
-    const [
-      ,
-      yearText,
-      monthText,
-      dayText,
-      hourText,
-      minuteText,
-      secondText = "0",
-      millisecondText = "0",
-    ] = localDateTimeMatch;
-    const year = Number.parseInt(yearText, 10);
-    const month = Number.parseInt(monthText, 10);
-    const day = Number.parseInt(dayText, 10);
-    const hour = Number.parseInt(hourText, 10);
-    const minute = Number.parseInt(minuteText, 10);
-    const second = Number.parseInt(secondText, 10);
-    const millisecond = Number.parseInt(
-      millisecondText.padEnd(3, "0"),
-      10,
+  if (exactDateParts) {
+    const exactDate = createDatabaseDate(
+      exactDateParts.year,
+      exactDateParts.month,
+      exactDateParts.day,
     );
 
     if (
-      Number.isInteger(year) &&
-      Number.isInteger(month) &&
-      Number.isInteger(day) &&
-      Number.isInteger(hour) &&
-      Number.isInteger(minute) &&
-      Number.isInteger(second) &&
-      Number.isInteger(millisecond)
+      exactDate.getUTCFullYear() === exactDateParts.year &&
+      exactDate.getUTCMonth() === exactDateParts.month - 1 &&
+      exactDate.getUTCDate() === exactDateParts.day
     ) {
-      const parsedLocalDateTime = new Date(
-        year,
-        month - 1,
-        day,
-        hour,
-        minute,
-        second,
-        millisecond,
-      );
-
-      if (
-        parsedLocalDateTime.getFullYear() === year &&
-        parsedLocalDateTime.getMonth() === month - 1 &&
-        parsedLocalDateTime.getDate() === day &&
-        parsedLocalDateTime.getHours() === hour &&
-        parsedLocalDateTime.getMinutes() === minute &&
-        parsedLocalDateTime.getSeconds() === second &&
-        parsedLocalDateTime.getMilliseconds() === millisecond
-      ) {
-        return parsedLocalDateTime;
-      }
+      return exactDate;
     }
   }
 
   const parsed = new Date(trimmed);
 
   if (Number.isNaN(parsed.getTime())) {
-    return new Date();
+    return normalizeDatabaseDate(fallbackDate);
   }
 
-  return parsed;
+  return createDatabaseDate(
+    parsed.getFullYear(),
+    parsed.getMonth() + 1,
+    parsed.getDate(),
+  );
 }
