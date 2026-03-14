@@ -46,15 +46,31 @@ function normalizeLine(value: string | null | undefined, fallback: string) {
   return trimmed ? trimmed : fallback;
 }
 
+function normalizeStoredWeightValue(weight: StoredWeightValue) {
+  if (typeof weight === "number") {
+    return Number.isFinite(weight) ? weight : null;
+  }
+
+  if (typeof weight === "string") {
+    const parsed = Number(weight);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  if (weight && typeof weight.toNumber === "function") {
+    const parsed = weight.toNumber();
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
 function formatWorkoutSetForClipboard(
   set: WorkoutClipboardSet,
   weightUnit: WeightUnit,
 ) {
   const reps = Math.max(0, Math.trunc(set.reps));
-  const rawWeight =
-    typeof set.weightLb === "string" ? Number(set.weightLb) : set.weightLb;
   const displayWeight = convertStoredWeightToDisplay(
-    Number.isFinite(rawWeight) ? rawWeight : null,
+    normalizeStoredWeightValue(set.weightLb),
     weightUnit,
   );
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { Copy, CopyPlus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { copyTextToClipboard } from "@/lib/clipboard";
@@ -29,10 +30,13 @@ export function WorkoutDetailActions({
     }
 
     try {
-      await copyTextToClipboard(workoutExport);
+      const result = await copyTextToClipboard(workoutExport);
       setFeedback({
         kind: "success",
-        message: "Copied workout to clipboard.",
+        message:
+          result === "clipboard"
+            ? "Copied workout to clipboard."
+            : "Clipboard blocked. Workout text opened for manual copy.",
       });
     } catch (caughtError) {
       setFeedback({
@@ -124,24 +128,34 @@ export function WorkoutDetailActions({
         className={styles.actionButton}
         onClick={() => void handleCopy()}
         disabled={status !== "idle"}
+        aria-label="Copy workout"
       >
-        Copy workout
+        <Copy className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+        <span className={styles.actionButtonLabel}>Copy workout</span>
       </button>
       <button
         type="button"
         className={styles.actionButton}
         onClick={handleDuplicate}
         disabled={status !== "idle"}
+        aria-label={status === "duplicating" ? "Duplicating workout" : "Duplicate workout"}
       >
-        {status === "duplicating" ? "Duplicating..." : "Duplicate workout"}
+        <CopyPlus className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+        <span className={styles.actionButtonLabel}>
+          {status === "duplicating" ? "Duplicating..." : "Duplicate workout"}
+        </span>
       </button>
       <button
         type="button"
         className={`${styles.actionButton} ${styles.dangerActionButton}`}
         onClick={handleDelete}
         disabled={status !== "idle"}
+        aria-label={status === "deleting" ? "Deleting workout" : "Delete workout"}
       >
-        {status === "deleting" ? "Deleting..." : "Delete workout"}
+        <Trash2 className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+        <span className={styles.actionButtonLabel}>
+          {status === "deleting" ? "Deleting..." : "Delete workout"}
+        </span>
       </button>
       {feedback.kind !== "idle" ? (
         <p

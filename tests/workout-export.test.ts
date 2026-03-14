@@ -33,6 +33,50 @@ test("formatWorkoutForClipboard produces compact plain-text output", () => {
   );
 });
 
+test("formatWorkoutForClipboard handles decimal-backed stored weights", () => {
+  const formatted = formatWorkoutForClipboard({
+    performedAt: createDatabaseDate(2026, 3, 14),
+    workoutType: "Legs",
+    title: "Legs",
+    weightUnit: "LB",
+    exercises: [
+      {
+        name: "Barbell Squat",
+        sets: [
+          {
+            reps: 3,
+            weightLb: {
+              toNumber: () => 225,
+            },
+          },
+          {
+            reps: 6,
+            weightLb: {
+              toNumber: () => 185,
+            },
+          },
+        ],
+      },
+      {
+        name: "Glute Bridge",
+        sets: [
+          {
+            reps: 5,
+            weightLb: {
+              toNumber: () => 275,
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(
+    formatted,
+    "3/14: Legs\n\nBarbell Squat:\n225x3\n185x6\n\nGlute Bridge:\n275x5",
+  );
+});
+
 test("formatWorkoutSplitForClipboard produces weekday-by-weekday plain text", () => {
   const formatted = formatWorkoutSplitForClipboard({
     id: "split-1",

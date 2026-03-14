@@ -36,7 +36,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
   font-size: 0.76rem;
+  touch-action: manipulation;
 }
 
 .actionButton {
@@ -49,9 +51,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
   font-family: inherit;
   font-size: 0.76rem;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .backLink:hover,
@@ -82,6 +86,17 @@
 
 .dangerActionButton:hover {
   background: color-mix(in srgb, #a43838 12%, transparent);
+}
+
+.actionButtonIcon {
+  width: 0.88rem;
+  height: 0.88rem;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.actionButtonLabel {
+  white-space: nowrap;
 }
 
 .actionStatus {
@@ -215,6 +230,42 @@
   border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
   padding: 0.5rem 0.2rem;
   font-size: 0.81rem;
+}
+
+@media (max-width: 759px) {
+  .topRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .topActions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+  .detailActionsGroup {
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .actionLink,
+  .actionButton {
+    width: 2.3rem;
+    min-width: 2.3rem;
+    padding: 0;
+  }
+
+  .actionButtonLabel {
+    display: none;
+  }
+
+  .actionStatus {
+    flex-basis: 100%;
+    text-align: right;
+  }
 }
 
 @media (min-width: 760px) {

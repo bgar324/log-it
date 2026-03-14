@@ -345,10 +345,13 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
 
   async function handleCopySplit() {
     try {
-      await copyTextToClipboard(formatWorkoutSplitForClipboard(split));
+      const result = await copyTextToClipboard(formatWorkoutSplitForClipboard(split));
       setCopyState({
         kind: "success",
-        message: "Copied split to clipboard.",
+        message:
+          result === "clipboard"
+            ? "Copied split to clipboard."
+            : "Clipboard blocked. Split text opened for manual copy.",
       });
     } catch (error) {
       setCopyState({

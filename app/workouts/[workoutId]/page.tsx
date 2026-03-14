@@ -1,3 +1,4 @@
+import { SquarePen } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ThemeToggle } from "@/app/components/theme-toggle";
@@ -153,8 +154,13 @@ export default async function WorkoutDetailPage({
             Back to workouts
           </Link>
           <div className={styles.topActions}>
-            <Link href={`/workouts/${workout.id}/edit`} className={styles.actionLink}>
-              Edit workout
+            <Link
+              href={`/workouts/${workout.id}/edit`}
+              className={styles.actionLink}
+              aria-label="Edit workout"
+            >
+              <SquarePen className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+              <span className={styles.actionButtonLabel}>Edit workout</span>
             </Link>
             <WorkoutDetailActions workoutId={workout.id} workoutExport={workoutExport} />
             <ThemeToggle />
