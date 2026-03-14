@@ -10,7 +10,10 @@ import {
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ComponentType, FormEvent, useEffect, useMemo, useState } from "react";
+import { CSSProperties, ComponentType, FormEvent, useEffect, useMemo, useState } from "react";
+import { getWorkoutTypeColor } from "@/lib/workout-splits/colors";
+import { getWeekdayForDate } from "@/lib/workout-splits/shared";
+import { createDatabaseDate } from "@/lib/workout-utils";
 import {
   formatWeightWithUnit,
   type WeightUnit,
@@ -215,6 +218,10 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       ),
     [data.overview.workoutCalendar.dayCounts],
   );
+  const splitDayByWeekday = useMemo(
+    () => new Map(data.split.days.map((day) => [day.weekday, day])),
+    [data.split.days],
+  );
   const calendarCells = useMemo(() => {
     const parsedMonth = parseMonthKey(selectedCalendarMonth.monthKey);
 
@@ -229,6 +236,8 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       key: string;
       dayNumber: number | null;
       workoutCount: number;
+      workoutType: string | null;
+      style?: CSSProperties;
     }> = [];
 
     for (let index = 0; index < leadingEmptySlots; index += 1) {
@@ -236,16 +245,36 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
         key: `empty-start-${index}`,
         dayNumber: null,
         workoutCount: 0,
+        workoutType: null,
       });
     }
 
     for (let day = 1; day <= daysInMonth; day += 1) {
       const currentDateKey = dateKeyForParts(parsedMonth.year, parsedMonth.month, day);
+      const workoutCount = workoutDaysByDateKey.get(currentDateKey) ?? 0;
+      const splitDay =
+        data.split.id === null
+          ? null
+          : splitDayByWeekday.get(
+              getWeekdayForDate(createDatabaseDate(parsedMonth.year, parsedMonth.month, day)),
+            ) ?? null;
+      const workoutColors =
+        workoutCount > 0 && splitDay ? getWorkoutTypeColor(splitDay.workoutType) : null;
 
       cells.push({
         key: currentDateKey,
         dayNumber: day,
-        workoutCount: workoutDaysByDateKey.get(currentDateKey) ?? 0,
+        workoutCount,
+        workoutType: splitDay?.workoutType ?? null,
+        style:
+          workoutColors === null
+            ? undefined
+            : ({
+                "--calendar-day-border": workoutColors.border,
+                "--calendar-day-background": workoutColors.background,
+                "--calendar-day-text": workoutColors.text,
+                "--calendar-day-count": workoutColors.accent,
+              } as CSSProperties),
       });
     }
 
@@ -256,11 +285,12 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
         key: `empty-end-${index}`,
         dayNumber: null,
         workoutCount: 0,
+        workoutType: null,
       });
     }
 
     return cells;
-  }, [selectedCalendarMonth.monthKey, workoutDaysByDateKey]);
+  }, [data.split.id, selectedCalendarMonth.monthKey, splitDayByWeekday, workoutDaysByDateKey]);
   const canGoToPreviousCalendarMonth = calendarMonthIndex > 0;
   const canGoToNextCalendarMonth = calendarMonthIndex < calendarMonthOptions.length - 1;
 
@@ -621,11 +651,12 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                         className={`${styles.calendarDay} ${
                           cell.workoutCount > 0 ? styles.calendarDayActive : ""
                         }`}
+                        style={cell.style}
                         title={
                           cell.workoutCount > 0
                             ? `${cell.workoutCount} workout${
                                 cell.workoutCount === 1 ? "" : "s"
-                              } logged`
+                              } logged${cell.workoutType ? ` · ${cell.workoutType} day on your split` : ""}`
                             : "No workout logged"
                         }
                       >

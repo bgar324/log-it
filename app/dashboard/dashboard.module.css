@@ -387,6 +387,10 @@
 }
 
 .calendarDay {
+  --calendar-day-border: color-mix(in srgb, var(--text) 22%, transparent);
+  --calendar-day-background: color-mix(in srgb, var(--text) 12%, transparent);
+  --calendar-day-text: var(--text);
+  --calendar-day-count: color-mix(in srgb, var(--text) 90%, var(--muted));
   border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
   background: color-mix(in srgb, var(--bg) 26%, var(--surface));
   color: color-mix(in srgb, var(--text) 88%, var(--muted));
@@ -397,10 +401,10 @@
 }
 
 .calendarDayActive {
-  border-color: color-mix(in srgb, var(--text) 22%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 38%, transparent);
-  background: color-mix(in srgb, var(--text) 12%, transparent);
-  color: var(--text);
+  border-color: var(--calendar-day-border);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--calendar-day-border) 46%, transparent);
+  background: var(--calendar-day-background);
+  color: var(--calendar-day-text);
 }
 
 .calendarDayNumber {
@@ -418,7 +422,7 @@
 }
 
 .calendarDayActive .calendarDayCount {
-  color: color-mix(in srgb, var(--text) 90%, var(--muted));
+  color: var(--calendar-day-count);
 }
 
 .calendarDayEmpty {
