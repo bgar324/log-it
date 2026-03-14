@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import {
   normalizeExerciseDisplayName,
   normalizeExerciseLookupKey,
   pickBestExerciseSuggestion,
 } from "@/lib/exercise-autofill";
+import { formatWorkoutSplitForClipboard } from "@/lib/workout-export";
 import {
   getWeekdayForDate,
   reorderSplitDays,
@@ -62,6 +64,13 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     getWeekdayForDate(new Date()),
   );
   const [saveState, setSaveState] = useState<SaveState>({
+    kind: "idle",
+    message: "",
+  });
+  const [copyState, setCopyState] = useState<{
+    kind: "idle" | "success" | "error";
+    message: string;
+  }>({
     kind: "idle",
     message: "",
   });
@@ -333,6 +342,21 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     }
   }
 
+  async function handleCopySplit() {
+    try {
+      await copyTextToClipboard(formatWorkoutSplitForClipboard(split));
+      setCopyState({
+        kind: "success",
+        message: "Copied split to clipboard.",
+      });
+    } catch (error) {
+      setCopyState({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Unable to copy split.",
+      });
+    }
+  }
+
   if (!selectedDay) {
     return null;
   }
@@ -349,14 +373,24 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
             </p>
           </div>
 
-          <button
-            type="button"
-            className={splitStyles.primaryButton}
-            onClick={() => void handleSave()}
-            disabled={saveState.kind === "saving"}
-          >
-            {saveState.kind === "saving" ? "Saving..." : "Save split"}
-          </button>
+          <div className={splitStyles.splitSummaryActions}>
+            <button
+              type="button"
+              className={splitStyles.inlineButton}
+              onClick={() => void handleCopySplit()}
+              disabled={saveState.kind === "saving"}
+            >
+              Copy split
+            </button>
+            <button
+              type="button"
+              className={splitStyles.primaryButton}
+              onClick={() => void handleSave()}
+              disabled={saveState.kind === "saving"}
+            >
+              {saveState.kind === "saving" ? "Saving..." : "Save split"}
+            </button>
+          </div>
         </div>
 
         <label className={splitStyles.editorField}>
@@ -410,6 +444,19 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
             role={saveState.kind === "error" ? "alert" : undefined}
           >
             {saveState.message}
+          </p>
+        ) : null}
+
+        {copyState.kind !== "idle" ? (
+          <p
+            className={`${splitStyles.status} ${
+              copyState.kind === "success"
+                ? splitStyles.statusSuccess
+                : splitStyles.statusError
+            }`}
+            role={copyState.kind === "error" ? "alert" : "status"}
+          >
+            {copyState.message}
           </p>
         ) : null}
       </section>

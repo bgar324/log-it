@@ -2,20 +2,48 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import styles from "./workout-detail.module.css";
 
 type WorkoutDetailActionsProps = {
   workoutId: string;
+  workoutExport: string;
 };
 
 export function WorkoutDetailActions({
   workoutId,
+  workoutExport,
 }: WorkoutDetailActionsProps) {
   const router = useRouter();
   const [status, setStatus] = useState<"idle" | "duplicating" | "deleting">(
     "idle",
   );
-  const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{
+    kind: "idle" | "success" | "error";
+    message: string;
+  }>({ kind: "idle", message: "" });
+
+  async function handleCopy() {
+    if (status !== "idle") {
+      return;
+    }
+
+    try {
+      await copyTextToClipboard(workoutExport);
+      setFeedback({
+        kind: "success",
+        message: "Copied workout to clipboard.",
+      });
+    } catch (caughtError) {
+      setFeedback({
+        kind: "error",
+        message:
+          caughtError instanceof Error
+            ? caughtError.message
+            : "Unable to copy workout.",
+      });
+    }
+  }
 
   async function handleDuplicate() {
     if (status !== "idle") {
@@ -23,7 +51,7 @@ export function WorkoutDetailActions({
     }
 
     setStatus("duplicating");
-    setError(null);
+    setFeedback({ kind: "idle", message: "" });
 
     try {
       const response = await fetch(`/api/workouts/${workoutId}/duplicate`, {
@@ -38,11 +66,13 @@ export function WorkoutDetailActions({
       router.push(`/workouts/${payload.id}/edit`);
       router.refresh();
     } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "Unable to duplicate workout.",
-      );
+      setFeedback({
+        kind: "error",
+        message:
+          caughtError instanceof Error
+            ? caughtError.message
+            : "Unable to duplicate workout.",
+      });
       setStatus("idle");
     }
   }
@@ -61,7 +91,7 @@ export function WorkoutDetailActions({
     }
 
     setStatus("deleting");
-    setError(null);
+    setFeedback({ kind: "idle", message: "" });
 
     try {
       const response = await fetch(`/api/workouts/${workoutId}`, {
@@ -76,17 +106,27 @@ export function WorkoutDetailActions({
       router.push("/workouts");
       router.refresh();
     } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "Unable to delete workout.",
-      );
+      setFeedback({
+        kind: "error",
+        message:
+          caughtError instanceof Error
+            ? caughtError.message
+            : "Unable to delete workout.",
+      });
       setStatus("idle");
     }
   }
 
   return (
     <div className={styles.detailActionsGroup}>
+      <button
+        type="button"
+        className={styles.actionButton}
+        onClick={() => void handleCopy()}
+        disabled={status !== "idle"}
+      >
+        Copy workout
+      </button>
       <button
         type="button"
         className={styles.actionButton}
@@ -103,9 +143,16 @@ export function WorkoutDetailActions({
       >
         {status === "deleting" ? "Deleting..." : "Delete workout"}
       </button>
-      {error ? (
-        <p className={styles.actionError} role="alert">
-          {error}
+      {feedback.kind !== "idle" ? (
+        <p
+          className={`${styles.actionStatus} ${
+            feedback.kind === "success"
+              ? styles.actionStatusSuccess
+              : styles.actionStatusError
+          }`}
+          role={feedback.kind === "error" ? "alert" : "status"}
+        >
+          {feedback.message}
         </p>
       ) : null}
     </div>

@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/app/components/theme-toggle";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
+import { formatWorkoutForClipboard } from "@/lib/workout-export";
 import {
   convertStoredWeightToDisplay,
   formatWeightWithUnit,
@@ -131,6 +132,19 @@ export default async function WorkoutDetailPage({
     { label: "Sets", value: `${totalSets}` },
     { label: "Total volume", value: formatWeightWithUnit(totalWeight, unit) },
   ];
+  const workoutExport = formatWorkoutForClipboard({
+    performedAt: workout.performedAt,
+    workoutType: workout.workoutType,
+    title: workout.title,
+    weightUnit: unit,
+    exercises: workout.exercises.map((exercise) => ({
+      name: exercise.name,
+      sets: exercise.sets.map((set) => ({
+        reps: set.reps,
+        weightLb: set.weightLb,
+      })),
+    })),
+  });
 
   return (
     <main className={styles.shell}>
@@ -143,7 +157,7 @@ export default async function WorkoutDetailPage({
             <Link href={`/workouts/${workout.id}/edit`} className={styles.actionLink}>
               Edit workout
             </Link>
-            <WorkoutDetailActions workoutId={workout.id} />
+            <WorkoutDetailActions workoutId={workout.id} workoutExport={workoutExport} />
             <ThemeToggle />
           </div>
         </header>

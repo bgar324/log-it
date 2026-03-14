@@ -16,9 +16,13 @@
   "include": [
     "tests/**/*.ts",
     "lib/exercise-autofill.ts",
+    "lib/prisma.ts",
+    "lib/schema-compat.ts",
     "lib/weight-unit.ts",
     "lib/workout-utils.ts",
+    "lib/workout-export.ts",
     "lib/workouts/payload.ts",
+    "lib/workouts/service.ts",
     "lib/workout-splits/colors.ts",
     "lib/workout-splits/payload.ts",
     "lib/workout-splits/shared.ts"

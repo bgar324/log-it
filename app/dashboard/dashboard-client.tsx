@@ -2,7 +2,6 @@
 
 import {
   Blocks,
-  CalendarDays,
   ChartLine,
   Dumbbell,
   LayoutDashboard,
@@ -16,7 +15,6 @@ import {
   formatWeightWithUnit,
   type WeightUnit,
 } from "@/lib/weight-unit";
-import { DashboardCalendarView } from "./dashboard-calendar-view";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
 import { ThemeToggle } from "../components/theme-toggle";
 import { DashboardUserMenu } from "./dashboard-user-menu";
@@ -41,7 +39,6 @@ const NAV_ITEMS: Array<{
   { view: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { view: "workouts", label: "Workouts", icon: Dumbbell },
   { view: "progress", label: "Progress", icon: ChartLine },
-  { view: "calendar", label: "Calendar", icon: CalendarDays },
   { view: "split", label: "Workout Split", icon: Blocks },
 ];
 
@@ -57,10 +54,6 @@ const VIEW_CONTENT: Record<DashboardView, { title: string; subtitle: string }> =
   progress: {
     title: "Progress",
     subtitle: "Trend lines plus movement-level filtering across your exercise catalog.",
-  },
-  calendar: {
-    title: "Calendar",
-    subtitle: "See the planned split, log directly from any day, and compare schedule vs. what you completed.",
   },
   split: {
     title: "Workout Split",
@@ -802,17 +795,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               )}
             </section>
           </>
-        ) : null}
-
-        {activeView === "calendar" ? (
-          <section className={styles.plainSection}>
-            <DashboardCalendarView
-              split={data.split}
-              monthCounts={data.overview.workoutCalendar.monthCounts}
-              latestMonthKey={data.overview.workoutCalendar.latestMonthKey}
-              logsByDate={data.calendar.logsByDate}
-            />
-          </section>
         ) : null}
 
         {activeView === "split" ? (

@@ -13,7 +13,6 @@ const DASHBOARD_VIEWS: DashboardView[] = [
   "dashboard",
   "workouts",
   "progress",
-  "calendar",
   "split",
   "profile",
 ];
@@ -173,45 +172,17 @@ async function loadRecentLogs(userId: string) {
 }
 
 async function loadCalendarLogs(userId: string) {
-  try {
-    return await prisma.workoutLog.findMany({
-      where: {
-        userId,
-      },
-      orderBy: {
-        performedAt: "desc",
-      },
-      select: {
-        id: true,
-        title: true,
-        workoutType: true,
-        performedAt: true,
-      },
-    });
-  } catch (error) {
-    if (!isPrismaSchemaMismatchError(error)) {
-      throw error;
-    }
-
-    const logs = await prisma.workoutLog.findMany({
-      where: {
-        userId,
-      },
-      orderBy: {
-        performedAt: "desc",
-      },
-      select: {
-        id: true,
-        title: true,
-        performedAt: true,
-      },
-    });
-
-    return logs.map((log) => ({
-      ...log,
-      workoutType: null,
-    }));
-  }
+  return prisma.workoutLog.findMany({
+    where: {
+      userId,
+    },
+    orderBy: {
+      performedAt: "desc",
+    },
+    select: {
+      performedAt: true,
+    },
+  });
 }
 
 export default async function DashboardPage({
@@ -516,10 +487,6 @@ export default async function DashboardPage({
 
   const workoutDayCountMap = new Map<string, number>();
   const workoutMonthCountMap = new Map<string, number>();
-  const workoutLogsByDate = new Map<
-    string,
-    DashboardClientData["calendar"]["logsByDate"][number]["logs"]
-  >();
 
   for (const log of calendarLogs) {
     const day = dateKey(log.performedAt);
@@ -527,15 +494,6 @@ export default async function DashboardPage({
 
     workoutDayCountMap.set(day, (workoutDayCountMap.get(day) ?? 0) + 1);
     workoutMonthCountMap.set(month, (workoutMonthCountMap.get(month) ?? 0) + 1);
-
-    const dayLogs = workoutLogsByDate.get(day) ?? [];
-    dayLogs.push({
-      id: log.id,
-      title: log.title,
-      workoutType: log.workoutType,
-      performedAtLabel: timelineDateLabel(log.performedAt),
-    });
-    workoutLogsByDate.set(day, dayLogs);
   }
 
   const workoutCalendarDayCounts = Array.from(workoutDayCountMap.entries())
@@ -581,13 +539,6 @@ export default async function DashboardPage({
             count: 0,
           },
         ];
-
-  const calendarLogsByDate = Array.from(workoutLogsByDate.entries())
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([day, logs]) => ({
-      dateKey: day,
-      logs,
-    }));
 
   const exerciseSummaryMap = new Map<
     string,
@@ -727,9 +678,6 @@ export default async function DashboardPage({
       avgWeekly: Number(avgWeekly.toFixed(1)),
       totalWeightLifted,
       weeklySeries,
-    },
-    calendar: {
-      logsByDate: calendarLogsByDate,
     },
     split: workoutSplit,
   };

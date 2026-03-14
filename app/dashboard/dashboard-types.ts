@@ -5,7 +5,6 @@ export type DashboardView =
   | "dashboard"
   | "workouts"
   | "progress"
-  | "calendar"
   | "split"
   | "profile";
 
@@ -92,17 +91,6 @@ export type DashboardClientData = {
       label: string;
       sessions: number;
       volume: number;
-    }>;
-  };
-  calendar: {
-    logsByDate: Array<{
-      dateKey: string;
-      logs: Array<{
-        id: string;
-        title: string;
-        workoutType: string | null;
-        performedAtLabel: string;
-      }>;
     }>;
   };
   split: WorkoutSplitTemplate;

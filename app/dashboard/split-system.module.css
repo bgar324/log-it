@@ -30,6 +30,14 @@
   flex-shrink: 0;
 }
 
+.splitSummaryActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .calendarMonthSelect,
 .editorInput {
   border-radius: 0.82rem;
@@ -428,7 +436,8 @@
   .splitSummaryHead,
   .editorSectionHead,
   .exerciseRow,
-  .exerciseMain {
+  .exerciseMain,
+  .splitSummaryActions {
     flex-direction: column;
     align-items: stretch;
   }

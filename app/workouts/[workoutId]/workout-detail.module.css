@@ -84,10 +84,17 @@
   background: color-mix(in srgb, #a43838 12%, transparent);
 }
 
-.actionError {
+.actionStatus {
   margin: 0;
-  color: #a43838;
   font-size: 0.74rem;
+}
+
+.actionStatusSuccess {
+  color: #2f7b4d;
+}
+
+.actionStatusError {
+  color: #a43838;
 }
 
 .summaryCard,
