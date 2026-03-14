@@ -753,7 +753,11 @@
   align-items: center;
   gap: 0.45rem;
   flex-wrap: nowrap;
-  margin-top: 0.2rem;
+  margin-top: 0.8rem;
+}
+
+.profileActionForm {
+  margin: 0;
 }
 
 .metricAction {

@@ -15,17 +15,17 @@ function redirectWithError(request: NextRequest, error: string) {
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const email = String(formData.get("signinEmail") ?? "")
-      .trim()
-      .toLowerCase();
+    const username = String(
+      formData.get("signinUsername") ?? formData.get("signinEmail") ?? "",
+    ).trim();
     const password = String(formData.get("signinPassword") ?? "");
 
-    if (!email || !password) {
+    if (!username || !password) {
       return redirectWithError(request, "missing_fields");
     }
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { username },
       select: {
         id: true,
         email: true,

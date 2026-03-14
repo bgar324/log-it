@@ -838,7 +838,11 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
           <section className={styles.panel}>
             <p className={styles.panelSubtitle}>These details are shown in your dashboard greeting and account menu.</p>
 
-            <form className={styles.profileForm} onSubmit={handleProfileSave}>
+            <form
+              id="profileSettingsForm"
+              className={styles.profileForm}
+              onSubmit={handleProfileSave}
+            >
               <label className={styles.profileField} htmlFor="profileFirstName">
                 <span>First name</span>
                 <input
@@ -891,35 +895,34 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                 </select>
               </label>
 
-              <div className={styles.profileActions}>
-                <button
-                  type="submit"
-                  className={styles.primaryButton}
-                  disabled={saveState.kind === "saving"}
-                >
-                  {saveState.kind === "saving" ? "Saving..." : "Save profile"}
-                </button>
+            </form>
 
-                <button
-                  type="submit"
-                  formAction="/auth/signout"
-                  formMethod="post"
-                  className={styles.secondaryButton}
-                >
+            <div className={styles.profileActions}>
+              <button
+                type="submit"
+                form="profileSettingsForm"
+                className={styles.primaryButton}
+                disabled={saveState.kind === "saving"}
+              >
+                {saveState.kind === "saving" ? "Saving..." : "Save profile"}
+              </button>
+
+              <form method="post" action="/auth/signout" className={styles.profileActionForm}>
+                <button type="submit" className={styles.secondaryButton}>
                   Sign out
                 </button>
-              </div>
+              </form>
+            </div>
 
-              {saveState.kind !== "idle" ? (
-                <p
-                  className={styles.profileStatus}
-                  data-state={saveState.kind}
-                  role={saveState.kind === "error" ? "alert" : undefined}
-                >
-                  {saveState.message}
-                </p>
-              ) : null}
-            </form>
+            {saveState.kind !== "idle" ? (
+              <p
+                className={styles.profileStatus}
+                data-state={saveState.kind}
+                role={saveState.kind === "error" ? "alert" : undefined}
+              >
+                {saveState.message}
+              </p>
+            ) : null}
 
           </section>
         ) : null}

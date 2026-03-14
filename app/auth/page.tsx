@@ -17,7 +17,7 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   weak_password: "Password must be at least 8 characters.",
   password_mismatch: "Password and confirm password do not match.",
   account_exists: "An account with that email or username already exists.",
-  invalid_credentials: "Email or password is incorrect.",
+  invalid_credentials: "Username or password is incorrect.",
   invalid_db_credentials: "Database credentials are invalid. Update DATABASE_URL and restart dev server.",
   database_error: "Database is unavailable. Restart dev server and try again.",
   server_error: "Something went wrong. Please try again.",
@@ -148,7 +148,12 @@ function RegisterForm() {
 function SignInForm() {
   return (
     <form className="form" method="post" action="/auth/signin">
-      <Field id="signinEmail" label="Email" name="signinEmail" type="email" autoComplete="email" />
+      <Field
+        id="signinUsername"
+        label="Username"
+        name="signinUsername"
+        autoComplete="username"
+      />
       <PasswordField
         id="signinPassword"
         label="Password"
