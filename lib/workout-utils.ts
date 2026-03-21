@@ -33,6 +33,32 @@ export function normalizeWorkoutTypeSlug(value: string) {
   return toCanonicalSlug(value);
 }
 
+export function reorderItems<T>(
+  items: readonly T[],
+  fromIndex: number,
+  toIndex: number,
+) {
+  if (
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex >= items.length ||
+    fromIndex === toIndex
+  ) {
+    return [...items];
+  }
+
+  const reordered = [...items];
+  const [movedItem] = reordered.splice(fromIndex, 1);
+
+  if (movedItem === undefined) {
+    return [...items];
+  }
+
+  reordered.splice(toIndex, 0, movedItem);
+  return reordered;
+}
+
 export const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 
 function padDatePart(value: number, length = 2) {

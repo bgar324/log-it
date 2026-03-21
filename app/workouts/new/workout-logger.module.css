@@ -211,16 +211,42 @@
 .exerciseCard {
   background: color-mix(in srgb, var(--text) 7%, transparent);
   border-radius: 0.72rem;
+  border: 1px solid transparent;
   padding: 0.78rem;
   display: flex;
   flex-direction: column;
   gap: 0.58rem;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.exerciseCardDragging {
+  border-color: color-mix(in srgb, var(--text) 18%, transparent);
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  box-shadow: 0 12px 24px color-mix(in srgb, #000 14%, transparent);
+  transform: scale(0.99);
+}
+
+.exerciseCardDropTarget {
+  border-color: color-mix(in srgb, var(--text) 28%, transparent);
+  background: color-mix(in srgb, var(--text) 11%, transparent);
 }
 
 .exerciseHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.exerciseHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  min-width: 0;
 }
 
 .exerciseTitle {
@@ -228,6 +254,12 @@
   font-size: 1rem;
   font-weight: 550;
   letter-spacing: -0.005em;
+}
+
+.exerciseMeta {
+  margin: 0.12rem 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 
 .iconButton {
@@ -252,6 +284,16 @@
 .iconButton:hover:not(:disabled) {
   color: var(--text);
   background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.dragHandle {
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
 }
 
 .icon {

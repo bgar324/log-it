@@ -1,9 +1,9 @@
 "use client";
 
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { GripVertical, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import DatePicker from "react-datepicker";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import {
@@ -15,6 +15,7 @@ import {
   formatDatabaseDateLabel,
   formatDatabaseDateValue,
   getCurrentPacificDate,
+  reorderItems,
   toDatabaseDateFromInput,
 } from "@/lib/workout-utils";
 import {
@@ -440,6 +441,11 @@ export function WorkoutLogger({
   const suggestionCacheRef = useRef<Record<string, string[]>>({});
   const latestSuggestionLookupRef = useRef<Record<string, string>>({});
   const suggestionDebounceTimeoutRef = useRef<Record<string, number>>({});
+  const exerciseDragRef = useRef<{
+    activeIndex: number;
+    targetIndex: number;
+    pointerId: number;
+  } | null>(null);
 
   const [title, setTitle] = useState(initialState.title);
   const [workoutType, setWorkoutType] = useState(initialState.workoutType);
@@ -456,6 +462,8 @@ export function WorkoutLogger({
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [didRestoreDraft, setDidRestoreDraft] = useState(false);
+  const [draggingExerciseIndex, setDraggingExerciseIndex] = useState<number | null>(null);
+  const [dropTargetExerciseIndex, setDropTargetExerciseIndex] = useState<number | null>(null);
   const performedAtDate = useMemo(
     () => toDatabaseDateFromInput(performedAt),
     [performedAt],
@@ -630,6 +638,116 @@ export function WorkoutLogger({
 
     delete latestInsightLookupRef.current[id];
     delete latestSuggestionLookupRef.current[id];
+  }
+
+  function findExerciseIndexFromPoint(clientX: number, clientY: number) {
+    for (const element of document.elementsFromPoint(clientX, clientY)) {
+      if (!(element instanceof HTMLElement)) {
+        continue;
+      }
+
+      const card = element.closest<HTMLElement>("[data-exercise-card]");
+
+      if (!card) {
+        continue;
+      }
+
+      const exerciseIndex = Number.parseInt(
+        card.dataset.exerciseIndex ?? "",
+        10,
+      );
+
+      if (Number.isInteger(exerciseIndex)) {
+        return exerciseIndex;
+      }
+    }
+
+    return null;
+  }
+
+  function clearExerciseDragState() {
+    exerciseDragRef.current = null;
+    setDraggingExerciseIndex(null);
+    setDropTargetExerciseIndex(null);
+  }
+
+  function commitExerciseReorder(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) {
+      clearExerciseDragState();
+      return;
+    }
+
+    setExercises((current) => reorderItems(current, fromIndex, toIndex));
+    clearExerciseDragState();
+  }
+
+  function handleExercisePointerDown(
+    event: ReactPointerEvent<HTMLButtonElement>,
+    exerciseIndex: number,
+  ) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    exerciseDragRef.current = {
+      activeIndex: exerciseIndex,
+      targetIndex: exerciseIndex,
+      pointerId: event.pointerId,
+    };
+    setDraggingExerciseIndex(exerciseIndex);
+    setDropTargetExerciseIndex(exerciseIndex);
+  }
+
+  function handleExercisePointerMove(
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) {
+    const activeDrag = exerciseDragRef.current;
+
+    if (!activeDrag || activeDrag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const hoveredIndex = findExerciseIndexFromPoint(event.clientX, event.clientY);
+
+    if (hoveredIndex === null || hoveredIndex === activeDrag.targetIndex) {
+      return;
+    }
+
+    exerciseDragRef.current = {
+      ...activeDrag,
+      targetIndex: hoveredIndex,
+    };
+    setDropTargetExerciseIndex(hoveredIndex);
+  }
+
+  function handleExercisePointerUp(
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) {
+    const activeDrag = exerciseDragRef.current;
+
+    if (!activeDrag || activeDrag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    commitExerciseReorder(activeDrag.activeIndex, activeDrag.targetIndex);
+  }
+
+  function handleExercisePointerCancel(
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) {
+    const activeDrag = exerciseDragRef.current;
+
+    if (!activeDrag || activeDrag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    clearExerciseDragState();
   }
 
   function addSet(exerciseId: string) {
@@ -1106,11 +1224,47 @@ export function WorkoutLogger({
 
           <section className={styles.exerciseSection}>
             {exercises.map((exercise, exerciseIndex) => (
-              <article key={exercise.id} className={styles.exerciseCard}>
+              <article
+                key={exercise.id}
+                className={`${styles.exerciseCard} ${
+                  draggingExerciseIndex === exerciseIndex
+                    ? styles.exerciseCardDragging
+                    : ""
+                } ${
+                  dropTargetExerciseIndex === exerciseIndex &&
+                  draggingExerciseIndex !== exerciseIndex
+                    ? styles.exerciseCardDropTarget
+                    : ""
+                }`}
+                data-exercise-card="true"
+                data-exercise-index={exerciseIndex}
+              >
                 <div className={styles.exerciseHead}>
-                  <h2 className={styles.exerciseTitle}>
-                    Exercise {exerciseIndex + 1}
-                  </h2>
+                  <div className={styles.exerciseHeading}>
+                    <button
+                      type="button"
+                      className={`${styles.iconButton} ${styles.dragHandle}`}
+                      onPointerDown={(event) =>
+                        handleExercisePointerDown(event, exerciseIndex)
+                      }
+                      onPointerMove={handleExercisePointerMove}
+                      onPointerUp={handleExercisePointerUp}
+                      onPointerCancel={handleExercisePointerCancel}
+                      aria-label={`Drag to reorder exercise ${exerciseIndex + 1}`}
+                      title="Drag to reorder"
+                    >
+                      <GripVertical
+                        className={styles.icon}
+                        aria-hidden="true"
+                        strokeWidth={1.9}
+                      />
+                    </button>
+                    <div>
+                      <h2 className={styles.exerciseTitle}>
+                        Exercise {exerciseIndex + 1}
+                      </h2>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     className={styles.iconButton}
