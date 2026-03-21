@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { syncWorkoutReadModels } from "@/lib/workout-read-models";
 import {
   isObject,
   normalizeWorkoutPayload,
@@ -75,6 +77,13 @@ export async function POST(request: NextRequest) {
     }
 
     const created = await createWorkout(user.id, parsed.value);
+    after(async () => {
+      try {
+        await syncWorkoutReadModels(created.syncInput);
+      } catch (syncError) {
+        console.error("workout create read-model sync failure:", syncError);
+      }
+    });
 
     return NextResponse.json({ id: created.id }, { status: 201 });
   } catch (error) {
@@ -111,6 +120,13 @@ export async function PUT(request: NextRequest) {
     }
 
     const updated = await updateWorkout(workoutId, user.id, parsed.value);
+    after(async () => {
+      try {
+        await syncWorkoutReadModels(updated.syncInput);
+      } catch (syncError) {
+        console.error("workout update read-model sync failure:", syncError);
+      }
+    });
 
     return NextResponse.json({ id: updated.id }, { status: 200 });
   } catch (error) {

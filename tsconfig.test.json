@@ -20,6 +20,7 @@
     "lib/schema-compat.ts",
     "lib/weight-unit.ts",
     "lib/workout-utils.ts",
+    "lib/workout-read-models.ts",
     "lib/workout-export.ts",
     "lib/workouts/payload.ts",
     "lib/workouts/service.ts",

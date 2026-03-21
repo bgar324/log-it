@@ -1,9 +1,15 @@
 import { requireSessionUser } from "@/lib/auth";
 import { toExerciseRouteKey } from "@/lib/exercise-route-key";
 import { prisma } from "@/lib/prisma";
+import { buildExerciseSummaryRecords, buildWorkoutCalendarDayCounts, ensureWorkoutReadModels } from "@/lib/workout-read-models";
 import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import { getUserWorkoutSplit } from "@/lib/workout-splits/service";
-import { getWeekdayForDate } from "@/lib/workout-splits/shared";
+import {
+  REST_DAY_WORKOUT_TYPE,
+  SPLIT_WEEKDAYS,
+  getWeekdayForDate,
+  type WorkoutSplitTemplate,
+} from "@/lib/workout-splits/shared";
 import { convertStoredWeightToDisplay, toWeightNumber } from "@/lib/weight-unit";
 import {
   addDaysToDatabaseDate,
@@ -14,7 +20,7 @@ import {
   formatDatabaseDateValue,
   formatDatabaseMonthValue,
   getCurrentPacificDate,
-  normalizeExerciseName,
+  normalizeWorkoutTypeSlug,
   startOfDatabaseMonth,
   startOfDatabaseWeek,
 } from "@/lib/workout-utils";
@@ -41,11 +47,7 @@ function normalizeView(value: string | undefined): DashboardView {
     return "workouts";
   }
 
-  if (value === "exercises") {
-    return "progress";
-  }
-
-  if (value === "exercise") {
+  if (value === "exercises" || value === "exercise") {
     return "progress";
   }
 
@@ -92,16 +94,84 @@ function timelineDateLabel(date: Date) {
   });
 }
 
-function daysBetweenDays(from: Date, to: Date) {
-  return daysBetweenDatabaseDates(from, to);
+function createDefaultSplit(): WorkoutSplitTemplate {
+  return {
+    id: null,
+    name: "Weekly Split",
+    days: SPLIT_WEEKDAYS.map((weekday) => ({
+      id: null,
+      weekday,
+      workoutType: REST_DAY_WORKOUT_TYPE,
+      workoutTypeSlug: normalizeWorkoutTypeSlug(REST_DAY_WORKOUT_TYPE),
+      exercises: [],
+    })),
+  };
 }
 
-async function loadRecentLogs(userId: string) {
+function createEmptyDashboardData(
+  user: Awaited<ReturnType<typeof requireSessionUser>>,
+  now: Date,
+): DashboardClientData {
+  const emptyMonthKey = monthKey(now);
+
+  return {
+    user: {
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      preferredWeightUnit: user.preferredWeightUnit,
+      joinedAtLabel: monthLabel(user.createdAt),
+    },
+    overview: {
+      totalWorkouts: 0,
+      workoutsThisWeek: 0,
+      totalExercises: 0,
+      totalSets: 0,
+      todayPlan: {
+        workoutType: "No split",
+        subtitle: "Set up your weekly split to preload today's workout.",
+      },
+      monthChange: 0,
+      weeklyBars: Array.from({ length: 7 }, (_, index) => ({
+        label: WEEKDAY_SHORT_FORMATTER.format(
+          addDaysToDatabaseDate(startOfDatabaseWeek(now), index),
+        ),
+        count: 0,
+      })),
+      personalBests: [],
+      workoutCalendar: {
+        dayCounts: [],
+        monthCounts: [
+          {
+            monthKey: emptyMonthKey,
+            label: monthLabel(now),
+            count: 0,
+          },
+        ],
+        latestMonthKey: emptyMonthKey,
+      },
+    },
+    workouts: [],
+    workoutMonths: [],
+    exercises: [],
+    progress: {
+      currentWeek: 0,
+      weekDelta: 0,
+      avgWeekly: 0,
+      totalWeightLifted: 0,
+      weeklySeries: [],
+    },
+    split: createDefaultSplit(),
+  };
+}
+
+async function loadRecentLogs(userId: string, take: number) {
   try {
     return await prisma.workoutLog.findMany({
       where: { userId },
       orderBy: { performedAt: "desc" },
-      take: 80,
+      take,
       select: {
         id: true,
         title: true,
@@ -127,7 +197,7 @@ async function loadRecentLogs(userId: string) {
     const logs = await prisma.workoutLog.findMany({
       where: { userId },
       orderBy: { performedAt: "desc" },
-      take: 80,
+      take,
       select: {
         id: true,
         title: true,
@@ -152,92 +222,231 @@ async function loadRecentLogs(userId: string) {
   }
 }
 
-async function loadCalendarLogs(userId: string) {
-  return prisma.workoutLog.findMany({
+async function loadExerciseSummaryRows(userId: string) {
+  try {
+    const rows = await prisma.exerciseSummary.findMany({
+      where: {
+        userId,
+      },
+      select: {
+        normalizedName: true,
+        name: true,
+        sessionCount: true,
+        setCount: true,
+        totalReps: true,
+        bestWeightLb: true,
+        lastPerformedAt: true,
+      },
+    });
+
+    if (rows.length > 0) {
+      return rows.map((row) => ({
+        normalizedName: row.normalizedName,
+        name: row.name,
+        sessionCount: row.sessionCount,
+        setCount: row.setCount,
+        totalReps: row.totalReps,
+        bestWeightLb: toWeightNumber(row.bestWeightLb) ?? 0,
+        lastPerformedAt: row.lastPerformedAt,
+      }));
+    }
+  } catch (error) {
+    if (!isPrismaSchemaMismatchError(error)) {
+      throw error;
+    }
+  }
+
+  const exerciseLogs = await prisma.workoutExercise.findMany({
     where: {
-      userId,
+      workoutLog: {
+        userId,
+      },
     },
     orderBy: {
-      performedAt: "desc",
+      workoutLog: {
+        performedAt: "desc",
+      },
+    },
+    select: {
+      normalizedName: true,
+      name: true,
+      createdAt: true,
+      workoutLog: {
+        select: {
+          id: true,
+          performedAt: true,
+        },
+      },
+      sets: {
+        select: {
+          reps: true,
+          weightLb: true,
+        },
+      },
+    },
+  });
+
+  return buildExerciseSummaryRecords(exerciseLogs);
+}
+
+async function loadWorkoutCalendarSummary(userId: string) {
+  try {
+    const rows = await prisma.workoutCalendarDay.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        date: "asc",
+      },
+      select: {
+        date: true,
+        workoutCount: true,
+      },
+    });
+
+    if (rows.length > 0) {
+      return rows.map((row) => ({
+        dateKey: formatDatabaseDateValue(row.date),
+        count: row.workoutCount,
+      }));
+    }
+  } catch (error) {
+    if (!isPrismaSchemaMismatchError(error)) {
+      throw error;
+    }
+  }
+
+  const logs = await prisma.workoutLog.findMany({
+    where: {
+      userId,
     },
     select: {
       performedAt: true,
     },
   });
+
+  return buildWorkoutCalendarDayCounts(logs).map((row) => ({
+    dateKey: row.dateKey,
+    count: row.workoutCount,
+  }));
 }
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const params = await searchParams;
-  const initialView = normalizeView(params.view);
-  const user = await requireSessionUser();
-  const weightUnit = user.preferredWeightUnit;
+function buildWorkoutCalendarOverview(
+  dayCounts: DashboardClientData["overview"]["workoutCalendar"]["dayCounts"],
+  now: Date,
+) {
+  const workoutMonthCountMap = new Map<string, number>();
 
-  const now = getCurrentPacificDate();
-  const weekStart = startOfDatabaseWeek(now);
-  const weekDays = Array.from({ length: 7 }, (_, index) => {
-    return addDaysToDatabaseDate(weekStart, index);
+  for (const entry of dayCounts) {
+    const month = entry.dateKey.slice(0, 7);
+    workoutMonthCountMap.set(
+      month,
+      (workoutMonthCountMap.get(month) ?? 0) + entry.count,
+    );
+  }
+
+  const sortedMonthKeys = Array.from(workoutMonthCountMap.keys()).sort();
+  const monthCounts: DashboardClientData["overview"]["workoutCalendar"]["monthCounts"] =
+    sortedMonthKeys.length > 0
+      ? (() => {
+          const [firstYear, firstMonth] = sortedMonthKeys[0].split("-").map(Number);
+          const [lastYear, lastMonth] = sortedMonthKeys[sortedMonthKeys.length - 1]
+            .split("-")
+            .map(Number);
+          const firstMonthDate = createDatabaseDate(firstYear, firstMonth, 1);
+          const lastMonthDate = createDatabaseDate(lastYear, lastMonth, 1);
+          const months: DashboardClientData["overview"]["workoutCalendar"]["monthCounts"] = [];
+
+          for (
+            const cursor = new Date(firstMonthDate);
+            cursor.getTime() <= lastMonthDate.getTime();
+            cursor.setUTCMonth(cursor.getUTCMonth() + 1)
+          ) {
+            const key = monthKey(cursor);
+            months.push({
+              monthKey: key,
+              label: monthLabel(cursor),
+              count: workoutMonthCountMap.get(key) ?? 0,
+            });
+          }
+
+          return months;
+        })()
+      : [
+          {
+            monthKey: monthKey(now),
+            label: monthLabel(now),
+            count: 0,
+          },
+        ];
+
+  return {
+    dayCounts,
+    monthCounts,
+    latestMonthKey: monthCounts[monthCounts.length - 1]?.monthKey ?? null,
+  };
+}
+
+function mapWorkoutSummaries(
+  logs: Awaited<ReturnType<typeof loadRecentLogs>>,
+  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+) {
+  return logs.map((log) => {
+    const setCount = log.exercises.reduce((sum, exercise) => sum + exercise._count.sets, 0);
+    const volume = convertStoredWeightToDisplay(log.totalWeightLb, weightUnit) ?? 0;
+
+    return {
+      id: log.id,
+      title: log.title,
+      workoutType: log.workoutType,
+      month: monthLabel(log.performedAt),
+      performedAtLabel: monthDateLabel(log.performedAt),
+      timelineLabel: timelineDateLabel(log.performedAt),
+      exerciseCount: log.exercises.length,
+      setCount,
+      volume,
+    };
   });
+}
 
+async function loadDashboardOverviewSection(
+  userId: string,
+  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  now: Date,
+) {
+  await ensureWorkoutReadModels(userId);
+
+  const weekStart = startOfDatabaseWeek(now);
+  const weekDays = Array.from({ length: 7 }, (_, index) =>
+    addDaysToDatabaseDate(weekStart, index),
+  );
   const monthStart = startOfDatabaseMonth(now);
   const previousMonthStart = addMonthsToDatabaseDate(monthStart, -1);
   const previousMonthEnd = monthStart;
-  const trendStart = addDaysToDatabaseDate(now, -55);
-  const progressStart = addDaysToDatabaseDate(weekStart, -(7 * 11));
 
   const [
     totalWorkouts,
     workoutsThisWeek,
-    totalExercises,
-    totalSets,
-    totalWeightLiftedAggregate,
     workoutsThisMonth,
     workoutsPreviousMonth,
-    trendLogs,
+    exerciseSummaries,
     recentLogs,
     personalBestSets,
-    exerciseLogs,
-    progressLogs,
-    calendarLogs,
+    workoutCalendarDayCounts,
     workoutSplit,
   ] = await Promise.all([
-    prisma.workoutLog.count({ where: { userId: user.id } }),
+    prisma.workoutLog.count({ where: { userId } }),
     prisma.workoutLog.count({
       where: {
-        userId: user.id,
+        userId,
         performedAt: {
           gte: weekStart,
         },
       },
     }),
-    prisma.exercise.count({
-      where: {
-        userId: user.id,
-      },
-    }),
-    prisma.workoutSet.count({
-      where: {
-        workoutExercise: {
-          workoutLog: {
-            userId: user.id,
-          },
-        },
-      },
-    }),
-    prisma.workoutLog.aggregate({
-      where: {
-        userId: user.id,
-      },
-      _sum: {
-        totalWeightLb: true,
-      },
-    }),
     prisma.workoutLog.count({
       where: {
-        userId: user.id,
+        userId,
         performedAt: {
           gte: monthStart,
         },
@@ -245,25 +454,15 @@ export default async function DashboardPage({
     }),
     prisma.workoutLog.count({
       where: {
-        userId: user.id,
+        userId,
         performedAt: {
           gte: previousMonthStart,
           lt: previousMonthEnd,
         },
       },
     }),
-    prisma.workoutLog.findMany({
-      where: {
-        userId: user.id,
-        performedAt: {
-          gte: trendStart,
-        },
-      },
-      select: {
-        performedAt: true,
-      },
-    }),
-    loadRecentLogs(user.id),
+    loadExerciseSummaryRows(userId),
+    loadRecentLogs(userId, 5),
     prisma.workoutSet.findMany({
       where: {
         weightLb: {
@@ -271,7 +470,7 @@ export default async function DashboardPage({
         },
         workoutExercise: {
           workoutLog: {
-            userId: user.id,
+            userId,
           },
         },
       },
@@ -294,50 +493,8 @@ export default async function DashboardPage({
         },
       },
     }),
-    prisma.workoutExercise.findMany({
-      where: {
-        workoutLog: {
-          userId: user.id,
-        },
-      },
-      orderBy: {
-        workoutLog: {
-          performedAt: "desc",
-        },
-      },
-      select: {
-        name: true,
-        workoutLog: {
-          select: {
-            id: true,
-            performedAt: true,
-          },
-        },
-        sets: {
-          select: {
-            reps: true,
-            weightLb: true,
-          },
-        },
-      },
-    }),
-    prisma.workoutLog.findMany({
-      where: {
-        userId: user.id,
-        performedAt: {
-          gte: progressStart,
-        },
-      },
-      orderBy: {
-        performedAt: "asc",
-      },
-      select: {
-        performedAt: true,
-        totalWeightLb: true,
-      },
-    }),
-    loadCalendarLogs(user.id),
-    getUserWorkoutSplit(user.id),
+    loadWorkoutCalendarSummary(userId),
+    getUserWorkoutSplit(userId),
   ]);
 
   const monthChange =
@@ -346,11 +503,7 @@ export default async function DashboardPage({
       : workoutsThisMonth > 0
         ? 100
         : 0;
-  const totalWeightLifted =
-    convertStoredWeightToDisplay(
-      totalWeightLiftedAggregate._sum.totalWeightLb,
-      weightUnit,
-    ) ?? 0;
+
   const todaySplitDay =
     workoutSplit.id !== null
       ? workoutSplit.days.find((day) => day.weekday === getWeekdayForDate(now)) ?? null
@@ -373,37 +526,15 @@ export default async function DashboardPage({
             } ready to preload.`,
           };
 
-  const trendCountByDay = new Map<string, number>();
-
-  for (const log of trendLogs) {
-    const key = dateKey(log.performedAt);
-    trendCountByDay.set(key, (trendCountByDay.get(key) ?? 0) + 1);
-  }
-
+  const workoutCountByDate = new Map(
+    workoutCalendarDayCounts.map((row) => [row.dateKey, row.count]),
+  );
   const weeklyBars = weekDays.map((date) => ({
     label: WEEKDAY_SHORT_FORMATTER.format(date),
-    count: trendCountByDay.get(dateKey(date)) ?? 0,
+    count: workoutCountByDate.get(dateKey(date)) ?? 0,
   }));
 
-  const recentLogSummaries = recentLogs.map((log) => {
-    const setCount = log.exercises.reduce((sum, exercise) => sum + exercise._count.sets, 0);
-    const volume =
-      convertStoredWeightToDisplay(log.totalWeightLb, weightUnit) ?? 0;
-
-    return {
-      id: log.id,
-      title: log.title,
-      workoutType: log.workoutType,
-      month: monthLabel(log.performedAt),
-      performedAtLabel: monthDateLabel(log.performedAt),
-      timelineLabel: timelineDateLabel(log.performedAt),
-      exerciseCount: log.exercises.length,
-      setCount,
-      volume,
-    };
-  });
-
-  const workouts = recentLogSummaries.slice(0, 30).map((log) => ({
+  const workouts = mapWorkoutSummaries(recentLogs, weightUnit).map((log) => ({
     id: log.id,
     title: log.title,
     workoutType: log.workoutType,
@@ -413,35 +544,12 @@ export default async function DashboardPage({
     volume: log.volume,
   }));
 
-  const workoutMonthMap = new Map<string, DashboardClientData["workoutMonths"][number]["entries"]>();
-
-  for (const log of recentLogSummaries.slice(0, 60)) {
-    const monthEntries = workoutMonthMap.get(log.month) ?? [];
-
-    monthEntries.push({
-      id: log.id,
-      title: log.title,
-      workoutType: log.workoutType,
-      performedAtLabel: log.timelineLabel,
-      exerciseCount: log.exerciseCount,
-      setCount: log.setCount,
-      volume: log.volume,
-    });
-
-    workoutMonthMap.set(log.month, monthEntries);
-  }
-
-  const workoutMonths = Array.from(workoutMonthMap.entries()).map(([month, entries]) => ({
-    month,
-    entries,
-  }));
-
   const personalBests: DashboardClientData["overview"]["personalBests"] = [];
   const seenPersonalBestExerciseKeys = new Set<string>();
 
   for (const set of personalBestSets) {
     const lift = set.workoutExercise.name.trim();
-    const exerciseKey = normalizeExerciseName(lift);
+    const exerciseKey = set.workoutExercise.name.trim().toLowerCase();
 
     if (!exerciseKey || seenPersonalBestExerciseKeys.has(exerciseKey)) {
       continue;
@@ -460,150 +568,125 @@ export default async function DashboardPage({
     }
   }
 
-  const workoutDayCountMap = new Map<string, number>();
-  const workoutMonthCountMap = new Map<string, number>();
+  return {
+    overview: {
+      totalWorkouts,
+      workoutsThisWeek,
+      totalExercises: exerciseSummaries.length,
+      totalSets: exerciseSummaries.reduce((sum, item) => sum + item.setCount, 0),
+      todayPlan,
+      monthChange,
+      weeklyBars,
+      personalBests,
+      workoutCalendar: buildWorkoutCalendarOverview(workoutCalendarDayCounts, now),
+    },
+    workouts,
+    split: workoutSplit,
+  } satisfies Partial<DashboardClientData>;
+}
 
-  for (const log of calendarLogs) {
-    const day = dateKey(log.performedAt);
-    const month = monthKey(log.performedAt);
+async function loadWorkoutHistorySection(
+  userId: string,
+  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+) {
+  const recentLogSummaries = mapWorkoutSummaries(
+    await loadRecentLogs(userId, 60),
+    weightUnit,
+  );
+  const workoutMonthMap = new Map<string, DashboardClientData["workoutMonths"][number]["entries"]>();
 
-    workoutDayCountMap.set(day, (workoutDayCountMap.get(day) ?? 0) + 1);
-    workoutMonthCountMap.set(month, (workoutMonthCountMap.get(month) ?? 0) + 1);
+  for (const log of recentLogSummaries) {
+    const monthEntries = workoutMonthMap.get(log.month) ?? [];
+    monthEntries.push({
+      id: log.id,
+      title: log.title,
+      workoutType: log.workoutType,
+      performedAtLabel: log.timelineLabel,
+      exerciseCount: log.exerciseCount,
+      setCount: log.setCount,
+      volume: log.volume,
+    });
+    workoutMonthMap.set(log.month, monthEntries);
   }
 
-  const workoutCalendarDayCounts = Array.from(workoutDayCountMap.entries())
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([day, count]) => ({
-      dateKey: day,
-      count,
-    }));
+  return {
+    workoutMonths: Array.from(workoutMonthMap.entries()).map(([month, entries]) => ({
+      month,
+      entries,
+    })),
+  } satisfies Partial<DashboardClientData>;
+}
 
-  const sortedMonthKeys = Array.from(workoutMonthCountMap.keys()).sort();
+async function loadProgressSection(
+  userId: string,
+  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  now: Date,
+) {
+  await ensureWorkoutReadModels(userId);
 
-  const workoutCalendarMonths: DashboardClientData["overview"]["workoutCalendar"]["monthCounts"] =
-    sortedMonthKeys.length > 0
-      ? (() => {
-          const [firstYear, firstMonth] = sortedMonthKeys[0].split("-").map(Number);
-          const [lastYear, lastMonth] = sortedMonthKeys[sortedMonthKeys.length - 1]
-            .split("-")
-            .map(Number);
-          const firstMonthDate = createDatabaseDate(firstYear, firstMonth, 1);
-          const lastMonthDate = createDatabaseDate(lastYear, lastMonth, 1);
-          const months: DashboardClientData["overview"]["workoutCalendar"]["monthCounts"] = [];
-
-          for (
-            const cursor = new Date(firstMonthDate);
-            cursor.getTime() <= lastMonthDate.getTime();
-            cursor.setUTCMonth(cursor.getUTCMonth() + 1)
-          ) {
-            const key = monthKey(cursor);
-
-            months.push({
-              monthKey: key,
-              label: monthLabel(cursor),
-              count: workoutMonthCountMap.get(key) ?? 0,
-            });
-          }
-
-          return months;
-        })()
-      : [
-          {
-            monthKey: monthKey(now),
-            label: monthLabel(now),
-            count: 0,
+  const weekStart = startOfDatabaseWeek(now);
+  const progressStart = addDaysToDatabaseDate(weekStart, -(7 * 11));
+  const [exerciseSummaries, progressLogs, totalWeightLiftedAggregate] =
+    await Promise.all([
+      loadExerciseSummaryRows(userId),
+      prisma.workoutLog.findMany({
+        where: {
+          userId,
+          performedAt: {
+            gte: progressStart,
           },
-        ];
+        },
+        orderBy: {
+          performedAt: "asc",
+        },
+        select: {
+          performedAt: true,
+          totalWeightLb: true,
+        },
+      }),
+      prisma.workoutLog.aggregate({
+        where: {
+          userId,
+        },
+        _sum: {
+          totalWeightLb: true,
+        },
+      }),
+    ]);
 
-  const exerciseSummaryMap = new Map<
-    string,
-    {
-      key: string;
-      name: string;
-      sessions: Set<string>;
-      setCount: number;
-      totalReps: number;
-      bestWeight: number;
-      lastPerformedAt: Date;
-    }
-  >();
-
-  for (const item of exerciseLogs) {
-    const key = normalizeExerciseName(item.name);
-
-    if (!key) {
-      continue;
-    }
-
-    const current = exerciseSummaryMap.get(key);
-
-    const setCount = item.sets.length;
-    const totalReps = item.sets.reduce((sum, set) => sum + set.reps, 0);
-    const bestWeight = item.sets.reduce(
-      (max, set) => Math.max(max, toWeightNumber(set.weightLb) ?? 0),
-      0,
-    );
-
-    if (!current) {
-      exerciseSummaryMap.set(key, {
-        key,
-        name: item.name,
-        sessions: new Set([item.workoutLog.id]),
-        setCount,
-        totalReps,
-        bestWeight,
-        lastPerformedAt: item.workoutLog.performedAt,
-      });
-      continue;
-    }
-
-    current.sessions.add(item.workoutLog.id);
-    current.setCount += setCount;
-    current.totalReps += totalReps;
-    current.bestWeight = Math.max(current.bestWeight, bestWeight);
-
-    if (item.workoutLog.performedAt > current.lastPerformedAt) {
-      current.lastPerformedAt = item.workoutLog.performedAt;
-      current.name = item.name;
-    }
-  }
-
-  const exercises = Array.from(exerciseSummaryMap.values())
+  const exercises = exerciseSummaries
     .map((item) => ({
-      key: item.key,
-      routeKey: toExerciseRouteKey(item.key),
+      key: item.normalizedName,
+      routeKey: toExerciseRouteKey(item.normalizedName),
       name: item.name,
-      sessionCount: item.sessions.size,
+      sessionCount: item.sessionCount,
       setCount: item.setCount,
       totalReps: item.totalReps,
-      bestWeight: convertStoredWeightToDisplay(item.bestWeight, weightUnit) ?? 0,
-      lastPerformedAtLabel: shortDate(item.lastPerformedAt),
-      daysSinceLastHit: daysBetweenDays(now, item.lastPerformedAt),
+      bestWeight: convertStoredWeightToDisplay(item.bestWeightLb, weightUnit) ?? 0,
+      lastPerformedAtLabel: item.lastPerformedAt ? shortDate(item.lastPerformedAt) : "--",
+      daysSinceLastHit: item.lastPerformedAt
+        ? daysBetweenDatabaseDates(now, item.lastPerformedAt)
+        : 0,
     }))
-    .sort((a, b) => b.sessionCount - a.sessionCount)
+    .sort((left, right) => right.sessionCount - left.sessionCount)
     .slice(0, 80);
 
-  const progressWeeks = Array.from({ length: 12 }, (_, index) => {
-    return addDaysToDatabaseDate(progressStart, index * 7);
-  });
-
+  const progressWeeks = Array.from({ length: 12 }, (_, index) =>
+    addDaysToDatabaseDate(progressStart, index * 7),
+  );
   const progressCounts = new Map<string, { sessions: number; volume: number }>();
 
   for (const log of progressLogs) {
-    const week = startOfDatabaseWeek(log.performedAt);
-    const key = dateKey(week);
-    const sessionVolume = toWeightNumber(log.totalWeightLb) ?? 0;
-
+    const key = dateKey(startOfDatabaseWeek(log.performedAt));
     const current = progressCounts.get(key) ?? { sessions: 0, volume: 0 };
 
     current.sessions += 1;
-    current.volume += sessionVolume;
+    current.volume += toWeightNumber(log.totalWeightLb) ?? 0;
     progressCounts.set(key, current);
   }
 
   const weeklySeries = progressWeeks.map((weekStartDate) => {
-    const key = dateKey(weekStartDate);
-    const current = progressCounts.get(key);
+    const current = progressCounts.get(dateKey(weekStartDate));
 
     return {
       label: shortDate(weekStartDate),
@@ -614,46 +697,56 @@ export default async function DashboardPage({
 
   const currentWeek = weeklySeries[weeklySeries.length - 1]?.sessions ?? 0;
   const previousWeek = weeklySeries[weeklySeries.length - 2]?.sessions ?? 0;
-  const weekDelta = currentWeek - previousWeek;
-  const avgWeekly = weeklySeries.reduce((sum, week) => sum + week.sessions, 0) / weeklySeries.length;
+  const avgWeekly =
+    weeklySeries.reduce((sum, week) => sum + week.sessions, 0) / weeklySeries.length;
 
-  const data: DashboardClientData = {
-    user: {
-      username: user.username,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      preferredWeightUnit: user.preferredWeightUnit,
-      joinedAtLabel: monthLabel(user.createdAt),
-    },
-    overview: {
-      totalWorkouts,
-      workoutsThisWeek,
-      totalExercises,
-      totalSets,
-      todayPlan,
-      monthChange,
-      weeklyBars,
-      personalBests,
-      workoutCalendar: {
-        dayCounts: workoutCalendarDayCounts,
-        monthCounts: workoutCalendarMonths,
-        latestMonthKey:
-          workoutCalendarMonths[workoutCalendarMonths.length - 1]?.monthKey ?? null,
-      },
-    },
-    workouts,
-    workoutMonths,
+  return {
     exercises,
     progress: {
       currentWeek,
-      weekDelta,
+      weekDelta: currentWeek - previousWeek,
       avgWeekly: Number(avgWeekly.toFixed(1)),
-      totalWeightLifted,
+      totalWeightLifted:
+        convertStoredWeightToDisplay(
+          totalWeightLiftedAggregate._sum.totalWeightLb,
+          weightUnit,
+        ) ?? 0,
       weeklySeries,
     },
-    split: workoutSplit,
-  };
+  } satisfies Partial<DashboardClientData>;
+}
 
-  return <DashboardClient initialView={initialView} data={data} />;
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = await searchParams;
+  const initialView = normalizeView(params.view);
+  const user = await requireSessionUser();
+  const now = getCurrentPacificDate();
+  const data = createEmptyDashboardData(user, now);
+
+  const viewData =
+    initialView === "dashboard"
+      ? await loadDashboardOverviewSection(user.id, user.preferredWeightUnit, now)
+      : initialView === "workouts"
+        ? await loadWorkoutHistorySection(user.id, user.preferredWeightUnit)
+        : initialView === "progress"
+          ? await loadProgressSection(user.id, user.preferredWeightUnit, now)
+          : initialView === "split"
+            ? ({
+                split: await getUserWorkoutSplit(user.id),
+              } satisfies Partial<DashboardClientData>)
+            : ({} satisfies Partial<DashboardClientData>);
+
+  return (
+    <DashboardClient
+      initialView={initialView}
+      data={{
+        ...data,
+        ...viewData,
+      }}
+    />
+  );
 }

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_WEIGHT_UNIT, type WeightUnit } from "@/lib/weight-unit";
 
 const SESSION_COOKIE = "logit_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
@@ -13,6 +14,9 @@ type SessionClaims = {
   email: string;
   username: string;
   firstName: string | null;
+  lastName?: string | null;
+  preferredWeightUnit?: WeightUnit;
+  createdAt?: string;
   iat?: number;
   exp?: number;
 };
@@ -54,11 +58,17 @@ export async function createSessionToken(user: {
   email: string;
   username: string;
   firstName: string | null;
+  lastName?: string | null;
+  preferredWeightUnit?: WeightUnit;
+  createdAt?: Date;
 }) {
   return new SignJWT({
     email: user.email,
     username: user.username,
     firstName: user.firstName,
+    lastName: user.lastName ?? null,
+    preferredWeightUnit: user.preferredWeightUnit ?? DEFAULT_WEIGHT_UNIT,
+    createdAt: user.createdAt?.toISOString() ?? new Date(0).toISOString(),
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
@@ -107,11 +117,44 @@ export async function getSessionClaims() {
   }
 }
 
+function claimsHaveEmbeddedProfile(
+  claims: SessionClaims,
+): claims is SessionClaims & {
+  lastName: string | null;
+  preferredWeightUnit: WeightUnit;
+  createdAt: string;
+} {
+  return (
+    typeof claims.email === "string" &&
+    typeof claims.username === "string" &&
+    (claims.firstName === null || typeof claims.firstName === "string") &&
+    (claims.lastName === null || typeof claims.lastName === "string") &&
+    (claims.preferredWeightUnit === "LB" || claims.preferredWeightUnit === "KG") &&
+    typeof claims.createdAt === "string"
+  );
+}
+
 export async function getSessionUser(): Promise<SessionUser | null> {
   const claims = await getSessionClaims();
 
   if (!claims?.sub) {
     return null;
+  }
+
+  if (claimsHaveEmbeddedProfile(claims)) {
+    const createdAt = new Date(claims.createdAt);
+
+    if (!Number.isNaN(createdAt.getTime())) {
+      return {
+        id: claims.sub,
+        email: claims.email,
+        username: claims.username,
+        firstName: claims.firstName ?? null,
+        lastName: claims.lastName ?? null,
+        preferredWeightUnit: claims.preferredWeightUnit,
+        createdAt,
+      };
+    }
   }
 
   return prisma.user.findUnique({

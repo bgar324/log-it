@@ -10,7 +10,15 @@ import {
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CSSProperties, ComponentType, FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  CSSProperties,
+  ComponentType,
+  FormEvent,
+  startTransition,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { getWorkoutTypeColor } from "@/lib/workout-splits/colors";
 import { getWeekdayForDate } from "@/lib/workout-splits/shared";
 import { createDatabaseDate } from "@/lib/workout-utils";
@@ -140,7 +148,6 @@ function MetricHeader({ columns, rowClassName }: MetricHeaderProps) {
 
 export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const router = useRouter();
-  const [activeView, setActiveView] = useState<DashboardView>(initialView);
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [progressExercisePage, setProgressExercisePage] = useState(1);
   const [profile, setProfile] = useState(data.user);
@@ -153,6 +160,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     kind: "idle" | "saving" | "success" | "error";
     message: string;
   }>({ kind: "idle", message: "" });
+  const activeView = initialView;
 
   const greetingName = useMemo(() => {
     const trimmed = (profile.firstName ?? "").trim();
@@ -305,13 +313,14 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     return formatWeightWithUnit(value, displayWeightUnit);
   }
 
-  function switchView(view: DashboardView) {
+  function navigateToView(view: DashboardView) {
     if (view === activeView) {
       return;
     }
 
-    setActiveView(view);
-    window.history.replaceState(window.history.state, "", toViewHref(view));
+    startTransition(() => {
+      router.push(toViewHref(view));
+    });
   }
 
   function goToPreviousCalendarMonth() {
@@ -426,7 +435,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                 type="button"
                 className={styles.navButton}
                 data-active={isActive}
-                onClick={() => switchView(item.view)}
+                onClick={() => navigateToView(item.view)}
               >
                 <Icon className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
                 <span>{item.label}</span>
@@ -450,7 +459,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
           <div className={styles.headerActions}>
             <ThemeToggle />
-            <DashboardUserMenu name={greetingName} onProfile={() => switchView("profile")} />
+            <DashboardUserMenu name={greetingName} onProfile={() => navigateToView("profile")} />
           </div>
         </header>
 
@@ -465,7 +474,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                 type="button"
                 className={styles.mobileChip}
                 data-active={isActive}
-                onClick={() => switchView(item.view)}
+                onClick={() => navigateToView(item.view)}
               >
                 <Icon className={styles.mobileChipIcon} aria-hidden={true} strokeWidth={1.9} />
                 <span>{item.label}</span>

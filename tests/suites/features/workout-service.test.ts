@@ -23,16 +23,6 @@ type TransactionMock = {
     update: (args: unknown) => Promise<unknown>;
     delete: (args: unknown) => Promise<unknown>;
   };
-  workoutExercise: {
-    create: (args: unknown) => Promise<{ id: string }>;
-    deleteMany: (args: unknown) => Promise<unknown>;
-    findFirst: (args: unknown) => Promise<unknown>;
-  };
-  exercise: {
-    upsert: (args: unknown) => Promise<{ id: string }>;
-    updateMany: (args: unknown) => Promise<unknown>;
-    deleteMany: (args: unknown) => Promise<unknown>;
-  };
 };
 
 const prismaMutable = prisma as unknown as {
@@ -70,16 +60,7 @@ function createDefaultTransactionMock() {
     workoutLogFindFirst: [] as Array<Record<string, unknown>>,
     workoutLogUpdate: [] as Array<Record<string, unknown>>,
     workoutLogDelete: [] as Array<Record<string, unknown>>,
-    workoutExerciseCreate: [] as Array<Record<string, unknown>>,
-    workoutExerciseDeleteMany: [] as Array<Record<string, unknown>>,
-    workoutExerciseFindFirst: [] as Array<Record<string, unknown>>,
-    exerciseUpsert: [] as Array<Record<string, unknown>>,
-    exerciseUpdateMany: [] as Array<Record<string, unknown>>,
-    exerciseDeleteMany: [] as Array<Record<string, unknown>>,
   };
-
-  let exerciseCounter = 0;
-  let workoutExerciseCounter = 0;
 
   const tx: TransactionMock = {
     workoutLog: {
@@ -98,36 +79,6 @@ function createDefaultTransactionMock() {
       async delete(args) {
         calls.workoutLogDelete.push(args as Record<string, unknown>);
         return { id: "workout-deleted" };
-      },
-    },
-    workoutExercise: {
-      async create(args) {
-        calls.workoutExerciseCreate.push(args as Record<string, unknown>);
-        workoutExerciseCounter += 1;
-        return { id: `workout-exercise-${workoutExerciseCounter}` };
-      },
-      async deleteMany(args) {
-        calls.workoutExerciseDeleteMany.push(args as Record<string, unknown>);
-        return { count: 1 };
-      },
-      async findFirst(args) {
-        calls.workoutExerciseFindFirst.push(args as Record<string, unknown>);
-        return null;
-      },
-    },
-    exercise: {
-      async upsert(args) {
-        calls.exerciseUpsert.push(args as Record<string, unknown>);
-        exerciseCounter += 1;
-        return { id: `exercise-${exerciseCounter}` };
-      },
-      async updateMany(args) {
-        calls.exerciseUpdateMany.push(args as Record<string, unknown>);
-        return { count: 1 };
-      },
-      async deleteMany(args) {
-        calls.exerciseDeleteMany.push(args as Record<string, unknown>);
-        return { count: 1 };
       },
     },
   };
@@ -154,7 +105,7 @@ test.afterEach(() => {
   prismaMutable.$transaction = originalTransaction;
 });
 
-test("createWorkout writes the workout log, exercises, sets, and exercise catalog updates", async () => {
+test("createWorkout writes a nested workout payload and returns read-model sync metadata", async () => {
   const { tx, calls } = createDefaultTransactionMock();
 
   withMockedTransaction(async (callback, options) => {
@@ -164,43 +115,56 @@ test("createWorkout writes the workout log, exercises, sets, and exercise catalo
 
   const result = await createWorkout("user-1", BASE_WORKOUT);
 
-  assert.deepEqual(result, { id: "workout-created" });
+  assert.deepEqual(result, {
+    id: "workout-created",
+    syncInput: {
+      userId: "user-1",
+      normalizedExerciseNames: ["lat pulldown", "pull up"],
+      performedAtDates: ["2026-03-12"],
+    },
+  });
   assert.equal(calls.workoutLogCreate.length, 1);
-  assert.equal(calls.workoutExerciseCreate.length, 2);
-  assert.equal(calls.exerciseUpsert.length, 2);
-  assert.equal(calls.exerciseUpdateMany.length, 2);
 
   const createdWorkout = calls.workoutLogCreate[0];
-  assert.equal(createdWorkout?.data && (createdWorkout.data as { title?: string }).title, "Pull Day");
-  assert.equal(
-    createdWorkout?.data && (createdWorkout.data as { workoutType?: string | null }).workoutType,
-    "Pull",
-  );
-  assert.equal(
-    decimalString(
-      createdWorkout?.data && (createdWorkout.data as { totalWeightLb?: unknown }).totalWeightLb,
-    ),
-    "1905",
-  );
-  assert.equal(
-    formatDatabaseDateValue(
-      (createdWorkout?.data as { performedAt: Date }).performedAt,
-    ),
-    "2026-03-12",
-  );
-
-  const firstExercise = calls.workoutExerciseCreate[0];
-  const firstExerciseData = firstExercise?.data as {
-    name: string;
-    order: number;
-    sets: { create: Array<{ order: number; reps: number; weightLb: string | null }> };
+  const createdData = createdWorkout?.data as {
+    title: string;
+    workoutType?: string | null;
+    totalWeightLb: unknown;
+    performedAt: Date;
+    exercises: {
+      create: Array<{
+        name: string;
+        normalizedName: string;
+        order: number;
+        sets: { create: Array<{ order: number; reps: number; weightLb: string | null }> };
+      }>;
+    };
   };
 
-  assert.equal(firstExerciseData.name, "Lat Pulldown");
-  assert.equal(firstExerciseData.order, 1);
-  assert.deepEqual(firstExerciseData.sets.create, [
-    { order: 1, reps: 6, weightLb: "160" },
-    { order: 2, reps: 7, weightLb: "135" },
+  assert.equal(createdData.title, "Pull Day");
+  assert.equal(createdData.workoutType, "Pull");
+  assert.equal(decimalString(createdData.totalWeightLb), "1905");
+  assert.equal(formatDatabaseDateValue(createdData.performedAt), "2026-03-12");
+  assert.deepEqual(createdData.exercises.create, [
+    {
+      name: "Lat Pulldown",
+      normalizedName: "lat pulldown",
+      order: 1,
+      sets: {
+        create: [
+          { order: 1, reps: 6, weightLb: "160" },
+          { order: 2, reps: 7, weightLb: "135" },
+        ],
+      },
+    },
+    {
+      name: "Pull Up",
+      normalizedName: "pull up",
+      order: 2,
+      sets: {
+        create: [{ order: 1, reps: 10, weightLb: null }],
+      },
+    },
   ]);
 });
 
@@ -223,7 +187,7 @@ test("createWorkout retries without workout type columns on schema mismatch", as
 
   const result = await createWorkout("user-1", BASE_WORKOUT);
 
-  assert.deepEqual(result, { id: "workout-created" });
+  assert.equal(result.id, "workout-created");
   assert.equal(invocationCount, 2);
 
   const createdWorkout = calls.workoutLogCreate[0]?.data as Record<string, unknown>;
@@ -231,7 +195,7 @@ test("createWorkout retries without workout type columns on schema mismatch", as
   assert.equal("workoutTypeSlug" in createdWorkout, false);
 });
 
-test("updateWorkout replaces exercises and resynchronizes affected exercise records", async () => {
+test("updateWorkout replaces exercises through a nested update and includes old and new sync keys", async () => {
   const { tx, calls } = createDefaultTransactionMock();
   const updatedPayload: ParsedWorkout = {
     title: "Upper Reload",
@@ -252,6 +216,7 @@ test("updateWorkout replaces exercises and resynchronizes affected exercise reco
     calls.workoutLogFindFirst.push(args as Record<string, unknown>);
     return {
       id: "workout-1",
+      performedAt: createDatabaseDate(2026, 3, 12),
       exercises: [
         {
           name: "Bench Press",
@@ -261,51 +226,49 @@ test("updateWorkout replaces exercises and resynchronizes affected exercise reco
     };
   };
 
-  tx.workoutExercise.findFirst = async (args) => {
-    calls.workoutExerciseFindFirst.push(args as Record<string, unknown>);
-    const where = args as {
-      where?: {
-        normalizedName?: string;
-      };
-    };
-
-    if (where.where?.normalizedName === "incline press") {
-      return {
-        name: "Incline Press",
-        workoutLog: {
-          performedAt: updatedPayload.performedAt,
-        },
-      };
-    }
-
-    return null;
-  };
-
   withMockedTransaction(async (callback) => callback(tx));
 
   const result = await updateWorkout("workout-1", "user-1", updatedPayload);
 
-  assert.deepEqual(result, { id: "workout-1" });
+  assert.deepEqual(result, {
+    id: "workout-1",
+    syncInput: {
+      userId: "user-1",
+      normalizedExerciseNames: ["bench press", "incline press"],
+      performedAtDates: ["2026-03-12", "2026-03-13"],
+    },
+  });
   assert.equal(calls.workoutLogUpdate.length, 1);
-  assert.equal(calls.workoutExerciseDeleteMany.length, 1);
-  assert.equal(calls.workoutExerciseCreate.length, 1);
-  assert.equal(calls.exerciseDeleteMany.length, 1);
 
-  const deletedExerciseWhere = calls.exerciseDeleteMany[0]?.where as {
-    normalizedName?: string;
-    userId?: string;
+  const updatedWorkout = calls.workoutLogUpdate[0]?.data as {
+    title: string;
+    totalWeightLb: unknown;
+    workoutType?: string | null;
+    performedAt: Date;
+    exercises: {
+      deleteMany: Record<string, never>;
+      create: Array<{
+        name: string;
+        normalizedName: string;
+        order: number;
+      }>;
+    };
   };
-  assert.equal(deletedExerciseWhere.normalizedName, "bench press");
-  assert.equal(deletedExerciseWhere.userId, "user-1");
-
-  const updatedWorkout = calls.workoutLogUpdate[0]?.data as Record<string, unknown>;
   assert.equal(updatedWorkout.title, "Upper Reload");
   assert.equal(decimalString(updatedWorkout.totalWeightLb), "760");
   assert.equal(updatedWorkout.workoutType, "Upper");
-  assert.equal(
-    formatDatabaseDateValue(updatedWorkout.performedAt as Date),
-    "2026-03-13",
-  );
+  assert.equal(formatDatabaseDateValue(updatedWorkout.performedAt), "2026-03-13");
+  assert.deepEqual(updatedWorkout.exercises.deleteMany, {});
+  assert.deepEqual(updatedWorkout.exercises.create, [
+    {
+      name: "Incline Press",
+      normalizedName: "incline press",
+      order: 1,
+      sets: {
+        create: [{ order: 1, reps: 8, weightLb: "95" }],
+      },
+    },
+  ]);
 });
 
 test("updateWorkout throws a not-found error when the target workout does not exist", async () => {
@@ -320,13 +283,14 @@ test("updateWorkout throws a not-found error when the target workout does not ex
   );
 });
 
-test("deleteWorkout removes the workout and prunes orphaned exercise records", async () => {
+test("deleteWorkout removes the workout and returns the affected summary keys", async () => {
   const { tx, calls } = createDefaultTransactionMock();
 
   tx.workoutLog.findFirst = async (args) => {
     calls.workoutLogFindFirst.push(args as Record<string, unknown>);
     return {
       id: "workout-1",
+      performedAt: createDatabaseDate(2026, 3, 12),
       exercises: [
         {
           name: "Lat Pulldown",
@@ -340,15 +304,18 @@ test("deleteWorkout removes the workout and prunes orphaned exercise records", a
 
   const result = await deleteWorkout("workout-1", "user-1");
 
-  assert.deepEqual(result, { id: "workout-1" });
+  assert.deepEqual(result, {
+    id: "workout-1",
+    syncInput: {
+      userId: "user-1",
+      normalizedExerciseNames: ["lat pulldown"],
+      performedAtDates: ["2026-03-12"],
+    },
+  });
   assert.equal(calls.workoutLogDelete.length, 1);
-  assert.equal(calls.exerciseDeleteMany.length, 1);
-
-  const deletedWorkoutWhere = calls.workoutLogDelete[0]?.where as { id?: string };
-  assert.equal(deletedWorkoutWhere.id, "workout-1");
 });
 
-test("duplicateWorkout clones the source workout into a new workout record", async () => {
+test("duplicateWorkout clones the source workout into a nested create payload", async () => {
   const { tx, calls } = createDefaultTransactionMock();
   const pacificDateBefore = formatDatabaseDateValue(getCurrentPacificDate());
 
@@ -373,26 +340,36 @@ test("duplicateWorkout clones the source workout into a new workout record", asy
   const result = await duplicateWorkout("workout-1", "user-1");
   const pacificDateAfter = formatDatabaseDateValue(getCurrentPacificDate());
 
-  assert.deepEqual(result, { id: "workout-created" });
-  assert.equal(calls.workoutLogCreate.length, 1);
-  assert.equal(calls.workoutExerciseCreate.length, 1);
-
-  const createdWorkout = calls.workoutLogCreate[0]?.data as Record<string, unknown>;
-  assert.equal(createdWorkout.title, "Push Day");
-  assert.equal(createdWorkout.workoutType, "Push");
-  assert.equal(decimalString(createdWorkout.totalWeightLb), "1125");
-
-  const performedAt = createdWorkout.performedAt as Date;
+  assert.equal(result.id, "workout-created");
+  assert.deepEqual(result.syncInput.normalizedExerciseNames, ["bench press"]);
   assert.ok(
     [pacificDateBefore, pacificDateAfter].includes(
-      formatDatabaseDateValue(performedAt),
+      result.syncInput.performedAtDates[0] ?? "",
     ),
   );
 
-  const createdExercise = calls.workoutExerciseCreate[0]?.data as {
-    normalizedName?: string;
-    sets: { create: Array<{ weightLb: string | null }> };
+  const createdWorkout = calls.workoutLogCreate[0]?.data as {
+    title: string;
+    workoutType?: string | null;
+    totalWeightLb: unknown;
+    performedAt: Date;
+    exercises: {
+      create: Array<{
+        normalizedName: string;
+        sets: { create: Array<{ weightLb: string | null }> };
+      }>;
+    };
   };
-  assert.equal(createdExercise.normalizedName, "bench press");
-  assert.deepEqual(createdExercise.sets.create, [{ order: 1, reps: 5, weightLb: "225" }]);
+  assert.equal(createdWorkout.title, "Push Day");
+  assert.equal(createdWorkout.workoutType, "Push");
+  assert.equal(decimalString(createdWorkout.totalWeightLb), "1125");
+  assert.ok(
+    [pacificDateBefore, pacificDateAfter].includes(
+      formatDatabaseDateValue(createdWorkout.performedAt),
+    ),
+  );
+  assert.equal(createdWorkout.exercises.create[0]?.normalizedName, "bench press");
+  assert.deepEqual(createdWorkout.exercises.create[0]?.sets.create, [
+    { order: 1, reps: 5, weightLb: "225" },
+  ]);
 });

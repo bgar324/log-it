@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { syncWorkoutReadModels } from "@/lib/workout-read-models";
 import { duplicateWorkout, WORKOUT_NOT_FOUND_ERROR } from "@/lib/workouts/service";
 
 type RouteContext = {
@@ -52,6 +53,13 @@ export async function POST(_request: Request, context: RouteContext) {
 
   try {
     const duplicated = await duplicateWorkout(workoutId, user.id);
+    after(async () => {
+      try {
+        await syncWorkoutReadModels(duplicated.syncInput);
+      } catch (syncError) {
+        console.error("workout duplicate read-model sync failure:", syncError);
+      }
+    });
     return NextResponse.json({ id: duplicated.id }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.message === WORKOUT_NOT_FOUND_ERROR) {

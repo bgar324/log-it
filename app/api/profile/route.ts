@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { createSessionToken, getSessionUser, setSessionCookie } from "@/lib/auth";
 import { isWeightUnit } from "@/lib/weight-unit";
 import { prisma } from "@/lib/prisma";
 
@@ -56,13 +56,28 @@ export async function PATCH(request: NextRequest) {
         preferredWeightUnit,
       },
       select: {
+        id: true,
+        email: true,
+        username: true,
         firstName: true,
         lastName: true,
         preferredWeightUnit: true,
+        createdAt: true,
       },
     });
 
-    return NextResponse.json({ ok: true, user: updated });
+    const response = NextResponse.json({
+      ok: true,
+      user: {
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        preferredWeightUnit: updated.preferredWeightUnit,
+      },
+    });
+    const token = await createSessionToken(updated);
+    setSessionCookie(response, token);
+
+    return response;
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

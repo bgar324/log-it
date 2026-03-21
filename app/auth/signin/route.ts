@@ -31,6 +31,9 @@ export async function POST(request: NextRequest) {
         email: true,
         username: true,
         firstName: true,
+        lastName: true,
+        preferredWeightUnit: true,
+        createdAt: true,
         passwordHash: true,
       },
     });
