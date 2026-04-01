@@ -1,6 +1,31 @@
 import Link from "next/link";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, cn } from "@heroui/react";
+
+type DivProps = ComponentPropsWithoutRef<"div">;
+
+export function cn(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
+}
+
+function Card({ className, ...props }: DivProps) {
+  return <div className={className} {...props} />;
+}
+
+function CardHeader({ className, ...props }: DivProps) {
+  return <div className={className} {...props} />;
+}
+
+function CardContent({ className, ...props }: DivProps) {
+  return <div className={className} {...props} />;
+}
+
+function CardTitle({ className, ...props }: DivProps) {
+  return <div className={className} {...props} />;
+}
+
+function CardDescription({ className, ...props }: DivProps) {
+  return <div className={className} {...props} />;
+}
 
 type AppBrandProps = {
   compact?: boolean;

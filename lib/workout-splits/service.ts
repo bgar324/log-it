@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { getSplitDataTag } from "./cache-tags";
+import { getSplitDataTag } from "../cache-tags";
 import { prisma } from "../prisma";
 import { isPrismaSchemaMismatchError } from "../schema-compat";
 import { formatDatabaseDateValue } from "../workout-utils";

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
-import { cn } from "@heroui/react";
-import { AppBrand, SurfaceCard } from "./ui";
+import { AppBrand, SurfaceCard, cn } from "./ui";
 import { ThemeToggle } from "./theme-toggle";
 
 type PublicPageShellProps = {
