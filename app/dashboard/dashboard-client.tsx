@@ -151,6 +151,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [progressExercisePage, setProgressExercisePage] = useState(1);
   const [profile, setProfile] = useState(data.user);
+  const [todayPlan, setTodayPlan] = useState(data.overview.todayPlan);
   const [firstNameInput, setFirstNameInput] = useState(data.user.firstName ?? "");
   const [lastNameInput, setLastNameInput] = useState(data.user.lastName ?? "");
   const [preferredWeightUnitInput, setPreferredWeightUnitInput] = useState<WeightUnit>(
@@ -308,6 +309,50 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     setLastNameInput(data.user.lastName ?? "");
     setPreferredWeightUnitInput(data.user.preferredWeightUnit);
   }, [data.user]);
+
+  useEffect(() => {
+    setTodayPlan(data.overview.todayPlan);
+  }, [data.overview.todayPlan]);
+
+  useEffect(() => {
+    if (activeView !== "dashboard") {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function hydrateTodayPlan() {
+      try {
+        const response = await fetch("/api/dashboard/today-plan", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as
+          | {
+              todayPlan?: DashboardClientData["overview"]["todayPlan"];
+            }
+          | {
+              error?: string;
+            };
+
+        if (!response.ok || !payload || !("todayPlan" in payload) || !payload.todayPlan) {
+          return;
+        }
+
+        setTodayPlan(payload.todayPlan);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    void hydrateTodayPlan();
+
+    return () => {
+      controller.abort();
+    };
+  }, [activeView]);
 
   function formatWeight(value: number) {
     return formatWeightWithUnit(value, displayWeightUnit);
@@ -523,8 +568,8 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Today</p>
-                <p className={styles.kpiValue}>{data.overview.todayPlan.workoutType}</p>
-                <p className={styles.kpiSubtle}>{data.overview.todayPlan.subtitle}</p>
+                <p className={styles.kpiValue}>{todayPlan.workoutType}</p>
+                <p className={styles.kpiSubtle}>{todayPlan.subtitle}</p>
               </article>
 
               <Link

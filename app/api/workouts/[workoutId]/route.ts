@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse, after } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
+import { getWorkoutDataTag } from "@/lib/cache-tags";
 import { syncWorkoutReadModels } from "@/lib/workout-read-models";
 import { deleteWorkout, WORKOUT_NOT_FOUND_ERROR } from "@/lib/workouts/service";
 
@@ -56,6 +58,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     after(async () => {
       try {
         await syncWorkoutReadModels(deleted.syncInput);
+        revalidateTag(getWorkoutDataTag(user.id), { expire: 0 });
       } catch (syncError) {
         console.error("workout delete read-model sync failure:", syncError);
       }

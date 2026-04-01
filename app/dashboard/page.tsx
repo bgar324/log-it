@@ -1,4 +1,7 @@
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import { requireSessionUser } from "@/lib/auth";
+import { getSplitDataTag, getWorkoutDataTag } from "@/lib/cache-tags";
 import { toExerciseRouteKey } from "@/lib/exercise-route-key";
 import { prisma } from "@/lib/prisma";
 import { buildExerciseSummaryRecords, buildWorkoutCalendarDayCounts } from "@/lib/workout-read-models";
@@ -7,7 +10,6 @@ import { getUserWorkoutSplit } from "@/lib/workout-splits/service";
 import {
   REST_DAY_WORKOUT_TYPE,
   SPLIT_WEEKDAYS,
-  getWeekdayForDate,
   type WorkoutSplitTemplate,
 } from "@/lib/workout-splits/shared";
 import { convertStoredWeightToDisplay, toWeightNumber } from "@/lib/weight-unit";
@@ -26,6 +28,12 @@ import {
 } from "@/lib/workout-utils";
 import { DashboardClient } from "./dashboard-client";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
+
+const VIEW_CACHE_REVALIDATE_SECONDS = 60;
+const DEFAULT_TODAY_PLAN = {
+  workoutType: "Loading plan",
+  subtitle: "Fetching today's split details.",
+} as const;
 
 const DASHBOARD_VIEWS: DashboardView[] = [
   "dashboard",
@@ -128,10 +136,7 @@ function createEmptyDashboardData(
       workoutsThisWeek: 0,
       totalExercises: 0,
       totalSets: 0,
-      todayPlan: {
-        workoutType: "No split",
-        subtitle: "Set up your weekly split to preload today's workout.",
-      },
+      todayPlan: DEFAULT_TODAY_PLAN,
       monthChange: 0,
       weeklyBars: Array.from({ length: 7 }, (_, index) => ({
         label: WEEKDAY_SHORT_FORMATTER.format(
@@ -168,27 +173,33 @@ function createEmptyDashboardData(
 
 async function loadRecentLogs(userId: string, take: number) {
   try {
-    return await prisma.workoutLog.findMany({
-      where: { userId },
-      orderBy: { performedAt: "desc" },
-      take,
-      select: {
-        id: true,
-        title: true,
-        workoutType: true,
-        totalWeightLb: true,
-        performedAt: true,
-        exercises: {
-          select: {
-            _count: {
-              select: {
-                sets: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    return await prisma.$queryRaw<
+      Array<{
+        id: string;
+        title: string;
+        workoutType: string | null;
+        totalWeightLb: Prisma.Decimal | number | null;
+        performedAt: Date;
+        exerciseCount: number;
+        setCount: number;
+      }>
+    >`
+      SELECT
+        wl.id,
+        wl.title,
+        wl."workoutType",
+        wl."totalWeightLb",
+        wl."performedAt",
+        COUNT(DISTINCT we.id)::int AS "exerciseCount",
+        COUNT(ws.id)::int AS "setCount"
+      FROM "WorkoutLog" wl
+      LEFT JOIN "WorkoutExercise" we ON we."workoutLogId" = wl.id
+      LEFT JOIN "WorkoutSet" ws ON ws."workoutExerciseId" = we.id
+      WHERE wl."userId" = ${userId}
+      GROUP BY wl.id, wl.title, wl."workoutType", wl."totalWeightLb", wl."performedAt"
+      ORDER BY wl."performedAt" DESC
+      LIMIT ${take}
+    `;
   } catch (error) {
     if (!isPrismaSchemaMismatchError(error)) {
       throw error;
@@ -216,8 +227,13 @@ async function loadRecentLogs(userId: string, take: number) {
     });
 
     return logs.map((log) => ({
-      ...log,
       workoutType: null,
+      id: log.id,
+      title: log.title,
+      totalWeightLb: log.totalWeightLb,
+      performedAt: log.performedAt,
+      exerciseCount: log.exercises.length,
+      setCount: log.exercises.reduce((sum, exercise) => sum + exercise._count.sets, 0),
     }));
   }
 }
@@ -415,7 +431,6 @@ function mapWorkoutSummaries(
   weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
 ) {
   return logs.map((log) => {
-    const setCount = log.exercises.reduce((sum, exercise) => sum + exercise._count.sets, 0);
     const volume = convertStoredWeightToDisplay(log.totalWeightLb, weightUnit) ?? 0;
 
     return {
@@ -425,8 +440,8 @@ function mapWorkoutSummaries(
       month: monthLabel(log.performedAt),
       performedAtLabel: monthDateLabel(log.performedAt),
       timelineLabel: timelineDateLabel(log.performedAt),
-      exerciseCount: log.exercises.length,
-      setCount,
+      exerciseCount: log.exerciseCount,
+      setCount: log.setCount,
       volume,
     };
   });
@@ -448,44 +463,11 @@ async function loadDashboardOverviewSection(
   const [
     exerciseSummaries,
     recentLogs,
-    personalBestSets,
     workoutCalendarDayCounts,
-    workoutSplit,
   ] = await Promise.all([
     loadExerciseSummaryRows(userId),
     loadRecentLogs(userId, 5),
-    prisma.workoutSet.findMany({
-      where: {
-        weightLb: {
-          not: null,
-        },
-        workoutExercise: {
-          workoutLog: {
-            userId,
-          },
-        },
-      },
-      orderBy: {
-        weightLb: "desc",
-      },
-      take: 40,
-      select: {
-        id: true,
-        weightLb: true,
-        workoutExercise: {
-          select: {
-            name: true,
-            workoutLog: {
-              select: {
-                performedAt: true,
-              },
-            },
-          },
-        },
-      },
-    }),
     loadWorkoutCalendarSummary(userId),
-    getUserWorkoutSplit(userId),
   ]);
 
   const totalWorkouts = sumWorkoutCounts(workoutCalendarDayCounts);
@@ -507,28 +489,6 @@ async function loadDashboardOverviewSection(
         ? 100
         : 0;
 
-  const todaySplitDay =
-    workoutSplit.id !== null
-      ? workoutSplit.days.find((day) => day.weekday === getWeekdayForDate(now)) ?? null
-      : null;
-  const todayPlan =
-    todaySplitDay === null
-      ? {
-          workoutType: "No split",
-          subtitle: "Set up your weekly split to preload today's workout.",
-        }
-      : todaySplitDay.workoutTypeSlug === "rest"
-        ? {
-            workoutType: todaySplitDay.workoutType,
-            subtitle: "Recovery day on your current split.",
-          }
-        : {
-            workoutType: todaySplitDay.workoutType,
-            subtitle: `${todaySplitDay.exercises.length} planned exercise${
-              todaySplitDay.exercises.length === 1 ? "" : "s"
-            } ready to preload.`,
-          };
-
   const workoutCountByDate = new Map(
     workoutCalendarDayCounts.map((row) => [row.dateKey, row.count]),
   );
@@ -547,29 +507,16 @@ async function loadDashboardOverviewSection(
     volume: log.volume,
   }));
 
-  const personalBests: DashboardClientData["overview"]["personalBests"] = [];
-  const seenPersonalBestExerciseKeys = new Set<string>();
-
-  for (const set of personalBestSets) {
-    const lift = set.workoutExercise.name.trim();
-    const exerciseKey = set.workoutExercise.name.trim().toLowerCase();
-
-    if (!exerciseKey || seenPersonalBestExerciseKeys.has(exerciseKey)) {
-      continue;
-    }
-
-    seenPersonalBestExerciseKeys.add(exerciseKey);
-    personalBests.push({
-      id: set.id,
-      lift,
-      weight: convertStoredWeightToDisplay(set.weightLb, weightUnit) ?? 0,
-      dateLabel: monthDateLabel(set.workoutExercise.workoutLog.performedAt),
-    });
-
-    if (personalBests.length >= 5) {
-      break;
-    }
-  }
+  const personalBests: DashboardClientData["overview"]["personalBests"] = exerciseSummaries
+    .filter((item) => item.bestWeightLb > 0)
+    .sort((left, right) => right.bestWeightLb - left.bestWeightLb)
+    .slice(0, 5)
+    .map((item) => ({
+      id: item.normalizedName,
+      lift: item.name,
+      weight: convertStoredWeightToDisplay(item.bestWeightLb, weightUnit) ?? 0,
+      dateLabel: item.lastPerformedAt ? monthDateLabel(item.lastPerformedAt) : "--",
+    }));
 
   return {
     overview: {
@@ -577,14 +524,13 @@ async function loadDashboardOverviewSection(
       workoutsThisWeek,
       totalExercises: exerciseSummaries.length,
       totalSets: exerciseSummaries.reduce((sum, item) => sum + item.setCount, 0),
-      todayPlan,
+      todayPlan: DEFAULT_TODAY_PLAN,
       monthChange,
       weeklyBars,
       personalBests,
       workoutCalendar: buildWorkoutCalendarOverview(workoutCalendarDayCounts, now),
     },
     workouts,
-    split: workoutSplit,
   } satisfies Partial<DashboardClientData>;
 }
 
@@ -717,6 +663,68 @@ async function loadProgressSection(
   } satisfies Partial<DashboardClientData>;
 }
 
+function loadCachedDashboardOverviewSection(
+  userId: string,
+  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  now: Date,
+) {
+  const nowKey = dateKey(now);
+
+  return unstable_cache(
+    async () => loadDashboardOverviewSection(userId, weightUnit, now),
+    ["dashboard-overview", userId, weightUnit, nowKey],
+    {
+      revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
+      tags: [getWorkoutDataTag(userId), getSplitDataTag(userId)],
+    },
+  )();
+}
+
+function loadCachedWorkoutHistorySection(
+  userId: string,
+  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+) {
+  return unstable_cache(
+    async () => loadWorkoutHistorySection(userId, weightUnit),
+    ["workout-history", userId, weightUnit],
+    {
+      revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
+      tags: [getWorkoutDataTag(userId)],
+    },
+  )();
+}
+
+function loadCachedProgressSection(
+  userId: string,
+  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  now: Date,
+) {
+  const weekStartKey = dateKey(startOfDatabaseWeek(now));
+
+  return unstable_cache(
+    async () => loadProgressSection(userId, weightUnit, now),
+    ["progress-view", userId, weightUnit, weekStartKey],
+    {
+      revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
+      tags: [getWorkoutDataTag(userId)],
+    },
+  )();
+}
+
+function loadCachedSplitSection(userId: string) {
+  return unstable_cache(
+    async () =>
+      ({
+        split: await getUserWorkoutSplit(userId),
+      }) satisfies Partial<DashboardClientData>,
+    ["split-view", userId],
+    {
+      revalidate: 300,
+      tags: [getSplitDataTag(userId)],
+    },
+  )();
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -732,15 +740,13 @@ export default async function DashboardPage({
 
   const viewData =
     initialView === "dashboard"
-      ? await loadDashboardOverviewSection(user.id, user.preferredWeightUnit, now)
+      ? await loadCachedDashboardOverviewSection(user.id, user.preferredWeightUnit, now)
       : initialView === "workouts"
-        ? await loadWorkoutHistorySection(user.id, user.preferredWeightUnit)
+        ? await loadCachedWorkoutHistorySection(user.id, user.preferredWeightUnit)
         : initialView === "progress"
-          ? await loadProgressSection(user.id, user.preferredWeightUnit, now)
+          ? await loadCachedProgressSection(user.id, user.preferredWeightUnit, now)
           : initialView === "split"
-            ? ({
-                split: await getUserWorkoutSplit(user.id),
-              } satisfies Partial<DashboardClientData>)
+            ? await loadCachedSplitSection(user.id)
             : ({} satisfies Partial<DashboardClientData>);
 
   return (

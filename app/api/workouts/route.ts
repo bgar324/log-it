@@ -1,7 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
+import { getWorkoutDataTag } from "@/lib/cache-tags";
 import { syncWorkoutReadModels } from "@/lib/workout-read-models";
 import {
   isObject,
@@ -80,6 +82,7 @@ export async function POST(request: NextRequest) {
     after(async () => {
       try {
         await syncWorkoutReadModels(created.syncInput);
+        revalidateTag(getWorkoutDataTag(user.id), { expire: 0 });
       } catch (syncError) {
         console.error("workout create read-model sync failure:", syncError);
       }
@@ -123,6 +126,7 @@ export async function PUT(request: NextRequest) {
     after(async () => {
       try {
         await syncWorkoutReadModels(updated.syncInput);
+        revalidateTag(getWorkoutDataTag(user.id), { expire: 0 });
       } catch (syncError) {
         console.error("workout update read-model sync failure:", syncError);
       }

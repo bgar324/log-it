@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
+import { getSplitDataTag } from "@/lib/cache-tags";
 import {
   normalizeWorkoutSplitPayload,
   type RawWorkoutSplitPayload,
@@ -73,6 +75,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const split = await saveUserWorkoutSplit(user.id, parsed.value);
+    revalidateTag(getSplitDataTag(user.id), { expire: 0 });
     return NextResponse.json({ ok: true, split }, { status: 200 });
   } catch (error) {
     console.error("workout split write failure:", error);

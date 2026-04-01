@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+import { getSplitDataTag } from "./cache-tags";
 import { prisma } from "../prisma";
 import { isPrismaSchemaMismatchError } from "../schema-compat";
 import { formatDatabaseDateValue } from "../workout-utils";
@@ -175,8 +177,17 @@ async function findStoredWorkoutSplitDay(
 }
 
 export async function getUserWorkoutSplit(userId: string) {
-  const split = await findStoredWorkoutSplit(userId);
-  return serializeWorkoutSplit(split as StoredWorkoutSplit | null);
+  return unstable_cache(
+    async () => {
+      const split = await findStoredWorkoutSplit(userId);
+      return serializeWorkoutSplit(split as StoredWorkoutSplit | null);
+    },
+    ["user-workout-split", userId],
+    {
+      revalidate: 300,
+      tags: [getSplitDataTag(userId)],
+    },
+  )();
 }
 
 function serializeWorkoutSplitDay(
@@ -210,19 +221,30 @@ export async function getWorkoutSplitSeedForDate(
   userId: string,
   date: Date,
 ): Promise<WorkoutSplitSeedForDate> {
-  const weekday = getWeekdayForDate(date);
-  const split = (await findStoredWorkoutSplitDay(
-    userId,
-    weekday,
-  )) as StoredWorkoutSplit | null;
+  const dateKey = formatDatabaseDateValue(date);
 
-  return {
-    split: {
-      id: split?.id ?? null,
-      name: split?.name ?? DEFAULT_WORKOUT_SPLIT_NAME,
+  return unstable_cache(
+    async () => {
+      const weekday = getWeekdayForDate(date);
+      const split = (await findStoredWorkoutSplitDay(
+        userId,
+        weekday,
+      )) as StoredWorkoutSplit | null;
+
+      return {
+        split: {
+          id: split?.id ?? null,
+          name: split?.name ?? DEFAULT_WORKOUT_SPLIT_NAME,
+        },
+        day: serializeWorkoutSplitDay(split, weekday),
+      };
     },
-    day: serializeWorkoutSplitDay(split, weekday),
-  };
+    ["workout-split-seed", userId, dateKey],
+    {
+      revalidate: 300,
+      tags: [getSplitDataTag(userId)],
+    },
+  )();
 }
 
 export async function saveUserWorkoutSplit(userId: string, payload: ParsedWorkoutSplit) {
