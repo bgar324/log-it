@@ -32,6 +32,11 @@ type StoredWorkoutSplit = {
   }>;
 };
 
+export type WorkoutSplitSeedForDate = {
+  split: Pick<WorkoutSplitTemplate, "id" | "name">;
+  day: WorkoutSplitDayTemplate;
+};
+
 function createDefaultDay(weekday: SplitWeekdayValue): WorkoutSplitDayTemplate {
   return {
     id: null,
@@ -126,9 +131,98 @@ async function findStoredWorkoutSplit(userId: string) {
   }
 }
 
+async function findStoredWorkoutSplitDay(
+  userId: string,
+  weekday: SplitWeekdayValue,
+) {
+  try {
+    return await prisma.workoutSplit.findUnique({
+      where: { userId },
+      select: {
+        id: true,
+        name: true,
+        days: {
+          where: {
+            weekday,
+          },
+          select: {
+            id: true,
+            weekday: true,
+            workoutType: true,
+            exercises: {
+              orderBy: {
+                order: "asc",
+              },
+              select: {
+                id: true,
+                order: true,
+                exerciseDisplayName: true,
+                exerciseSlug: true,
+                sets: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  } catch (error) {
+    if (isPrismaSchemaMismatchError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
 export async function getUserWorkoutSplit(userId: string) {
   const split = await findStoredWorkoutSplit(userId);
   return serializeWorkoutSplit(split as StoredWorkoutSplit | null);
+}
+
+function serializeWorkoutSplitDay(
+  split: StoredWorkoutSplit | null,
+  weekday: SplitWeekdayValue,
+) {
+  const day = split?.days[0];
+
+  if (!day) {
+    return createDefaultDay(weekday);
+  }
+
+  return {
+    id: day.id,
+    weekday: day.weekday,
+    workoutType: day.workoutType,
+    workoutTypeSlug: normalizeWorkoutTypeSlug(day.workoutType),
+    exercises: [...day.exercises]
+      .sort((left, right) => left.order - right.order)
+      .map((exercise) => ({
+        id: exercise.id,
+        order: exercise.order,
+        exerciseDisplayName: exercise.exerciseDisplayName,
+        exerciseSlug: exercise.exerciseSlug,
+        sets: exercise.sets,
+      })),
+  } satisfies WorkoutSplitDayTemplate;
+}
+
+export async function getWorkoutSplitSeedForDate(
+  userId: string,
+  date: Date,
+): Promise<WorkoutSplitSeedForDate> {
+  const weekday = getWeekdayForDate(date);
+  const split = (await findStoredWorkoutSplitDay(
+    userId,
+    weekday,
+  )) as StoredWorkoutSplit | null;
+
+  return {
+    split: {
+      id: split?.id ?? null,
+      name: split?.name ?? DEFAULT_WORKOUT_SPLIT_NAME,
+    },
+    day: serializeWorkoutSplitDay(split, weekday),
+  };
 }
 
 export async function saveUserWorkoutSplit(userId: string, payload: ParsedWorkoutSplit) {
@@ -188,7 +282,10 @@ export async function getWorkoutSplitDayForDate(userId: string, date: Date) {
   return getWorkoutSplitDay(split, getWeekdayForDate(date));
 }
 
-function buildSplitWorkoutTitle(split: WorkoutSplitTemplate, day: WorkoutSplitDayTemplate) {
+function buildSplitWorkoutTitle(
+  split: Pick<WorkoutSplitTemplate, "name">,
+  day: WorkoutSplitDayTemplate,
+) {
   if (day.workoutType.trim()) {
     return day.workoutType;
   }
@@ -197,7 +294,7 @@ function buildSplitWorkoutTitle(split: WorkoutSplitTemplate, day: WorkoutSplitDa
 }
 
 export function buildWorkoutLoggerInitialDataFromSplit(
-  split: WorkoutSplitTemplate,
+  split: Pick<WorkoutSplitTemplate, "name">,
   day: WorkoutSplitDayTemplate,
   date: Date,
 ): WorkoutLoggerInitialData {
@@ -216,12 +313,10 @@ export function buildWorkoutLoggerInitialDataFromSplit(
 }
 
 export async function getWorkoutLoggerInitialDataForDate(userId: string, date: Date) {
-  const split = await getUserWorkoutSplit(userId);
-  const day = getWorkoutSplitDay(split, getWeekdayForDate(date));
+  const seed = await getWorkoutSplitSeedForDate(userId, date);
 
   return {
-    split,
-    day,
-    initialData: buildWorkoutLoggerInitialDataFromSplit(split, day, date),
+    ...seed,
+    initialData: buildWorkoutLoggerInitialDataFromSplit(seed.split, seed.day, date),
   };
 }

@@ -1,7 +1,7 @@
 import { requireSessionUser } from "@/lib/auth";
 import { toExerciseRouteKey } from "@/lib/exercise-route-key";
 import { prisma } from "@/lib/prisma";
-import { buildExerciseSummaryRecords, buildWorkoutCalendarDayCounts, ensureWorkoutReadModels } from "@/lib/workout-read-models";
+import { buildExerciseSummaryRecords, buildWorkoutCalendarDayCounts } from "@/lib/workout-read-models";
 import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import { getUserWorkoutSplit } from "@/lib/workout-splits/service";
 import {
@@ -331,6 +331,29 @@ async function loadWorkoutCalendarSummary(userId: string) {
   }));
 }
 
+function sumWorkoutCounts(
+  dayCounts: DashboardClientData["overview"]["workoutCalendar"]["dayCounts"],
+  options?: {
+    gte?: Date;
+    lt?: Date;
+  },
+) {
+  const gteKey = options?.gte ? dateKey(options.gte) : null;
+  const ltKey = options?.lt ? dateKey(options.lt) : null;
+
+  return dayCounts.reduce((sum, row) => {
+    if (gteKey !== null && row.dateKey < gteKey) {
+      return sum;
+    }
+
+    if (ltKey !== null && row.dateKey >= ltKey) {
+      return sum;
+    }
+
+    return sum + row.count;
+  }, 0);
+}
+
 function buildWorkoutCalendarOverview(
   dayCounts: DashboardClientData["overview"]["workoutCalendar"]["dayCounts"],
   now: Date,
@@ -414,8 +437,6 @@ async function loadDashboardOverviewSection(
   weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
   now: Date,
 ) {
-  await ensureWorkoutReadModels(userId);
-
   const weekStart = startOfDatabaseWeek(now);
   const weekDays = Array.from({ length: 7 }, (_, index) =>
     addDaysToDatabaseDate(weekStart, index),
@@ -425,42 +446,12 @@ async function loadDashboardOverviewSection(
   const previousMonthEnd = monthStart;
 
   const [
-    totalWorkouts,
-    workoutsThisWeek,
-    workoutsThisMonth,
-    workoutsPreviousMonth,
     exerciseSummaries,
     recentLogs,
     personalBestSets,
     workoutCalendarDayCounts,
     workoutSplit,
   ] = await Promise.all([
-    prisma.workoutLog.count({ where: { userId } }),
-    prisma.workoutLog.count({
-      where: {
-        userId,
-        performedAt: {
-          gte: weekStart,
-        },
-      },
-    }),
-    prisma.workoutLog.count({
-      where: {
-        userId,
-        performedAt: {
-          gte: monthStart,
-        },
-      },
-    }),
-    prisma.workoutLog.count({
-      where: {
-        userId,
-        performedAt: {
-          gte: previousMonthStart,
-          lt: previousMonthEnd,
-        },
-      },
-    }),
     loadExerciseSummaryRows(userId),
     loadRecentLogs(userId, 5),
     prisma.workoutSet.findMany({
@@ -496,6 +487,18 @@ async function loadDashboardOverviewSection(
     loadWorkoutCalendarSummary(userId),
     getUserWorkoutSplit(userId),
   ]);
+
+  const totalWorkouts = sumWorkoutCounts(workoutCalendarDayCounts);
+  const workoutsThisWeek = sumWorkoutCounts(workoutCalendarDayCounts, {
+    gte: weekStart,
+  });
+  const workoutsThisMonth = sumWorkoutCounts(workoutCalendarDayCounts, {
+    gte: monthStart,
+  });
+  const workoutsPreviousMonth = sumWorkoutCounts(workoutCalendarDayCounts, {
+    gte: previousMonthStart,
+    lt: previousMonthEnd,
+  });
 
   const monthChange =
     workoutsPreviousMonth > 0
@@ -622,8 +625,6 @@ async function loadProgressSection(
   weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
   now: Date,
 ) {
-  await ensureWorkoutReadModels(userId);
-
   const weekStart = startOfDatabaseWeek(now);
   const progressStart = addDaysToDatabaseDate(weekStart, -(7 * 11));
   const [exerciseSummaries, progressLogs, totalWeightLiftedAggregate] =
@@ -721,9 +722,11 @@ export default async function DashboardPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const params = await searchParams;
+  const [params, user] = await Promise.all([
+    searchParams,
+    requireSessionUser(),
+  ]);
   const initialView = normalizeView(params.view);
-  const user = await requireSessionUser();
   const now = getCurrentPacificDate();
   const data = createEmptyDashboardData(user, now);
 

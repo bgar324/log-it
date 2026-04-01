@@ -13,8 +13,10 @@ export default async function NewWorkoutPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const params = await searchParams;
-  const user = await requireSessionUser();
+  const [params, user] = await Promise.all([
+    searchParams,
+    requireSessionUser(),
+  ]);
   const selectedDate = parseDateKey(params.date ?? "") ?? getCurrentPacificDate();
   const splitSeed = await getWorkoutLoggerInitialDataForDate(user.id, selectedDate);
   const initialData =
