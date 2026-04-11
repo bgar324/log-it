@@ -372,9 +372,6 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
           <div>
             <p className={splitStyles.editorEyebrow}>Weekly template</p>
             <h2 className={splitStyles.splitHeading}>Workout split</h2>
-            <p className={splitStyles.editorSubtitle}>
-              Each day powers the calendar badge and the exercise rows preloaded into `/workouts/new`.
-            </p>
           </div>
 
           <div className={splitStyles.splitSummaryActions}>
