@@ -848,8 +848,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
         {activeView === "profile" ? (
           <section className={styles.panel}>
-            <p className={styles.panelSubtitle}>These details are shown in your dashboard greeting and account menu.</p>
-
             <form
               id="profileSettingsForm"
               className={styles.profileForm}
