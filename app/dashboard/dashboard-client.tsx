@@ -552,9 +552,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
             <section className={styles.panel}>
               <div className={styles.panelHead}>
                 <h2 className={styles.panelTitle}>Recent sessions</h2>
-                <Link href="/workouts/new" className={`${styles.inlineAction} ${styles.mobileOnlyAction}`}>
-                  New workout
-                </Link>
               </div>
 
               {recentSessions.length > 0 ? (

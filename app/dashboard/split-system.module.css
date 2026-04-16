@@ -3,10 +3,10 @@
 .splitSummary {
   --split-border: color-mix(in srgb, var(--text) 12%, transparent);
   --split-border-strong: color-mix(in srgb, var(--text) 18%, transparent);
-  --split-soft: #ffffff;
+  --split-soft: transparent;
   border-radius: 0.54rem;
   border: 1px solid var(--split-border);
-  background: #ffffff;
+  background: transparent;
   box-shadow: none;
 }
 
@@ -45,7 +45,7 @@
 .editorInput {
   border-radius: 0.52rem;
   border: 1px solid var(--split-border);
-  background: #ffffff;
+  background: var(--bg);
   color: var(--text);
   min-height: 2.75rem;
   padding: 0 0.9rem;
@@ -145,9 +145,9 @@
 }
 
 .primaryButton {
-  background: var(--text);
-  color: var(--bg);
-  border-color: transparent;
+  background: transparent;
+  color: var(--text);
+  border-color: var(--split-border);
 }
 
 .iconGhostButton {
@@ -164,11 +164,11 @@
 .primaryButton:hover,
 .iconGhostButton:hover {
   border-color: var(--split-border-strong);
-  background: var(--split-soft);
+  background: transparent;
 }
 
 .primaryButton:hover {
-  background: var(--text);
+  background: transparent;
 }
 
 .calendarBadgeStack,
@@ -181,7 +181,7 @@
 
 .calendarLoggedLink {
   border-radius: 0.5rem;
-  background: var(--split-soft);
+  background: color-mix(in srgb, var(--text) 7%, transparent);
   padding: 0.62rem 0.7rem;
   color: inherit;
   text-decoration: none;
@@ -207,7 +207,7 @@
 
 .badge {
   --badge-border: var(--split-border);
-  --badge-background: var(--split-soft);
+  --badge-background: color-mix(in srgb, var(--text) 7%, transparent);
   --badge-text: var(--text);
   --badge-accent: var(--text);
   border: 1px solid var(--badge-border);
@@ -302,7 +302,7 @@
   border-color: var(--split-border-strong);
   box-shadow: none;
   transform: none;
-  background: var(--split-soft);
+  background: color-mix(in srgb, var(--text) 7%, transparent);
 }
 
 .splitDayCardDragging {
@@ -328,7 +328,7 @@
   align-items: center;
   justify-content: center;
   color: var(--muted);
-  background: var(--split-soft);
+  background: color-mix(in srgb, var(--text) 7%, transparent);
   cursor: grab;
 }
 

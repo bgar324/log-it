@@ -461,7 +461,6 @@ export function WorkoutLogger({
   >({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [didRestoreDraft, setDidRestoreDraft] = useState(false);
   const [draggingExerciseIndex, setDraggingExerciseIndex] = useState<number | null>(null);
   const [dropTargetExerciseIndex, setDropTargetExerciseIndex] = useState<number | null>(null);
   const performedAtDate = useMemo(
@@ -493,10 +492,7 @@ export function WorkoutLogger({
       setPerformedAt(storedDraft.performedAt);
       setExercises(hydrated.exercises);
       idCounterRef.current = hydrated.counters;
-      setDidRestoreDraft(true);
     } else {
-      setDidRestoreDraft(false);
-
       if (rawDraft) {
         window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
       }
@@ -1277,12 +1273,6 @@ export function WorkoutLogger({
                 </div>
 
                 <div className={styles.field}>
-                  <label
-                    className={styles.label}
-                    htmlFor={`exercise-name-${exercise.id}`}
-                  >
-                    Exercise name
-                  </label>
                   <div className={styles.inlineRow}>
                     {(() => {
                       const suggestedName = exerciseSuggestionById[exercise.id];
@@ -1305,6 +1295,7 @@ export function WorkoutLogger({
                             id={`exercise-name-${exercise.id}`}
                             className={styles.input}
                             value={exercise.name}
+                            aria-label={`Exercise name for exercise ${exerciseIndex + 1}`}
                             onChange={(event) =>
                               handleExerciseNameChange(exercise.id, event.target.value)
                             }
@@ -1406,7 +1397,6 @@ export function WorkoutLogger({
                   return (
                     <section className={styles.compareCard}>
                       <div className={styles.compareHead}>
-                        <p className={styles.compareTitle}>Comparison</p>
                         <p className={styles.compareMeta}>
                           Last hit {formatExerciseInsightDate(insight.lastSession.performedAt)}
                         </p>
@@ -1450,32 +1440,12 @@ export function WorkoutLogger({
                           Volume vs last: {formatDelta(volumeDelta, weightUnitLabel)} ·
                           Best vs last: {formatDelta(bestWeightDelta, weightUnitLabel)}
                         </p>
-                      ) : (
-                        <p className={styles.compareDelta}>
-                          Add reps and weight to compare this session live.
-                        </p>
-                      )}
+                      ) : null}
                     </section>
                   );
                 })()}
 
                 <div className={styles.setsStack}>
-                  <div className={styles.setsHead}>
-                    <h3 className={styles.setsTitle}>Sets</h3>
-                    <button
-                      type="button"
-                      className={styles.actionButton}
-                      onClick={() => addSet(exercise.id)}
-                    >
-                      <Plus
-                        className={styles.actionIcon}
-                        aria-hidden="true"
-                        strokeWidth={1.9}
-                      />
-                      Add set
-                    </button>
-                  </div>
-
                   <div
                     className={`${styles.setRow} ${styles.setRowHeader}`}
                     aria-hidden="true"
@@ -1491,51 +1461,63 @@ export function WorkoutLogger({
                   {exercise.sets.map((setItem, setIndex) => (
                     <div key={setItem.id} className={styles.setRow}>
                       <p className={styles.setNumber}>#{setIndex + 1}</p>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        pattern="[0-9]*[.]?[0-9]*"
-                        autoComplete="off"
-                        autoCapitalize="off"
-                        spellCheck={false}
-                        enterKeyHint="next"
-                        className={styles.input}
-                        placeholder={weightUnitLabel}
-                        value={setItem.weightLb}
-                        aria-label={`Weight in ${weightUnitName} for set ${setIndex + 1}`}
-                        onChange={(event) =>
-                          updateSet(
-                            exercise.id,
-                            setItem.id,
-                            "weightLb",
-                            sanitizeWeightInput(event.target.value),
-                          )
-                        }
-                      />
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        autoComplete="off"
-                        autoCapitalize="off"
-                        spellCheck={false}
-                        enterKeyHint="done"
-                        className={styles.input}
-                        placeholder="Reps"
-                        value={setItem.reps}
-                        aria-label={`Repetitions for set ${setIndex + 1}`}
-                        onChange={(event) =>
-                          updateSet(
-                            exercise.id,
-                            setItem.id,
-                            "reps",
-                            sanitizeRepsInput(event.target.value),
-                          )
-                        }
-                      />
+                      <label
+                        className={`${styles.setField} ${styles.setFieldWeight}`}
+                      >
+                        <span className={styles.setFieldLabel}>
+                          Weight ({weightUnitLabel})
+                        </span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          pattern="[0-9]*[.]?[0-9]*"
+                          autoComplete="off"
+                          autoCapitalize="off"
+                          spellCheck={false}
+                          enterKeyHint="next"
+                          className={styles.input}
+                          placeholder={weightUnitLabel}
+                          value={setItem.weightLb}
+                          aria-label={`Weight in ${weightUnitName} for set ${setIndex + 1}`}
+                          onChange={(event) =>
+                            updateSet(
+                              exercise.id,
+                              setItem.id,
+                              "weightLb",
+                              sanitizeWeightInput(event.target.value),
+                            )
+                          }
+                        />
+                      </label>
+                      <label
+                        className={`${styles.setField} ${styles.setFieldReps}`}
+                      >
+                        <span className={styles.setFieldLabel}>Reps</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          autoComplete="off"
+                          autoCapitalize="off"
+                          spellCheck={false}
+                          enterKeyHint="done"
+                          className={styles.input}
+                          placeholder="Reps"
+                          value={setItem.reps}
+                          aria-label={`Repetitions for set ${setIndex + 1}`}
+                          onChange={(event) =>
+                            updateSet(
+                              exercise.id,
+                              setItem.id,
+                              "reps",
+                              sanitizeRepsInput(event.target.value),
+                            )
+                          }
+                        />
+                      </label>
                       <button
                         type="button"
-                        className={styles.iconButton}
+                        className={`${styles.iconButton} ${styles.setRemoveButton}`}
                         onClick={() => removeSet(exercise.id, setItem.id)}
                         disabled={exercise.sets.length === 1}
                         aria-label={`Remove set ${setIndex + 1}`}
@@ -1548,6 +1530,21 @@ export function WorkoutLogger({
                       </button>
                     </div>
                   ))}
+
+                  <div className={styles.setActions}>
+                    <button
+                      type="button"
+                      className={styles.actionButton}
+                      onClick={() => addSet(exercise.id)}
+                    >
+                      <Plus
+                        className={styles.actionIcon}
+                        aria-hidden="true"
+                        strokeWidth={1.9}
+                      />
+                      Add set
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}

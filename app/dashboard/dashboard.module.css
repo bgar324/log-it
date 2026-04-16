@@ -3,9 +3,9 @@
   display: flex;
   --dashboard-border: color-mix(in srgb, var(--text) 12%, transparent);
   --dashboard-border-strong: color-mix(in srgb, var(--text) 18%, transparent);
-  --dashboard-soft: #ffffff;
-  --dashboard-row: #ffffff;
-  background: #ffffff;
+  --dashboard-soft: transparent;
+  --dashboard-row: transparent;
+  background: var(--bg);
 }
 
 .sidebar {
@@ -49,13 +49,13 @@
 .navButton:hover {
   color: var(--text);
   border-color: var(--dashboard-border);
-  background: var(--dashboard-soft);
+  background: transparent;
 }
 
 .navButton[data-active="true"] {
-  color: var(--bg);
-  border-color: var(--text);
-  background: var(--text);
+  color: var(--text);
+  border-color: var(--dashboard-border-strong);
+  background: transparent;
 }
 
 .navIcon {
@@ -65,10 +65,11 @@
 
 .sidebarAction {
   margin-top: auto;
+  border: 1px solid var(--dashboard-border);
   border-radius: 0.52rem;
   min-height: 2.42rem;
-  background: var(--text);
-  color: var(--bg);
+  background: transparent;
+  color: var(--text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -77,11 +78,13 @@
   letter-spacing: 0;
   transition:
     transform 140ms ease,
-    filter 140ms ease;
+    border-color 140ms ease,
+    background-color 140ms ease;
 }
 
 .sidebarAction:hover {
-  filter: brightness(0.96);
+  border-color: var(--dashboard-border-strong);
+  background: transparent;
 }
 
 .sidebarAction:active {
@@ -102,7 +105,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.86rem;
-  background: #ffffff;
+  background: var(--bg);
 }
 
 .header {
@@ -146,7 +149,7 @@
 
 .mobileChip {
   border: 1px solid transparent;
-  background: var(--dashboard-soft);
+  background: transparent;
   color: var(--muted);
   border-radius: 0.5rem;
   min-height: 2.04rem;
@@ -164,10 +167,16 @@
     color 150ms ease;
 }
 
+.mobileChip:hover {
+  color: var(--text);
+  border-color: var(--dashboard-border);
+  background: transparent;
+}
+
 .mobileChip[data-active="true"] {
-  color: var(--bg);
-  border-color: var(--text);
-  background: var(--text);
+  color: var(--text);
+  border-color: var(--dashboard-border-strong);
+  background: transparent;
 }
 
 .mobileChipIcon {
@@ -209,7 +218,7 @@
 .chartPanel {
   border-radius: 0.54rem;
   border: 1px solid var(--dashboard-border);
-  background: #ffffff;
+  background: transparent;
   box-shadow: none;
 }
 
@@ -232,7 +241,7 @@
 
 .kpiActionCard:hover {
   border-color: var(--dashboard-border-strong);
-  background: var(--dashboard-soft);
+  background: transparent;
 }
 
 .kpiActionIcon {
@@ -341,7 +350,7 @@
 
 .calendarNavButton:hover:not(:disabled) {
   border-color: var(--dashboard-border-strong);
-  background: var(--dashboard-soft);
+  background: transparent;
 }
 
 .calendarNavButton:disabled {
@@ -378,7 +387,7 @@
 
 .calendarDay {
   border: 1px solid var(--dashboard-border);
-  background: #ffffff;
+  background: var(--surface);
   color: color-mix(in srgb, var(--text) 88%, var(--muted));
   display: flex;
   align-items: center;
@@ -389,7 +398,7 @@
 .calendarDayActive {
   border-color: color-mix(in srgb, var(--text) 24%, transparent);
   box-shadow: none;
-  background: color-mix(in srgb, var(--text) 7%, #ffffff);
+  background: color-mix(in srgb, var(--text) 7%, var(--surface));
   color: var(--text);
 }
 
@@ -415,7 +424,7 @@
 
 .inlineAction:hover {
   border-color: var(--dashboard-border-strong);
-  background: var(--dashboard-soft);
+  background: transparent;
 }
 
 .searchInput {
@@ -423,7 +432,7 @@
   width: clamp(9rem, 34vw, 14rem);
   border-radius: 0.52rem;
   border: 1px solid var(--dashboard-border);
-  background: #ffffff;
+  background: var(--bg);
   color: var(--text);
   padding: 0 0.74rem;
   font-family: inherit;
@@ -515,7 +524,7 @@
 
 .tableLink:hover {
   border-color: var(--dashboard-border-strong);
-  background: var(--dashboard-soft);
+  background: transparent;
 }
 
 .metricList {
@@ -567,7 +576,7 @@
 
 .paginationButton:hover:not(:disabled) {
   border-color: var(--dashboard-border-strong);
-  background: var(--dashboard-soft);
+  background: transparent;
 }
 
 .paginationButton:disabled {
@@ -622,7 +631,7 @@
 
 .metricRow:hover {
   border-color: var(--dashboard-border-strong);
-  background: var(--dashboard-row);
+  background: transparent;
 }
 
 .clickableMetricRow {
@@ -719,7 +728,7 @@
   min-height: 2.48rem;
   border-radius: 0.52rem;
   border: 1px solid var(--dashboard-border);
-  background: #ffffff;
+  background: var(--bg);
   color: var(--text);
   padding: 0 0.7rem;
   font-family: inherit;
@@ -761,7 +770,7 @@
 
 .metricAction:hover {
   border-color: var(--dashboard-border-strong);
-  background: var(--dashboard-soft);
+  background: transparent;
 }
 
 .primaryButton,
@@ -776,9 +785,9 @@
 }
 
 .primaryButton {
-  border: none;
-  background: var(--text);
-  color: var(--bg);
+  border: 1px solid var(--dashboard-border);
+  background: transparent;
+  color: var(--text);
 }
 
 .primaryButton:disabled {
@@ -793,7 +802,12 @@
 }
 
 .secondaryButton:hover {
-  background: var(--dashboard-soft);
+  background: transparent;
+}
+
+.primaryButton:hover {
+  border-color: var(--dashboard-border-strong);
+  background: transparent;
 }
 
 .profileStatus {
@@ -822,7 +836,7 @@
 .dashboardUserTrigger {
   border: 1px solid var(--dashboard-border);
   border-radius: 0.5rem;
-  background: var(--dashboard-soft);
+  background: transparent;
   color: var(--text);
   min-height: 1.72rem;
   padding: 0 0.5rem;
@@ -839,7 +853,7 @@
 
 .dashboardUserTrigger:hover {
   border-color: var(--dashboard-border-strong);
-  background: var(--dashboard-soft);
+  background: transparent;
 }
 
 .dashboardUserTriggerIcon {
@@ -866,7 +880,7 @@
   width: 10.8rem;
   border-radius: 0.52rem;
   border: 1px solid var(--dashboard-border);
-  background: #ffffff;
+  background: var(--bg);
   box-shadow: none;
   padding: 0.26rem;
   z-index: 20;
@@ -887,7 +901,7 @@
 }
 
 .dashboardMenuItem:hover {
-  background: var(--dashboard-soft);
+  background: transparent;
 }
 
 .dashboardMenuSignout {
@@ -909,7 +923,7 @@
     gap: 1rem;
     border-right: 1px solid var(--dashboard-border);
     padding: 1.08rem 0.68rem;
-    background: #ffffff;
+    background: transparent;
     position: sticky;
     top: 0;
     height: 100dvh;

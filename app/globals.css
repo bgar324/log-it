@@ -22,11 +22,11 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #101113;
-  --surface: #16171a;
+  --surface: #101113;
   --text: #f2f3f5;
   --muted: #9ea1a8;
-  --field-bg: #1b1d22;
-  --field-line: transparent;
+  --field-bg: #101113;
+  --field-line: rgba(242, 243, 245, 0.14);
   --button-bg: #f2f3f5;
   --button-text: #111216;
   --toggle-bg: transparent;
@@ -195,12 +195,12 @@ a {
 }
 
 :root[data-theme="light"] .theme-toggle-slot-sun {
-  background: #ffffff;
+  background: var(--bg);
   color: var(--text);
 }
 
 :root[data-theme="dark"] .theme-toggle-slot-moon {
-  background: color-mix(in srgb, var(--text) 18%, transparent);
+  background: var(--bg);
   color: var(--text);
 }
 

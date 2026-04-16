@@ -26,7 +26,7 @@ type ProgressChartsProps = {
 const CHART_GRID_STROKE = "color-mix(in srgb, var(--text) 14%, transparent)";
 const TOOLTIP_CURSOR = { stroke: "color-mix(in srgb, var(--text) 18%, transparent)" };
 const TOOLTIP_CONTENT_STYLE = {
-  backgroundColor: "#ffffff",
+  backgroundColor: "var(--surface)",
   border: "1px solid color-mix(in srgb, var(--text) 14%, transparent)",
   borderRadius: "6px",
   fontSize: "12px",

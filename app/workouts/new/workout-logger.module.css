@@ -21,6 +21,7 @@
 }
 
 .backLink {
+  background: var(--bg);
   border-radius: 999px;
   min-height: 2rem;
   padding: 0 0.72rem;
@@ -34,7 +35,7 @@
 }
 
 .backLink:hover {
-  background: color-mix(in srgb, var(--text) 8%, transparent);
+  border-color: color-mix(in srgb, var(--text) 22%, transparent);
 }
 
 .header {
@@ -66,7 +67,8 @@
 }
 
 .card {
-  background: color-mix(in srgb, var(--text) 7%, transparent);
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   border-radius: 0.72rem;
   padding: 0.78rem;
   display: flex;
@@ -92,7 +94,7 @@
 }
 
 .input {
-  border: none;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   border-radius: 0.52rem;
   background: var(--field-bg);
   color: var(--text);
@@ -105,6 +107,7 @@
 
 .input:focus {
   outline: none;
+  border-color: color-mix(in srgb, var(--text) 24%, transparent);
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
@@ -133,7 +136,7 @@
 .datePickerPopper :global(.react-datepicker) {
   border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
   border-radius: 0.82rem;
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+  background: var(--bg);
   color: var(--text);
   box-shadow: 0 16px 30px color-mix(in srgb, #000 28%, transparent);
   overflow: hidden;
@@ -141,7 +144,7 @@
 
 .datePickerPopper :global(.react-datepicker__header) {
   border-bottom: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
-  background: color-mix(in srgb, var(--surface) 90%, var(--bg));
+  background: var(--bg);
   padding-top: 0.56rem;
 }
 
@@ -209,9 +212,9 @@
 }
 
 .exerciseCard {
-  background: color-mix(in srgb, var(--text) 7%, transparent);
+  background: var(--bg);
   border-radius: 0.72rem;
-  border: 1px solid transparent;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   padding: 0.78rem;
   display: flex;
   flex-direction: column;
@@ -225,14 +228,14 @@
 
 .exerciseCardDragging {
   border-color: color-mix(in srgb, var(--text) 18%, transparent);
-  background: color-mix(in srgb, var(--text) 10%, transparent);
+  background: var(--bg);
   box-shadow: 0 12px 24px color-mix(in srgb, #000 14%, transparent);
   transform: scale(0.99);
 }
 
 .exerciseCardDropTarget {
   border-color: color-mix(in srgb, var(--text) 28%, transparent);
-  background: color-mix(in srgb, var(--text) 11%, transparent);
+  background: var(--bg);
 }
 
 .exerciseHead {
@@ -263,8 +266,8 @@
 }
 
 .iconButton {
-  border: none;
-  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  background: var(--bg);
   color: var(--muted);
   width: 2.05rem;
   height: 2.05rem;
@@ -283,7 +286,7 @@
 
 .iconButton:hover:not(:disabled) {
   color: var(--text);
-  background: color-mix(in srgb, var(--text) 8%, transparent);
+  border-color: color-mix(in srgb, var(--text) 20%, transparent);
 }
 
 .dragHandle {
@@ -341,7 +344,7 @@
 .compareCard {
   border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   border-radius: 0.56rem;
-  background: color-mix(in srgb, var(--bg) 30%, var(--surface));
+  background: var(--bg);
   padding: 0.62rem;
   display: flex;
   flex-direction: column;
@@ -351,17 +354,9 @@
 .compareHead {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.35rem;
   flex-wrap: wrap;
-}
-
-.compareTitle {
-  margin: 0;
-  font-size: 0.77rem;
-  color: var(--muted);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
 }
 
 .compareMeta {
@@ -403,9 +398,9 @@
 }
 
 .actionButton {
-  border: none;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--text) 10%, transparent);
+  background: var(--bg);
   color: var(--text);
   min-height: 2.55rem;
   padding: 0 0.7rem;
@@ -419,7 +414,7 @@
 }
 
 .actionButton:hover {
-  filter: brightness(0.97);
+  border-color: color-mix(in srgb, var(--text) 20%, transparent);
 }
 
 .actionIcon {
@@ -440,37 +435,25 @@
   flex-direction: column;
   gap: 0.58rem;
   padding-block: 6px;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.setsHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-}
-
-.setsTitle {
-  margin: 0;
-  font-size: 0.84rem;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-  text-transform: uppercase;
+  overflow-x: visible;
 }
 
 .setRow {
   display: grid;
-  grid-template-columns: auto minmax(4.8rem, 0.95fr) minmax(4.8rem, 0.85fr) auto;
-  gap: 0.5rem;
-  align-items: center;
-  min-width: 24rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    "number remove"
+    "weight reps";
+  gap: 0.6rem;
+  align-items: start;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  border-radius: 0.72rem;
+  background: var(--bg);
+  padding: 0.72rem;
 }
 
 .setRowHeader {
-  padding: 0 0.1rem;
-  margin-bottom: 2px;
+  display: none;
 }
 
 .setHeadLabel {
@@ -481,22 +464,55 @@
   white-space: nowrap;
 }
 
-.setRow > .iconButton {
-  justify-self: center;
-}
-
 .setNumber {
   margin: 0;
-  min-width: 1.4rem;
+  grid-area: number;
   color: var(--muted);
-  font-size: 0.72rem;
-  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 560;
+  letter-spacing: 0.02em;
+}
+
+.setField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.setFieldWeight {
+  grid-area: weight;
+}
+
+.setFieldReps {
+  grid-area: reps;
+}
+
+.setFieldLabel {
+  color: var(--muted);
+  font-size: 0.64rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.setRemoveButton {
+  grid-area: remove;
+  justify-self: end;
+}
+
+.setActions {
+  display: flex;
+  width: 100%;
+}
+
+.setActions .actionButton {
+  width: 100%;
 }
 
 .secondaryButton {
-  border: none;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   border-radius: 0.56rem;
-  background: color-mix(in srgb, var(--text) 8%, transparent);
+  background: var(--bg);
   color: var(--text);
   min-height: 2.75rem;
   padding: 0 0.85rem;
@@ -511,7 +527,7 @@
 }
 
 .secondaryButton:hover {
-  filter: brightness(0.97);
+  border-color: color-mix(in srgb, var(--text) 20%, transparent);
 }
 
 .formError {
@@ -566,11 +582,63 @@
   }
 
   .metaGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actionButton {
+    width: auto;
+  }
+
+  .setActions {
+    justify-content: flex-end;
+  }
+
+  .setActions .actionButton {
+    width: 100%;
+  }
+
+  .setRowHeader {
+    display: grid;
+    grid-template-columns: auto minmax(4.8rem, 0.95fr) minmax(4.8rem, 0.85fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0 0.1rem;
+    margin-bottom: 2px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
   }
 
   .setRow {
+    grid-template-columns: auto minmax(4.8rem, 0.95fr) minmax(4.8rem, 0.85fr) auto;
+    grid-template-areas: "number weight reps remove";
+    gap: 0.5rem;
+    align-items: center;
     min-width: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .setNumber {
+    min-width: 1.4rem;
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-align: center;
+  }
+
+  .setField {
+    gap: 0;
+  }
+
+  .setFieldLabel {
+    display: none;
+  }
+
+  .setRemoveButton {
+    justify-self: center;
   }
 }
 
