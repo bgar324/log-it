@@ -1149,9 +1149,6 @@ export function WorkoutLogger({
   const backHref = isEditMode ? `/workouts/${workoutId}` : "/dashboard?view=workouts";
   const backLabel = isEditMode ? "Back to workout" : "Back to workouts";
   const pageTitle = isEditMode ? "Edit workout" : "Log workout";
-  const autosaveMeta = isEditMode
-    ? `Update sets, reps, and weight in ${weightUnitName} to keep this workout accurate.`
-    : `${didRestoreDraft ? "Draft restored. " : ""}Autosaves on this device while you log. All weights are in ${weightUnitName}.`;
   const savingLabel = isEditMode ? "Saving changes..." : "Saving workout...";
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
@@ -1167,7 +1164,6 @@ export function WorkoutLogger({
 
         <header className={styles.header}>
           <h1 className={styles.title}>{pageTitle}</h1>
-          <p className={styles.autosaveMeta}>{autosaveMeta}</p>
         </header>
 
         <form className={styles.form} onSubmit={handleSubmit}>
