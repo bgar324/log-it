@@ -1,6 +1,5 @@
 "use client";
 
-import { useId } from "react";
 import {
   Area,
   AreaChart,
@@ -27,16 +26,15 @@ type ProgressChartsProps = {
 const CHART_GRID_STROKE = "color-mix(in srgb, var(--text) 14%, transparent)";
 const TOOLTIP_CURSOR = { stroke: "color-mix(in srgb, var(--text) 18%, transparent)" };
 const TOOLTIP_CONTENT_STYLE = {
-  backgroundColor: "color-mix(in srgb, var(--surface) 88%, var(--bg))",
+  backgroundColor: "#ffffff",
   border: "1px solid color-mix(in srgb, var(--text) 14%, transparent)",
-  borderRadius: "8px",
+  borderRadius: "6px",
   fontSize: "12px",
   color: "var(--text)",
 };
 const TOOLTIP_LABEL_STYLE = { color: "var(--muted)" };
 
 export function ProgressCharts({ weeklySeries, weightUnit }: ProgressChartsProps) {
-  const sessionsGradientId = useId().replace(/:/g, "");
   const unitLabel = getWeightUnitLabel(weightUnit);
 
   return (
@@ -51,12 +49,6 @@ export function ProgressCharts({ weeklySeries, weightUnit }: ProgressChartsProps
               data={weeklySeries}
               margin={{ top: 8, right: 8, left: -8, bottom: 4 }}
             >
-              <defs>
-                <linearGradient id={sessionsGradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--text)" stopOpacity={0.42} />
-                  <stop offset="100%" stopColor="var(--text)" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} />
               <XAxis
                 dataKey="label"
@@ -81,7 +73,8 @@ export function ProgressCharts({ weeklySeries, weightUnit }: ProgressChartsProps
                 dataKey="sessions"
                 stroke="var(--text)"
                 strokeWidth={2}
-                fill={`url(#${sessionsGradientId})`}
+                fill="var(--text)"
+                fillOpacity={0.07}
               />
             </AreaChart>
           </ResponsiveContainer>

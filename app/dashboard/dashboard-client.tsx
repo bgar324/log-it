@@ -11,7 +11,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  CSSProperties,
   ComponentType,
   FormEvent,
   startTransition,
@@ -19,7 +18,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { getWorkoutTypeColor } from "@/lib/workout-splits/colors";
 import { getWeekdayForDate } from "@/lib/workout-splits/shared";
 import { createDatabaseDate } from "@/lib/workout-utils";
 import {
@@ -82,15 +80,6 @@ function toViewHref(view: DashboardView) {
   }
 
   return `/dashboard?view=${view}`;
-}
-
-function monthDeltaLabel(value: number) {
-  if (value === 0) {
-    return "No change vs last month";
-  }
-
-  const direction = value > 0 ? "up" : "down";
-  return `${Math.abs(value).toFixed(0)}% ${direction} vs last month`;
 }
 
 function daysAgoLabel(days: number) {
@@ -246,7 +235,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       dayNumber: number | null;
       workoutCount: number;
       workoutType: string | null;
-      style?: CSSProperties;
     }> = [];
 
     for (let index = 0; index < leadingEmptySlots; index += 1) {
@@ -267,23 +255,12 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
           : splitDayByWeekday.get(
               getWeekdayForDate(createDatabaseDate(parsedMonth.year, parsedMonth.month, day)),
             ) ?? null;
-      const workoutColors =
-        workoutCount > 0 && splitDay ? getWorkoutTypeColor(splitDay.workoutType) : null;
 
       cells.push({
         key: currentDateKey,
         dayNumber: day,
         workoutCount,
         workoutType: splitDay?.workoutType ?? null,
-        style:
-          workoutColors === null
-            ? undefined
-            : ({
-                "--calendar-day-border": workoutColors.border,
-                "--calendar-day-background": workoutColors.background,
-                "--calendar-day-text": workoutColors.text,
-                "--calendar-day-count": workoutColors.accent,
-              } as CSSProperties),
       });
     }
 
@@ -537,7 +514,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Total workouts</p>
                 <p className={styles.kpiValue}>{data.overview.totalWorkouts}</p>
-                <p className={styles.kpiSubtle}>{monthDeltaLabel(data.overview.monthChange)}</p>
               </article>
 
               <article className={styles.kpiCard}>
@@ -548,7 +524,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                     <span
                       key={bar.label}
                       className={styles.inlineBar}
-                      style={{ height: `${20 + bar.count * 14}px` }}
+                      style={{ height: `${8 + bar.count * 6}px` }}
                     />
                   ))}
                 </div>
@@ -557,19 +533,16 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Exercises logged</p>
                 <p className={styles.kpiValue}>{data.overview.totalExercises}</p>
-                <p className={styles.kpiSubtle}>Unique movements in your catalog</p>
               </article>
 
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Sets tracked</p>
                 <p className={styles.kpiValue}>{data.overview.totalSets}</p>
-                <p className={styles.kpiSubtle}>All recorded warmup and working sets</p>
               </article>
 
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Today</p>
                 <p className={styles.kpiValue}>{todayPlan.workoutType}</p>
-                <p className={styles.kpiSubtle}>{todayPlan.subtitle}</p>
               </article>
 
               <Link
@@ -579,7 +552,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               >
                 <Plus className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
                 <span className={styles.kpiActionText}>Log workout</span>
-                <span className={styles.kpiSubtle}>Quick start a new session</span>
               </Link>
             </section>
 
@@ -705,7 +677,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                         className={`${styles.calendarDay} ${
                           cell.workoutCount > 0 ? styles.calendarDayActive : ""
                         }`}
-                        style={cell.style}
                         title={
                           cell.workoutCount > 0
                             ? `${cell.workoutCount} workout${
@@ -715,9 +686,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                         }
                       >
                         <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
-                        {cell.workoutCount > 1 ? (
-                          <span className={styles.calendarDayCount}>{cell.workoutCount}</span>
-                        ) : null}
                       </div>
                     ),
                   )}
@@ -773,24 +741,20 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>This week</p>
                 <p className={styles.kpiValue}>{data.progress.currentWeek}</p>
-                <p className={styles.kpiSubtle}>Sessions logged since Monday.</p>
               </article>
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Week delta</p>
                 <p className={styles.kpiValue}>
                   {data.progress.weekDelta >= 0 ? `+${data.progress.weekDelta}` : data.progress.weekDelta}
                 </p>
-                <p className={styles.kpiSubtle}>Compared with the previous week.</p>
               </article>
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>12 week avg</p>
                 <p className={styles.kpiValue}>{data.progress.avgWeekly}</p>
-                <p className={styles.kpiSubtle}>Average weekly sessions across the last 12 weeks.</p>
               </article>
               <article className={styles.kpiCard}>
                 <p className={styles.kpiLabel}>Total weight lifted</p>
                 <p className={styles.kpiValue}>{formatWeight(data.progress.totalWeightLifted)}</p>
-                <p className={styles.kpiSubtle}>Accumulated across all logged weighted sets</p>
               </article>
             </section>
 

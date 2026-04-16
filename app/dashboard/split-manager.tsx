@@ -370,7 +370,6 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
       <section className={splitStyles.splitSummary}>
         <div className={splitStyles.splitSummaryHead}>
           <div>
-            <p className={splitStyles.editorEyebrow}>Weekly template</p>
             <h2 className={splitStyles.splitHeading}>Workout split</h2>
           </div>
 

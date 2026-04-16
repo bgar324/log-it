@@ -1,8 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { GripVertical } from "lucide-react";
-import { getWorkoutTypeColor } from "@/lib/workout-splits/colors";
 import {
   getSplitWeekdayLabel,
   type WorkoutSplitDayTemplate,
@@ -32,13 +30,7 @@ export function SplitDayCard({
   onDrop,
   onDragEnd,
 }: SplitDayCardProps) {
-  const colors = getWorkoutTypeColor(day.workoutType);
   const totalSets = day.exercises.reduce((sum, exercise) => sum + exercise.sets, 0);
-  const style = {
-    "--day-border": colors.border,
-    "--day-background": colors.background,
-    "--day-text": colors.text,
-  } as CSSProperties;
 
   return (
     <button
@@ -49,7 +41,6 @@ export function SplitDayCard({
       } ${isDragging ? splitStyles.splitDayCardDragging : ""} ${
         isDropTarget ? splitStyles.splitDayCardDropTarget : ""
       }`}
-      style={style}
       onClick={onSelect}
       onDragStart={(event) => {
         event.dataTransfer.effectAllowed = "move";

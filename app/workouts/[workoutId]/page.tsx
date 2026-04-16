@@ -168,7 +168,6 @@ export default async function WorkoutDetailPage({
         </header>
 
         <section className={styles.summaryCard}>
-          <p className={styles.label}>Workout</p>
           <h1 className={styles.title}>{workout.title}</h1>
           <div className={styles.metaRow}>
             {summaryItems.map((item) => (

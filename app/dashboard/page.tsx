@@ -12,6 +12,7 @@ import {
   SPLIT_WEEKDAYS,
   type WorkoutSplitTemplate,
 } from "@/lib/workout-splits/shared";
+import { loadTodayPlan, NO_SPLIT_TODAY_PLAN } from "@/lib/workout-splits/today-plan";
 import { convertStoredWeightToDisplay, toWeightNumber } from "@/lib/weight-unit";
 import {
   addDaysToDatabaseDate,
@@ -30,10 +31,6 @@ import { DashboardClient } from "./dashboard-client";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
 
 const VIEW_CACHE_REVALIDATE_SECONDS = 60;
-const DEFAULT_TODAY_PLAN = {
-  workoutType: "Loading plan",
-  subtitle: "Fetching today's split details.",
-} as const;
 
 const DASHBOARD_VIEWS: DashboardView[] = [
   "dashboard",
@@ -136,7 +133,7 @@ function createEmptyDashboardData(
       workoutsThisWeek: 0,
       totalExercises: 0,
       totalSets: 0,
-      todayPlan: DEFAULT_TODAY_PLAN,
+      todayPlan: NO_SPLIT_TODAY_PLAN,
       monthChange: 0,
       weeklyBars: Array.from({ length: 7 }, (_, index) => ({
         label: WEEKDAY_SHORT_FORMATTER.format(
@@ -464,10 +461,12 @@ async function loadDashboardOverviewSection(
     exerciseSummaries,
     recentLogs,
     workoutCalendarDayCounts,
+    todayPlan,
   ] = await Promise.all([
     loadExerciseSummaryRows(userId),
     loadRecentLogs(userId, 5),
     loadWorkoutCalendarSummary(userId),
+    loadTodayPlan(userId, now),
   ]);
 
   const totalWorkouts = sumWorkoutCounts(workoutCalendarDayCounts);
@@ -524,7 +523,7 @@ async function loadDashboardOverviewSection(
       workoutsThisWeek,
       totalExercises: exerciseSummaries.length,
       totalSets: exerciseSummaries.reduce((sum, item) => sum + item.setCount, 0),
-      todayPlan: DEFAULT_TODAY_PLAN,
+      todayPlan,
       monthChange,
       weeklyBars,
       personalBests,

@@ -35,10 +35,7 @@ export function SplitEditor({
     <section className={splitStyles.splitEditor}>
       <div className={splitStyles.editorHeader}>
         <div>
-          <p className={splitStyles.editorEyebrow}>
-            {getSplitWeekdayLabel(day.weekday)}
-          </p>
-          <h2 className={splitStyles.editorTitle}>Split editor</h2>
+          <h2 className={splitStyles.editorTitle}>{getSplitWeekdayLabel(day.weekday)}</h2>
           <p className={splitStyles.editorSubtitle}>
             This template preloads the logger and colors the calendar badge for this day.
           </p>

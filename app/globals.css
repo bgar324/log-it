@@ -2,12 +2,12 @@
 
 :root {
   color-scheme: light;
-  --bg: #f6f6f4;
+  --bg: #ffffff;
   --surface: #ffffff;
   --text: #171819;
   --muted: #686b70;
-  --field-bg: #ecece8;
-  --field-line: transparent;
+  --field-bg: #ffffff;
+  --field-line: rgba(23, 24, 25, 0.12);
   --button-bg: #171819;
   --button-text: #f4f4f2;
   --toggle-bg: transparent;
@@ -34,6 +34,14 @@
   --focus-ring: rgba(242, 243, 245, 0.2);
   --shadow: none;
   --soft-shadow: none;
+}
+
+:root[data-theme="light"] .theme-icon-toggle,
+:root[data-theme="light"] .theme-toggle-slot-sun,
+:root[data-theme="light"] .theme-toggle-slot-moon,
+:root[data-theme="light"] .auth-alert,
+:root[data-theme="light"] .password-toggle:hover {
+  background: #ffffff;
 }
 
 * {
@@ -142,7 +150,7 @@ a {
   appearance: none;
   border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 6%, transparent);
+  background: var(--field-bg);
   color: var(--muted);
   display: inline-grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -187,7 +195,7 @@ a {
 }
 
 :root[data-theme="light"] .theme-toggle-slot-sun {
-  background: color-mix(in srgb, var(--text) 13%, transparent);
+  background: #ffffff;
   color: var(--text);
 }
 
@@ -258,11 +266,13 @@ a {
 }
 
 .btn-outline {
+  border: 1px solid var(--field-line);
   background: var(--field-bg);
   color: var(--text);
 }
 
 .btn-google {
+  border: 1px solid var(--field-line);
   background: var(--field-bg);
   color: var(--text);
 }
@@ -305,7 +315,8 @@ a {
 
 .auth-alert {
   margin: 0;
-  background: color-mix(in srgb, var(--text) 9%, var(--field-bg));
+  border: 1px solid var(--field-line);
+  background: var(--field-bg);
   color: color-mix(in srgb, var(--text) 90%, var(--muted));
   border-radius: 0.55rem;
   padding: 0.62rem 0.7rem;
@@ -379,6 +390,7 @@ a {
   justify-content: center;
   min-height: 2.05rem;
   padding: 0.45rem 0.72rem;
+  border: 1px solid var(--field-line);
   border-radius: 0.5rem;
   background: var(--field-bg);
   color: var(--text);
@@ -445,7 +457,7 @@ a {
 
 .switch-option {
   font-family: var(--font-heading);
-  border: none;
+  border: 1px solid var(--field-line);
   border-radius: 0.5rem;
   background: var(--field-bg);
   color: var(--muted);
@@ -485,7 +497,7 @@ a {
 }
 
 .input {
-  border: none;
+  border: 1px solid var(--field-line);
   background: var(--field-bg);
   color: var(--text);
   border-radius: 0.52rem;
@@ -532,7 +544,7 @@ a {
 
 .password-toggle:hover {
   color: var(--text);
-  background: color-mix(in srgb, var(--text) 7%, transparent);
+  background: var(--field-bg);
 }
 
 .password-toggle:focus-visible {
