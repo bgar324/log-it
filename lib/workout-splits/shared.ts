@@ -41,13 +41,13 @@ export type WorkoutSplitTemplate = {
 };
 
 const WEEKDAY_LABELS: Record<SplitWeekdayValue, string> = {
-  MONDAY: "Mon",
-  TUESDAY: "Tue",
-  WEDNESDAY: "Wed",
-  THURSDAY: "Thu",
-  FRIDAY: "Fri",
-  SATURDAY: "Sat",
-  SUNDAY: "Sun",
+  MONDAY: "Monday",
+  TUESDAY: "Tuesday",
+  WEDNESDAY: "Wednesday",
+  THURSDAY: "Thursday",
+  FRIDAY: "Friday",
+  SATURDAY: "Saturday",
+  SUNDAY: "Sunday",
 };
 
 const WEEKDAY_INDEX: Record<SplitWeekdayValue, number> = {

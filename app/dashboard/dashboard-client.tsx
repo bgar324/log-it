@@ -51,26 +51,21 @@ const NAV_ITEMS: Array<{
   { view: "split", label: "Workout Split", icon: Blocks },
 ];
 
-const VIEW_CONTENT: Record<DashboardView, { title: string; subtitle: string }> = {
+const VIEW_CONTENT: Record<DashboardView, { title: string}> = {
   dashboard: {
     title: "Dashboard",
-    subtitle: "Your weekly snapshot across volume, frequency, and top performance.",
   },
   workouts: {
     title: "Workouts",
-    subtitle: "Every logged session grouped by month with sets and total volume.",
   },
   progress: {
     title: "Progress",
-    subtitle: "Trend lines plus movement-level filtering across your exercise catalog.",
   },
   split: {
     title: "Workout Split",
-    subtitle: "Build your seven-day template once and reuse it every time you open the logger.",
   },
   profile: {
     title: "Profile",
-    subtitle: "Update the account details shown in your dashboard and menu.",
   },
 };
 
@@ -476,7 +471,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
         <header className={styles.header}>
           <div>
             <h1 className={styles.title}>{viewMeta.title}</h1>
-            <p className={styles.subtitle}>{viewMeta.subtitle}</p>
           </div>
 
           <div className={styles.headerActions}>

@@ -405,10 +405,6 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
           />
         </label>
 
-        <p className={splitStyles.splitSummaryHint}>
-          Drag the grip on a day card to shift where the split starts. Moving Upper into Tue makes Tuesday’s calendar badge and logger autofill become Upper.
-        </p>
-
         <div className={splitStyles.splitGrid}>
           {split.days.map((day, index) => (
             <SplitDayCard

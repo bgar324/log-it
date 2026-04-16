@@ -36,9 +36,6 @@ export function SplitEditor({
       <div className={splitStyles.editorHeader}>
         <div>
           <h2 className={splitStyles.editorTitle}>{getSplitWeekdayLabel(day.weekday)}</h2>
-          <p className={splitStyles.editorSubtitle}>
-            This template preloads the logger and colors the calendar badge for this day.
-          </p>
         </div>
       </div>
 
@@ -55,9 +52,6 @@ export function SplitEditor({
       <div className={splitStyles.editorSectionHead}>
         <div>
           <h3 className={splitStyles.editorSectionTitle}>Exercises</h3>
-          <p className={splitStyles.helperText}>
-            Set counts create the initial rows in the workout logger.
-          </p>
         </div>
         <button
           type="button"
