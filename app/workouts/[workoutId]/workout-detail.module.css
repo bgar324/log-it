@@ -3,7 +3,7 @@
   display: flex;
   justify-content: center;
   padding: 0.95rem;
-  background: #ffffff;
+  background: var(--bg);
 }
 
 .stage {
@@ -55,7 +55,7 @@
 .backLink:hover,
 .actionLink:hover,
 .actionButton:hover {
-  background: color-mix(in srgb, var(--text) 8%, transparent);
+  background: transparent;
 }
 
 .topActions {
@@ -110,7 +110,7 @@
 .exerciseCard {
   border-radius: 0.54rem;
   border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
-  background: #ffffff;
+  background: transparent;
 }
 
 .summaryCard {
@@ -135,7 +135,7 @@
 .metaPill {
   border-radius: 0.5rem;
   padding: 0.52rem 0.58rem;
-  background: #ffffff;
+  background: transparent;
   border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   display: inline-flex;
   flex-direction: column;

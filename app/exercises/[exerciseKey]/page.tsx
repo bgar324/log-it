@@ -17,6 +17,7 @@ import {
   normalizeExerciseName,
 } from "@/lib/workout-utils";
 import { ExerciseDetailChart } from "./exercise-detail-chart";
+import { SessionBreakdownTable } from "./session-breakdown-table";
 import styles from "./exercise-detail.module.css";
 
 type ExerciseDetailParams = Promise<{ exerciseKey: string }>;
@@ -314,7 +315,6 @@ export default async function ExerciseDetailPage({
         </header>
 
         <section className={styles.summaryCard}>
-          <p className={styles.label}>Exercise</p>
           <h1 className={styles.title}>{displayName}</h1>
           <p className={styles.subtitle}>
             Last hit {formatDate(lastHit)} ({daysAgoLabel(daysSinceLastHit)}
@@ -406,42 +406,17 @@ export default async function ExerciseDetailPage({
 
         <section className={styles.panel}>
           <h2 className={styles.panelTitle}>Session breakdown</h2>
-
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Workout</th>
-                  <th>Date</th>
-                  <th>Sets</th>
-                  <th>Reps</th>
-                  <th>Best weight</th>
-                  <th>Volume</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sessions.map((session) => (
-                  <tr key={session.workoutId}>
-                    <td>{session.workoutTitle}</td>
-                    <td>{formatDate(session.performedAt)}</td>
-                    <td>{session.setCount}</td>
-                    <td>{session.totalReps}</td>
-                    <td>{formatWeightWithUnit(session.bestWeight, weightUnit)}</td>
-                    <td>{formatWeightValue(session.totalLoad)} {unitLabel}</td>
-                    <td>
-                      <Link
-                        href={`/workouts/${session.workoutId}`}
-                        className={styles.tableLink}
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <SessionBreakdownTable
+            sessions={sessions.map((session) => ({
+              workoutId: session.workoutId,
+              workoutTitle: session.workoutTitle,
+              performedAtLabel: formatDate(session.performedAt),
+              setCount: session.setCount,
+              totalReps: session.totalReps,
+              bestWeightLabel: formatWeightWithUnit(session.bestWeight, weightUnit),
+              totalLoadLabel: `${formatWeightValue(session.totalLoad)} ${unitLabel}`,
+            }))}
+          />
         </section>
       </section>
     </main>
