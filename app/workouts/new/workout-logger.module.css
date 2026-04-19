@@ -384,9 +384,16 @@
   font-size: 0.72rem;
 }
 
-.compareGrid {
+.compareBody {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 0.7rem;
+  align-items: start;
+}
+
+.compareGrid {
+  display: flex;
+  flex-direction: column;
   gap: 0.44rem;
 }
 
@@ -407,6 +414,43 @@
   margin: 0;
   font-size: 0.88rem;
   line-height: 1.2;
+}
+
+.compareSnapshot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.compareSetList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.36rem;
+}
+
+.compareSetRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.18rem;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  border-radius: 0.56rem;
+  background: var(--bg);
+  padding: 0.46rem 0.58rem;
+}
+
+.compareSetIndex {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 560;
+  letter-spacing: 0.02em;
+}
+
+.compareSetValue {
+  font-size: 0.82rem;
+  line-height: 1.2;
+  text-align: left;
 }
 
 .compareDelta {
@@ -582,8 +626,12 @@
 }
 
 @media (max-width: 420px) {
-  .compareGrid {
-    grid-template-columns: 1fr;
+  .compareBody {
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  }
+
+  .compareSetRow {
+    min-height: 3.7rem;
   }
 
   .searchResultsList {
@@ -599,6 +647,10 @@
 }
 
 @media (min-width: 620px) {
+  .compareBody {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+
   .loggerShell {
     padding: 1.4rem;
   }

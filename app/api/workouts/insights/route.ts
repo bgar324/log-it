@@ -12,6 +12,10 @@ type SessionAggregate = {
   bestWeight: number | null;
   bestWeightReps: number | null;
   totalVolume: number;
+  sets: Array<{
+    reps: number;
+    weightLb: number | null;
+  }>;
 };
 
 function toWeightNumber(value: { toNumber: () => number } | number | null) {
@@ -57,11 +61,16 @@ export async function GET(request: NextRequest) {
           userId: user.id,
         },
       },
-      orderBy: {
-        workoutLog: {
-          performedAt: "desc",
+      orderBy: [
+        {
+          workoutLog: {
+            performedAt: "desc",
+          },
         },
-      },
+        {
+          order: "asc",
+        },
+      ],
       take: 120,
       select: {
         workoutLog: {
@@ -72,6 +81,9 @@ export async function GET(request: NextRequest) {
           },
         },
         sets: {
+          orderBy: {
+            order: "asc",
+          },
           select: {
             reps: true,
             weightLb: true,
@@ -96,6 +108,7 @@ export async function GET(request: NextRequest) {
           bestWeight: null,
           bestWeightReps: null,
           totalVolume: 0,
+          sets: [],
         } satisfies SessionAggregate);
 
       for (const set of exerciseLog.sets) {
@@ -120,6 +133,13 @@ export async function GET(request: NextRequest) {
 
         session.totalVolume += weight * set.reps;
       }
+
+      session.sets.push(
+        ...exerciseLog.sets.map((set) => ({
+          reps: set.reps,
+          weightLb: toWeightNumber(set.weightLb),
+        })),
+      );
 
       sessionsByWorkoutId.set(workoutId, session);
     }
@@ -160,6 +180,11 @@ export async function GET(request: NextRequest) {
                 : roundToTenth(lastSession.bestWeight),
             bestWeightReps: lastSession.bestWeightReps,
             totalVolume: Math.round(lastSession.totalVolume),
+            sets: lastSession.sets.map((set) => ({
+              reps: set.reps,
+              weightLb:
+                set.weightLb === null ? null : roundToTenth(set.weightLb),
+            })),
           }
         : null,
       allTimeBestWeight:

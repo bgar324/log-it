@@ -51,6 +51,10 @@ type ExerciseInsight = {
     bestWeight: number | null;
     bestWeightReps: number | null;
     totalVolume: number;
+    sets: Array<{
+      reps: number;
+      weightLb: number | null;
+    }>;
   } | null;
   allTimeBestWeight: number | null;
 };
@@ -416,6 +420,18 @@ function formatDelta(value: number, suffix: string) {
   const rounded = Number.isInteger(value) ? value : Number(value.toFixed(1));
   const sign = rounded > 0 ? "+" : "";
   return `${sign}${rounded} ${suffix}`;
+}
+
+function formatLoggedSetSnapshot(
+  set: { reps: number; weightLb: number | null },
+  weightUnit: WeightUnit,
+) {
+  if (set.weightLb === null) {
+    return `Bodyweight x ${set.reps}`;
+  }
+
+  const displayWeight = convertStoredWeightToDisplay(set.weightLb, weightUnit) ?? 0;
+  return `${formatWeightWithUnit(displayWeight, weightUnit)} x ${set.reps}`;
 }
 
 export function WorkoutLogger({
@@ -1384,13 +1400,6 @@ export function WorkoutLogger({
                       insight.lastSession.totalVolume,
                       weightUnit,
                     ) ?? 0;
-                  const lastBestWeight =
-                    insight.lastSession.bestWeight === null
-                      ? null
-                      : (convertStoredWeightToDisplay(
-                          insight.lastSession.bestWeight,
-                          weightUnit,
-                        ) ?? 0);
                   const allTimeBestWeight =
                     insight.allTimeBestWeight === null
                       ? null
@@ -1399,9 +1408,26 @@ export function WorkoutLogger({
                           weightUnit,
                         ) ?? 0);
                   const volumeDelta = draftSummary.totalVolume - lastVolume;
+                  const lastSessionBestWeightDisplay = insight.lastSession.sets.reduce<number | null>(
+                    (max, set) => {
+                      if (set.weightLb === null) {
+                        return max;
+                      }
+
+                      const displayWeight =
+                        convertStoredWeightToDisplay(set.weightLb, weightUnit) ?? 0;
+
+                      if (max === null) {
+                        return displayWeight;
+                      }
+
+                      return Math.max(max, displayWeight);
+                    },
+                    null,
+                  );
                   const draftBestWeight = draftSummary.bestWeight ?? 0;
                   const bestWeightDelta =
-                    draftBestWeight - (lastBestWeight ?? 0);
+                    draftBestWeight - (lastSessionBestWeightDisplay ?? 0);
 
                   return (
                     <section className={styles.compareCard}>
@@ -1411,36 +1437,36 @@ export function WorkoutLogger({
                         </p>
                       </div>
 
-                      <div className={styles.compareGrid}>
-                        <div className={styles.compareItem}>
-                          <p className={styles.compareLabel}>Last session</p>
-                          <p className={styles.compareValue}>
-                            {insight.lastSession.setCount} sets · {insight.lastSession.totalReps} reps
-                          </p>
+                      <div className={styles.compareBody}>
+                        <div className={styles.compareGrid}>
+                          <div className={styles.compareItem}>
+                            <p className={styles.compareLabel}>Last session</p>
+                            <p className={styles.compareValue}>
+                              {insight.lastSession.setCount} sets · {insight.lastSession.totalReps} reps
+                            </p>
+                          </div>
+                          <div className={styles.compareItem}>
+                            <p className={styles.compareLabel}>All-time best</p>
+                            <p className={styles.compareValue}>
+                              {allTimeBestWeight !== null
+                                ? formatWeightWithUnit(allTimeBestWeight, weightUnit)
+                                : "--"}
+                            </p>
+                          </div>
                         </div>
-                        <div className={styles.compareItem}>
-                          <p className={styles.compareLabel}>Last volume</p>
-                          <p className={styles.compareValue}>
-                            {formatWeightWithUnit(lastVolume, weightUnit)}
-                          </p>
-                        </div>
-                        <div className={styles.compareItem}>
-                          <p className={styles.compareLabel}>Last best weight</p>
-                          <p className={styles.compareValue}>
-                            {lastBestWeight !== null
-                              ? insight.lastSession.bestWeightReps !== null
-                                ? `${formatWeightWithUnit(lastBestWeight, weightUnit)} x ${insight.lastSession.bestWeightReps}`
-                                : formatWeightWithUnit(lastBestWeight, weightUnit)
-                              : "--"}
-                          </p>
-                        </div>
-                        <div className={styles.compareItem}>
-                          <p className={styles.compareLabel}>All-time best</p>
-                          <p className={styles.compareValue}>
-                            {allTimeBestWeight !== null
-                              ? formatWeightWithUnit(allTimeBestWeight, weightUnit)
-                              : "--"}
-                          </p>
+
+                        <div className={styles.compareSnapshot}>
+                          <p className={styles.compareLabel}>Last session snapshot</p>
+                          <div className={styles.compareSetList}>
+                            {insight.lastSession.sets.map((set, index) => (
+                              <div key={`${insight.lastSession.workoutId}-set-${index}`} className={styles.compareSetRow}>
+                                <span className={styles.compareSetIndex}>#{index + 1}</span>
+                                <span className={styles.compareSetValue}>
+                                  {formatLoggedSetSnapshot(set, weightUnit)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
