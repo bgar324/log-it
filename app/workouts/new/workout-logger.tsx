@@ -427,18 +427,11 @@ function formatLoggedSetSnapshot(
   weightUnit: WeightUnit,
 ) {
   if (set.weightLb === null) {
-    return `${set.reps} reps`;
+    return `Bodyweight x ${set.reps}`;
   }
 
   const displayWeight = convertStoredWeightToDisplay(set.weightLb, weightUnit) ?? 0;
-  return `${formatWeightWithUnit(displayWeight, weightUnit)} × ${set.reps}`;
-}
-
-function isWorkoutSnapshotEqual(
-  left: WorkoutDraftSnapshot,
-  right: WorkoutDraftSnapshot,
-) {
-  return JSON.stringify(left) === JSON.stringify(right);
+  return `${formatWeightWithUnit(displayWeight, weightUnit)} x ${set.reps}`;
 }
 
 export function WorkoutLogger({
@@ -447,704 +440,836 @@ export function WorkoutLogger({
   initialData,
   weightUnit,
 }: WorkoutLoggerProps) {
+  const isEditMode = mode === "edit" && Boolean(workoutId);
+  const initialState = useMemo(
+    () => createInitialLoggerState(initialData),
+    [initialData],
+  );
   const router = useRouter();
-  const initialState = useMemo(() => createInitialLoggerState(initialData), [initialData]);
+  const weightUnitLabel = getWeightUnitLabel(weightUnit);
+  const weightUnitName = weightUnit === "KG" ? "kilograms" : "pounds";
+  const idCounterRef = useRef(initialState.counters);
+  const insightCacheRef = useRef<Record<string, ExerciseInsight>>({});
+  const latestInsightLookupRef = useRef<Record<string, string>>({});
+  const autosaveReadyRef = useRef(false);
+  const latestDraftSnapshotRef = useRef<WorkoutDraftSnapshot | null>(null);
+  const suggestionCacheRef = useRef<Record<string, string[]>>({});
+  const latestSuggestionLookupRef = useRef<Record<string, string>>({});
+  const suggestionDebounceTimeoutRef = useRef<Record<string, number>>({});
+  const exerciseDragRef = useRef<{
+    activeIndex: number;
+    targetIndex: number;
+    pointerId: number;
+  } | null>(null);
+
   const [title, setTitle] = useState(initialState.title);
   const [workoutType, setWorkoutType] = useState(initialState.workoutType);
   const [performedAt, setPerformedAt] = useState(initialState.performedAt);
-  const [exercises, setExercises] = useState(initialState.exercises);
-  const [exerciseCounter, setExerciseCounter] = useState(initialState.counters.exercise);
-  const [setCounter, setSetCounter] = useState(initialState.counters.set);
-  const [isSaving, setIsSaving] = useState(false);
+  const [exercises, setExercises] = useState<ExerciseDraft[]>(
+    initialState.exercises,
+  );
+  const [exerciseInsightById, setExerciseInsightById] = useState<
+    Record<string, ExerciseInsightState>
+  >({});
+  const [exerciseSearchResultsById, setExerciseSearchResultsById] = useState<
+    Record<string, string[]>
+  >({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [draftStatus, setDraftStatus] = useState<"idle" | "saved" | "error">("idle");
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [suggestionsByExerciseId, setSuggestionsByExerciseId] = useState<Record<string, string[]>>({});
-  const [activeSuggestionExerciseId, setActiveSuggestionExerciseId] = useState<string | null>(null);
-  const [insightsByExerciseId, setInsightsByExerciseId] = useState<Record<string, ExerciseInsightState>>({});
-  const [draggingExerciseId, setDraggingExerciseId] = useState<string | null>(null);
-  const autosaveTimerRef = useRef<number | null>(null);
-  const suggestionTimersRef = useRef<Record<string, number>>({});
-  const suggestionsAbortControllersRef = useRef<Record<string, AbortController>>({});
-  const insightsAbortControllersRef = useRef<Record<string, AbortController>>({});
-  const submitIntentRef = useRef<"save" | "save-and-continue">("save");
-  const dragStartIndexRef = useRef<number | null>(null);
-  const dragPointerIdRef = useRef<number | null>(null);
-
-  const initialSnapshot = useMemo(
-    () =>
-      createWorkoutDraftSnapshot(
-        initialState.title,
-        initialState.workoutType,
-        initialState.performedAt,
-        initialState.exercises,
-      ),
-    [initialState],
+  const [isSaving, setIsSaving] = useState(false);
+  const [draggingExerciseIndex, setDraggingExerciseIndex] = useState<number | null>(null);
+  const [dropTargetExerciseIndex, setDropTargetExerciseIndex] = useState<number | null>(null);
+  const performedAtDate = useMemo(
+    () => toDatabaseDateFromInput(performedAt),
+    [performedAt],
   );
-
-  const currentSnapshot = useMemo(
-    () => createWorkoutDraftSnapshot(title, workoutType, performedAt, exercises),
-    [title, workoutType, performedAt, exercises],
-  );
-
-  const hasUnsavedChanges = useMemo(
-    () => !isWorkoutSnapshotEqual(initialSnapshot, currentSnapshot),
-    [initialSnapshot, currentSnapshot],
-  );
-
-  const weightUnitLabel = getWeightUnitLabel(weightUnit);
-  const weightUnitName = weightUnit === "LB" ? "pounds" : "kilograms";
-  const isEditMode = mode === "edit";
-  const pageTitle = isEditMode ? "Edit workout" : "Log workout";
-  const pageDescription = isEditMode
-    ? "Update the details below and save your changes."
-    : "Track your workout quickly and keep your progress moving.";
-  const submitLabel = isEditMode ? "Save changes" : "Save workout";
-  const savingLabel = isEditMode ? "Saving changes..." : "Saving workout...";
 
   useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+    setTitle(initialState.title);
+    setWorkoutType(initialState.workoutType);
+    setPerformedAt(initialState.performedAt);
+    setExercises(initialState.exercises);
+    idCounterRef.current = initialState.counters;
+  }, [initialState]);
 
   useEffect(() => {
-    if (!isHydrated || isEditMode) {
+    if (isEditMode) {
+      autosaveReadyRef.current = true;
       return;
     }
 
-    const storedDraft = parseStoredWorkoutDraft(
-      window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY),
-      weightUnit,
+    const rawDraft = window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY);
+    const storedDraft = parseStoredWorkoutDraft(rawDraft, weightUnit);
+
+    if (storedDraft) {
+      const hydrated = hydrateExercisesFromSnapshot(storedDraft.exercises);
+      setTitle(storedDraft.title);
+      setWorkoutType(storedDraft.workoutType);
+      setPerformedAt(storedDraft.performedAt);
+      setExercises(hydrated.exercises);
+      idCounterRef.current = hydrated.counters;
+    } else {
+      if (rawDraft) {
+        window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+      }
+    }
+
+    autosaveReadyRef.current = true;
+  }, [initialData, isEditMode, weightUnit]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      return;
+    }
+
+    latestDraftSnapshotRef.current = createWorkoutDraftSnapshot(
+      title,
+      workoutType,
+      performedAt,
+      exercises,
     );
-
-    if (!storedDraft) {
-      return;
-    }
-
-    const hydrated = hydrateExercisesFromSnapshot(storedDraft.exercises);
-    setTitle(storedDraft.title.trim() || "Gym session");
-    setWorkoutType(storedDraft.workoutType.trim());
-    setPerformedAt(normalizePerformedAtInput(storedDraft.performedAt));
-    setExercises(hydrated.exercises);
-    setExerciseCounter(hydrated.counters.exercise);
-    setSetCounter(hydrated.counters.set);
-  }, [isHydrated, isEditMode, weightUnit]);
+  }, [isEditMode, title, workoutType, performedAt, exercises]);
 
   useEffect(() => {
-    if (!isHydrated || isEditMode) {
+    if (isEditMode) {
       return;
     }
 
-    if (autosaveTimerRef.current !== null) {
-      window.clearTimeout(autosaveTimerRef.current);
+    if (!autosaveReadyRef.current) {
+      return;
     }
 
-    autosaveTimerRef.current = window.setTimeout(() => {
-      const didPersist = persistWorkoutDraft(currentSnapshot, weightUnit);
-      setDraftStatus(didPersist ? "saved" : "error");
+    const timeoutId = window.setTimeout(() => {
+      const snapshot = createWorkoutDraftSnapshot(
+        title,
+        workoutType,
+        performedAt,
+        exercises,
+      );
+      latestDraftSnapshotRef.current = snapshot;
+      persistWorkoutDraft(snapshot, weightUnit);
     }, WORKOUT_AUTOSAVE_DELAY_MS);
 
     return () => {
-      if (autosaveTimerRef.current !== null) {
-        window.clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
+      window.clearTimeout(timeoutId);
     };
-  }, [currentSnapshot, isHydrated, isEditMode, weightUnit]);
+  }, [isEditMode, title, workoutType, performedAt, exercises, weightUnit]);
 
   useEffect(() => {
-    return () => {
-      Object.values(suggestionTimersRef.current).forEach((timerId) => {
-        window.clearTimeout(timerId);
-      });
-      Object.values(suggestionsAbortControllersRef.current).forEach((controller) => {
-        controller.abort();
-      });
-      Object.values(insightsAbortControllersRef.current).forEach((controller) => {
-        controller.abort();
-      });
-    };
-  }, []);
-
-  useEffect(() => {
-    const lookupEntries = exercises.map((exercise) => {
-      const normalizedName = normalizeExerciseLookupKey(exercise.name);
-      return {
-        exerciseId: exercise.id,
-        normalizedName,
-      };
-    });
-
-    setInsightsByExerciseId((previous) => {
-      const next: Record<string, ExerciseInsightState> = {};
-
-      for (const { exerciseId, normalizedName } of lookupEntries) {
-        const existing = previous[exerciseId];
-
-        if (!normalizedName) {
-          if (existing?.status === "ready" || existing?.status === "loading") {
-            const controller = insightsAbortControllersRef.current[exerciseId];
-            if (controller) {
-              controller.abort();
-              delete insightsAbortControllersRef.current[exerciseId];
-            }
-          }
-          next[exerciseId] = { status: "idle" };
-          continue;
-        }
-
-        if (
-          existing &&
-          existing.lookupKey === normalizedName &&
-          (existing.status === "loading" || existing.status === "ready")
-        ) {
-          next[exerciseId] = existing;
-          continue;
-        }
-
-        next[exerciseId] = {
-          status: "loading",
-          lookupKey: normalizedName,
-        };
-
-        const existingController = insightsAbortControllersRef.current[exerciseId];
-        if (existingController) {
-          existingController.abort();
-        }
-
-        const controller = new AbortController();
-        insightsAbortControllersRef.current[exerciseId] = controller;
-
-        fetch(`/api/exercises/insights?name=${encodeURIComponent(normalizedName)}`, {
-          signal: controller.signal,
-        })
-          .then(async (response) => {
-            const payload = (await response.json()) as ExerciseInsight | { error?: string };
-
-            if (!response.ok) {
-              throw new Error(
-                "error" in payload && typeof payload.error === "string"
-                  ? payload.error
-                  : "Could not load comparison.",
-              );
-            }
-
-            setInsightsByExerciseId((current) => {
-              const latest = current[exerciseId];
-
-              if (!latest || latest.lookupKey !== normalizedName) {
-                return current;
-              }
-
-              return {
-                ...current,
-                [exerciseId]: {
-                  status: "ready",
-                  lookupKey: normalizedName,
-                  data: payload as ExerciseInsight,
-                },
-              };
-            });
-          })
-          .catch((error: unknown) => {
-            if (controller.signal.aborted) {
-              return;
-            }
-
-            const message =
-              error instanceof Error ? error.message : "Could not load comparison.";
-
-            setInsightsByExerciseId((current) => {
-              const latest = current[exerciseId];
-
-              if (!latest || latest.lookupKey !== normalizedName) {
-                return current;
-              }
-
-              return {
-                ...current,
-                [exerciseId]: {
-                  status: "error",
-                  lookupKey: normalizedName,
-                  error: message,
-                },
-              };
-            });
-          })
-          .finally(() => {
-            if (insightsAbortControllersRef.current[exerciseId] === controller) {
-              delete insightsAbortControllersRef.current[exerciseId];
-            }
-          });
-      }
-
-      for (const exerciseId of Object.keys(previous)) {
-        if (lookupEntries.some((entry) => entry.exerciseId === exerciseId)) {
-          continue;
-        }
-
-        const controller = insightsAbortControllersRef.current[exerciseId];
-        if (controller) {
-          controller.abort();
-          delete insightsAbortControllersRef.current[exerciseId];
-        }
-      }
-
-      return next;
-    });
-  }, [exercises]);
-
-  const clearSuggestionsForExercise = (exerciseId: string) => {
-    const timerId = suggestionTimersRef.current[exerciseId];
-    if (timerId !== undefined) {
-      window.clearTimeout(timerId);
-      delete suggestionTimersRef.current[exerciseId];
-    }
-
-    const controller = suggestionsAbortControllersRef.current[exerciseId];
-    if (controller) {
-      controller.abort();
-      delete suggestionsAbortControllersRef.current[exerciseId];
-    }
-
-    setSuggestionsByExerciseId((current) => {
-      if (!(exerciseId in current)) {
-        return current;
-      }
-
-      const next = { ...current };
-      delete next[exerciseId];
-      return next;
-    });
-
-    setActiveSuggestionExerciseId((current) =>
-      current === exerciseId ? null : current,
-    );
-  };
-
-  const loadSuggestionsForExercise = (exerciseId: string, query: string) => {
-    clearSuggestionsForExercise(exerciseId);
-
-    const normalizedQuery = normalizeExerciseLookupKey(query);
-
-    if (!normalizedQuery) {
+    if (isEditMode) {
       return;
     }
 
-    suggestionTimersRef.current[exerciseId] = window.setTimeout(async () => {
-      const controller = new AbortController();
-      suggestionsAbortControllersRef.current[exerciseId] = controller;
-
-      try {
-        const response = await fetch(
-          `/api/exercises/suggestions?query=${encodeURIComponent(normalizedQuery)}`,
-          {
-            signal: controller.signal,
-          },
-        );
-
-        const payload = (await response.json()) as ExerciseSuggestionsPayload;
-
-        if (!response.ok) {
-          throw new Error(payload.error ?? "Could not load exercise suggestions.");
-        }
-
-        const suggestions = Array.isArray(payload.suggestions)
-          ? payload.suggestions.filter((value): value is string => typeof value === "string")
-          : [];
-
-        setSuggestionsByExerciseId((current) => ({
-          ...current,
-          [exerciseId]: suggestions,
-        }));
-        setActiveSuggestionExerciseId(exerciseId);
-      } catch {
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        setSuggestionsByExerciseId((current) => ({
-          ...current,
-          [exerciseId]: [],
-        }));
-      } finally {
-        if (suggestionsAbortControllersRef.current[exerciseId] === controller) {
-          delete suggestionsAbortControllersRef.current[exerciseId];
-        }
+    function handlePageHide() {
+      if (!autosaveReadyRef.current || !latestDraftSnapshotRef.current) {
+        return;
       }
-    }, EXERCISE_SUGGESTION_DEBOUNCE_MS);
-  };
 
-  const updateExerciseName = (exerciseId: string, value: string) => {
+      persistWorkoutDraft(latestDraftSnapshotRef.current, weightUnit);
+    }
+
+    window.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [isEditMode, weightUnit]);
+
+  useEffect(() => {
+    const pendingSuggestionTimeouts = suggestionDebounceTimeoutRef.current;
+
+    return () => {
+      for (const timeoutId of Object.values(pendingSuggestionTimeouts)) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
+
+  function nextExerciseId() {
+    idCounterRef.current.exercise += 1;
+    return `exercise-${idCounterRef.current.exercise}`;
+  }
+
+  function nextSetId() {
+    idCounterRef.current.set += 1;
+    return `set-${idCounterRef.current.set}`;
+  }
+
+  function updateExercise(
+    id: string,
+    updater: (exercise: ExerciseDraft) => ExerciseDraft,
+  ) {
     setExercises((current) =>
       current.map((exercise) =>
-        exercise.id === exerciseId
-          ? {
-              ...exercise,
-              name: value,
-            }
-          : exercise,
+        exercise.id === id ? updater(exercise) : exercise,
       ),
     );
+  }
 
-    loadSuggestionsForExercise(exerciseId, value);
-  };
+  function addExercise() {
+    setExercises((current) => [
+      ...current,
+      createExerciseDraft(nextExerciseId(), nextSetId()),
+    ]);
+  }
 
-  const selectSuggestion = (exerciseId: string, suggestion: string) => {
-    setExercises((current) =>
-      current.map((exercise) =>
-        exercise.id === exerciseId
-          ? {
-              ...exercise,
-              name: normalizeExerciseDisplayName(suggestion),
-            }
-          : exercise,
-      ),
-    );
-    clearSuggestionsForExercise(exerciseId);
-  };
-
-  const addExercise = () => {
-    setExerciseCounter((currentCounter) => {
-      const nextCounter = currentCounter + 1;
-      setSetCounter((currentSetCounter) => {
-        const nextSetCounter = currentSetCounter + 1;
-        setExercises((currentExercises) => [
-          ...currentExercises,
-          createExerciseDraft(`exercise-${nextCounter}`, `set-${nextSetCounter}`),
-        ]);
-        return nextSetCounter;
-      });
-      return nextCounter;
-    });
-  };
-
-  const removeExercise = (exerciseId: string) => {
+  function removeExercise(id: string) {
     setExercises((current) => {
       if (current.length === 1) {
         return current;
       }
 
-      return current.filter((exercise) => exercise.id !== exerciseId);
+      return current.filter((exercise) => exercise.id !== id);
     });
-    clearSuggestionsForExercise(exerciseId);
-  };
 
-  const addSet = (exerciseId: string) => {
-    setSetCounter((currentCounter) => {
-      const nextCounter = currentCounter + 1;
-
-      setExercises((currentExercises) =>
-        currentExercises.map((exercise) =>
-          exercise.id === exerciseId
-            ? {
-                ...exercise,
-                sets: [...exercise.sets, createSetDraft(`set-${nextCounter}`)],
-              }
-            : exercise,
-        ),
-      );
-
-      return nextCounter;
-    });
-  };
-
-  const removeSet = (exerciseId: string, setId: string) => {
-    setExercises((current) =>
-      current.map((exercise) => {
-        if (exercise.id !== exerciseId || exercise.sets.length === 1) {
-          return exercise;
-        }
-
-        return {
-          ...exercise,
-          sets: exercise.sets.filter((setItem) => setItem.id !== setId),
-        };
-      }),
-    );
-  };
-
-  const updateSet = (
-    exerciseId: string,
-    setId: string,
-    field: keyof Pick<ExerciseSetDraft, "reps" | "weightLb">,
-    value: string,
-  ) => {
-    setExercises((current) =>
-      current.map((exercise) =>
-        exercise.id === exerciseId
-          ? {
-              ...exercise,
-              sets: exercise.sets.map((setItem) =>
-                setItem.id === setId
-                  ? {
-                      ...setItem,
-                      [field]: value,
-                    }
-                  : setItem,
-              ),
-            }
-          : exercise,
-      ),
-    );
-  };
-
-  const onDragStart = (
-    event: ReactPointerEvent<HTMLButtonElement>,
-    exerciseId: string,
-  ) => {
-    const target = event.currentTarget;
-    const pointerId = event.pointerId;
-    dragPointerIdRef.current = pointerId;
-    setDraggingExerciseId(exerciseId);
-    dragStartIndexRef.current = exercises.findIndex((exercise) => exercise.id === exerciseId);
-    target.setPointerCapture(pointerId);
-  };
-
-  const onDragMove = (
-    event: ReactPointerEvent<HTMLButtonElement>,
-    hoveredExerciseId: string,
-  ) => {
-    if (!draggingExerciseId || dragPointerIdRef.current !== event.pointerId) {
-      return;
-    }
-
-    if (draggingExerciseId === hoveredExerciseId) {
-      return;
-    }
-
-    setExercises((current) => {
-      const fromIndex = current.findIndex((exercise) => exercise.id === draggingExerciseId);
-      const toIndex = current.findIndex((exercise) => exercise.id === hoveredExerciseId);
-
-      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) {
+    setExerciseInsightById((current) => {
+      if (!(id in current)) {
         return current;
       }
 
-      return reorderItems(current, fromIndex, toIndex);
+      const next = { ...current };
+      delete next[id];
+      return next;
     });
-  };
 
-  const onDragEnd = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (dragPointerIdRef.current === event.pointerId) {
-      dragPointerIdRef.current = null;
+    setExerciseSearchResultsById((current) => {
+      if (!(id in current)) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+
+    const pendingSuggestionTimeout = suggestionDebounceTimeoutRef.current[id];
+    if (pendingSuggestionTimeout !== undefined) {
+      window.clearTimeout(pendingSuggestionTimeout);
+      delete suggestionDebounceTimeoutRef.current[id];
+    }
+
+    delete latestInsightLookupRef.current[id];
+    delete latestSuggestionLookupRef.current[id];
+  }
+
+  function findExerciseIndexFromPoint(clientX: number, clientY: number) {
+    for (const element of document.elementsFromPoint(clientX, clientY)) {
+      if (!(element instanceof HTMLElement)) {
+        continue;
+      }
+
+      const card = element.closest<HTMLElement>("[data-exercise-card]");
+
+      if (!card) {
+        continue;
+      }
+
+      const exerciseIndex = Number.parseInt(
+        card.dataset.exerciseIndex ?? "",
+        10,
+      );
+
+      if (Number.isInteger(exerciseIndex)) {
+        return exerciseIndex;
+      }
+    }
+
+    return null;
+  }
+
+  function clearExerciseDragState() {
+    exerciseDragRef.current = null;
+    setDraggingExerciseIndex(null);
+    setDropTargetExerciseIndex(null);
+  }
+
+  function commitExerciseReorder(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) {
+      clearExerciseDragState();
+      return;
+    }
+
+    setExercises((current) => reorderItems(current, fromIndex, toIndex));
+    clearExerciseDragState();
+  }
+
+  function handleExercisePointerDown(
+    event: ReactPointerEvent<HTMLButtonElement>,
+    exerciseIndex: number,
+  ) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    exerciseDragRef.current = {
+      activeIndex: exerciseIndex,
+      targetIndex: exerciseIndex,
+      pointerId: event.pointerId,
+    };
+    setDraggingExerciseIndex(exerciseIndex);
+    setDropTargetExerciseIndex(exerciseIndex);
+  }
+
+  function handleExercisePointerMove(
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) {
+    const activeDrag = exerciseDragRef.current;
+
+    if (!activeDrag || activeDrag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const hoveredIndex = findExerciseIndexFromPoint(event.clientX, event.clientY);
+
+    if (hoveredIndex === null || hoveredIndex === activeDrag.targetIndex) {
+      return;
+    }
+
+    exerciseDragRef.current = {
+      ...activeDrag,
+      targetIndex: hoveredIndex,
+    };
+    setDropTargetExerciseIndex(hoveredIndex);
+  }
+
+  function handleExercisePointerUp(
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) {
+    const activeDrag = exerciseDragRef.current;
+
+    if (!activeDrag || activeDrag.pointerId !== event.pointerId) {
+      return;
     }
 
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
 
-    dragStartIndexRef.current = null;
-    setDraggingExerciseId(null);
-  };
+    commitExerciseReorder(activeDrag.activeIndex, activeDrag.targetIndex);
+  }
 
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  function handleExercisePointerCancel(
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) {
+    const activeDrag = exerciseDragRef.current;
 
-    setFormError(null);
-
-    const trimmedTitle = title.trim() || "Gym session";
-    const normalizedPerformedAt = normalizePerformedAtInput(performedAt);
-    const payload = createWorkoutDraftSnapshot(
-      trimmedTitle,
-      workoutType.trim(),
-      normalizedPerformedAt,
-      exercises.map((exercise) => ({
-        ...exercise,
-        name: exercise.name.trim(),
-      })),
-    );
-
-    const hasExerciseWithName = payload.exercises.some((exercise) => exercise.name.trim());
-
-    if (!hasExerciseWithName) {
-      setFormError("Add at least one exercise before saving.");
+    if (!activeDrag || activeDrag.pointerId !== event.pointerId) {
       return;
     }
 
-    const hasLoggedSet = payload.exercises.some((exercise) =>
-      exercise.sets.some((setItem) => {
-        const reps = Number.parseInt(setItem.reps.trim(), 10);
-        return Number.isInteger(reps) && reps > 0;
-      }),
-    );
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
 
-    if (!hasLoggedSet) {
-      setFormError("Log at least one set with reps before saving.");
+    clearExerciseDragState();
+  }
+
+  function addSet(exerciseId: string) {
+    updateExercise(exerciseId, (exercise) => ({
+      ...exercise,
+      sets: [...exercise.sets, createSetDraft(nextSetId())],
+    }));
+  }
+
+  function removeSet(exerciseId: string, setId: string) {
+    updateExercise(exerciseId, (exercise) => {
+      if (exercise.sets.length === 1) {
+        return exercise;
+      }
+
+      return {
+        ...exercise,
+        sets: exercise.sets.filter((setItem) => setItem.id !== setId),
+      };
+    });
+  }
+
+  function updateSet(
+    exerciseId: string,
+    setId: string,
+    field: keyof ExerciseSetDraft,
+    value: string,
+  ) {
+    updateExercise(exerciseId, (exercise) => ({
+      ...exercise,
+      sets: exercise.sets.map((setItem) =>
+        setItem.id === setId ? { ...setItem, [field]: value } : setItem,
+      ),
+    }));
+  }
+
+  function setExerciseSearchResults(exerciseId: string, results: string[]) {
+    setExerciseSearchResultsById((current) => {
+      if (results.length === 0) {
+        if (!(exerciseId in current)) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[exerciseId];
+        return next;
+      }
+
+      const previous = current[exerciseId] ?? [];
+
+      if (
+        previous.length === results.length &&
+        previous.every((item, index) => item === results[index])
+      ) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [exerciseId]: results,
+      };
+    });
+  }
+
+  function resetExerciseInsightState(exerciseId: string) {
+    setExerciseInsightById((current) => {
+      const previous = current[exerciseId];
+
+      if (!previous || previous.status === "idle") {
+        return current;
+      }
+
+      return {
+        ...current,
+        [exerciseId]: { status: "idle" },
+      };
+    });
+  }
+
+  function clearPendingSuggestionLookup(exerciseId: string) {
+    const pendingTimeout = suggestionDebounceTimeoutRef.current[exerciseId];
+
+    if (pendingTimeout !== undefined) {
+      window.clearTimeout(pendingTimeout);
+      delete suggestionDebounceTimeoutRef.current[exerciseId];
+    }
+  }
+
+  async function fetchExerciseSuggestions(exerciseId: string, query: string) {
+    const lookupKey = normalizeExerciseLookupKey(query);
+
+    if (!lookupKey) {
+      setExerciseSearchResults(exerciseId, []);
+      delete latestSuggestionLookupRef.current[exerciseId];
+      return;
+    }
+
+    const cachedSuggestions = suggestionCacheRef.current[lookupKey];
+
+    if (cachedSuggestions) {
+      setExerciseSearchResults(exerciseId, cachedSuggestions);
+      return;
+    }
+
+    latestSuggestionLookupRef.current[exerciseId] = lookupKey;
+
+    try {
+      const response = await fetch(
+        `/api/workouts/exercise-suggestions?query=${encodeURIComponent(query)}`,
+        {
+          cache: "no-store",
+        },
+      );
+      const payload = (await response.json()) as ExerciseSuggestionsPayload;
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Unable to load suggestions.");
+      }
+
+      const suggestions = Array.isArray(payload.suggestions)
+        ? payload.suggestions
+            .map((item) => toSafeString(item).trim())
+            .filter((item) => item !== "")
+        : [];
+      suggestionCacheRef.current[lookupKey] = suggestions;
+
+      if (latestSuggestionLookupRef.current[exerciseId] !== lookupKey) {
+        return;
+      }
+
+      setExerciseSearchResults(exerciseId, suggestions);
+    } catch {
+      if (latestSuggestionLookupRef.current[exerciseId] !== lookupKey) {
+        return;
+      }
+
+      setExerciseSearchResults(exerciseId, []);
+    }
+  }
+
+  function queueExerciseSuggestionLookup(exerciseId: string, rawValue: string) {
+    clearPendingSuggestionLookup(exerciseId);
+
+    if (!rawValue.trim()) {
+      setExerciseSearchResults(exerciseId, []);
+      delete latestSuggestionLookupRef.current[exerciseId];
+      return;
+    }
+
+    suggestionDebounceTimeoutRef.current[exerciseId] = window.setTimeout(() => {
+      delete suggestionDebounceTimeoutRef.current[exerciseId];
+      void fetchExerciseSuggestions(exerciseId, rawValue);
+    }, EXERCISE_SUGGESTION_DEBOUNCE_MS);
+  }
+
+  function handleExerciseNameChange(exerciseId: string, rawValue: string) {
+    updateExercise(exerciseId, (current) => ({
+      ...current,
+      name: rawValue,
+    }));
+
+    resetExerciseInsightState(exerciseId);
+    queueExerciseSuggestionLookup(exerciseId, rawValue);
+  }
+
+  function handleExerciseNameFocus(exerciseId: string, rawValue: string) {
+    if (!rawValue.trim()) {
+      return;
+    }
+
+    queueExerciseSuggestionLookup(exerciseId, rawValue);
+  }
+
+  function applyExerciseSearchResult(exerciseId: string, suggestion: string) {
+    const normalizedSuggestion = normalizeExerciseDisplayName(suggestion);
+    setExerciseSearchResults(exerciseId, []);
+    delete latestSuggestionLookupRef.current[exerciseId];
+
+    updateExercise(exerciseId, (current) => ({
+      ...current,
+      name: normalizedSuggestion,
+    }));
+
+    void fetchExerciseInsight(exerciseId, normalizedSuggestion);
+  }
+
+  async function fetchExerciseInsight(exerciseId: string, exerciseName: string) {
+    const lookupKey = normalizeExerciseLookupKey(exerciseName);
+
+    if (!lookupKey) {
+      setExerciseInsightById((current) => ({
+        ...current,
+        [exerciseId]: { status: "idle" },
+      }));
+      delete latestInsightLookupRef.current[exerciseId];
+      return;
+    }
+
+    const cached = insightCacheRef.current[lookupKey];
+
+    if (cached) {
+      setExerciseInsightById((current) => ({
+        ...current,
+        [exerciseId]: {
+          status: "ready",
+          lookupKey,
+          data: cached,
+        },
+      }));
+      return;
+    }
+
+    latestInsightLookupRef.current[exerciseId] = lookupKey;
+
+    setExerciseInsightById((current) => ({
+      ...current,
+      [exerciseId]: {
+        status: "loading",
+        lookupKey,
+      },
+    }));
+
+    try {
+      const response = await fetch(
+        `/api/workouts/insights?exercise=${encodeURIComponent(exerciseName)}`,
+        {
+          cache: "no-store",
+        },
+      );
+      const payload = (await response.json()) as
+        | ExerciseInsight
+        | { error?: string };
+
+      if (!response.ok || !("normalizedName" in payload)) {
+        throw new Error(
+          "error" in payload ? (payload.error ?? "Unable to compare exercise.") : "Unable to compare exercise.",
+        );
+      }
+
+      const responseLookupKey = normalizeExerciseLookupKey(payload.normalizedName);
+      insightCacheRef.current[responseLookupKey] = payload;
+
+      if (latestInsightLookupRef.current[exerciseId] !== lookupKey) {
+        return;
+      }
+
+      setExerciseInsightById((current) => ({
+        ...current,
+        [exerciseId]: {
+          status: "ready",
+          lookupKey,
+          data: payload,
+        },
+      }));
+    } catch (error) {
+      if (latestInsightLookupRef.current[exerciseId] !== lookupKey) {
+        return;
+      }
+
+      setExerciseInsightById((current) => ({
+        ...current,
+        [exerciseId]: {
+          status: "error",
+          lookupKey,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to compare exercise.",
+        },
+      }));
+    }
+  }
+
+  async function handleExerciseNameBlur(exerciseId: string, rawValue: string) {
+    clearPendingSuggestionLookup(exerciseId);
+    setExerciseSearchResults(exerciseId, []);
+    delete latestSuggestionLookupRef.current[exerciseId];
+
+    const normalized = normalizeExerciseDisplayName(rawValue);
+
+    updateExercise(exerciseId, (current) => ({
+      ...current,
+      name: normalized,
+    }));
+
+    await fetchExerciseInsight(exerciseId, normalized);
+  }
+
+  function buildPayload() {
+    const normalizedExercises = exercises
+      .map((exercise) => {
+        const name = normalizeExerciseDisplayName(toSafeString(exercise.name));
+        const parsedSets = exercise.sets
+          .filter((setItem) => toSafeString(setItem.reps).trim() !== "")
+          .map((setItem) => {
+            const reps = Number.parseInt(toSafeString(setItem.reps).trim(), 10);
+            const rawWeight = toSafeString(setItem.weightLb).trim();
+            const weightLb = rawWeight
+              ? rawWeight.startsWith(".")
+                ? `0${rawWeight}`
+                : rawWeight
+              : null;
+
+            return {
+              reps,
+              weightLb,
+            };
+          })
+          .filter(
+            (setItem) => Number.isInteger(setItem.reps) && setItem.reps > 0,
+          );
+
+        return {
+          name,
+          sets: parsedSets,
+        };
+      })
+      .filter((exercise) => exercise.name !== "");
+
+    if (normalizedExercises.length === 0) {
+      return { error: "Add at least one exercise with a name." as const };
+    }
+
+    for (const exercise of normalizedExercises) {
+      if (exercise.sets.length === 0) {
+        return {
+          error:
+            `Add at least one set with reps for ${exercise.name}.` as const,
+        };
+      }
+    }
+
+    return {
+      value: {
+        title,
+        workoutType,
+        performedAt,
+        weightUnit,
+        exercises: normalizedExercises,
+      },
+    };
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isSaving) {
+      return;
+    }
+
+    setFormError(null);
+
+    const payload = buildPayload();
+
+    if ("error" in payload) {
+      setFormError(payload.error ?? "Unable to validate workout.");
       return;
     }
 
     setIsSaving(true);
 
     try {
-      const response = await fetch(
-        isEditMode && workoutId ? `/api/workouts/${workoutId}` : "/api/workouts",
-        {
-          method: isEditMode ? "PATCH" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
+      const requestBody = isEditMode
+        ? {
+            ...payload.value,
+            workoutId,
+          }
+        : payload.value;
+      const response = await fetch("/api/workouts", {
+        method: isEditMode ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(requestBody),
+      });
 
       const data = (await response.json()) as WorkoutSubmitResponse;
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Could not save workout.");
+        setFormError(
+          data.error ??
+            (isEditMode
+              ? "Unable to update workout."
+              : "Unable to save workout."),
+        );
+        return;
       }
 
       if (!isEditMode) {
         window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
       }
 
-      if (submitIntentRef.current === "save-and-continue") {
-        setTitle("Gym session");
-        setWorkoutType("");
-        setPerformedAt(formatDatabaseDateValue(getCurrentPacificDate()));
-        setExercises([createExerciseDraft(INITIAL_EXERCISE_ID, INITIAL_SET_ID)]);
-        setExerciseCounter(1);
-        setSetCounter(1);
-        setSuggestionsByExerciseId({});
-        setActiveSuggestionExerciseId(null);
-        setInsightsByExerciseId({});
-        setDraftStatus("idle");
-        router.refresh();
-        return;
-      }
+      const resolvedWorkoutId = data.id ?? workoutId;
 
-      router.push("/workouts");
+      if (isEditMode && resolvedWorkoutId) {
+        router.push(`/workouts/${resolvedWorkoutId}`);
+      } else {
+        router.push("/workouts");
+      }
       router.refresh();
-    } catch (error) {
+    } catch {
       setFormError(
-        error instanceof Error ? error.message : "Could not save workout.",
+        isEditMode ? "Unable to update workout." : "Unable to save workout.",
       );
     } finally {
       setIsSaving(false);
     }
-  };
+  }
+
+  const backHref = isEditMode ? `/workouts/${workoutId}` : "/dashboard?view=workouts";
+  const backLabel = isEditMode ? "Back to workout" : "Back to workouts";
+  const pageTitle = isEditMode ? "Edit workout" : "Log workout";
+  const savingLabel = isEditMode ? "Saving changes..." : "Saving workout...";
+  const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
   return (
-    <main className={styles.page}>
-      <section className={styles.shell}>
+    <main className={styles.loggerShell}>
+      <section className={styles.loggerStage} aria-label="Workout logger">
+        <div className={styles.topRow}>
+          <Link href={backHref} className={styles.backLink}>
+            {backLabel}
+          </Link>
+          <ThemeToggle />
+        </div>
+
         <header className={styles.header}>
-          <div className={styles.headerContent}>
-            <div className={styles.eyebrowRow}>
-              <Link href="/workouts" className={styles.backLink}>
-                Back to workouts
-              </Link>
-              <ThemeToggle />
-            </div>
-            <div>
-              <p className={styles.eyebrow}>Workout logger</p>
-              <h1 className={styles.title}>{pageTitle}</h1>
-              <p className={styles.description}>{pageDescription}</p>
-            </div>
-          </div>
-          <div className={styles.statusPillGroup}>
-            {isEditMode ? null : (
-              <span className={styles.statusPill}>
-                {draftStatus === "saved"
-                  ? "Draft autosaved"
-                  : draftStatus === "error"
-                    ? "Draft save failed"
-                    : "Draft ready"}
-              </span>
-            )}
-            <span className={styles.statusPill}>
-              {hasUnsavedChanges ? "Unsaved changes" : "All changes saved"}
-            </span>
-          </div>
+          <h1 className={styles.title}>{pageTitle}</h1>
         </header>
 
-        <form className={styles.form} onSubmit={onSubmit}>
-          <section className={styles.panel}>
-            <div className={styles.panelHead}>
-              <div>
-                <p className={styles.panelEyebrow}>Session details</p>
-                <h2 className={styles.panelTitle}>Workout info</h2>
-              </div>
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <section className={styles.card}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="workout-title">
+                Workout title
+              </label>
+              <input
+                id="workout-title"
+                className={styles.input}
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Push day"
+              />
             </div>
 
-            <div className={styles.fieldGrid}>
-              <label className={styles.field}>
-                <span className={styles.label}>Title</span>
+            <div className={styles.metaGrid}>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="workout-type">
+                  Workout type
+                </label>
                 <input
-                  type="text"
-                  className={styles.input}
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Push day"
-                  autoComplete="off"
-                />
-              </label>
-
-              <label className={styles.field}>
-                <span className={styles.label}>Workout type</span>
-                <input
-                  type="text"
+                  id="workout-type"
                   className={styles.input}
                   value={workoutType}
                   onChange={(event) => setWorkoutType(event.target.value)}
-                  placeholder="Upper body"
-                  autoComplete="off"
+                  placeholder="Push"
                 />
-              </label>
+              </div>
 
-              <label className={styles.field}>
-                <span className={styles.label}>Date performed</span>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="workout-performed-at">
+                  Date
+                </label>
                 <DatePicker
-  selected={toDatabaseDateFromInput(performedAt)}
-  onChange={(date: Date | null) => {
-    const value = date
-      ? formatDatabaseDateValue(date)
-      : formatDatabaseDateValue(getCurrentPacificDate());
-    setPerformedAt(value);
-  }}
-  dateFormat="MMM d, yyyy"
-  className={styles.input}
-/>
-              </label>
+                  id="workout-performed-at"
+                  selected={performedAtDate}
+                  onChange={(value: Date | null) => {
+                    if (value) {
+                      setPerformedAt(formatDatabaseDateValue(value));
+                    }
+                  }}
+                  dateFormat="MM/dd/yyyy"
+                  calendarClassName={styles.datePickerCalendar}
+                  wrapperClassName={styles.datePickerWrapper}
+                  popperClassName={styles.datePickerPopper}
+                  className={`${styles.input} ${styles.dateInput}`}
+                  showPopperArrow={false}
+                />
+              </div>
             </div>
           </section>
 
           <section className={styles.exerciseSection}>
-            <div className={styles.sectionHead}>
-              <div>
-                <p className={styles.panelEyebrow}>Exercises</p>
-                <h2 className={styles.panelTitle}>Log your lifts</h2>
-              </div>
-
-              {!isEditMode ? (
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={() => {
-                    submitIntentRef.current = "save-and-continue";
-                  }}
-                  disabled={isSaving}
-                >
-                  Save and continue
-                </button>
-              ) : null}
-            </div>
-
             {exercises.map((exercise, exerciseIndex) => (
               <article
                 key={exercise.id}
                 className={`${styles.exerciseCard} ${
-                  draggingExerciseId === exercise.id ? styles.exerciseCardDragging : ""
+                  draggingExerciseIndex === exerciseIndex
+                    ? styles.exerciseCardDragging
+                    : ""
+                } ${
+                  dropTargetExerciseIndex === exerciseIndex &&
+                  draggingExerciseIndex !== exerciseIndex
+                    ? styles.exerciseCardDropTarget
+                    : ""
                 }`}
+                data-exercise-card="true"
+                data-exercise-index={exerciseIndex}
               >
                 <div className={styles.exerciseHead}>
-                  <div className={styles.exerciseHeadLeft}>
+                  <div className={styles.exerciseHeading}>
                     <button
                       type="button"
-                      className={styles.dragHandle}
-                      aria-label={`Reorder exercise ${exerciseIndex + 1}`}
-                      onPointerDown={(event) => onDragStart(event, exercise.id)}
-                      onPointerMove={(event) => onDragMove(event, exercise.id)}
-                      onPointerUp={onDragEnd}
-                      onPointerCancel={onDragEnd}
+                      className={`${styles.iconButton} ${styles.dragHandle}`}
+                      onPointerDown={(event) =>
+                        handleExercisePointerDown(event, exerciseIndex)
+                      }
+                      onPointerMove={handleExercisePointerMove}
+                      onPointerUp={handleExercisePointerUp}
+                      onPointerCancel={handleExercisePointerCancel}
+                      aria-label={`Drag to reorder exercise ${exerciseIndex + 1}`}
+                      title="Drag to reorder"
                     >
                       <GripVertical
                         className={styles.icon}
@@ -1153,13 +1278,11 @@ export function WorkoutLogger({
                       />
                     </button>
                     <div>
-                      <p className={styles.exerciseIndex}>Exercise {exerciseIndex + 1}</p>
-                      <p className={styles.exerciseSummary}>
-                        {exercise.sets.length} set{exercise.sets.length === 1 ? "" : "s"}
-                      </p>
+                      <h2 className={styles.exerciseTitle}>
+                        Exercise {exerciseIndex + 1}
+                      </h2>
                     </div>
                   </div>
-
                   <button
                     type="button"
                     className={styles.iconButton}
@@ -1175,270 +1298,288 @@ export function WorkoutLogger({
                   </button>
                 </div>
 
-                <div className={styles.exerciseBody}>
-                  <label className={styles.field}>
-                    <span className={styles.label}>Exercise name</span>
-                    <input
-                      type="text"
-                      className={styles.input}
-                      value={exercise.name}
-                      onChange={(event) =>
-                        updateExerciseName(exercise.id, event.target.value)
-                      }
-                      placeholder="Incline dumbbell press"
-                      autoComplete="off"
-                      onFocus={() => {
-                        if ((suggestionsByExerciseId[exercise.id] ?? []).length > 0) {
-                          setActiveSuggestionExerciseId(exercise.id);
-                        }
-                      }}
-                      onBlur={() => {
-                        window.setTimeout(() => {
-                          setActiveSuggestionExerciseId((current) =>
-                            current === exercise.id ? null : current,
-                          );
-                        }, 120);
-                      }}
-                    />
+                <div className={styles.field}>
+                  <div className={styles.inlineRow}>
+                    {(() => {
+                      const searchResults =
+                        exerciseSearchResultsById[exercise.id] ?? [];
 
-                    {activeSuggestionExerciseId === exercise.id &&
-                    (suggestionsByExerciseId[exercise.id] ?? []).length > 0 ? (
-                      <div className={styles.suggestions}>
-                        {(suggestionsByExerciseId[exercise.id] ?? []).map((suggestion) => (
-                          <button
-                            key={`${exercise.id}-${suggestion}`}
-                            type="button"
-                            className={styles.suggestionButton}
-                            onMouseDown={(event) => {
-                              event.preventDefault();
-                              selectSuggestion(exercise.id, suggestion);
-                            }}
-                          >
-                            {normalizeExerciseDisplayName(suggestion)}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </label>
-
-                  {(() => {
-                    const insightState = insightsByExerciseId[exercise.id];
-
-                    if (!insightState || insightState.status === "idle") {
                       return (
-                        <p className={styles.compareHint}>
-                          Start typing an exercise name to compare against your history.
-                        </p>
+                        <>
+                          <input
+                            id={`exercise-name-${exercise.id}`}
+                            className={styles.input}
+                            value={exercise.name}
+                            aria-label={`Exercise name for exercise ${exerciseIndex + 1}`}
+                            onChange={(event) =>
+                              handleExerciseNameChange(exercise.id, event.target.value)
+                            }
+                            onFocus={(event) =>
+                              handleExerciseNameFocus(exercise.id, event.target.value)
+                            }
+                            onBlur={(event) =>
+                              void handleExerciseNameBlur(exercise.id, event.target.value)
+                            }
+                            autoComplete="off"
+                            spellCheck={true}
+                            autoCapitalize="words"
+                            autoCorrect="on"
+                            placeholder="Barbell bench press"
+                          />
+                          {searchResults.length > 0 ? (
+                            <div
+                              className={styles.searchResults}
+                              aria-label={`Exercise matches for exercise ${exerciseIndex + 1}`}
+                            >
+                              <p className={styles.searchResultsLabel}>Matches</p>
+                              <div className={styles.searchResultsList}>
+                                {searchResults.map((result) => (
+                                  <button
+                                    key={`${exercise.id}-${result}`}
+                                    type="button"
+                                    className={styles.searchResultButton}
+                                    onPointerDown={(event) => {
+                                      event.preventDefault();
+                                    }}
+                                    onClick={() => {
+                                      clearPendingSuggestionLookup(exercise.id);
+                                      applyExerciseSearchResult(
+                                        exercise.id,
+                                        result,
+                                      );
+                                    }}
+                                  >
+                                    {result}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                        </>
                       );
-                    }
+                    })()}
+                  </div>
+                </div>
 
-                    if (insightState.status === "loading") {
-                      return (
-                        <p className={styles.compareHint}>Loading previous session...</p>
-                      );
-                    }
+                {(() => {
+                  const insightState = exerciseInsightById[exercise.id];
 
-                    if (insightState.status === "error") {
-                      return (
-                        <p className={styles.compareHint}>
-                          Could not load comparison right now.
-                        </p>
-                      );
-                    }
+                  if (!insightState || insightState.status === "idle") {
+                    return null;
+                  }
 
-                    const insight = insightState.data;
-
-                    if (!insight || !insight.lastSession) {
-                      return (
-                        <p className={styles.compareHint}>
-                          No previous logs for this exercise yet.
-                        </p>
-                      );
-                    }
-
-                    const lastSession = insight.lastSession;
-                    const draftSummary = summarizeDraftSets(exercise);
-                    const lastVolume =
-                      convertStoredWeightToDisplay(
-                        lastSession.totalVolume,
-                        weightUnit,
-                      ) ?? 0;
-                    const allTimeBestWeight =
-                      insight.allTimeBestWeight === null
-                        ? null
-                        : (convertStoredWeightToDisplay(
-                            insight.allTimeBestWeight,
-                            weightUnit,
-                          ) ?? 0);
-                    const volumeDelta = draftSummary.totalVolume - lastVolume;
-                    const lastSessionBestWeightDisplay = lastSession.sets.reduce<number | null>(
-                      (max, set) => {
-                        if (set.weightLb === null) {
-                          return max;
-                        }
-
-                        const displayWeight =
-                          convertStoredWeightToDisplay(set.weightLb, weightUnit) ?? 0;
-
-                        if (max === null) {
-                          return displayWeight;
-                        }
-
-                        return Math.max(max, displayWeight);
-                      },
-                      null,
-                    );
-                    const draftBestWeight = draftSummary.bestWeight ?? 0;
-                    const bestWeightDelta =
-                      draftBestWeight - (lastSessionBestWeightDisplay ?? 0);
-
+                  if (insightState.status === "loading") {
                     return (
-                      <section className={styles.compareCard}>
-                        <div className={styles.compareHead}>
-                          <p className={styles.compareMeta}>
-                            Last hit {formatExerciseInsightDate(lastSession.performedAt)}
-                          </p>
-                        </div>
-
-                        <div className={styles.compareBody}>
-                          <div className={styles.compareGrid}>
-                            <div className={styles.compareItem}>
-                              <p className={styles.compareLabel}>Last session</p>
-                              <p className={styles.compareValue}>
-                                {lastSession.setCount} sets · {lastSession.totalReps} reps
-                              </p>
-                            </div>
-                            <div className={styles.compareItem}>
-                              <p className={styles.compareLabel}>All-time best</p>
-                              <p className={styles.compareValue}>
-                                {allTimeBestWeight !== null
-                                  ? formatWeightWithUnit(allTimeBestWeight, weightUnit)
-                                  : "--"}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className={styles.compareSnapshot}>
-                            <p className={styles.compareLabel}>Last session snapshot</p>
-                            <div className={styles.compareSetList}>
-                              {lastSession.sets.map((set, index) => (
-                                <div key={`${lastSession.workoutId}-set-${index}`} className={styles.compareSetRow}>
-                                  <span className={styles.compareSetIndex}>#{index + 1}</span>
-                                  <span className={styles.compareSetValue}>
-                                    {formatLoggedSetSnapshot(set, weightUnit)}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {draftSummary.setCount > 0 ? (
-                          <p className={styles.compareDelta}>
-                            Volume vs last: {formatDelta(volumeDelta, weightUnitLabel)} ·
-                            Best vs last: {formatDelta(bestWeightDelta, weightUnitLabel)}
-                          </p>
-                        ) : null}
-                      </section>
+                      <p className={styles.compareHint}>
+                        Comparing with previous sessions...
+                      </p>
                     );
-                  })()}
+                  }
 
-                  <div className={styles.setsStack}>
-                    <div
-                      className={`${styles.setRow} ${styles.setRowHeader}`}
-                      aria-hidden="true"
-                    >
-                      <span className={styles.setHeadLabel}>Set</span>
-                      <span className={styles.setHeadLabel}>
-                        Weight ({weightUnitLabel})
-                      </span>
-                      <span className={styles.setHeadLabel}>Reps</span>
-                      <span className={styles.setHeadLabel}>Action</span>
-                    </div>
+                  if (insightState.status === "error") {
+                    return (
+                      <p className={styles.compareHint}>
+                        Could not load comparison right now.
+                      </p>
+                    );
+                  }
 
-                    {exercise.sets.map((setItem, setIndex) => (
-                      <div key={setItem.id} className={styles.setRow}>
-                        <p className={styles.setNumber}>#{setIndex + 1}</p>
-                        <label
-                          className={`${styles.setField} ${styles.setFieldWeight}`}
-                        >
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            pattern="[0-9]*[.]?[0-9]*"
-                            autoComplete="off"
-                            autoCapitalize="off"
-                            spellCheck={false}
-                            enterKeyHint="next"
-                            className={styles.input}
-                            placeholder={weightUnitLabel}
-                            value={setItem.weightLb}
-                            aria-label={`Weight in ${weightUnitName} for set ${setIndex + 1}`}
-                            onChange={(event) =>
-                              updateSet(
-                                exercise.id,
-                                setItem.id,
-                                "weightLb",
-                                sanitizeWeightInput(event.target.value),
-                              )
-                            }
-                          />
-                        </label>
-                        <label
-                          className={`${styles.setField} ${styles.setFieldReps}`}
-                        >
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            autoComplete="off"
-                            autoCapitalize="off"
-                            spellCheck={false}
-                            enterKeyHint="done"
-                            className={styles.input}
-                            placeholder="Reps"
-                            value={setItem.reps}
-                            aria-label={`Repetitions for set ${setIndex + 1}`}
-                            onChange={(event) =>
-                              updateSet(
-                                exercise.id,
-                                setItem.id,
-                                "reps",
-                                sanitizeRepsInput(event.target.value),
-                              )
-                            }
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          className={`${styles.iconButton} ${styles.setRemoveButton}`}
-                          onClick={() => removeSet(exercise.id, setItem.id)}
-                          disabled={exercise.sets.length === 1}
-                          aria-label={`Remove set ${setIndex + 1}`}
-                        >
-                          <Trash2
-                            className={styles.icon}
-                            aria-hidden="true"
-                            strokeWidth={1.9}
-                          />
-                        </button>
+                  const insight = insightState.data;
+
+                  if (!insight || !insight.lastSession) {
+                    return (
+                      <p className={styles.compareHint}>
+                        No previous logs for this exercise yet.
+                      </p>
+                    );
+                  }
+
+                  const lastSession = insight.lastSession;
+                  const draftSummary = summarizeDraftSets(exercise);
+                  const lastVolume =
+                    convertStoredWeightToDisplay(
+                      lastSession.totalVolume,
+                      weightUnit,
+                    ) ?? 0;
+                  const allTimeBestWeight =
+                    insight.allTimeBestWeight === null
+                      ? null
+                      : (convertStoredWeightToDisplay(
+                          insight.allTimeBestWeight,
+                          weightUnit,
+                        ) ?? 0);
+                  const volumeDelta = draftSummary.totalVolume - lastVolume;
+                  const lastSessionBestWeightDisplay = lastSession.sets.reduce<number | null>(
+                    (max, set) => {
+                      if (set.weightLb === null) {
+                        return max;
+                      }
+
+                      const displayWeight =
+                        convertStoredWeightToDisplay(set.weightLb, weightUnit) ?? 0;
+
+                      if (max === null) {
+                        return displayWeight;
+                      }
+
+                      return Math.max(max, displayWeight);
+                    },
+                    null,
+                  );
+                  const draftBestWeight = draftSummary.bestWeight ?? 0;
+                  const bestWeightDelta =
+                    draftBestWeight - (lastSessionBestWeightDisplay ?? 0);
+
+                  return (
+                    <section className={styles.compareCard}>
+                      <div className={styles.compareHead}>
+                        <p className={styles.compareMeta}>
+                          Last hit {formatExerciseInsightDate(lastSession.performedAt)}
+                        </p>
                       </div>
-                    ))}
 
-                    <div className={styles.setActions}>
+                      <div className={styles.compareBody}>
+                        <div className={styles.compareGrid}>
+                          <div className={styles.compareItem}>
+                            <p className={styles.compareLabel}>Last session</p>
+                            <p className={styles.compareValue}>
+                              {lastSession.setCount} sets · {lastSession.totalReps} reps
+                            </p>
+                          </div>
+                          <div className={styles.compareItem}>
+                            <p className={styles.compareLabel}>All-time best</p>
+                            <p className={styles.compareValue}>
+                              {allTimeBestWeight !== null
+                                ? formatWeightWithUnit(allTimeBestWeight, weightUnit)
+                                : "--"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className={styles.compareSnapshot}>
+                          <p className={styles.compareLabel}>Last session snapshot</p>
+                          <div className={styles.compareSetList}>
+                            {lastSession.sets.map((set, index) => (
+                              <div key={`${lastSession.workoutId}-set-${index}`} className={styles.compareSetRow}>
+                                <span className={styles.compareSetIndex}>#{index + 1}</span>
+                                <span className={styles.compareSetValue}>
+                                  {formatLoggedSetSnapshot(set, weightUnit)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {draftSummary.setCount > 0 ? (
+                        <p className={styles.compareDelta}>
+                          Volume vs last: {formatDelta(volumeDelta, weightUnitLabel)} ·
+                          Best vs last: {formatDelta(bestWeightDelta, weightUnitLabel)}
+                        </p>
+                      ) : null}
+                    </section>
+                  );
+                })()}
+
+                <div className={styles.setsStack}>
+                  <div
+                    className={`${styles.setRow} ${styles.setRowHeader}`}
+                    aria-hidden="true"
+                  >
+                    <span className={styles.setHeadLabel}>Set</span>
+                    <span className={styles.setHeadLabel}>
+                      Weight ({weightUnitLabel})
+                    </span>
+                    <span className={styles.setHeadLabel}>Reps</span>
+                    <span className={styles.setHeadLabel}>Action</span>
+                  </div>
+
+                  {exercise.sets.map((setItem, setIndex) => (
+                    <div key={setItem.id} className={styles.setRow}>
+                      <p className={styles.setNumber}>#{setIndex + 1}</p>
+                      <label
+                        className={`${styles.setField} ${styles.setFieldWeight}`}
+                      >
+                        <span className={styles.setFieldLabel}>
+                          Weight ({weightUnitLabel})
+                        </span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          pattern="[0-9]*[.]?[0-9]*"
+                          autoComplete="off"
+                          autoCapitalize="off"
+                          spellCheck={false}
+                          enterKeyHint="next"
+                          className={styles.input}
+                          placeholder={weightUnitLabel}
+                          value={setItem.weightLb}
+                          aria-label={`Weight in ${weightUnitName} for set ${setIndex + 1}`}
+                          onChange={(event) =>
+                            updateSet(
+                              exercise.id,
+                              setItem.id,
+                              "weightLb",
+                              sanitizeWeightInput(event.target.value),
+                            )
+                          }
+                        />
+                      </label>
+                      <label
+                        className={`${styles.setField} ${styles.setFieldReps}`}
+                      >
+                        <span className={styles.setFieldLabel}>Reps</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          autoComplete="off"
+                          autoCapitalize="off"
+                          spellCheck={false}
+                          enterKeyHint="done"
+                          className={styles.input}
+                          placeholder="Reps"
+                          value={setItem.reps}
+                          aria-label={`Repetitions for set ${setIndex + 1}`}
+                          onChange={(event) =>
+                            updateSet(
+                              exercise.id,
+                              setItem.id,
+                              "reps",
+                              sanitizeRepsInput(event.target.value),
+                            )
+                          }
+                        />
+                      </label>
                       <button
                         type="button"
-                        className={styles.actionButton}
-                        onClick={() => addSet(exercise.id)}
+                        className={`${styles.iconButton} ${styles.setRemoveButton}`}
+                        onClick={() => removeSet(exercise.id, setItem.id)}
+                        disabled={exercise.sets.length === 1}
+                        aria-label={`Remove set ${setIndex + 1}`}
                       >
-                        <Plus
-                          className={styles.actionIcon}
+                        <Trash2
+                          className={styles.icon}
                           aria-hidden="true"
                           strokeWidth={1.9}
                         />
-                        Add set
                       </button>
                     </div>
+                  ))}
+
+                  <div className={styles.setActions}>
+                    <button
+                      type="button"
+                      className={styles.actionButton}
+                      onClick={() => addSet(exercise.id)}
+                    >
+                      <Plus
+                        className={styles.actionIcon}
+                        aria-hidden="true"
+                        strokeWidth={1.9}
+                      />
+                      Add set
+                    </button>
                   </div>
                 </div>
               </article>
@@ -1464,9 +1605,6 @@ export function WorkoutLogger({
             type="submit"
             className={styles.saveButton}
             disabled={isSaving}
-            onClick={() => {
-              submitIntentRef.current = "save";
-            }}
           >
             {isSaving ? (
               <>
