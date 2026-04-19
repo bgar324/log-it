@@ -1093,16 +1093,16 @@ export function WorkoutLogger({
               <label className={styles.field}>
                 <span className={styles.label}>Date performed</span>
                 <DatePicker
-                  selected={toDatabaseDateFromInput(performedAt)}
-                  onChange={(date) => {
-                    const value = date
-                      ? formatDatabaseDateValue(date)
-                      : formatDatabaseDateValue(getCurrentPacificDate());
-                    setPerformedAt(value);
-                  }}
-                  dateFormat="MMM d, yyyy"
-                  className={styles.input}
-                />
+  selected={toDatabaseDateFromInput(performedAt)}
+  onChange={(date: Date | null) => {
+    const value = date
+      ? formatDatabaseDateValue(date)
+      : formatDatabaseDateValue(getCurrentPacificDate());
+    setPerformedAt(value);
+  }}
+  dateFormat="MMM d, yyyy"
+  className={styles.input}
+/>
               </label>
             </div>
           </section>
