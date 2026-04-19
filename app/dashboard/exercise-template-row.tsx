@@ -6,20 +6,22 @@ import splitStyles from "./split-system.module.css";
 
 type ExerciseTemplateRowProps = {
   exercise: WorkoutSplitExerciseTemplate;
-  suggestion: string | null;
+  searchResults: string[];
   onNameChange: (value: string) => void;
+  onNameFocus: (value: string) => void;
   onNameBlur: (value: string) => void;
-  onAcceptSuggestion: (suggestion: string) => void;
+  onApplySearchResult: (suggestion: string) => void;
   onSetsChange: (value: number) => void;
   onRemove: () => void;
 };
 
 export function ExerciseTemplateRow({
   exercise,
-  suggestion,
+  searchResults,
   onNameChange,
+  onNameFocus,
   onNameBlur,
-  onAcceptSuggestion,
+  onApplySearchResult,
   onSetsChange,
   onRemove,
 }: ExerciseTemplateRowProps) {
@@ -32,6 +34,7 @@ export function ExerciseTemplateRow({
             className={splitStyles.editorInput}
             value={exercise.exerciseDisplayName}
             onChange={(event) => onNameChange(event.target.value)}
+            onFocus={(event) => onNameFocus(event.target.value)}
             onBlur={(event) => onNameBlur(event.target.value)}
             autoComplete="off"
             spellCheck={true}
@@ -39,20 +42,25 @@ export function ExerciseTemplateRow({
             autoCorrect="on"
             placeholder="Bench Press"
           />
-          {suggestion ? (
-            <p className={splitStyles.didYouMean}>
-              Did you mean?{" "}
-              <button
-                type="button"
-                className={splitStyles.didYouMeanSuggestion}
-                onPointerDown={(event) => {
-                  event.preventDefault();
-                }}
-                onClick={() => onAcceptSuggestion(suggestion)}
-              >
-                {suggestion}
-              </button>
-            </p>
+          {searchResults.length > 0 ? (
+            <div className={splitStyles.searchResults}>
+              <p className={splitStyles.searchResultsLabel}>Matches</p>
+              <div className={splitStyles.searchResultsList}>
+                {searchResults.map((result) => (
+                  <button
+                    key={`${exercise.id ?? exercise.order}-${result}`}
+                    type="button"
+                    className={splitStyles.searchResultButton}
+                    onPointerDown={(event) => {
+                      event.preventDefault();
+                    }}
+                    onClick={() => onApplySearchResult(result)}
+                  >
+                    {result}
+                  </button>
+                ))}
+              </div>
+            </div>
           ) : null}
         </label>
 

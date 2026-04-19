@@ -309,30 +309,49 @@
   display: block;
 }
 
-.didYouMean {
-  margin: 0.36rem 0 0;
-  color: var(--muted);
-  font-size: 0.74rem;
-  line-height: 1.35;
+.searchResults {
+  margin-top: 0.48rem;
+  padding: 0.52rem;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  border-radius: 0.56rem;
+  background: color-mix(in srgb, var(--field-bg) 88%, var(--bg));
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
-.didYouMeanSuggestion {
-  border: none;
-  background: none;
-  padding: 0;
-  color: color-mix(in srgb, var(--text) 92%, var(--muted));
+.searchResultsLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+.searchResultsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.searchResultButton {
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.78rem;
   font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
+  font-size: 0.86rem;
+  line-height: 1.2;
+  text-align: left;
   cursor: pointer;
   touch-action: manipulation;
 }
 
-.didYouMeanSuggestion:hover {
-  color: var(--text);
+.searchResultButton:hover {
+  border-color: color-mix(in srgb, var(--text) 22%, transparent);
 }
 
 .compareHint {
@@ -565,6 +584,17 @@
 @media (max-width: 420px) {
   .compareGrid {
     grid-template-columns: 1fr;
+  }
+
+  .searchResultsList {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    max-height: 14rem;
+  }
+
+  .searchResultButton {
+    width: 100%;
+    border-radius: 0.56rem;
   }
 }
 

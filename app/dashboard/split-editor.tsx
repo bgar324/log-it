@@ -10,11 +10,12 @@ import splitStyles from "./split-system.module.css";
 
 type SplitEditorProps = {
   day: WorkoutSplitDayTemplate;
-  exerciseSuggestions: Record<string, string | null>;
+  exerciseSearchResults: Record<string, string[]>;
   onWorkoutTypeChange: (value: string) => void;
   onExerciseNameChange: (exerciseIndex: number, value: string) => void;
+  onExerciseNameFocus: (exerciseIndex: number, value: string) => void;
   onExerciseNameBlur: (exerciseIndex: number, value: string) => void;
-  onAcceptExerciseSuggestion: (exerciseIndex: number, suggestion: string) => void;
+  onApplyExerciseSearchResult: (exerciseIndex: number, suggestion: string) => void;
   onExerciseSetsChange: (exerciseIndex: number, value: number) => void;
   onAddExercise: () => void;
   onRemoveExercise: (exerciseIndex: number) => void;
@@ -22,11 +23,12 @@ type SplitEditorProps = {
 
 export function SplitEditor({
   day,
-  exerciseSuggestions,
+  exerciseSearchResults,
   onWorkoutTypeChange,
   onExerciseNameChange,
+  onExerciseNameFocus,
   onExerciseNameBlur,
-  onAcceptExerciseSuggestion,
+  onApplyExerciseSearchResult,
   onExerciseSetsChange,
   onAddExercise,
   onRemoveExercise,
@@ -69,11 +71,12 @@ export function SplitEditor({
             <ExerciseTemplateRow
               key={exercise.id ?? `${day.weekday}-${exercise.order}`}
               exercise={exercise}
-              suggestion={exerciseSuggestions[`${day.weekday}-${index}`] ?? null}
+              searchResults={exerciseSearchResults[`${day.weekday}-${index}`] ?? []}
               onNameChange={(value) => onExerciseNameChange(index, value)}
+              onNameFocus={(value) => onExerciseNameFocus(index, value)}
               onNameBlur={(value) => onExerciseNameBlur(index, value)}
-              onAcceptSuggestion={(suggestion) =>
-                onAcceptExerciseSuggestion(index, suggestion)
+              onApplySearchResult={(suggestion) =>
+                onApplyExerciseSearchResult(index, suggestion)
               }
               onSetsChange={(value) => onExerciseSetsChange(index, value)}
               onRemove={() => onRemoveExercise(index)}

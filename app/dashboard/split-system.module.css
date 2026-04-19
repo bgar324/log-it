@@ -71,7 +71,7 @@
 .editorLabel,
 .splitDayMeta,
 .helperText,
-.didYouMean,
+.searchResultsLabel,
 .calendarEmptyText,
 .calendarMoreLogs,
 .status {
@@ -379,20 +379,46 @@
   height: 0.92rem;
 }
 
-.didYouMean {
-  margin: 0.3rem 0 0;
+.searchResults {
+  margin-top: 0.42rem;
+  padding: 0.48rem;
+  border: 1px solid var(--split-border);
+  border-radius: 0.52rem;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
 }
 
-.didYouMeanSuggestion {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: inherit;
+.searchResultsLabel {
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+.searchResultsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  max-height: 11rem;
+  overflow-y: auto;
+}
+
+.searchResultButton {
+  border: 1px solid var(--split-border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 2.35rem;
+  padding: 0.42rem 0.74rem;
   font: inherit;
-  font-weight: 600;
+  font-size: 0.84rem;
+  line-height: 1.2;
+  text-align: left;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 0.16em;
+}
+
+.searchResultButton:hover {
+  border-color: var(--split-border-strong);
 }
 
 .emptyState {
@@ -454,5 +480,15 @@
 
   .iconGhostButton {
     align-self: flex-end;
+  }
+
+  .searchResultsList {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .searchResultButton {
+    width: 100%;
+    border-radius: 0.56rem;
   }
 }

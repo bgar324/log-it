@@ -6,7 +6,6 @@ import { copyTextToClipboard } from "@/lib/clipboard";
 import {
   normalizeExerciseDisplayName,
   normalizeExerciseLookupKey,
-  pickBestExerciseSuggestion,
 } from "@/lib/exercise-autofill";
 import { formatWorkoutSplitForClipboard } from "@/lib/workout-export";
 import { getCurrentPacificDate } from "@/lib/workout-utils";
@@ -78,8 +77,8 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
   const suggestionCacheRef = useRef<Record<string, string[]>>({});
   const latestSuggestionLookupRef = useRef<Record<string, string>>({});
   const suggestionDebounceTimeoutRef = useRef<Record<string, number>>({});
-  const [exerciseSuggestionByKey, setExerciseSuggestionByKey] = useState<
-    Record<string, string>
+  const [exerciseSearchResultsByKey, setExerciseSearchResultsByKey] = useState<
+    Record<string, string[]>
   >({});
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
@@ -121,12 +120,9 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     return `${weekday}-${exerciseIndex}`;
   }
 
-  function setExerciseSuggestion(
-    exerciseKey: string,
-    suggestion: string | null,
-  ) {
-    setExerciseSuggestionByKey((current) => {
-      if (!suggestion) {
+  function setExerciseSearchResults(exerciseKey: string, results: string[]) {
+    setExerciseSearchResultsByKey((current) => {
+      if (results.length === 0) {
         if (!(exerciseKey in current)) {
           return current;
         }
@@ -136,13 +132,18 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
         return next;
       }
 
-      if (current[exerciseKey] === suggestion) {
+      const previous = current[exerciseKey] ?? [];
+
+      if (
+        previous.length === results.length &&
+        previous.every((item, index) => item === results[index])
+      ) {
         return current;
       }
 
       return {
         ...current,
-        [exerciseKey]: suggestion,
+        [exerciseKey]: results,
       };
     });
   }
@@ -164,14 +165,14 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     }
 
     latestSuggestionLookupRef.current = {};
-    setExerciseSuggestionByKey({});
+    setExerciseSearchResultsByKey({});
   }, []);
 
   async function fetchExerciseSuggestions(exerciseKey: string, query: string) {
     const lookupKey = normalizeExerciseLookupKey(query);
 
     if (!lookupKey) {
-      setExerciseSuggestion(exerciseKey, null);
+      setExerciseSearchResults(exerciseKey, []);
       delete latestSuggestionLookupRef.current[exerciseKey];
       return;
     }
@@ -179,10 +180,7 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     const cachedSuggestions = suggestionCacheRef.current[lookupKey];
 
     if (cachedSuggestions) {
-      setExerciseSuggestion(
-        exerciseKey,
-        pickBestExerciseSuggestion(query, cachedSuggestions),
-      );
+      setExerciseSearchResults(exerciseKey, cachedSuggestions);
       return;
     }
 
@@ -212,16 +210,13 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
         return;
       }
 
-      setExerciseSuggestion(
-        exerciseKey,
-        pickBestExerciseSuggestion(query, suggestions),
-      );
+      setExerciseSearchResults(exerciseKey, suggestions);
     } catch {
       if (latestSuggestionLookupRef.current[exerciseKey] !== lookupKey) {
         return;
       }
 
-      setExerciseSuggestion(exerciseKey, null);
+      setExerciseSearchResults(exerciseKey, []);
     }
   }
 
@@ -232,7 +227,7 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     clearPendingSuggestionLookup(exerciseKey);
 
     if (!rawValue.trim()) {
-      setExerciseSuggestion(exerciseKey, null);
+      setExerciseSearchResults(exerciseKey, []);
       delete latestSuggestionLookupRef.current[exerciseKey];
       return;
     }
@@ -270,7 +265,7 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     );
 
     clearPendingSuggestionLookup(exerciseKey);
-    setExerciseSuggestion(exerciseKey, null);
+    setExerciseSearchResults(exerciseKey, []);
     delete latestSuggestionLookupRef.current[exerciseKey];
 
     updateSplitDay(selectedDay.weekday, (day) => ({
@@ -286,14 +281,27 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     }));
   }
 
-  function acceptExerciseSuggestion(exerciseIndex: number, suggestion: string) {
+  function handleExerciseNameFocus(exerciseIndex: number, rawValue: string) {
+    const exerciseKey = exerciseSuggestionKey(
+      selectedDay.weekday,
+      exerciseIndex,
+    );
+
+    if (!rawValue.trim()) {
+      return;
+    }
+
+    queueExerciseSuggestionLookup(exerciseKey, rawValue);
+  }
+
+  function applyExerciseSearchResult(exerciseIndex: number, suggestion: string) {
     const exerciseKey = exerciseSuggestionKey(
       selectedDay.weekday,
       exerciseIndex,
     );
 
     clearPendingSuggestionLookup(exerciseKey);
-    setExerciseSuggestion(exerciseKey, null);
+    setExerciseSearchResults(exerciseKey, []);
     delete latestSuggestionLookupRef.current[exerciseKey];
 
     updateSplitDay(selectedDay.weekday, (day) => ({
@@ -499,32 +507,26 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
 
       <SplitEditor
         day={selectedDay}
+        exerciseSearchResults={Object.fromEntries(
+          selectedDay.exercises.map((_, index) => {
+            const exerciseKey = exerciseSuggestionKey(
+              selectedDay.weekday,
+              index,
+            );
+
+            return [exerciseKey, exerciseSearchResultsByKey[exerciseKey] ?? []];
+          }),
+        )}
         onWorkoutTypeChange={(value) =>
           updateSplitDay(selectedDay.weekday, (day) => ({
             ...day,
             workoutType: value,
           }))
         }
-        exerciseSuggestions={Object.fromEntries(
-          selectedDay.exercises.map((exercise, index) => {
-            const exerciseKey = exerciseSuggestionKey(
-              selectedDay.weekday,
-              index,
-            );
-            const suggestedName = exerciseSuggestionByKey[exerciseKey];
-            const suggestionForAction =
-              suggestedName &&
-              normalizeExerciseLookupKey(exercise.exerciseDisplayName) !==
-                normalizeExerciseLookupKey(suggestedName)
-                ? suggestedName
-                : null;
-
-            return [exerciseKey, suggestionForAction];
-          }),
-        )}
         onExerciseNameChange={handleExerciseNameChange}
+        onExerciseNameFocus={handleExerciseNameFocus}
         onExerciseNameBlur={handleExerciseNameBlur}
-        onAcceptExerciseSuggestion={acceptExerciseSuggestion}
+        onApplyExerciseSearchResult={applyExerciseSearchResult}
         onExerciseSetsChange={(exerciseIndex, value) =>
           updateSplitDay(selectedDay.weekday, (day) => ({
             ...day,

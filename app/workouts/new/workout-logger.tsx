@@ -9,7 +9,6 @@ import { ThemeToggle } from "@/app/components/theme-toggle";
 import {
   normalizeExerciseDisplayName,
   normalizeExerciseLookupKey,
-  pickBestExerciseSuggestion,
 } from "@/lib/exercise-autofill";
 import {
   formatDatabaseDateLabel,
@@ -456,8 +455,8 @@ export function WorkoutLogger({
   const [exerciseInsightById, setExerciseInsightById] = useState<
     Record<string, ExerciseInsightState>
   >({});
-  const [exerciseSuggestionById, setExerciseSuggestionById] = useState<
-    Record<string, string>
+  const [exerciseSearchResultsById, setExerciseSearchResultsById] = useState<
+    Record<string, string[]>
   >({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -616,7 +615,7 @@ export function WorkoutLogger({
       return next;
     });
 
-    setExerciseSuggestionById((current) => {
+    setExerciseSearchResultsById((current) => {
       if (!(id in current)) {
         return current;
       }
@@ -780,9 +779,9 @@ export function WorkoutLogger({
     }));
   }
 
-  function setExerciseSuggestion(exerciseId: string, suggestion: string | null) {
-    setExerciseSuggestionById((current) => {
-      if (!suggestion) {
+  function setExerciseSearchResults(exerciseId: string, results: string[]) {
+    setExerciseSearchResultsById((current) => {
+      if (results.length === 0) {
         if (!(exerciseId in current)) {
           return current;
         }
@@ -792,13 +791,18 @@ export function WorkoutLogger({
         return next;
       }
 
-      if (current[exerciseId] === suggestion) {
+      const previous = current[exerciseId] ?? [];
+
+      if (
+        previous.length === results.length &&
+        previous.every((item, index) => item === results[index])
+      ) {
         return current;
       }
 
       return {
         ...current,
-        [exerciseId]: suggestion,
+        [exerciseId]: results,
       };
     });
   }
@@ -831,7 +835,7 @@ export function WorkoutLogger({
     const lookupKey = normalizeExerciseLookupKey(query);
 
     if (!lookupKey) {
-      setExerciseSuggestion(exerciseId, null);
+      setExerciseSearchResults(exerciseId, []);
       delete latestSuggestionLookupRef.current[exerciseId];
       return;
     }
@@ -839,8 +843,7 @@ export function WorkoutLogger({
     const cachedSuggestions = suggestionCacheRef.current[lookupKey];
 
     if (cachedSuggestions) {
-      const bestSuggestion = pickBestExerciseSuggestion(query, cachedSuggestions);
-      setExerciseSuggestion(exerciseId, bestSuggestion);
+      setExerciseSearchResults(exerciseId, cachedSuggestions);
       return;
     }
 
@@ -870,14 +873,13 @@ export function WorkoutLogger({
         return;
       }
 
-      const bestSuggestion = pickBestExerciseSuggestion(query, suggestions);
-      setExerciseSuggestion(exerciseId, bestSuggestion);
+      setExerciseSearchResults(exerciseId, suggestions);
     } catch {
       if (latestSuggestionLookupRef.current[exerciseId] !== lookupKey) {
         return;
       }
 
-      setExerciseSuggestion(exerciseId, null);
+      setExerciseSearchResults(exerciseId, []);
     }
   }
 
@@ -885,7 +887,7 @@ export function WorkoutLogger({
     clearPendingSuggestionLookup(exerciseId);
 
     if (!rawValue.trim()) {
-      setExerciseSuggestion(exerciseId, null);
+      setExerciseSearchResults(exerciseId, []);
       delete latestSuggestionLookupRef.current[exerciseId];
       return;
     }
@@ -906,9 +908,17 @@ export function WorkoutLogger({
     queueExerciseSuggestionLookup(exerciseId, rawValue);
   }
 
-  function acceptExerciseSuggestion(exerciseId: string, suggestion: string) {
+  function handleExerciseNameFocus(exerciseId: string, rawValue: string) {
+    if (!rawValue.trim()) {
+      return;
+    }
+
+    queueExerciseSuggestionLookup(exerciseId, rawValue);
+  }
+
+  function applyExerciseSearchResult(exerciseId: string, suggestion: string) {
     const normalizedSuggestion = normalizeExerciseDisplayName(suggestion);
-    setExerciseSuggestion(exerciseId, null);
+    setExerciseSearchResults(exerciseId, []);
     delete latestSuggestionLookupRef.current[exerciseId];
 
     updateExercise(exerciseId, (current) => ({
@@ -1008,7 +1018,7 @@ export function WorkoutLogger({
 
   async function handleExerciseNameBlur(exerciseId: string, rawValue: string) {
     clearPendingSuggestionLookup(exerciseId);
-    setExerciseSuggestion(exerciseId, null);
+    setExerciseSearchResults(exerciseId, []);
     delete latestSuggestionLookupRef.current[exerciseId];
 
     const normalized = normalizeExerciseDisplayName(rawValue);
@@ -1275,19 +1285,8 @@ export function WorkoutLogger({
                 <div className={styles.field}>
                   <div className={styles.inlineRow}>
                     {(() => {
-                      const suggestedName = exerciseSuggestionById[exercise.id];
-                      const currentLookupKey = normalizeExerciseLookupKey(
-                        exercise.name,
-                      );
-                      const suggestionLookupKey = normalizeExerciseLookupKey(
-                        suggestedName ?? "",
-                      );
-                      const suggestionForAction =
-                        suggestedName &&
-                        currentLookupKey &&
-                        currentLookupKey !== suggestionLookupKey
-                          ? suggestedName
-                          : null;
+                      const searchResults =
+                        exerciseSearchResultsById[exercise.id] ?? [];
 
                       return (
                         <>
@@ -1299,6 +1298,9 @@ export function WorkoutLogger({
                             onChange={(event) =>
                               handleExerciseNameChange(exercise.id, event.target.value)
                             }
+                            onFocus={(event) =>
+                              handleExerciseNameFocus(exercise.id, event.target.value)
+                            }
                             onBlur={(event) =>
                               void handleExerciseNameBlur(exercise.id, event.target.value)
                             }
@@ -1308,27 +1310,34 @@ export function WorkoutLogger({
                             autoCorrect="on"
                             placeholder="Barbell bench press"
                           />
-                          {suggestionForAction ? (
-                            <p className={styles.didYouMean}>
-                              Did you mean?{" "}
-                              <button
-                                type="button"
-                                className={styles.didYouMeanSuggestion}
-                                onPointerDown={(event) => {
-                                  // Keep input focus so blur handlers do not clear the suggestion first.
-                                  event.preventDefault();
-                                }}
-                                onClick={() => {
-                                  clearPendingSuggestionLookup(exercise.id);
-                                  acceptExerciseSuggestion(
-                                    exercise.id,
-                                    suggestionForAction,
-                                  );
-                                }}
-                              >
-                                {suggestionForAction}
-                              </button>
-                            </p>
+                          {searchResults.length > 0 ? (
+                            <div
+                              className={styles.searchResults}
+                              aria-label={`Exercise matches for exercise ${exerciseIndex + 1}`}
+                            >
+                              <p className={styles.searchResultsLabel}>Matches</p>
+                              <div className={styles.searchResultsList}>
+                                {searchResults.map((result) => (
+                                  <button
+                                    key={`${exercise.id}-${result}`}
+                                    type="button"
+                                    className={styles.searchResultButton}
+                                    onPointerDown={(event) => {
+                                      event.preventDefault();
+                                    }}
+                                    onClick={() => {
+                                      clearPendingSuggestionLookup(exercise.id);
+                                      applyExerciseSearchResult(
+                                        exercise.id,
+                                        result,
+                                      );
+                                    }}
+                                  >
+                                    {result}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           ) : null}
                         </>
                       );
