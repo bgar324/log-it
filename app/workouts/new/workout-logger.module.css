@@ -250,13 +250,16 @@
   align-items: center;
   gap: 0.48rem;
   min-width: 0;
+  flex: 1;
 }
 
-.exerciseTitle {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 550;
-  letter-spacing: -0.005em;
+.exerciseNameInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.05rem;
+  height: 2.05rem;
+  border-radius: 0.45rem;
+  padding: 0 0.74rem;
 }
 
 .exerciseMeta {
@@ -560,7 +563,16 @@
 
 .setRemoveButton {
   grid-area: remove;
+  align-self: start;
   justify-self: end;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.4rem;
+}
+
+.setRemoveButton .icon {
+  width: 0.88rem;
+  height: 0.88rem;
 }
 
 .setActions {
@@ -720,7 +732,8 @@
   }
 
   .setRemoveButton {
-    justify-self: center;
+    align-self: start;
+    justify-self: end;
   }
 }
 

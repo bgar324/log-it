@@ -32,6 +32,30 @@
   gap: 0.48rem;
 }
 
+.mobileHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
+}
+
+.mobileMenuToggle {
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 999px;
+  width: 3.1rem;
+  height: 1.7rem;
+  background: transparent;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mobileMenuIcon {
+  width: 0.92rem;
+  height: 0.92rem;
+}
+
 .signout {
   border: none;
   border-radius: 0.5rem;
@@ -104,6 +128,38 @@
 .navIcon {
   width: 0.84rem;
   height: 0.84rem;
+}
+
+.mobileMenuPanel {
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 0.72rem;
+  padding: 0.62rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.58rem;
+}
+
+.mobileMenuNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+}
+
+.mobileMenuLink {
+  border: 1px solid transparent;
+  border-radius: 0.56rem;
+  min-height: 2.2rem;
+  padding: 0 0.72rem;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.mobileMenuLink[data-active="true"] {
+  border-color: color-mix(in srgb, var(--text) 16%, transparent);
+  color: var(--text);
 }
 
 .actionsRow {
@@ -296,11 +352,32 @@
 }
 
 @media (min-width: 680px) {
+  .topActions {
+    display: inline-flex;
+  }
+
+  .mobileHeaderActions,
+  .mobileMenuToggle,
+  .mobileMenuPanel {
+    display: none;
+  }
+
   .shell {
     padding: 1.25rem;
   }
 
   .statsGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 679px) {
+  .topActions,
+  .nav {
+    display: none;
+  }
+
+  .mobileHeaderActions {
+    display: inline-flex;
   }
 }

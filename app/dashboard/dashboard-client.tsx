@@ -5,7 +5,10 @@ import {
   ChartLine,
   Dumbbell,
   LayoutDashboard,
+  Menu,
   Plus,
+  User2,
+  X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -205,6 +208,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const [preferredWeightUnitInput, setPreferredWeightUnitInput] = useState<WeightUnit>(
     data.user.preferredWeightUnit,
   );
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [saveState, setSaveState] = useState<{
     kind: "idle" | "saving" | "success" | "error";
     message: string;
@@ -395,6 +399,8 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   }
 
   function navigateToView(view: DashboardView) {
+    setMobileMenuOpen(false);
+
     if (view === activeView) {
       return;
     }
@@ -541,27 +547,70 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
             <ThemeToggle />
             <DashboardUserMenu name={greetingName} onProfile={() => navigateToView("profile")} />
           </div>
+
+          <div className={styles.mobileHeaderActions}>
+            <ThemeToggle />
+            <button
+              type="button"
+              className={styles.mobileMenuToggle}
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="dashboard-mobile-menu"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+            >
+              {mobileMenuOpen ? (
+                <X className={styles.mobileMenuToggleIcon} aria-hidden="true" strokeWidth={1.9} />
+              ) : (
+                <Menu className={styles.mobileMenuToggleIcon} aria-hidden="true" strokeWidth={1.9} />
+              )}
+            </button>
+          </div>
         </header>
 
-        <nav className={styles.mobileNav} aria-label="Dashboard mobile navigation">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeView === item.view;
+        {mobileMenuOpen ? (
+          <div
+            id="dashboard-mobile-menu"
+            className={styles.mobileMenuPanel}
+            aria-label="Dashboard mobile navigation"
+          >
+            <nav className={styles.mobileMenuNav} aria-label="Dashboard sections">
+              {NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeView === item.view;
 
-            return (
+                return (
+                  <button
+                    key={item.view}
+                    type="button"
+                    className={styles.mobileMenuItem}
+                    data-active={isActive}
+                    onClick={() => navigateToView(item.view)}
+                  >
+                    <Icon
+                      className={styles.mobileMenuItemIcon}
+                      aria-hidden={true}
+                      strokeWidth={1.9}
+                    />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
               <button
-                key={item.view}
                 type="button"
-                className={styles.mobileChip}
-                data-active={isActive}
-                onClick={() => navigateToView(item.view)}
+                className={styles.mobileMenuItem}
+                data-active={activeView === "profile"}
+                onClick={() => navigateToView("profile")}
               >
-                <Icon className={styles.mobileChipIcon} aria-hidden={true} strokeWidth={1.9} />
-                <span>{item.label}</span>
+                <User2
+                  className={styles.mobileMenuItemIcon}
+                  aria-hidden={true}
+                  strokeWidth={1.9}
+                />
+                <span>Profile</span>
               </button>
-            );
-          })}
-        </nav>
+            </nav>
+          </div>
+        ) : null}
 
         {activeView === "dashboard" ? (
           <>

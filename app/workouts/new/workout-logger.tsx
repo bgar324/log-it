@@ -1270,18 +1270,33 @@ export function WorkoutLogger({
                       onPointerCancel={handleExercisePointerCancel}
                       aria-label={`Drag to reorder exercise ${exerciseIndex + 1}`}
                       title="Drag to reorder"
-                    >
-                      <GripVertical
-                        className={styles.icon}
-                        aria-hidden="true"
-                        strokeWidth={1.9}
-                      />
-                    </button>
-                    <div>
-                      <h2 className={styles.exerciseTitle}>
-                        Exercise {exerciseIndex + 1}
-                      </h2>
-                    </div>
+                      >
+                        <GripVertical
+                          className={styles.icon}
+                          aria-hidden="true"
+                          strokeWidth={1.9}
+                        />
+                      </button>
+                    <input
+                      id={`exercise-name-${exercise.id}`}
+                      className={`${styles.input} ${styles.exerciseNameInput}`}
+                      value={exercise.name}
+                      aria-label={`Exercise name for exercise ${exerciseIndex + 1}`}
+                      onChange={(event) =>
+                        handleExerciseNameChange(exercise.id, event.target.value)
+                      }
+                      onFocus={(event) =>
+                        handleExerciseNameFocus(exercise.id, event.target.value)
+                      }
+                      onBlur={(event) =>
+                        void handleExerciseNameBlur(exercise.id, event.target.value)
+                      }
+                      autoComplete="off"
+                      spellCheck={true}
+                      autoCapitalize="words"
+                      autoCorrect="on"
+                      placeholder="Barbell bench press"
+                    />
                   </div>
                   <button
                     type="button"
@@ -1298,67 +1313,41 @@ export function WorkoutLogger({
                   </button>
                 </div>
 
-                <div className={styles.field}>
-                  <div className={styles.inlineRow}>
-                    {(() => {
-                      const searchResults =
-                        exerciseSearchResultsById[exercise.id] ?? [];
+                <div className={styles.inlineRow}>
+                  {(() => {
+                    const searchResults =
+                      exerciseSearchResultsById[exercise.id] ?? [];
 
-                      return (
-                        <>
-                          <input
-                            id={`exercise-name-${exercise.id}`}
-                            className={styles.input}
-                            value={exercise.name}
-                            aria-label={`Exercise name for exercise ${exerciseIndex + 1}`}
-                            onChange={(event) =>
-                              handleExerciseNameChange(exercise.id, event.target.value)
-                            }
-                            onFocus={(event) =>
-                              handleExerciseNameFocus(exercise.id, event.target.value)
-                            }
-                            onBlur={(event) =>
-                              void handleExerciseNameBlur(exercise.id, event.target.value)
-                            }
-                            autoComplete="off"
-                            spellCheck={true}
-                            autoCapitalize="words"
-                            autoCorrect="on"
-                            placeholder="Barbell bench press"
-                          />
-                          {searchResults.length > 0 ? (
-                            <div
-                              className={styles.searchResults}
-                              aria-label={`Exercise matches for exercise ${exerciseIndex + 1}`}
+                    return searchResults.length > 0 ? (
+                      <div
+                        className={styles.searchResults}
+                        aria-label={`Exercise matches for exercise ${exerciseIndex + 1}`}
+                      >
+                        <p className={styles.searchResultsLabel}>Matches</p>
+                        <div className={styles.searchResultsList}>
+                          {searchResults.map((result) => (
+                            <button
+                              key={`${exercise.id}-${result}`}
+                              type="button"
+                              className={styles.searchResultButton}
+                              onPointerDown={(event) => {
+                                event.preventDefault();
+                              }}
+                              onClick={() => {
+                                clearPendingSuggestionLookup(exercise.id);
+                                applyExerciseSearchResult(
+                                  exercise.id,
+                                  result,
+                                );
+                              }}
                             >
-                              <p className={styles.searchResultsLabel}>Matches</p>
-                              <div className={styles.searchResultsList}>
-                                {searchResults.map((result) => (
-                                  <button
-                                    key={`${exercise.id}-${result}`}
-                                    type="button"
-                                    className={styles.searchResultButton}
-                                    onPointerDown={(event) => {
-                                      event.preventDefault();
-                                    }}
-                                    onClick={() => {
-                                      clearPendingSuggestionLookup(exercise.id);
-                                      applyExerciseSearchResult(
-                                        exercise.id,
-                                        result,
-                                      );
-                                    }}
-                                  >
-                                    {result}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-                        </>
-                      );
-                    })()}
-                  </div>
+                              {result}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
 
                 {(() => {
@@ -1499,9 +1488,6 @@ export function WorkoutLogger({
                       <label
                         className={`${styles.setField} ${styles.setFieldWeight}`}
                       >
-                        <span className={styles.setFieldLabel}>
-                          Weight ({weightUnitLabel})
-                        </span>
                         <input
                           type="text"
                           inputMode="decimal"
@@ -1527,7 +1513,6 @@ export function WorkoutLogger({
                       <label
                         className={`${styles.setField} ${styles.setFieldReps}`}
                       >
-                        <span className={styles.setFieldLabel}>Reps</span>
                         <input
                           type="text"
                           inputMode="numeric"
