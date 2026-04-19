@@ -84,7 +84,9 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const selectedDay = useMemo(
-    () => split.days.find((day) => day.weekday === selectedWeekday) ?? split.days[0],
+    () =>
+      split.days.find((day) => day.weekday === selectedWeekday) ??
+      split.days[0],
     [selectedWeekday, split.days],
   );
 
@@ -100,19 +102,29 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
 
   function updateSplitDay(
     weekday: SplitWeekdayValue,
-    updater: (day: WorkoutSplitTemplate["days"][number]) => WorkoutSplitTemplate["days"][number],
+    updater: (
+      day: WorkoutSplitTemplate["days"][number],
+    ) => WorkoutSplitTemplate["days"][number],
   ) {
     setSplit((current) => ({
       ...current,
-      days: current.days.map((day) => (day.weekday === weekday ? updater(day) : day)),
+      days: current.days.map((day) =>
+        day.weekday === weekday ? updater(day) : day,
+      ),
     }));
   }
 
-  function exerciseSuggestionKey(weekday: SplitWeekdayValue, exerciseIndex: number) {
+  function exerciseSuggestionKey(
+    weekday: SplitWeekdayValue,
+    exerciseIndex: number,
+  ) {
     return `${weekday}-${exerciseIndex}`;
   }
 
-  function setExerciseSuggestion(exerciseKey: string, suggestion: string | null) {
+  function setExerciseSuggestion(
+    exerciseKey: string,
+    suggestion: string | null,
+  ) {
     setExerciseSuggestionByKey((current) => {
       if (!suggestion) {
         if (!(exerciseKey in current)) {
@@ -145,7 +157,9 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
   }
 
   const clearAllExerciseSuggestions = useCallback(() => {
-    for (const exerciseKey of Object.keys(suggestionDebounceTimeoutRef.current)) {
+    for (const exerciseKey of Object.keys(
+      suggestionDebounceTimeoutRef.current,
+    )) {
       clearPendingSuggestionLookup(exerciseKey);
     }
 
@@ -211,7 +225,10 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     }
   }
 
-  function queueExerciseSuggestionLookup(exerciseKey: string, rawValue: string) {
+  function queueExerciseSuggestionLookup(
+    exerciseKey: string,
+    rawValue: string,
+  ) {
     clearPendingSuggestionLookup(exerciseKey);
 
     if (!rawValue.trim()) {
@@ -220,14 +237,20 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
       return;
     }
 
-    suggestionDebounceTimeoutRef.current[exerciseKey] = window.setTimeout(() => {
-      delete suggestionDebounceTimeoutRef.current[exerciseKey];
-      void fetchExerciseSuggestions(exerciseKey, rawValue);
-    }, EXERCISE_SUGGESTION_DEBOUNCE_MS);
+    suggestionDebounceTimeoutRef.current[exerciseKey] = window.setTimeout(
+      () => {
+        delete suggestionDebounceTimeoutRef.current[exerciseKey];
+        void fetchExerciseSuggestions(exerciseKey, rawValue);
+      },
+      EXERCISE_SUGGESTION_DEBOUNCE_MS,
+    );
   }
 
   function handleExerciseNameChange(exerciseIndex: number, value: string) {
-    const exerciseKey = exerciseSuggestionKey(selectedDay.weekday, exerciseIndex);
+    const exerciseKey = exerciseSuggestionKey(
+      selectedDay.weekday,
+      exerciseIndex,
+    );
 
     updateSplitDay(selectedDay.weekday, (day) => ({
       ...day,
@@ -241,7 +264,10 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
   }
 
   function handleExerciseNameBlur(exerciseIndex: number, rawValue: string) {
-    const exerciseKey = exerciseSuggestionKey(selectedDay.weekday, exerciseIndex);
+    const exerciseKey = exerciseSuggestionKey(
+      selectedDay.weekday,
+      exerciseIndex,
+    );
 
     clearPendingSuggestionLookup(exerciseKey);
     setExerciseSuggestion(exerciseKey, null);
@@ -261,7 +287,10 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
   }
 
   function acceptExerciseSuggestion(exerciseIndex: number, suggestion: string) {
-    const exerciseKey = exerciseSuggestionKey(selectedDay.weekday, exerciseIndex);
+    const exerciseKey = exerciseSuggestionKey(
+      selectedDay.weekday,
+      exerciseIndex,
+    );
 
     clearPendingSuggestionLookup(exerciseKey);
     setExerciseSuggestion(exerciseKey, null);
@@ -325,27 +354,35 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
       const payload = (await response.json()) as SaveSplitResponse;
 
       if (!response.ok || !payload || !("ok" in payload && payload.ok)) {
-        throw new Error(payload && "error" in payload ? payload.error : "Unable to save split.");
+        throw new Error(
+          payload && "error" in payload
+            ? payload.error
+            : "Unable to save split.",
+        );
       }
 
       setSplit(payload.split);
       clearAllExerciseSuggestions();
       setSaveState({
         kind: "success",
-        message: "Workout split saved. Calendar and logger autofill are updated.",
+        message:
+          "Workout split saved. Calendar and logger autofill are updated.",
       });
       router.refresh();
     } catch (error) {
       setSaveState({
         kind: "error",
-        message: error instanceof Error ? error.message : "Unable to save split.",
+        message:
+          error instanceof Error ? error.message : "Unable to save split.",
       });
     }
   }
 
   async function handleCopySplit() {
     try {
-      const result = await copyTextToClipboard(formatWorkoutSplitForClipboard(split));
+      const result = await copyTextToClipboard(
+        formatWorkoutSplitForClipboard(split),
+      );
       setCopyState({
         kind: "success",
         message:
@@ -356,7 +393,8 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     } catch (error) {
       setCopyState({
         kind: "error",
-        message: error instanceof Error ? error.message : "Unable to copy split.",
+        message:
+          error instanceof Error ? error.message : "Unable to copy split.",
       });
     }
   }
@@ -369,9 +407,19 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
     <div className={splitStyles.splitLayout}>
       <section className={splitStyles.splitSummary}>
         <div className={splitStyles.splitSummaryHead}>
-          <div>
-            <h2 className={splitStyles.splitHeading}>Workout split</h2>
-          </div>
+          <label className={splitStyles.editorField}>
+            <input
+              className={splitStyles.editorInput}
+              value={split.name}
+              onChange={(event) =>
+                setSplit((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }))
+              }
+              placeholder="Powerbuilding split"
+            />
+          </label>
 
           <div className={splitStyles.splitSummaryActions}>
             <button
@@ -393,18 +441,6 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
           </div>
         </div>
 
-        <label className={splitStyles.editorField}>
-          <span className={splitStyles.editorLabel}>Split name</span>
-          <input
-            className={splitStyles.editorInput}
-            value={split.name}
-            onChange={(event) =>
-              setSplit((current) => ({ ...current, name: event.target.value }))
-            }
-            placeholder="Powerbuilding split"
-          />
-        </label>
-
         <div className={splitStyles.splitGrid}>
           {split.days.map((day, index) => (
             <SplitDayCard
@@ -412,14 +448,18 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
               day={day}
               isSelected={day.weekday === selectedWeekday}
               isDragging={draggingIndex === index}
-              isDropTarget={dropTargetIndex === index && draggingIndex !== index}
+              isDropTarget={
+                dropTargetIndex === index && draggingIndex !== index
+              }
               onSelect={() => setSelectedWeekday(day.weekday)}
               onDragStart={() => {
                 setDraggingIndex(index);
                 setDropTargetIndex(index);
               }}
               onDragOver={() => setDropTargetIndex(index)}
-              onDrop={() => handleSplitDayReorder(draggingIndex ?? index, index)}
+              onDrop={() =>
+                handleSplitDayReorder(draggingIndex ?? index, index)
+              }
               onDragEnd={() => {
                 setDraggingIndex(null);
                 setDropTargetIndex(null);
@@ -467,7 +507,10 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
         }
         exerciseSuggestions={Object.fromEntries(
           selectedDay.exercises.map((exercise, index) => {
-            const exerciseKey = exerciseSuggestionKey(selectedDay.weekday, index);
+            const exerciseKey = exerciseSuggestionKey(
+              selectedDay.weekday,
+              index,
+            );
             const suggestedName = exerciseSuggestionByKey[exerciseKey];
             const suggestionForAction =
               suggestedName &&

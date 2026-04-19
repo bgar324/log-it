@@ -115,6 +115,16 @@ type MetricHeaderProps = {
   rowClassName?: string;
 };
 
+type WorkoutTableRow = {
+  id: string;
+  title: string;
+  workoutType: string | null;
+  performedAtLabel: string;
+  exerciseCount: number;
+  setCount: number;
+  volume: number;
+};
+
 function MetricHeader({ columns, rowClassName }: MetricHeaderProps) {
   return (
     <div className={`${styles.metricHeader} ${rowClassName ?? ""}`}>
@@ -126,6 +136,60 @@ function MetricHeader({ columns, rowClassName }: MetricHeaderProps) {
           {column}
         </span>
       ))}
+    </div>
+  );
+}
+
+function WorkoutTable({
+  rows,
+  weightUnit,
+}: {
+  rows: WorkoutTableRow[];
+  weightUnit: WeightUnit;
+}) {
+  return (
+    <div className={styles.tableWrap}>
+      <table className={styles.table}>
+        <colgroup>
+          <col className={styles.workoutTableDateColumn} />
+          <col className={styles.workoutTableWorkoutColumn} />
+          <col className={styles.workoutTableExercisesColumn} />
+          <col className={styles.workoutTableSetsColumn} />
+          <col className={styles.workoutTableVolumeColumn} />
+          <col className={styles.workoutTableActionsColumn} />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Workout</th>
+            <th>Exercises</th>
+            <th>Sets</th>
+            <th>Volume</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((workout) => (
+            <tr key={workout.id}>
+              <td>{workout.performedAtLabel}</td>
+              <td>
+                <span className={styles.tableCellTitle}>{workout.title}</span>
+                {workout.workoutType ? (
+                  <span className={styles.tableCellMeta}>{workout.workoutType}</span>
+                ) : null}
+              </td>
+              <td>{workout.exerciseCount} ex</td>
+              <td>{workout.setCount} sets</td>
+              <td>{formatWeightWithUnit(workout.volume, weightUnit)}</td>
+              <td>
+                <Link href={`/workouts/${workout.id}`} className={styles.tableLink}>
+                  View
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -555,39 +619,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               </div>
 
               {recentSessions.length > 0 ? (
-                <div className={styles.tableWrap}>
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Workout</th>
-                        <th>Sets</th>
-                        <th>Volume</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentSessions.map((session) => (
-                        <tr key={session.id}>
-                          <td>{session.performedAtLabel}</td>
-                          <td>
-                            <span className={styles.tableCellTitle}>{session.title}</span>
-                            {session.workoutType ? (
-                              <span className={styles.tableCellMeta}>{session.workoutType}</span>
-                            ) : null}
-                          </td>
-                          <td>{session.setCount}</td>
-                          <td>{formatWeight(session.volume)}</td>
-                          <td>
-                            <Link href={`/workouts/${session.id}`} className={styles.tableLink}>
-                              View
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <WorkoutTable rows={recentSessions} weightUnit={displayWeightUnit} />
               ) : (
                 <p className={styles.empty}>No sessions yet. Log your first workout.</p>
               )}
@@ -688,35 +720,12 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
 
         {activeView === "workouts" ? (
           <section className={styles.plainSection}>
-
             {data.workoutMonths.length > 0 ? (
               <div className={styles.timeline}>
                 {data.workoutMonths.map((month) => (
                   <section key={month.month} className={styles.monthSection}>
                     <h3 className={styles.monthTitle}>{month.month}</h3>
-                    <div className={styles.metricList}>
-                      <MetricHeader
-                        columns={["Workout", "Exercises", "Sets", "Volume", "Actions"]}
-                        rowClassName={styles.workoutRow}
-                      />
-                      {month.entries.map((workout) => (
-                        <article key={workout.id} className={`${styles.metricRow} ${styles.workoutRow}`}>
-                          <div>
-                            <p className={styles.metricMain}>{workout.title}</p>
-                            <p className={styles.metricSubtle}>
-                              {workout.performedAtLabel}
-                              {workout.workoutType ? ` · ${workout.workoutType}` : ""}
-                            </p>
-                          </div>
-                          <span>{workout.exerciseCount} ex</span>
-                          <span>{workout.setCount} sets</span>
-                          <span>{formatWeight(workout.volume)}</span>
-                          <Link href={`/workouts/${workout.id}`} className={styles.metricAction}>
-                            View
-                          </Link>
-                        </article>
-                      ))}
-                    </div>
+                    <WorkoutTable rows={month.entries} weightUnit={displayWeightUnit} />
                   </section>
                 ))}
               </div>

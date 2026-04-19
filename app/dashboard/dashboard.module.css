@@ -462,7 +462,32 @@
   width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
-  min-width: 35rem;
+  min-width: 42rem;
+  table-layout: fixed;
+}
+
+.workoutTableDateColumn {
+  width: 14%;
+}
+
+.workoutTableWorkoutColumn {
+  width: 26%;
+}
+
+.workoutTableExercisesColumn {
+  width: 12%;
+}
+
+.workoutTableSetsColumn {
+  width: 12%;
+}
+
+.workoutTableVolumeColumn {
+  width: 18%;
+}
+
+.workoutTableActionsColumn {
+  width: 12%;
 }
 
 .table th {
@@ -477,9 +502,8 @@
 }
 
 .table th:last-child {
-  width: 1%;
-  text-align: right;
-  padding-right: 0.12rem;
+  text-align: left;
+  padding-right: 0.48rem;
   white-space: nowrap;
 }
 
@@ -502,8 +526,8 @@
   border-right: 0;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
-  text-align: right;
-  padding-right: 0.12rem;
+  text-align: left;
+  padding-right: 0.48rem;
   white-space: nowrap;
 }
 

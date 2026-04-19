@@ -99,7 +99,6 @@
 
 .kpiCard {
   padding: 0.78rem;
-  min-height: 8.65rem;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -110,7 +109,6 @@
   color: var(--muted);
   font-size: 0.76rem;
   letter-spacing: 0.035em;
-  text-transform: uppercase;
 }
 
 .kpiValue {

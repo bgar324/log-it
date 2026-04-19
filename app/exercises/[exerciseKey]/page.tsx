@@ -327,49 +327,19 @@ export default async function ExerciseDetailPage({
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Sessions</p>
               <p className={styles.kpiValue}>{sessions.length}</p>
-              <p className={styles.kpiSubtle}>
-                Distinct workout logs containing this movement
-              </p>
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Sets</p>
               <p className={styles.kpiValue}>{totalSetCount}</p>
-              <p className={styles.kpiSubtle}>
-                {weightedSetCount} weighted sets tracked
-              </p>
             </article>
             <article className={styles.kpiCard}>
-              <p className={styles.kpiLabel}>Reps</p>
-              <p className={styles.kpiValue}>{totalReps}</p>
-              <p className={styles.kpiSubtle}>
-                {averageRepsPerSet} avg reps per set
-              </p>
+              <p className={styles.kpiLabel}>Average Reps</p>
+              <p className={styles.kpiValue}>{averageRepsPerSet}</p>
             </article>
             <article className={styles.kpiCard}>
               <p className={styles.kpiLabel}>Best weight</p>
               <p className={styles.kpiValue}>
                 {formatWeightWithUnit(bestWeight, weightUnit)}
-              </p>
-              <p className={styles.kpiSubtle}>
-                Top recorded load for a single set
-              </p>
-            </article>
-            <article className={styles.kpiCard}>
-              <p className={styles.kpiLabel}>Total load</p>
-              <p className={styles.kpiValue}>
-                {formatWeightWithUnit(totalLoad, weightUnit)}
-              </p>
-              <p className={styles.kpiSubtle}>
-                Accumulated {unitLabel} * reps across all sessions
-              </p>
-            </article>
-            <article className={styles.kpiCard}>
-              <p className={styles.kpiLabel}>Avg load/session</p>
-              <p className={styles.kpiValue}>
-                {formatWeightWithUnit(averageLoadPerSession, weightUnit)}
-              </p>
-              <p className={styles.kpiSubtle}>
-                Average session-level tonnage for this movement
               </p>
             </article>
           </div>
