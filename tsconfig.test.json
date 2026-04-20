@@ -11,11 +11,19 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "types": ["node"]
   },
   "include": [
     "tests/**/*.ts",
+    "app/api/workouts/insights/route.ts",
+    "lib/auth.ts",
     "lib/exercise-autofill.ts",
+    "lib/workouts/insight-request.ts",
+    "lib/workouts/prediction.ts",
     "lib/prisma.ts",
     "lib/schema-compat.ts",
     "lib/weight-unit.ts",

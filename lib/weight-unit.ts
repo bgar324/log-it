@@ -70,6 +70,38 @@ export function roundWeightForDisplay(
   return Number(value.toFixed(maximumFractionDigits));
 }
 
+export function getGymWeightIncrement(unit: WeightUnit) {
+  return unit === "KG" ? 2.5 : 5;
+}
+
+export function roundDisplayWeightToIncrement(
+  value: number,
+  unit: WeightUnit,
+) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  const increment = getGymWeightIncrement(unit);
+  return roundWeightForDisplay(Math.round(value / increment) * increment);
+}
+
+export function roundStoredWeightToGymIncrement(
+  valueLb: number,
+  unit: WeightUnit,
+) {
+  if (!Number.isFinite(valueLb)) {
+    return 0;
+  }
+
+  const roundedDisplayWeight = roundDisplayWeightToIncrement(
+    poundsToDisplayWeight(valueLb, unit),
+    unit,
+  );
+
+  return Number(displayWeightToPounds(roundedDisplayWeight, unit).toFixed(4));
+}
+
 export function formatWeightValue(
   value: number,
   options?: {

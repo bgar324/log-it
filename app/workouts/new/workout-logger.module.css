@@ -463,6 +463,21 @@
   line-height: 1.35;
 }
 
+.predictionPanel {
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+  padding-top: 0.55rem;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 0.7rem;
+  align-items: start;
+}
+
+.predictionSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
 .actionButton {
   border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   border-radius: 0.5rem;
@@ -642,6 +657,10 @@
     grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
   }
 
+  .predictionPanel {
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  }
+
   .compareSetRow {
     min-height: 3.7rem;
   }
@@ -660,6 +679,10 @@
 
 @media (min-width: 620px) {
   .compareBody {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+
+  .predictionPanel {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   }
 

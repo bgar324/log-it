@@ -1,21 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { formatDatabaseDateValue, normalizeExerciseName } from "@/lib/workout-utils";
+import { getSessionUser } from "../../../../lib/auth";
+import { prisma } from "../../../../lib/prisma";
+import {
+  predictExercisePerformance,
+  type PredictionSession,
+} from "../../../../lib/workouts/prediction";
+import {
+  formatDatabaseDateValue,
+  normalizeExerciseName,
+  toDatabaseDateFromInput,
+} from "../../../../lib/workout-utils";
 
-type SessionAggregate = {
+type SessionAggregate = PredictionSession & {
   workoutId: string;
   workoutTitle: string;
   performedAt: Date;
+  exerciseOrder: number | null;
   setCount: number;
   totalReps: number;
   bestWeight: number | null;
   bestWeightReps: number | null;
   totalVolume: number;
-  sets: Array<{
-    reps: number;
-    weightLb: number | null;
-  }>;
 };
 
 function toWeightNumber(value: { toNumber: () => number } | number | null) {
@@ -32,6 +37,26 @@ function toWeightNumber(value: { toNumber: () => number } | number | null) {
 
 function roundToTenth(value: number) {
   return Math.round(value * 10) / 10;
+}
+
+function parsePositiveIntegerParam(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value.trim(), 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function parsePerformedAtParam(value: string | null) {
+  const trimmed = value?.trim() ?? "";
+
+  if (!trimmed || !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return null;
+  }
+
+  const parsed = toDatabaseDateFromInput(trimmed);
+  return formatDatabaseDateValue(parsed) === trimmed ? parsed : null;
 }
 
 export async function GET(request: NextRequest) {
@@ -52,6 +77,17 @@ export async function GET(request: NextRequest) {
   }
 
   const normalizedName = normalizeExerciseName(exerciseName);
+  const performedAt = parsePerformedAtParam(
+    request.nextUrl.searchParams.get("performedAt"),
+  );
+  const position = parsePositiveIntegerParam(
+    request.nextUrl.searchParams.get("position"),
+  );
+  const setCount = parsePositiveIntegerParam(
+    request.nextUrl.searchParams.get("setCount"),
+  );
+  const canPredict =
+    performedAt !== null && position !== null && setCount !== null;
 
   try {
     const exerciseLogs = await prisma.workoutExercise.findMany({
@@ -73,6 +109,7 @@ export async function GET(request: NextRequest) {
       ],
       take: 120,
       select: {
+        order: true,
         workoutLog: {
           select: {
             id: true,
@@ -103,6 +140,7 @@ export async function GET(request: NextRequest) {
           workoutId,
           workoutTitle: exerciseLog.workoutLog.title,
           performedAt: exerciseLog.workoutLog.performedAt,
+          exerciseOrder: exerciseLog.order,
           setCount: 0,
           totalReps: 0,
           bestWeight: null,
@@ -111,7 +149,14 @@ export async function GET(request: NextRequest) {
           sets: [],
         } satisfies SessionAggregate);
 
-      for (const set of exerciseLog.sets) {
+      if (
+        session.exerciseOrder === null ||
+        exerciseLog.order < session.exerciseOrder
+      ) {
+        session.exerciseOrder = exerciseLog.order;
+      }
+
+      for (const [setIndex, set] of exerciseLog.sets.entries()) {
         session.setCount += 1;
         session.totalReps += set.reps;
 
@@ -135,7 +180,8 @@ export async function GET(request: NextRequest) {
       }
 
       session.sets.push(
-        ...exerciseLog.sets.map((set) => ({
+        ...exerciseLog.sets.map((set, setIndex) => ({
+          setIndex: session.sets.length + setIndex + 1,
           reps: set.reps,
           weightLb: toWeightNumber(set.weightLb),
         })),
@@ -160,6 +206,16 @@ export async function GET(request: NextRequest) {
 
       return Math.max(max, session.bestWeight);
     }, null);
+    const prediction =
+      canPredict && performedAt && position && setCount
+        ? predictExercisePerformance({
+            sessions,
+            performedAt,
+            currentPosition: position,
+            setCount,
+            weightUnit: user.preferredWeightUnit,
+          })
+        : null;
 
     return NextResponse.json({
       exerciseName,
@@ -189,6 +245,7 @@ export async function GET(request: NextRequest) {
         : null,
       allTimeBestWeight:
         allTimeBestWeight === null ? null : roundToTenth(allTimeBestWeight),
+      prediction,
     });
   } catch (error) {
     console.error("workout insights failure:", error);

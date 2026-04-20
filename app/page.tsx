@@ -35,11 +35,13 @@ export default async function Home() {
           </div>
 
           <p className="tos">
-            By continuing, you agree to our{" "}
             <Link href="/legal" className="legal-inline-link">
               Terms of Conditions
             </Link>
-            .
+            {" · "}
+            <Link href="/research" className="legal-inline-link">
+              Research
+            </Link>
           </p>
         </div>
       </section>

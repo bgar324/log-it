@@ -5,6 +5,8 @@ import {
   formatWeightInputValueFromPounds,
   normalizeWeightUnit,
   poundsToDisplayWeight,
+  roundDisplayWeightToIncrement,
+  roundStoredWeightToGymIncrement,
 } from "../lib/weight-unit";
 
 test("normalizeWeightUnit falls back to pounds", () => {
@@ -25,4 +27,10 @@ test("formatWeightInputValueFromPounds prepares editable values", () => {
   assert.equal(formatWeightInputValueFromPounds(135, "LB"), "135");
   assert.equal(formatWeightInputValueFromPounds(44.0925, "KG"), "20");
   assert.equal(formatWeightInputValueFromPounds(null, "KG"), "");
+});
+
+test("gym rounding follows display increments for pounds and kilograms", () => {
+  assert.equal(roundDisplayWeightToIncrement(187, "LB"), 185);
+  assert.equal(roundDisplayWeightToIncrement(86.6, "KG"), 87.5);
+  assert.equal(roundStoredWeightToGymIncrement(191, "LB"), 190);
 });

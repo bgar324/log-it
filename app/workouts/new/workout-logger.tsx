@@ -10,6 +10,7 @@ import {
   normalizeExerciseDisplayName,
   normalizeExerciseLookupKey,
 } from "@/lib/exercise-autofill";
+import { createExerciseInsightRequestContext } from "@/lib/workouts/insight-request";
 import {
   formatDatabaseDateLabel,
   formatDatabaseDateValue,
@@ -21,6 +22,8 @@ import {
   convertStoredWeightToDisplay,
   formatWeightWithUnit,
   getWeightUnitLabel,
+  poundsToDisplayWeight,
+  roundDisplayWeightToIncrement,
   type WeightUnit,
 } from "@/lib/weight-unit";
 import styles from "./workout-logger.module.css";
@@ -35,6 +38,21 @@ type ExerciseDraft = {
   id: string;
   name: string;
   sets: ExerciseSetDraft[];
+};
+
+type PredictedSet = {
+  setIndex: number;
+  weightLb: number | null;
+  reps: number | null;
+  repRange: { min: number; max: number } | null;
+};
+
+type ExercisePrediction = {
+  basedOnSessions: number;
+  daysSinceLastPerformed: number | null;
+  confidence: "low" | "medium" | "high";
+  rationale: string[];
+  predictedSets: PredictedSet[];
 };
 
 type ExerciseInsight = {
@@ -57,6 +75,7 @@ type ExerciseInsight = {
     }>;
   } | null;
   allTimeBestWeight: number | null;
+  prediction: ExercisePrediction | null;
 };
 
 type ExerciseInsightState = {
@@ -434,6 +453,46 @@ function formatLoggedSetSnapshot(
   return `${formatWeightWithUnit(displayWeight, weightUnit)} x ${set.reps}`;
 }
 
+function formatPredictedWeight(weightLb: number, weightUnit: WeightUnit) {
+  const displayWeight = roundDisplayWeightToIncrement(
+    poundsToDisplayWeight(weightLb, weightUnit),
+    weightUnit,
+  );
+
+  return formatWeightWithUnit(displayWeight, weightUnit);
+}
+
+function formatPredictedSetSnapshot(
+  set: PredictedSet,
+  weightUnit: WeightUnit,
+) {
+  const repText = set.reps === null ? "--" : `${set.reps}`;
+
+  if (set.weightLb === null) {
+    return `Bodyweight x ${repText}`;
+  }
+
+  return `${formatPredictedWeight(set.weightLb, weightUnit)} x ${repText}`;
+}
+
+function formatRepRange(
+  repRange: { min: number; max: number } | null,
+) {
+  if (!repRange) {
+    return "--";
+  }
+
+  if (repRange.min === repRange.max) {
+    return `${repRange.min}`;
+  }
+
+  return `${repRange.min}-${repRange.max} reps`;
+}
+
+function formatConfidenceLabel(confidence: ExercisePrediction["confidence"]) {
+  return confidence.charAt(0).toUpperCase() + confidence.slice(1);
+}
+
 export function WorkoutLogger({
   mode = "create",
   workoutId,
@@ -482,6 +541,51 @@ export function WorkoutLogger({
     () => toDatabaseDateFromInput(performedAt),
     [performedAt],
   );
+  const exerciseInsightContexts = useMemo(
+    () =>
+      exercises
+        .map((exercise, exerciseIndex) => ({
+          exerciseId: exercise.id,
+          context: createExerciseInsightRequestContext(
+            exercise.name,
+            performedAt,
+            exerciseIndex + 1,
+            exercise.sets.length,
+          ),
+        }))
+        .filter(
+          (
+            item,
+          ): item is {
+            exerciseId: string;
+            context: NonNullable<
+              ReturnType<typeof createExerciseInsightRequestContext>
+            >;
+          } => item.context !== null,
+        ),
+    [exercises, performedAt],
+  );
+
+  function getExerciseInsightContext(exerciseId: string, exerciseName?: string) {
+    const exerciseIndex = exercises.findIndex((exercise) => exercise.id === exerciseId);
+
+    if (exerciseIndex === -1) {
+      return null;
+    }
+
+    const exercise = exercises[exerciseIndex];
+
+    if (!exercise) {
+      return null;
+    }
+
+    return createExerciseInsightRequestContext(
+      exerciseName ?? exercise.name,
+      performedAt,
+      exerciseIndex + 1,
+      exercise.sets.length,
+    );
+  }
 
   useEffect(() => {
     setTitle(initialState.title);
@@ -583,6 +687,18 @@ export function WorkoutLogger({
       }
     };
   }, []);
+
+  useEffect(() => {
+    for (const { exerciseId, context } of exerciseInsightContexts) {
+      const state = exerciseInsightById[exerciseId];
+
+      if (!state || state.status === "idle" || state.lookupKey === context.lookupKey) {
+        continue;
+      }
+
+      void fetchExerciseInsight(exerciseId, context.exerciseName, context);
+    }
+  }, [exerciseInsightById, exerciseInsightContexts]);
 
   function nextExerciseId() {
     idCounterRef.current.exercise += 1;
@@ -942,13 +1058,16 @@ export function WorkoutLogger({
       name: normalizedSuggestion,
     }));
 
-    void fetchExerciseInsight(exerciseId, normalizedSuggestion);
+    const context = getExerciseInsightContext(exerciseId, normalizedSuggestion);
+    void fetchExerciseInsight(exerciseId, normalizedSuggestion, context);
   }
 
-  async function fetchExerciseInsight(exerciseId: string, exerciseName: string) {
-    const lookupKey = normalizeExerciseLookupKey(exerciseName);
-
-    if (!lookupKey) {
+  async function fetchExerciseInsight(
+    exerciseId: string,
+    exerciseName: string,
+    requestContext = getExerciseInsightContext(exerciseId, exerciseName),
+  ) {
+    if (!requestContext) {
       setExerciseInsightById((current) => ({
         ...current,
         [exerciseId]: { status: "idle" },
@@ -957,6 +1076,7 @@ export function WorkoutLogger({
       return;
     }
 
+    const lookupKey = requestContext.lookupKey;
     const cached = insightCacheRef.current[lookupKey];
 
     if (cached) {
@@ -982,12 +1102,9 @@ export function WorkoutLogger({
     }));
 
     try {
-      const response = await fetch(
-        `/api/workouts/insights?exercise=${encodeURIComponent(exerciseName)}`,
-        {
-          cache: "no-store",
-        },
-      );
+      const response = await fetch(requestContext.requestPath, {
+        cache: "no-store",
+      });
       const payload = (await response.json()) as
         | ExerciseInsight
         | { error?: string };
@@ -998,8 +1115,7 @@ export function WorkoutLogger({
         );
       }
 
-      const responseLookupKey = normalizeExerciseLookupKey(payload.normalizedName);
-      insightCacheRef.current[responseLookupKey] = payload;
+      insightCacheRef.current[lookupKey] = payload;
 
       if (latestInsightLookupRef.current[exerciseId] !== lookupKey) {
         return;
@@ -1044,7 +1160,8 @@ export function WorkoutLogger({
       name: normalized,
     }));
 
-    await fetchExerciseInsight(exerciseId, normalized);
+    const context = getExerciseInsightContext(exerciseId, normalized);
+    await fetchExerciseInsight(exerciseId, normalized, context);
   }
 
   function buildPayload() {
@@ -1429,6 +1546,8 @@ export function WorkoutLogger({
                   const draftBestWeight = draftSummary.bestWeight ?? 0;
                   const bestWeightDelta =
                     draftBestWeight - (lastSessionBestWeightDisplay ?? 0);
+                  const prediction = insight.prediction;
+                  const predictedAnchorSet = prediction?.predictedSets[0] ?? null;
 
                   return (
                     <section className={styles.compareCard}>
@@ -1436,6 +1555,12 @@ export function WorkoutLogger({
                         <p className={styles.compareMeta}>
                           Last hit {formatExerciseInsightDate(lastSession.performedAt)}
                         </p>
+                        {prediction ? (
+                          <p className={styles.compareMeta}>
+                            Based on {prediction.basedOnSessions} recent session
+                            {prediction.basedOnSessions === 1 ? "" : "s"}
+                          </p>
+                        ) : null}
                       </div>
 
                       <div className={styles.compareBody}>
@@ -1470,6 +1595,53 @@ export function WorkoutLogger({
                           </div>
                         </div>
                       </div>
+
+                      {prediction && predictedAnchorSet ? (
+                        <section className={styles.predictionPanel}>
+                          <div className={styles.predictionSummary}>
+                            <div className={styles.compareItem}>
+                              <p className={styles.compareLabel}>Recommended target</p>
+                              <p className={styles.compareValue}>
+                                {formatPredictedSetSnapshot(
+                                  predictedAnchorSet,
+                                  weightUnit,
+                                )}
+                              </p>
+                            </div>
+                            <div className={styles.compareItem}>
+                              <p className={styles.compareLabel}>Expected range</p>
+                              <p className={styles.compareValue}>
+                                {formatRepRange(predictedAnchorSet.repRange)}
+                              </p>
+                            </div>
+                            <div className={styles.compareItem}>
+                              <p className={styles.compareLabel}>Confidence</p>
+                              <p className={styles.compareValue}>
+                                {formatConfidenceLabel(prediction.confidence)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className={styles.compareSnapshot}>
+                            <p className={styles.compareLabel}>Predicted set flow</p>
+                            <div className={styles.compareSetList}>
+                              {prediction.predictedSets.map((set) => (
+                                <div
+                                  key={`${exercise.id}-prediction-${set.setIndex}`}
+                                  className={styles.compareSetRow}
+                                >
+                                  <span className={styles.compareSetIndex}>
+                                    #{set.setIndex}
+                                  </span>
+                                  <span className={styles.compareSetValue}>
+                                    {formatPredictedSetSnapshot(set, weightUnit)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </section>
+                      ) : null}
 
                       {draftSummary.setCount > 0 ? (
                         <p className={styles.compareDelta}>

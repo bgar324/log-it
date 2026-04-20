@@ -3,8 +3,8 @@ import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { DEFAULT_WEIGHT_UNIT, type WeightUnit } from "@/lib/weight-unit";
+import { prisma } from "./prisma";
+import { DEFAULT_WEIGHT_UNIT, type WeightUnit } from "./weight-unit";
 
 const SESSION_COOKIE = "logit_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
