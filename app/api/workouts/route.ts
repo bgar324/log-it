@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { revalidateTag } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
 import { getWorkoutDataTag } from "@/lib/cache-tags";
+import { getWorkoutSplitSeedForDate } from "@/lib/workout-splits/service";
 import { syncWorkoutReadModels } from "@/lib/workout-read-models";
 import {
   isObject,
@@ -16,6 +17,11 @@ import {
   updateWorkout,
   WORKOUT_NOT_FOUND_ERROR,
 } from "@/lib/workouts/service";
+
+async function isRestDayForUser(userId: string, date: Date) {
+  const splitSeed = await getWorkoutSplitSeedForDate(userId, date);
+  return splitSeed.split.id !== null && splitSeed.day.workoutTypeSlug === "rest";
+}
 
 function toWorkoutWriteErrorResponse(error: unknown, fallbackMessage: string) {
   if (
@@ -76,6 +82,13 @@ export async function POST(request: NextRequest) {
 
     if ("error" in parsed) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    if (await isRestDayForUser(user.id, parsed.value.performedAt)) {
+      return NextResponse.json(
+        { error: "You cannot log a workout on a rest day." },
+        { status: 409 },
+      );
     }
 
     const created = await createWorkout(user.id, parsed.value);

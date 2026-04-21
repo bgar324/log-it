@@ -54,7 +54,7 @@ export function WorkoutLoggerSetsEditor({
               inputMode="decimal"
               pattern="[0-9]*[.]?[0-9]*"
               autoComplete="off"
-              autoCapitalize="off"
+              autoCapitalize="none"
               spellCheck={false}
               enterKeyHint="next"
               className={styles.input}
@@ -77,7 +77,7 @@ export function WorkoutLoggerSetsEditor({
               inputMode="numeric"
               pattern="[0-9]*"
               autoComplete="off"
-              autoCapitalize="off"
+              autoCapitalize="none"
               spellCheck={false}
               enterKeyHint="done"
               className={styles.input}

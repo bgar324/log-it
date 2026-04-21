@@ -1,9 +1,9 @@
 "use client";
 
 import { Loader2, Plus, Save } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { BackButton } from "@/app/components/back-button";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
 import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
@@ -174,7 +174,7 @@ export function WorkoutLogger({
   }
 
   const backHref = isEditMode ? `/workouts/${workoutId}` : "/dashboard?view=workouts";
-  const backLabel = isEditMode ? "Back to workout" : "Back to workouts";
+  const backLabel = "Back";
   const pageTitle = isEditMode ? "Edit workout" : "Log workout";
   const savingLabel = isEditMode ? "Saving changes..." : "Saving workout...";
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
@@ -183,9 +183,12 @@ export function WorkoutLogger({
     <main className={styles.loggerShell}>
       <section className={styles.loggerStage} aria-label="Workout logger">
         <div className={styles.topRow}>
-          <Link href={backHref} className={styles.backLink}>
-            {backLabel}
-          </Link>
+          <BackButton
+            fallbackHref={backHref}
+            label={backLabel}
+            className={styles.backLink}
+            iconClassName={styles.backButtonIcon}
+          />
           <ThemeToggle />
         </div>
 

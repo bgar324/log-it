@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Plus, User2, X } from "lucide-react";
+import { Menu, Moon, Plus, User2, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
@@ -14,6 +14,7 @@ type DashboardShellProps = {
   title: string;
   greeting: string;
   profileLabel: string;
+  canLogWorkout: boolean;
   mobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
   onCloseMobileMenu: () => void;
@@ -26,6 +27,7 @@ export function DashboardShell({
   title,
   greeting,
   profileLabel,
+  canLogWorkout,
   mobileMenuOpen,
   onToggleMobileMenu,
   onCloseMobileMenu,
@@ -79,10 +81,17 @@ export function DashboardShell({
         </nav>
 
         <div className={styles.sidebarUtilityStack}>
-          <Link href="/workouts/new" className={styles.sidebarAction}>
-            <Plus className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
-            Log workout
-          </Link>
+          {canLogWorkout ? (
+            <Link href="/workouts/new" className={styles.sidebarAction}>
+              <Plus className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
+              Log workout
+            </Link>
+          ) : (
+            <div className={`${styles.sidebarAction} ${styles.sidebarActionDisabled}`}>
+              <Moon className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
+              Rest
+            </div>
+          )}
           <div className={styles.sidebarDivider} aria-hidden="true" />
           <button
             type="button"

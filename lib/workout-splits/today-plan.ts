@@ -3,16 +3,19 @@ import { getWorkoutSplitSeedForDate } from "./service";
 export type TodayPlan = {
   workoutType: string;
   subtitle: string;
+  isRestDay: boolean;
 };
 
 export const NO_SPLIT_TODAY_PLAN: TodayPlan = {
   workoutType: "No split",
   subtitle: "Set up your weekly split to preload today's workout.",
+  isRestDay: false,
 };
 
 export const UNAVAILABLE_TODAY_PLAN: TodayPlan = {
   workoutType: "Plan unavailable",
   subtitle: "Unable to load today's split right now.",
+  isRestDay: false,
 };
 
 export async function loadTodayPlan(userId: string, date: Date): Promise<TodayPlan> {
@@ -26,6 +29,7 @@ export async function loadTodayPlan(userId: string, date: Date): Promise<TodayPl
     return {
       workoutType: splitSeed.day.workoutType,
       subtitle: "Recovery day on your current split.",
+      isRestDay: true,
     };
   }
 
@@ -34,5 +38,6 @@ export async function loadTodayPlan(userId: string, date: Date): Promise<TodayPl
     subtitle: `${splitSeed.day.exercises.length} planned exercise${
       splitSeed.day.exercises.length === 1 ? "" : "s"
     } ready to preload.`,
+    isRestDay: false,
   };
 }

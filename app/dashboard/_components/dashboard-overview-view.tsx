@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Moon, Plus } from "lucide-react";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import type { DashboardClientData } from "../dashboard-types";
@@ -64,14 +64,21 @@ export function DashboardOverviewView({
           <p className={styles.kpiValue}>{todayPlan.workoutType}</p>
         </article>
 
-        <Link
-          href="/workouts/new"
-          className={`${styles.kpiCard} ${styles.kpiActionCard}`}
-          aria-label="Log workout"
-        >
-          <Plus className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
-          <span className={styles.kpiActionText}>Log workout</span>
-        </Link>
+        {todayPlan.isRestDay ? (
+          <div className={`${styles.kpiCard} ${styles.kpiActionCard} ${styles.kpiActionCardDisabled}`}>
+            <Moon className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
+            <span className={styles.kpiActionText}>Rest</span>
+          </div>
+        ) : (
+          <Link
+            href="/workouts/new"
+            className={`${styles.kpiCard} ${styles.kpiActionCard}`}
+            aria-label="Log workout"
+          >
+            <Plus className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
+            <span className={styles.kpiActionText}>Log workout</span>
+          </Link>
+        )}
       </section>
 
       <section className={styles.panel}>

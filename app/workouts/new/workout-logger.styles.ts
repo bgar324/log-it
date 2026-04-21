@@ -31,11 +31,12 @@ export const styles = {
   ),
   topRow: "flex items-center justify-between gap-[0.5rem]",
   backLink: cn(
-    "inline-flex min-h-[2rem] items-center justify-center whitespace-nowrap rounded-full border",
+    "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] whitespace-nowrap rounded-full border",
     "border-[color:color-mix(in_srgb,var(--text)_14%,transparent)]",
-    "bg-[var(--bg)] px-[0.72rem] text-[0.76rem] text-[var(--text)]",
+    "bg-[var(--bg)] px-[0.72rem] text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
   ),
+  backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
   header: "flex flex-col gap-[0.25rem]",
   title:
     "m-0 text-[clamp(1.8rem,7vw,2.35rem)] leading-[1.02] tracking-[-0.02em] font-[560]",

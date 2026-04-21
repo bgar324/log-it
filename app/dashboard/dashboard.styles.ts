@@ -30,6 +30,8 @@ export const styles = {
   sidebarUtilityStack: "mt-auto flex flex-col gap-[0.52rem]",
   sidebarAction:
     "inline-flex min-h-[2.42rem] cursor-pointer items-center gap-[0.55rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.72rem] text-left text-[0.72rem] text-[var(--text)] transition-[transform,border-color,background-color] duration-[140ms] hover:border-[var(--dashboard-border-strong)] active:translate-y-[1px]",
+  sidebarActionDisabled:
+    "cursor-default border-[var(--calendar-active-border)] bg-[var(--calendar-active-bg)] text-[var(--muted)] hover:border-[var(--calendar-active-border)] active:translate-y-0",
   sidebarActionIcon: "h-[0.9rem] w-[0.9rem]",
   sidebarDivider: "h-px w-full bg-[var(--dashboard-border)]",
   sidebarSecondaryAction:
@@ -67,10 +69,12 @@ export const styles = {
   kpiCard:
     `${dashboardSurface} flex min-h-[4.95rem] flex-col gap-[0.28rem] px-[0.7rem] py-[0.62rem]`,
   kpiActionCard:
-    "dashboard-kpi-action-card cursor-pointer items-start justify-center gap-[0.42rem] border-dashed text-[var(--text)] no-underline hover:border-[var(--dashboard-border-strong)]",
-  kpiActionIcon: "h-[1.02rem] w-[1.02rem]",
+    "dashboard-kpi-action-card cursor-pointer items-start justify-center gap-[0.42rem] border-dashed text-[var(--text)] no-underline hover:border-[var(--dashboard-border-strong)] max-[760px]:gap-[0.28rem]",
+  kpiActionCardDisabled:
+    "cursor-default border-[var(--calendar-active-border)] bg-[var(--calendar-active-bg)] text-[var(--muted)] hover:border-[var(--calendar-active-border)]",
+  kpiActionIcon: "h-[1.02rem] w-[1.02rem] max-[760px]:h-[0.92rem] max-[760px]:w-[0.92rem] -mt-3",
   kpiActionText:
-    "text-[1rem] leading-[1.1]",
+    "text-[1rem] leading-[1.1] max-[760px]:text-[clamp(1.4rem,4.6vw,2rem)] max-[760px]:leading-none max-[760px]:tracking-[-0.05em] max-[760px]:font-[520]",
   kpiLabel: "m-0 text-[0.72rem] text-[var(--muted)]",
   kpiValue:
     "m-0 break-words text-[clamp(1.4rem,4.6vw,2rem)] leading-none tracking-[-0.05em] font-[520]",

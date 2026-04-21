@@ -80,6 +80,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       title={VIEW_TITLES[activeView]}
       greeting={greeting}
       profileLabel={profileLabel}
+      canLogWorkout={!todayPlan.isRestDay}
       mobileMenuOpen={mobileMenuOpen}
       onToggleMobileMenu={() => setMobileMenuOpen((open) => !open)}
       onCloseMobileMenu={() => setMobileMenuOpen(false)}

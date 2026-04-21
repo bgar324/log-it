@@ -25,6 +25,7 @@ export type DashboardClientData = {
     todayPlan: {
       workoutType: string;
       subtitle: string;
+      isRestDay: boolean;
     };
     monthChange: number;
     weeklyBars: Array<{
