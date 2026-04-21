@@ -6,7 +6,7 @@ import { WEEKDAY_CHIPS } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
 import type { DashboardCalendarState } from "../_hooks/use-dashboard-calendar";
 import { DashboardMetricHeader } from "./dashboard-metric-header";
-import { DashboardWorkoutTable } from "./dashboard-workout-table";
+import { DashboardWorkoutList } from "./dashboard-workout-list";
 
 type DashboardOverviewViewProps = {
   overview: DashboardClientData["overview"];
@@ -80,7 +80,7 @@ export function DashboardOverviewView({
         </div>
 
         {recentSessions.length > 0 ? (
-          <DashboardWorkoutTable rows={recentSessions} weightUnit={weightUnit} />
+          <DashboardWorkoutList rows={recentSessions} weightUnit={weightUnit} />
         ) : (
           <p className={styles.empty}>No sessions yet. Log your first workout.</p>
         )}
