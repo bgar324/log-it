@@ -34,39 +34,32 @@ export function SessionBreakdownTable({
   return (
     <>
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Workout</th>
-              <th>Date</th>
-              <th>Sets</th>
-              <th>Reps</th>
-              <th>Best weight</th>
-              <th>Volume</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleSessions.map((session) => (
-              <tr key={session.workoutId}>
-                <td>{session.workoutTitle}</td>
-                <td>{session.performedAtLabel}</td>
-                <td>{session.setCount}</td>
-                <td>{session.totalReps}</td>
-                <td>{session.bestWeightLabel}</td>
-                <td>{session.totalLoadLabel}</td>
-                <td>
-                  <Link
-                    href={`/workouts/${session.workoutId}`}
-                    className={styles.tableLink}
-                  >
-                    View
-                  </Link>
-                </td>
-              </tr>
+        <div className={styles.metricList}>
+          <div className={styles.sessionHeader}>
+            {["Workout", "Date", "Sets", "Reps", "Best weight", "Volume"].map((label) => (
+              <span key={label} className={styles.sessionHeaderCell}>
+                {label}
+              </span>
             ))}
-          </tbody>
-        </table>
+          </div>
+          {visibleSessions.map((session) => (
+            <Link
+              key={session.workoutId}
+              href={`/workouts/${session.workoutId}`}
+              className={`${styles.sessionRow} ${styles.sessionLinkRow}`}
+            >
+              <div>
+                <p className={styles.sessionTitle}>{session.workoutTitle}</p>
+                <p className={styles.sessionMeta}>Open workout</p>
+              </div>
+              <span>{session.performedAtLabel}</span>
+              <span>{session.setCount}</span>
+              <span>{session.totalReps}</span>
+              <span>{session.bestWeightLabel}</span>
+              <span>{session.totalLoadLabel}</span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {sessions.length > PAGE_SIZE ? (

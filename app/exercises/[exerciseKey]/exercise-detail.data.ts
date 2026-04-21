@@ -235,7 +235,7 @@ function summarizeExerciseSessions(exerciseLogs: ExerciseLogRow[], weightUnit: W
   const bestWeight = sessions.reduce((max, session) => Math.max(max, session.bestWeight), 0);
   const lastHit = sessions[0]?.performedAt;
   const averageRepsPerSet =
-    totalSetCount > 0 ? Number((totalReps / totalSetCount).toFixed(1)) : 0;
+    totalSetCount > 0 ? Math.round(totalReps / totalSetCount) : 0;
 
   return {
     displayName,
@@ -290,7 +290,9 @@ export async function loadExerciseDetailPageData(rawExerciseKey: string) {
     totalSetCount: summary.totalSetCount,
     averageRepsPerSet: summary.averageRepsPerSet,
     bestWeight: summary.bestWeight,
-    bestWeightLabel: formatWeightWithUnit(summary.bestWeight, weightUnit),
+    bestWeightLabel: formatWeightWithUnit(summary.bestWeight, weightUnit, {
+      maximumFractionDigits: 0,
+    }),
     chartSeries,
     sessionBreakdownRows: summary.sessions.map((session) => ({
       workoutId: session.workoutId,
@@ -298,8 +300,12 @@ export async function loadExerciseDetailPageData(rawExerciseKey: string) {
       performedAtLabel: formatDate(session.performedAt),
       setCount: session.setCount,
       totalReps: session.totalReps,
-      bestWeightLabel: formatWeightWithUnit(session.bestWeight, weightUnit),
-      totalLoadLabel: `${formatWeightValue(session.totalLoad)} ${unitLabel}`,
+      bestWeightLabel: formatWeightWithUnit(session.bestWeight, weightUnit, {
+        maximumFractionDigits: 0,
+      }),
+      totalLoadLabel: `${formatWeightValue(session.totalLoad, {
+        maximumFractionDigits: 0,
+      })} ${unitLabel}`,
     })),
   };
 }

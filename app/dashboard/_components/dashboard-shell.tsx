@@ -3,6 +3,7 @@
 import { Menu, Plus, User2, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import type { DashboardView } from "../dashboard-types";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { NAV_ITEMS } from "../dashboard-client.shared";
@@ -15,6 +16,7 @@ type DashboardShellProps = {
   profileLabel: string;
   mobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
+  onCloseMobileMenu: () => void;
   onNavigate: (view: DashboardView) => void;
   children: ReactNode;
 };
@@ -26,9 +28,29 @@ export function DashboardShell({
   profileLabel,
   mobileMenuOpen,
   onToggleMobileMenu,
+  onCloseMobileMenu,
   onNavigate,
   children,
 }: DashboardShellProps) {
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!mobileMenuRef.current?.contains(event.target as Node)) {
+        onCloseMobileMenu();
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [mobileMenuOpen, onCloseMobileMenu]);
+
   return (
     <main className={styles.shell} aria-label="Training dashboard shell">
       <aside className={styles.sidebar} aria-label="Dashboard sidebar">
@@ -89,67 +111,77 @@ export function DashboardShell({
 
           <div className={styles.mobileHeaderActions}>
             <ThemeToggle />
-            <button
-              type="button"
-              className={styles.mobileMenuToggle}
-              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="dashboard-mobile-menu"
-              onClick={onToggleMobileMenu}
-            >
-              {mobileMenuOpen ? (
-                <X className={styles.mobileMenuToggleIcon} aria-hidden="true" strokeWidth={1.9} />
-              ) : (
-                <Menu className={styles.mobileMenuToggleIcon} aria-hidden="true" strokeWidth={1.9} />
-              )}
-            </button>
-          </div>
-        </header>
-
-        {mobileMenuOpen ? (
-          <div
-            id="dashboard-mobile-menu"
-            className={styles.mobileMenuPanel}
-            aria-label="Dashboard mobile navigation"
-          >
-            <nav className={styles.mobileMenuNav} aria-label="Dashboard sections">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeView === item.view;
-
-                return (
-                  <button
-                    key={item.view}
-                    type="button"
-                    className={styles.mobileMenuItem}
-                    data-active={isActive}
-                    onClick={() => onNavigate(item.view)}
-                  >
-                    <Icon
-                      className={styles.mobileMenuItemIcon}
-                      aria-hidden={true}
-                      strokeWidth={1.9}
-                    />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
+            <div className={styles.mobileMenu} ref={mobileMenuRef}>
               <button
                 type="button"
-                className={styles.mobileMenuItem}
-                data-active={activeView === "profile"}
-                onClick={() => onNavigate("profile")}
+                className={styles.mobileMenuToggle}
+                aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="dashboard-mobile-menu"
+                aria-haspopup="menu"
+                onClick={onToggleMobileMenu}
               >
-                <User2
-                  className={styles.mobileMenuItemIcon}
-                  aria-hidden={true}
-                  strokeWidth={1.9}
-                />
-                <span>{profileLabel}</span>
+                {mobileMenuOpen ? (
+                  <X
+                    className={styles.mobileMenuToggleIcon}
+                    aria-hidden="true"
+                    strokeWidth={1.9}
+                  />
+                ) : (
+                  <Menu
+                    className={styles.mobileMenuToggleIcon}
+                    aria-hidden="true"
+                    strokeWidth={1.9}
+                  />
+                )}
               </button>
-            </nav>
+              {mobileMenuOpen ? (
+                <div
+                  id="dashboard-mobile-menu"
+                  className={styles.mobileMenuPanel}
+                  aria-label="Dashboard mobile navigation"
+                >
+                  <nav className={styles.mobileMenuNav} aria-label="Dashboard sections">
+                    {NAV_ITEMS.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = activeView === item.view;
+
+                      return (
+                        <button
+                          key={item.view}
+                          type="button"
+                          className={styles.mobileMenuItem}
+                          data-active={isActive}
+                          onClick={() => onNavigate(item.view)}
+                        >
+                          <Icon
+                            className={styles.mobileMenuItemIcon}
+                            aria-hidden={true}
+                            strokeWidth={1.9}
+                          />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      className={styles.mobileMenuItem}
+                      data-active={activeView === "profile"}
+                      onClick={() => onNavigate("profile")}
+                    >
+                      <User2
+                        className={styles.mobileMenuItemIcon}
+                        aria-hidden={true}
+                        strokeWidth={1.9}
+                      />
+                      <span>{profileLabel}</span>
+                    </button>
+                  </nav>
+                </div>
+              ) : null}
+            </div>
           </div>
-        ) : null}
+        </header>
 
         {children}
       </section>

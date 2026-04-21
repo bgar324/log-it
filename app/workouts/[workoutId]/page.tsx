@@ -1,6 +1,5 @@
-import { SquarePen } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackButton } from "@/app/components/back-button";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -130,7 +129,10 @@ export default async function WorkoutDetailPage({
     { label: "Date", value: formatDate(workout.performedAt) },
     { label: "Exercises", value: `${workout.exercises.length}` },
     { label: "Sets", value: `${totalSets}` },
-    { label: "Total volume", value: formatWeightWithUnit(totalWeight, unit) },
+    {
+      label: "Total volume",
+      value: formatWeightWithUnit(totalWeight, unit, { maximumFractionDigits: 0 }),
+    },
   ];
   const workoutExport = formatWorkoutForClipboard({
     performedAt: workout.performedAt,
@@ -150,20 +152,21 @@ export default async function WorkoutDetailPage({
     <main className={styles.shell}>
       <section className={styles.stage}>
         <header className={styles.topRow}>
-          <Link href="/dashboard?view=workouts" className={styles.backLink}>
-            Back to workouts
-          </Link>
+          <div className={styles.topLead}>
+            <BackButton
+              fallbackHref="/workouts"
+              label="Back"
+              className={styles.backLink}
+              iconClassName={styles.backButtonIcon}
+            />
+          </div>
           <div className={styles.topActions}>
-            <Link
-              href={`/workouts/${workout.id}/edit`}
-              className={styles.actionLink}
-              aria-label="Edit workout"
-            >
-              <SquarePen className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
-              <span className={styles.actionButtonLabel}>Edit workout</span>
-            </Link>
-            <WorkoutDetailActions workoutId={workout.id} workoutExport={workoutExport} />
             <ThemeToggle />
+            <WorkoutDetailActions
+              editHref={`/workouts/${workout.id}/edit`}
+              workoutId={workout.id}
+              workoutExport={workoutExport}
+            />
           </div>
         </header>
 
@@ -199,7 +202,10 @@ export default async function WorkoutDetailPage({
                     <h2 className={styles.exerciseName}>{exercise.name}</h2>
                   </div>
                   <p className={styles.exerciseVolume}>
-                    {formatWeightWithUnit(exerciseVolume, unit)} volume
+                    {formatWeightWithUnit(exerciseVolume, unit, {
+                      maximumFractionDigits: 0,
+                    })}{" "}
+                    volume
                   </p>
                 </header>
 
@@ -221,6 +227,7 @@ export default async function WorkoutDetailPage({
                               ? formatWeightWithUnit(
                                   convertStoredWeightToDisplay(set.weightLb, unit) ?? 0,
                                   unit,
+                                  { maximumFractionDigits: 0 },
                                 )
                               : "--"}
                           </td>
@@ -229,6 +236,31 @@ export default async function WorkoutDetailPage({
                       ))}
                     </tbody>
                   </table>
+                </div>
+                <div className={styles.mobileSetList}>
+                  {exercise.sets.map((set) => (
+                    <div key={set.id} className={styles.mobileSetCard}>
+                      <div className={styles.mobileSetCell}>
+                        <p className={styles.mobileSetNumber}>Set {set.order}</p>
+                      </div>
+                      <div className={styles.mobileSetCell}>
+                        <span className={styles.mobileSetMeta}>Weight</span>
+                        <span className={styles.mobileSetValue}>
+                          {set.weightLb !== null
+                            ? formatWeightWithUnit(
+                                convertStoredWeightToDisplay(set.weightLb, unit) ?? 0,
+                                unit,
+                                { maximumFractionDigits: 0 },
+                              )
+                            : "--"}
+                        </span>
+                      </div>
+                      <div className={styles.mobileSetCell}>
+                        <span className={styles.mobileSetMeta}>Reps</span>
+                        <span className={styles.mobileSetValue}>{set.reps}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </article>
             );

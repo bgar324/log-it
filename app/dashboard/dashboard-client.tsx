@@ -82,6 +82,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       profileLabel={profileLabel}
       mobileMenuOpen={mobileMenuOpen}
       onToggleMobileMenu={() => setMobileMenuOpen((open) => !open)}
+      onCloseMobileMenu={() => setMobileMenuOpen(false)}
       onNavigate={navigateToView}
     >
       {activeView === "dashboard" ? (

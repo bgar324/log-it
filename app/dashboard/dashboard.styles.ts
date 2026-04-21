@@ -1,7 +1,21 @@
+function cn(...values: string[]) {
+  return values.filter(Boolean).join(" ");
+}
+
 const dashboardBorder =
   "[--dashboard-border:color-mix(in_srgb,var(--text)_12%,transparent)] [--dashboard-border-strong:color-mix(in_srgb,var(--text)_18%,transparent)]";
 const dashboardSurface =
   "rounded-[0.54rem] border border-[var(--dashboard-border)] bg-transparent shadow-none";
+const headerActionBase = cn(
+  "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] rounded-full border px-[0.72rem]",
+  "border-[var(--dashboard-border)] bg-transparent text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
+  "max-[760px]:w-[2.3rem] max-[760px]:min-w-[2.3rem] max-[760px]:px-0",
+);
+const mobileMenuItemBase = cn(
+  "inline-flex min-h-[2.2rem] w-full cursor-pointer items-center gap-[0.42rem] rounded-[0.42rem] border border-transparent bg-transparent px-[0.58rem]",
+  "text-left text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
+  "hover:border-[var(--dashboard-border)]",
+);
 
 export const styles = {
   shell:
@@ -32,14 +46,16 @@ export const styles = {
     "inline-flex shrink-0 items-center gap-[0.5rem] max-[760px]:hidden",
   mobileHeaderActions:
     "hidden shrink-0 items-center gap-[0.5rem] max-[760px]:inline-flex",
-  mobileMenuToggle:
-    "inline-flex h-[1.7rem] w-[1.8rem] shrink-0 cursor-pointer items-center justify-center rounded-full border border-[var(--dashboard-border)] bg-[var(--bg)] text-[var(--text)]",
+  mobileMenu: "relative hidden max-[760px]:inline-flex",
+  mobileMenuToggle: headerActionBase,
   mobileMenuToggleIcon: "h-[1rem] w-[1rem]",
   mobileMenuPanel:
-    "flex flex-col gap-[0.62rem] rounded-[0.76rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[0.62rem] min-[900px]:hidden",
+    "absolute right-0 top-[calc(100%+0.36rem)] z-20 flex w-[12rem] flex-col gap-[0.22rem] rounded-[0.56rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[0.28rem] min-[900px]:hidden",
   mobileMenuNav: "flex flex-col gap-[0.34rem]",
-  mobileMenuItem:
-    "inline-flex min-h-[2.4rem] cursor-pointer items-center gap-[0.48rem] rounded-[0.6rem] border border-transparent bg-transparent px-[0.78rem] text-left text-[0.84rem] text-[var(--muted)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)]",
+  mobileMenuItem: cn(
+    mobileMenuItemBase,
+    "data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)]",
+  ),
   mobileMenuItemIcon: "h-[0.92rem] w-[0.92rem]",
   tableCellTitle: "block font-[560]",
   tableCellMeta: "mt-[0.14rem] block text-[0.72rem] text-[var(--muted)]",
@@ -119,7 +135,7 @@ export const styles = {
   exerciseRow:
     "grid-cols-[minmax(0,1.95fr)_repeat(4,minmax(0,0.9fr))] w-[max(100%,36rem)]",
   workoutHistoryRow:
-    "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,0.9fr)_minmax(0,0.85fr)_minmax(0,1fr)_auto] w-[max(100%,44rem)]",
+    "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,0.9fr)_minmax(0,0.85fr)_minmax(0,1fr)] w-[max(100%,40rem)]",
   metricMain: "m-0 text-[0.84rem] leading-[1.3] font-[520] text-[var(--text)]",
   metricSubtle: "m-[0.18rem_0_0] text-[0.72rem] text-[var(--muted)]",
   timeline: "mt-[0.66rem] flex flex-col gap-[0.9rem]",

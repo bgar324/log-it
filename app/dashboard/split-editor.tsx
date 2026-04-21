@@ -33,6 +33,8 @@ export function SplitEditor({
   onAddExercise,
   onRemoveExercise,
 }: SplitEditorProps) {
+  const isRestDay = day.workoutTypeSlug === "rest";
+
   return (
     <section className={splitStyles.splitEditor}>
       <div className={splitStyles.editorHeader}>
@@ -55,17 +57,24 @@ export function SplitEditor({
         <div>
           <h3 className={splitStyles.editorSectionTitle}>Exercises</h3>
         </div>
-        <button
-          type="button"
-          className={splitStyles.inlineButton}
-          onClick={onAddExercise}
-        >
-          <Plus className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
-          Add exercise
-        </button>
+        {!isRestDay ? (
+          <button
+            type="button"
+            className={splitStyles.inlineButton}
+            onClick={onAddExercise}
+          >
+            <Plus className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
+            Add exercise
+          </button>
+        ) : null}
       </div>
 
-      {day.exercises.length > 0 ? (
+      {isRestDay ? (
+        <div className={splitStyles.restEmptyState}>
+          <p>Rest days cannot include exercises.</p>
+          <p>Change the workout type if you want to add movements for this day.</p>
+        </div>
+      ) : day.exercises.length > 0 ? (
         <div className={splitStyles.editorExerciseList}>
           {day.exercises.map((exercise, index) => (
             <ExerciseTemplateRow

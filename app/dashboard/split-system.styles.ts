@@ -11,9 +11,9 @@ export const splitStyles = {
   splitSummaryHead:
     "flex items-center justify-between gap-[0.75rem] max-[700px]:flex-col max-[700px]:items-stretch",
   splitSummaryActions:
-    "inline-flex flex-wrap items-center justify-end gap-[0.55rem] max-[700px]:flex-col max-[700px]:items-stretch",
+    "inline-flex flex-wrap items-center justify-end gap-[0.55rem] max-[700px]:grid max-[700px]:grid-cols-2",
   splitGrid:
-    "grid grid-cols-2 gap-[0.65rem] max-[700px]:grid-cols-1",
+    "grid grid-cols-2 gap-[0.65rem]",
   splitDayCard:
     "flex min-h-[7.6rem] cursor-pointer flex-col gap-[0.45rem] rounded-[0.54rem] border border-[var(--split-border)] bg-transparent p-[0.85rem] text-left text-[var(--text)]",
   splitDayCardActive:
@@ -62,6 +62,8 @@ export const splitStyles = {
   searchResultButton:
     "min-h-[2.35rem] cursor-pointer rounded-full border border-[var(--split-border)] bg-[var(--bg)] px-[0.74rem] py-[0.42rem] text-left text-[0.84rem] leading-[1.2] text-[var(--text)] hover:border-[var(--split-border-strong)] max-[700px]:w-full max-[700px]:rounded-[0.56rem]",
   emptyState:
+    "flex flex-col gap-[0.22rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[1rem] text-[0.84rem] text-[var(--muted)]",
+  restEmptyState:
     "flex flex-col gap-[0.22rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[1rem] text-[0.84rem] text-[var(--muted)]",
   status: "m-0 text-[0.72rem] text-[var(--muted)]",
   statusSuccess: "text-[#2f7b4d]",

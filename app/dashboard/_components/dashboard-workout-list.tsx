@@ -16,13 +16,14 @@ export function DashboardWorkoutList({
   return (
     <div className={styles.metricList}>
       <DashboardMetricHeader
-        columns={["Date", "Workout", "Exercises", "Sets", "Volume", "Action"]}
+        columns={["Date", "Workout", "Exercises", "Sets", "Volume"]}
         rowClassName={styles.workoutHistoryRow}
       />
       {rows.map((workout) => (
-        <div
+        <Link
           key={workout.id}
-          className={`${styles.metricRow} ${styles.workoutHistoryRow}`}
+          href={`/workouts/${workout.id}`}
+          className={`${styles.metricRow} ${styles.workoutHistoryRow} ${styles.clickableMetricRow}`}
         >
           <span>{workout.performedAtLabel}</span>
           <div>
@@ -33,13 +34,12 @@ export function DashboardWorkoutList({
           </div>
           <span>{workout.exerciseCount} ex</span>
           <span>{workout.setCount} sets</span>
-          <span>{formatWeightWithUnit(workout.volume, weightUnit)}</span>
-          <div>
-            <Link href={`/workouts/${workout.id}`} className={styles.tableLink}>
-              View
-            </Link>
-          </div>
-        </div>
+          <span>
+            {formatWeightWithUnit(workout.volume, weightUnit, {
+              maximumFractionDigits: 0,
+            })}
+          </span>
+        </Link>
       ))}
     </div>
   );

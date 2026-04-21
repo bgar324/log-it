@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackButton } from "@/app/components/back-button";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { ExerciseDetailChart } from "./exercise-detail-chart";
 import { loadExerciseDetailPageData } from "./exercise-detail.data";
@@ -19,9 +19,12 @@ export default async function ExerciseDetailPage({
     <main className={styles.shell}>
       <section className={styles.stage}>
         <header className={styles.topRow}>
-          <Link href="/dashboard?view=progress" className={styles.backLink}>
-            Back to progress
-          </Link>
+          <BackButton
+            fallbackHref="/progress"
+            label="Back"
+            className={styles.backLink}
+            iconClassName={styles.backButtonIcon}
+          />
           <ThemeToggle />
         </header>
 

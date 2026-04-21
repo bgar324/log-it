@@ -1,28 +1,62 @@
 "use client";
 
-import { Copy, CopyPlus, Trash2 } from "lucide-react";
+import { Copy, Ellipsis, SquarePen, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { styles } from "./workout-detail.styles";
 
 type WorkoutDetailActionsProps = {
+  editHref: string;
   workoutId: string;
   workoutExport: string;
 };
 
 export function WorkoutDetailActions({
+  editHref,
   workoutId,
   workoutExport,
 }: WorkoutDetailActionsProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "duplicating" | "deleting">(
-    "idle",
-  );
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [status, setStatus] = useState<"idle" | "deleting">("idle");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     kind: "idle" | "success" | "error";
     message: string;
   }>({ kind: "idle", message: "" });
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (feedback.kind !== "success") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFeedback({ kind: "idle", message: "" });
+    }, 1600);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [feedback.kind]);
 
   async function handleCopy() {
     if (status !== "idle") {
@@ -30,6 +64,7 @@ export function WorkoutDetailActions({
     }
 
     try {
+      setIsMenuOpen(false);
       const result = await copyTextToClipboard(workoutExport);
       setFeedback({
         kind: "success",
@@ -49,38 +84,6 @@ export function WorkoutDetailActions({
     }
   }
 
-  async function handleDuplicate() {
-    if (status !== "idle") {
-      return;
-    }
-
-    setStatus("duplicating");
-    setFeedback({ kind: "idle", message: "" });
-
-    try {
-      const response = await fetch(`/api/workouts/${workoutId}/duplicate`, {
-        method: "POST",
-      });
-      const payload = (await response.json()) as { id?: string; error?: string };
-
-      if (!response.ok || !payload.id) {
-        throw new Error(payload.error ?? "Unable to duplicate workout.");
-      }
-
-      router.push(`/workouts/${payload.id}/edit`);
-      router.refresh();
-    } catch (caughtError) {
-      setFeedback({
-        kind: "error",
-        message:
-          caughtError instanceof Error
-            ? caughtError.message
-            : "Unable to duplicate workout.",
-      });
-      setStatus("idle");
-    }
-  }
-
   async function handleDelete() {
     if (status !== "idle") {
       return;
@@ -96,6 +99,7 @@ export function WorkoutDetailActions({
 
     setStatus("deleting");
     setFeedback({ kind: "idle", message: "" });
+    setIsMenuOpen(false);
 
     try {
       const response = await fetch(`/api/workouts/${workoutId}`, {
@@ -122,53 +126,103 @@ export function WorkoutDetailActions({
   }
 
   return (
-    <div className={styles.detailActionsGroup}>
-      <button
-        type="button"
-        className={styles.actionButton}
-        onClick={() => void handleCopy()}
-        disabled={status !== "idle"}
-        aria-label="Copy workout"
-      >
-        <Copy className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
-        <span className={`${styles.actionButtonLabel} text-[0.76rem]`}>Copy workout</span>
-      </button>
-      <button
-        type="button"
-        className={styles.actionButton}
-        onClick={handleDuplicate}
-        disabled={status !== "idle"}
-        aria-label={status === "duplicating" ? "Duplicating workout" : "Duplicate workout"}
-      >
-        <CopyPlus className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
-        <span className={styles.actionButtonLabel}>
-          {status === "duplicating" ? "Duplicating..." : "Duplicate workout"}
-        </span>
-      </button>
-      <button
-        type="button"
-        className={`${styles.actionButton} ${styles.dangerActionButton}`}
-        onClick={handleDelete}
-        disabled={status !== "idle"}
-        aria-label={status === "deleting" ? "Deleting workout" : "Delete workout"}
-      >
-        <Trash2 className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
-        <span className={styles.actionButtonLabel}>
-          {status === "deleting" ? "Deleting..." : "Delete workout"}
-        </span>
-      </button>
-      {feedback.kind !== "idle" ? (
+    <>
+      <div className={styles.detailActionsGroup}>
+        <Link href={editHref} className={styles.actionLink} aria-label="Edit workout">
+          <SquarePen
+            className={styles.actionButtonIcon}
+            aria-hidden="true"
+            strokeWidth={1.9}
+          />
+          <span className={styles.actionButtonLabel}>Edit workout</span>
+        </Link>
+        <button
+          type="button"
+          className={styles.actionButton}
+          onClick={() => void handleCopy()}
+          disabled={status !== "idle"}
+          aria-label="Copy workout"
+        >
+          <Copy className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+          <span className={`${styles.actionButtonLabel} text-[0.76rem]`}>Copy workout</span>
+        </button>
+        <button
+          type="button"
+          className={`${styles.actionButton} ${styles.dangerActionButton}`}
+          onClick={handleDelete}
+          disabled={status !== "idle"}
+          aria-label={status === "deleting" ? "Deleting workout" : "Delete workout"}
+        >
+          <Trash2 className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+          <span className={styles.actionButtonLabel}>
+            {status === "deleting" ? "Deleting..." : "Delete workout"}
+          </span>
+        </button>
+      </div>
+      <div className={styles.mobileActionMenu} ref={menuRef}>
+        <button
+          type="button"
+          className={styles.mobileActionToggle}
+          onClick={() => setIsMenuOpen((open) => !open)}
+          aria-label="More workout actions"
+          aria-expanded={isMenuOpen}
+          aria-haspopup="menu"
+        >
+          <Ellipsis className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+        </button>
+        {isMenuOpen ? (
+          <div className={styles.mobileActionDropdown} role="menu">
+            <Link
+              href={editHref}
+              className={styles.mobileActionMenuItem}
+              role="menuitem"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <SquarePen
+                className={styles.actionButtonIcon}
+                aria-hidden="true"
+                strokeWidth={1.9}
+              />
+              <span>Edit workout</span>
+            </Link>
+            <button
+              type="button"
+              className={styles.mobileActionMenuItem}
+              onClick={() => void handleCopy()}
+              disabled={status !== "idle"}
+              role="menuitem"
+            >
+              <Copy className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+              <span>Copy workout</span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.mobileActionMenuItem} ${styles.mobileActionDangerItem}`}
+              onClick={handleDelete}
+              disabled={status !== "idle"}
+              role="menuitem"
+            >
+              <Trash2 className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+              <span>{status === "deleting" ? "Deleting..." : "Delete workout"}</span>
+            </button>
+          </div>
+        ) : null}
+      </div>
+      {feedback.kind === "success" ? (
+        <div className={styles.copyToast} role="status" aria-live="polite">
+          {feedback.message}
+        </div>
+      ) : null}
+      {feedback.kind === "error" ? (
         <p
           className={`${styles.actionStatus} ${
-            feedback.kind === "success"
-              ? styles.actionStatusSuccess
-              : styles.actionStatusError
+            styles.actionStatusError
           }`}
-          role={feedback.kind === "error" ? "alert" : "status"}
+          role="alert"
         >
           {feedback.message}
         </p>
       ) : null}
-    </div>
+    </>
   );
 }

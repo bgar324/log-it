@@ -71,7 +71,10 @@ export function SplitDayCard({
             {getSplitWeekdayLabel(day.weekday)}
           </span>
         </div>
-        <span className={splitStyles.splitDayMeta}>{day.exercises.length} exercises</span>
+        <span className={splitStyles.splitDayMeta}>
+          <span className="min-[701px]:hidden">{day.exercises.length} ex</span>
+          <span className="max-[700px]:hidden">{day.exercises.length} exercises</span>
+        </span>
       </div>
       <strong className={splitStyles.splitDayTitle}>{day.workoutType}</strong>
       <p className={splitStyles.splitDayStats}>{totalSets} planned sets</p>
