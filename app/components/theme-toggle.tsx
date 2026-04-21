@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 type Theme = "light" | "dark";
+const THEME_CHANGE_EVENT = "logit-theme-change";
 
 function readCurrentTheme(): Theme {
   const domTheme = document.documentElement.dataset.theme;
@@ -24,12 +25,36 @@ function readCurrentTheme(): Theme {
 function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme;
   window.localStorage.setItem("logit-theme", theme);
+  window.dispatchEvent(
+    new CustomEvent<Theme>(THEME_CHANGE_EVENT, {
+      detail: theme,
+    }),
+  );
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(() =>
-    typeof window === "undefined" ? "light" : readCurrentTheme(),
-  );
+  const [theme, setTheme] = useState<Theme>("light");
+
+  useLayoutEffect(() => {
+    function syncTheme() {
+      setTheme(readCurrentTheme());
+    }
+
+    function handleThemeChange(event: Event) {
+      const nextTheme =
+        event instanceof CustomEvent && (event.detail === "light" || event.detail === "dark")
+          ? event.detail
+          : readCurrentTheme();
+      setTheme(nextTheme);
+    }
+
+    syncTheme();
+    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+
+    return () => {
+      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+    };
+  }, []);
 
   function handleToggle() {
     const current = readCurrentTheme();
