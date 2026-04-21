@@ -12,7 +12,7 @@ import {
 } from "@/lib/weight-unit";
 import { formatDatabaseDateLabel } from "@/lib/workout-utils";
 import { WorkoutDetailActions } from "./workout-detail-actions";
-import styles from "./workout-detail.module.css";
+import { styles } from "./workout-detail.styles";
 
 type WorkoutPageParams = Promise<{ workoutId: string }>;
 
@@ -207,16 +207,16 @@ export default async function WorkoutDetailPage({
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th>Set</th>
-                        <th>Weight</th>
-                        <th>Reps</th>
+                        <th className={styles.tableHeadCell}>Set</th>
+                        <th className={styles.tableHeadCell}>Weight</th>
+                        <th className={styles.tableHeadCell}>Reps</th>
                       </tr>
                     </thead>
                     <tbody>
                       {exercise.sets.map((set) => (
                         <tr key={set.id}>
-                          <td>#{set.order}</td>
-                          <td>
+                          <td className={styles.tableBodyCell}>#{set.order}</td>
+                          <td className={styles.tableBodyCell}>
                             {set.weightLb !== null
                               ? formatWeightWithUnit(
                                   convertStoredWeightToDisplay(set.weightLb, unit) ?? 0,
@@ -224,7 +224,7 @@ export default async function WorkoutDetailPage({
                                 )
                               : "--"}
                           </td>
-                          <td>{set.reps}</td>
+                          <td className={styles.tableBodyCell}>{set.reps}</td>
                         </tr>
                       ))}
                     </tbody>

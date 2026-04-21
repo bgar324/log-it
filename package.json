@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "audit:code-size": "node scripts/audit-code-size.mjs",
     "test": "node scripts/run-tests.mjs",
     "test:features": "node scripts/run-tests.mjs features",
     "test:integrity": "node scripts/run-tests.mjs integrity",

@@ -5,7 +5,7 @@ import {
   getSplitWeekdayLabel,
   type WorkoutSplitDayTemplate,
 } from "@/lib/workout-splits/shared";
-import splitStyles from "./split-system.module.css";
+import { splitStyles } from "./split-system.styles";
 
 type SplitDayCardProps = {
   day: WorkoutSplitDayTemplate;

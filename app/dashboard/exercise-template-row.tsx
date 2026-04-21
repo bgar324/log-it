@@ -2,7 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import type { WorkoutSplitExerciseTemplate } from "@/lib/workout-splits/shared";
-import splitStyles from "./split-system.module.css";
+import { splitStyles } from "./split-system.styles";
 
 type ExerciseTemplateRowProps = {
   exercise: WorkoutSplitExerciseTemplate;

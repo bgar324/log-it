@@ -4,44 +4,45 @@
   color-scheme: light;
   --bg: #ffffff;
   --surface: #ffffff;
-  --text: #171819;
-  --muted: #686b70;
+  --text: #000000;
+  --muted: #6a6a6a;
   --field-bg: #ffffff;
-  --field-line: rgba(23, 24, 25, 0.12);
-  --button-bg: #171819;
-  --button-text: #f4f4f2;
-  --toggle-bg: transparent;
-  --toggle-icon: #171819;
-  --focus-ring: rgba(23, 24, 25, 0.16);
+  --field-line: rgba(0, 0, 0, 0.14);
+  --button-bg: #000000;
+  --button-text: #ffffff;
+  --toggle-bg: #ffffff;
+  --toggle-icon: rgba(0, 0, 0, 0.55);
+  --toggle-active-bg: #000000;
+  --toggle-active-icon: #ffffff;
+  --calendar-active-bg: #f1f1f1;
+  --calendar-active-border: rgba(0, 0, 0, 0.16);
+  --focus-ring: rgba(0, 0, 0, 0.14);
   --shadow: none;
   --soft-shadow: none;
-  --font-body: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
   --font-heading: var(--font-body);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #101113;
-  --surface: #101113;
-  --text: #f2f3f5;
-  --muted: #9ea1a8;
-  --field-bg: #101113;
-  --field-line: rgba(242, 243, 245, 0.14);
-  --button-bg: #f2f3f5;
-  --button-text: #111216;
-  --toggle-bg: transparent;
-  --toggle-icon: #f2f3f5;
-  --focus-ring: rgba(242, 243, 245, 0.2);
+  --bg: #000000;
+  --surface: #000000;
+  --text: #ffffff;
+  --muted: #b0b0b0;
+  --field-bg: #000000;
+  --field-line: rgba(255, 255, 255, 0.18);
+  --button-bg: #ffffff;
+  --button-text: #000000;
+  --toggle-bg: #000000;
+  --toggle-icon: rgba(255, 255, 255, 0.6);
+  --toggle-active-bg: #ffffff;
+  --toggle-active-icon: #000000;
+  --calendar-active-bg: #171717;
+  --calendar-active-border: rgba(255, 255, 255, 0.16);
+  --focus-ring: rgba(255, 255, 255, 0.2);
   --shadow: none;
   --soft-shadow: none;
-}
-
-:root[data-theme="light"] .theme-icon-toggle,
-:root[data-theme="light"] .theme-toggle-slot-sun,
-:root[data-theme="light"] .theme-toggle-slot-moon,
-:root[data-theme="light"] .auth-alert,
-:root[data-theme="light"] .password-toggle:hover {
-  background: #ffffff;
 }
 
 * {
@@ -59,6 +60,8 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   transition:
     background-color 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
     color 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -78,49 +81,21 @@ a {
   text-decoration: none;
 }
 
+@layer base {
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}
+
 .app-shell {
   min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 1rem;
-}
-
-.landing-shell {
-  position: relative;
-  isolation: isolate;
-}
-
-.landing-shell .phone-stage {
-  position: relative;
-  z-index: 1;
-}
-
-.cursor-dither-layer {
-  --dither-x: 50%;
-  --dither-y: 50%;
-  --dither-opacity: 0;
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  color: color-mix(in srgb, var(--text) 20%, transparent);
-  background-image: radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0);
-  background-size: 8px 8px;
-  opacity: var(--dither-opacity);
-  transition: opacity 220ms ease;
-  -webkit-mask-image: radial-gradient(
-    145px circle at var(--dither-x) var(--dither-y),
-    rgba(0, 0, 0, 0.98) 0%,
-    rgba(0, 0, 0, 0.78) 38%,
-    rgba(0, 0, 0, 0) 76%
-  );
-  mask-image: radial-gradient(
-    145px circle at var(--dither-x) var(--dither-y),
-    rgba(0, 0, 0, 0.98) 0%,
-    rgba(0, 0, 0, 0.78) 38%,
-    rgba(0, 0, 0, 0) 76%
-  );
 }
 
 .phone-stage {
@@ -148,60 +123,80 @@ a {
 
 .theme-icon-toggle {
   appearance: none;
-  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  border: 1px solid var(--field-line);
   border-radius: 999px;
-  background: var(--field-bg);
-  color: var(--muted);
-  display: inline-grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: var(--toggle-bg);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.08rem;
+  gap: 0.14rem;
   flex-shrink: 0;
-  width: 3.1rem;
-  height: 1.7rem;
+  width: 3.45rem;
+  height: 1.95rem;
   margin: 0;
-  padding: 0.1rem;
+  padding: 0.14rem;
   line-height: 1;
   cursor: pointer;
-  transition: border-color 180ms ease;
-}
-
-.theme-icon-toggle:hover {
-  border-color: color-mix(in srgb, var(--text) 22%, transparent);
-}
-
-.theme-icon-toggle:active {
-  transform: translateY(1px);
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease;
 }
 
 .theme-toggle-slot {
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 1.5rem;
+  height: 1.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  color: var(--muted);
+  color: var(--toggle-icon);
   transition:
     color 200ms ease,
     background-color 200ms ease;
 }
 
 .theme-toggle-icon {
-  width: 0.82rem;
-  height: 0.82rem;
+  width: 0.9rem;
+  height: 0.9rem;
   stroke: currentColor;
 }
 
-:root[data-theme="light"] .theme-toggle-slot-sun {
-  background: var(--bg);
-  color: var(--text);
+.theme-toggle-slot[data-active="true"] {
+  background: var(--toggle-active-bg);
+  color: var(--toggle-active-icon);
 }
 
-:root[data-theme="dark"] .theme-toggle-slot-moon {
-  background: var(--bg);
-  color: var(--text);
+.dashboard-theme-scope,
+.dashboard-theme-scope :where(
+    aside,
+    section,
+    article,
+    nav,
+    div,
+    p,
+    span,
+    h1,
+    h2,
+    h3,
+    a,
+    input,
+    select,
+    table,
+    thead,
+    tbody,
+    tr,
+    th,
+    td,
+    svg,
+    svg *
+  ) {
+  transition:
+    background-color 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    fill 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    stroke 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .title {
@@ -462,7 +457,6 @@ a {
   background: var(--field-bg);
   color: var(--muted);
   font-size: 0.78rem;
-  letter-spacing: 0.05em;
   padding: 0.56rem 0.62rem;
   text-align: center;
 }
@@ -493,7 +487,6 @@ a {
   font-family: var(--font-heading);
   font-size: 0.67rem;
   color: var(--muted);
-  letter-spacing: 0.08em;
 }
 
 .input {
@@ -544,7 +537,7 @@ a {
 
 .password-toggle:hover {
   color: var(--text);
-  background: var(--field-bg);
+  background: var(--bg);
 }
 
 .password-toggle:focus-visible {
@@ -556,6 +549,95 @@ a {
   width: 0.94rem;
   height: 0.94rem;
   stroke: currentColor;
+}
+
+.react-datepicker {
+  display: inline-block;
+  position: relative;
+}
+
+.react-datepicker__month-container {
+  float: left;
+}
+
+.react-datepicker__header {
+  position: relative;
+  text-align: center;
+}
+
+.react-datepicker__current-month {
+  margin: 0;
+}
+
+.react-datepicker__day-names,
+.react-datepicker__week {
+  display: flex;
+  white-space: nowrap;
+}
+
+.react-datepicker__day-name,
+.react-datepicker__day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.react-datepicker__day--outside-month {
+  opacity: 0.42;
+}
+
+.react-datepicker__day--disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.react-datepicker__navigation {
+  position: absolute;
+  top: 0.45rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.react-datepicker__navigation--previous {
+  left: 0.4rem;
+}
+
+.react-datepicker__navigation--next {
+  right: 0.4rem;
+}
+
+.react-datepicker__navigation-icon {
+  position: relative;
+  display: inline-flex;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.react-datepicker__navigation-icon::before {
+  content: "";
+  position: absolute;
+  inset: 0.08rem;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+}
+
+.react-datepicker__navigation-icon--previous::before {
+  transform: rotate(-135deg);
+}
+
+.react-datepicker__navigation-icon--next::before {
+  transform: rotate(45deg);
 }
 
 @media (hover: none) and (pointer: coarse) {

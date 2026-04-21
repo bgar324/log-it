@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import styles from "./exercise-detail.module.css";
+import { styles } from "./exercise-detail.styles";
 
 const PAGE_SIZE = 5;
 

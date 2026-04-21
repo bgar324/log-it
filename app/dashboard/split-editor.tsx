@@ -6,7 +6,7 @@ import {
   type WorkoutSplitDayTemplate,
 } from "@/lib/workout-splits/shared";
 import { ExerciseTemplateRow } from "./exercise-template-row";
-import splitStyles from "./split-system.module.css";
+import { splitStyles } from "./split-system.styles";
 
 type SplitEditorProps = {
   day: WorkoutSplitDayTemplate;

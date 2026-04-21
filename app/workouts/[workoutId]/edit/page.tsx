@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { WorkoutLogger, type WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger";
+import { WorkoutLogger } from "@/app/workouts/new/workout-logger";
+import type { WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger.utils";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";

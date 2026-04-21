@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CursorDither } from "./components/cursor-dither";
 import { ThemeToggle } from "./components/theme-toggle";
 import { getSessionUser } from "@/lib/auth";
 
@@ -12,19 +11,13 @@ export default async function Home() {
   }
 
   return (
-    <main className="app-shell landing-shell">
-      <CursorDither />
+    <main className="app-shell">
       <section className="phone-stage" aria-label="Logit landing">
         <div className="content-stack">
           <div className="top-row">
             <h1 className="title">logit</h1>
             <ThemeToggle />
           </div>
-
-          <p className="subtitle">
-            A lightweight journal for sets, reps, and progress.
-          </p>
-
           <div className="action-row">
             <Link className="btn btn-primary" href="/auth?mode=signin">
               Sign in

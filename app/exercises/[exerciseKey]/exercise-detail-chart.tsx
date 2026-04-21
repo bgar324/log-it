@@ -10,7 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { getWeightUnitLabel, type WeightUnit } from "@/lib/weight-unit";
-import styles from "./exercise-detail.module.css";
+import { styles } from "./exercise-detail.styles";
 
 type ExerciseDetailChartProps = {
   series: Array<{

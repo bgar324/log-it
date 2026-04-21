@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { getWeightUnitLabel, type WeightUnit } from "@/lib/weight-unit";
-import styles from "./dashboard.module.css";
+import { styles } from "./dashboard.styles";
 
 type ProgressChartsProps = {
   weeklySeries: Array<{
@@ -29,10 +29,10 @@ const TOOLTIP_CONTENT_STYLE = {
   backgroundColor: "var(--surface)",
   border: "1px solid color-mix(in srgb, var(--text) 14%, transparent)",
   borderRadius: "6px",
-  fontSize: "12px",
+  fontSize: "0.72rem",
   color: "var(--text)",
 };
-const TOOLTIP_LABEL_STYLE = { color: "var(--muted)" };
+const TOOLTIP_LABEL_STYLE = { color: "var(--muted)", fontSize: "0.65rem" };
 
 export function ProgressCharts({ weeklySeries, weightUnit }: ProgressChartsProps) {
   const unitLabel = getWeightUnitLabel(weightUnit);
@@ -54,14 +54,14 @@ export function ProgressCharts({ weeklySeries, weightUnit }: ProgressChartsProps
                 dataKey="label"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
+                tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
               />
               <YAxis
                 allowDecimals={false}
                 tickLine={false}
                 axisLine={false}
                 width={28}
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
+                tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
               />
               <Tooltip
                 cursor={TOOLTIP_CURSOR}
@@ -98,14 +98,14 @@ export function ProgressCharts({ weeklySeries, weightUnit }: ProgressChartsProps
                 dataKey="label"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
+                tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
               />
               <YAxis
                 allowDecimals={false}
                 tickLine={false}
                 axisLine={false}
                 width={44}
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
+                tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
               />
               <Tooltip
                 cursor={TOOLTIP_CURSOR}

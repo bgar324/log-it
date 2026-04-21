@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 type Theme = "light" | "dark";
@@ -26,9 +27,15 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeToggle() {
+  const [theme, setTheme] = useState<Theme>(() =>
+    typeof window === "undefined" ? "light" : readCurrentTheme(),
+  );
+
   function handleToggle() {
     const current = readCurrentTheme();
-    applyTheme(current === "dark" ? "light" : "dark");
+    const nextTheme = current === "dark" ? "light" : "dark";
+    applyTheme(nextTheme);
+    setTheme(nextTheme);
   }
 
   return (
@@ -37,11 +44,20 @@ export function ThemeToggle() {
       className="theme-icon-toggle"
       onClick={handleToggle}
       aria-label="Toggle color theme"
+      aria-pressed={theme === "dark"}
     >
-      <span className="theme-toggle-slot theme-toggle-slot-sun" aria-hidden="true">
+      <span
+        className="theme-toggle-slot theme-toggle-slot-sun"
+        data-active={theme === "light"}
+        aria-hidden="true"
+      >
         <Sun className="theme-toggle-icon" strokeWidth={1.8} />
       </span>
-      <span className="theme-toggle-slot theme-toggle-slot-moon" aria-hidden="true">
+      <span
+        className="theme-toggle-slot theme-toggle-slot-moon"
+        data-active={theme === "dark"}
+        aria-hidden="true"
+      >
         <Moon className="theme-toggle-icon" strokeWidth={1.8} />
       </span>
     </button>

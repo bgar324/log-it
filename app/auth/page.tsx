@@ -13,12 +13,14 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   missing_fields: "Please complete all required fields.",
   invalid_email: "Use a valid email address.",
   email_mismatch: "Email and confirm email do not match.",
-  invalid_username: "Username must be 3-24 chars and only letters, numbers, or underscores.",
+  invalid_username:
+    "Username must be 3-24 chars and only letters, numbers, or underscores.",
   weak_password: "Password must be at least 8 characters.",
   password_mismatch: "Password and confirm password do not match.",
   account_exists: "An account with that email or username already exists.",
   invalid_credentials: "Username or password is incorrect.",
-  invalid_db_credentials: "Database credentials are invalid. Update DATABASE_URL and restart dev server.",
+  invalid_db_credentials:
+    "Database credentials are invalid. Update DATABASE_URL and restart dev server.",
   database_error: "Database is unavailable. Restart dev server and try again.",
   server_error: "Something went wrong. Please try again.",
 };
@@ -31,7 +33,7 @@ export default async function AuthPage({
   const params = await searchParams;
   const mode: Mode = params.mode === "signin" ? "signin" : "register";
   const errorMessage = params.error
-    ? AUTH_ERROR_MESSAGES[params.error] ?? "Unable to process that request."
+    ? (AUTH_ERROR_MESSAGES[params.error] ?? "Unable to process that request.")
     : null;
 
   const sessionUser = await getSessionUser();
@@ -46,7 +48,11 @@ export default async function AuthPage({
         <div className="content-stack">
           <div className="auth-top-row">
             <Link href="/" className="back-link" aria-label="Back">
-              <ChevronLeft className="back-icon" aria-hidden="true" strokeWidth={2.1} />
+              <ChevronLeft
+                className="back-icon"
+                aria-hidden="true"
+                strokeWidth={2.1}
+              />
             </Link>
             <ThemeToggle />
           </div>
@@ -111,16 +117,28 @@ function RegisterForm() {
         />
       </div>
 
-      <Field id="username" label="Username" name="username" autoComplete="off" />
-      <Field id="email" label="Email" name="email" type="email" autoComplete="email" />
       <Field
-        id="confirmEmail"
-        label="Confirm email"
-        name="confirmEmail"
-        type="email"
-        autoComplete="email"
+        id="username"
+        label="Username"
+        name="username"
+        autoComplete="off"
       />
-
+      <div className="form-grid form-grid-two">
+        <Field
+          id="email"
+          label="Email"
+          name="email"
+          type="email"
+          autoComplete="email"
+        />
+        <Field
+          id="confirmEmail"
+          label="Confirm email"
+          name="confirmEmail"
+          type="email"
+          autoComplete="email"
+        />
+      </div>
       <div className="form-grid form-grid-two">
         <PasswordField
           id="password"

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "react-datepicker/dist/react-datepicker.css";
 import "./globals.css";
 
 const themeInitScript = `(() => {

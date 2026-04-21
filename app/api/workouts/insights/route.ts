@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
         session.exerciseOrder = exerciseLog.order;
       }
 
-      for (const [setIndex, set] of exerciseLog.sets.entries()) {
+      for (const set of exerciseLog.sets) {
         session.setCount += 1;
         session.totalReps += set.reps;
 

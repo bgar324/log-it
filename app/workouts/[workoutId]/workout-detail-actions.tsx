@@ -4,7 +4,7 @@ import { Copy, CopyPlus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { copyTextToClipboard } from "@/lib/clipboard";
-import styles from "./workout-detail.module.css";
+import { styles } from "./workout-detail.styles";
 
 type WorkoutDetailActionsProps = {
   workoutId: string;
@@ -131,7 +131,7 @@ export function WorkoutDetailActions({
         aria-label="Copy workout"
       >
         <Copy className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
-        <span className={styles.actionButtonLabel}>Copy workout</span>
+        <span className={`${styles.actionButtonLabel} text-[0.76rem]`}>Copy workout</span>
       </button>
       <button
         type="button"
