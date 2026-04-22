@@ -1,5 +1,5 @@
 import { styles } from "./page.styles";
-import { DisplayEquation, Fraction } from "./research-equation";
+import { DisplayEquation } from "./research-equation";
 
 export function ResearchMethodologyB() {
   return (
@@ -13,17 +13,14 @@ export function ResearchMethodologyB() {
           window rather than a monotonic rule.
         </p>
         <DisplayEquation
+          latex={String.raw`R = f(d)`}
           note={
             <>
               <strong>Interpretation.</strong> <em>R</em> is the recovery multiplier selected
               from a piecewise function of elapsed days <em>d</em>.
             </>
           }
-        >
-          <span>
-            <em>R</em> = <em>f</em>(<em>d</em>)
-          </span>
-        </DisplayEquation>
+        />
         <div className={styles.tableWrap}>
           <table className={styles.curveTable}>
             <thead>
@@ -54,6 +51,10 @@ export function ResearchMethodologyB() {
           against the user&apos;s own historical median placement.
         </p>
         <DisplayEquation
+          latex={[
+            String.raw`\Delta_p = p_{\mathrm{current}} - \operatorname{median}(p_{\mathrm{history}})`,
+            String.raw`P = \operatorname{clamp}(1 - 0.015\Delta_p, 0.92, 1.05)`,
+          ]}
           note={
             <>
               <strong>Interpretation.</strong> Δ
@@ -61,17 +62,7 @@ export function ResearchMethodologyB() {
               historical median position. <em>P</em> is the resulting position multiplier.
             </>
           }
-        >
-          <span>
-            Δ<sub>p</sub> = <em>p</em>
-            <sub>current</sub> - median(<em>p</em>
-            <sub>history</sub>)
-          </span>
-          <span className={styles.equationGap} />
-          <span>
-            <em>P</em> = clamp(1 - 0.015Δ<sub>p</sub>, 0.92, 1.05)
-          </span>
-        </DisplayEquation>
+        />
       </section>
 
       <section className="legal-section">
@@ -82,6 +73,10 @@ export function ResearchMethodologyB() {
           structure.
         </p>
         <DisplayEquation
+          latex={[
+            String.raw`\rho_j = \frac{w_j}{w_{\mathrm{anchor}}}`,
+            String.raw`\delta_j = r_j - r_{\mathrm{anchor}}`,
+          ]}
           note={
             <>
               <strong>Interpretation.</strong> ρ
@@ -90,31 +85,7 @@ export function ResearchMethodologyB() {
               <sub>j</sub> is the rep delta relative to the anchor.
             </>
           }
-        >
-          <span>
-            ρ<sub>j</sub> ={" "}
-            <Fraction
-              numerator={
-                <>
-                  <em>w</em>
-                  <sub>j</sub>
-                </>
-              }
-              denominator={
-                <>
-                  <em>w</em>
-                  <sub>anchor</sub>
-                </>
-              }
-            />
-          </span>
-          <span className={styles.equationGap} />
-          <span>
-            δ<sub>j</sub> = <em>r</em>
-            <sub>j</sub> - <em>r</em>
-            <sub>anchor</sub>
-          </span>
-        </DisplayEquation>
+        />
         <p>
           Across recent sessions, the model takes the median ratio and median rep delta for
           each set index. If no stable history exists for a later set, it falls back to a
@@ -129,6 +100,10 @@ export function ResearchMethodologyB() {
           position, and trend adjustments.
         </p>
         <DisplayEquation
+          latex={[
+            String.raw`S_{\mathrm{pred}} = B \times R \times P \times T`,
+            String.raw`w_{\mathrm{pred}} = \frac{S_{\mathrm{pred}}}{1 + \frac{\min(r_{\mathrm{target}}, 12)}{30}}`,
+          ]}
           note={
             <>
               <strong>Interpretation.</strong> <em>S</em>
@@ -137,40 +112,12 @@ export function ResearchMethodologyB() {
               available gym increment, and sanity-clamped against recent reality.
             </>
           }
-        >
-          <span>
-            <em>S</em>
-            <sub>pred</sub> = <em>B</em> × <em>R</em> × <em>P</em> × <em>T</em>
-          </span>
-          <span className={styles.equationGap} />
-          <span>
-            <em>w</em>
-            <sub>pred</sub> ={" "}
-            <Fraction
-              numerator={
-                <>
-                  <em>S</em>
-                  <sub>pred</sub>
-                </>
-              }
-              denominator={
-                <>
-                  1 +{" "}
-                  <Fraction
-                    numerator={
-                      <>
-                        min(<em>r</em>
-                        <sub>target</sub>, 12)
-                      </>
-                    }
-                    denominator="30"
-                  />
-                </>
-              }
-            />
-          </span>
-        </DisplayEquation>
+        />
         <DisplayEquation
+          latex={[
+            String.raw`\hat{w}_j = \hat{w}_{\mathrm{anchor}} \times \operatorname{median}(\rho_j)`,
+            String.raw`\hat{r}_j = \hat{r}_{\mathrm{anchor}} + \operatorname{median}(\delta_j)`,
+          ]}
           note={
             <>
               <strong>Interpretation.</strong> The predicted weight and reps for later set{" "}
@@ -178,19 +125,7 @@ export function ResearchMethodologyB() {
               backoff structure.
             </>
           }
-        >
-          <span>
-            <em>ŵ</em>
-            <sub>j</sub> = <em>ŵ</em>
-            <sub>anchor</sub> × median(ρ<sub>j</sub>)
-          </span>
-          <span className={styles.equationGap} />
-          <span>
-            <em>r̂</em>
-            <sub>j</sub> = <em>r̂</em>
-            <sub>anchor</sub> + median(δ<sub>j</sub>)
-          </span>
-        </DisplayEquation>
+        />
       </section>
     </>
   );

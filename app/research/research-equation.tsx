@@ -1,34 +1,40 @@
 import type { ReactNode } from "react";
+import katex from "katex";
 import { styles } from "./page.styles";
 
 export function DisplayEquation({
-  children,
+  latex,
   note,
+  label,
 }: {
-  children: ReactNode;
+  latex: string | string[];
   note: ReactNode;
+  label?: string;
 }) {
+  const expressions = Array.isArray(latex) ? latex : [latex];
+
   return (
     <figure className={styles.equationFigure}>
-      <div className={styles.equation} aria-label="Mathematical expression">
-        {children}
+      <div
+        className={styles.equation}
+        aria-label={label ?? expressions.join(" ")}
+        role="math"
+      >
+        {expressions.map((expression, index) => (
+          <span
+            key={`${index}-${expression}`}
+            className={styles.equationExpression}
+            dangerouslySetInnerHTML={{
+              __html: katex.renderToString(expression, {
+                displayMode: false,
+                strict: "ignore",
+                throwOnError: false,
+              }),
+            }}
+          />
+        ))}
       </div>
       <figcaption className={styles.equationCaption}>{note}</figcaption>
     </figure>
-  );
-}
-
-export function Fraction({
-  numerator,
-  denominator,
-}: {
-  numerator: ReactNode;
-  denominator: ReactNode;
-}) {
-  return (
-    <span className={styles.fraction}>
-      <span className={styles.fractionTop}>{numerator}</span>
-      <span className={styles.fractionBottom}>{denominator}</span>
-    </span>
   );
 }

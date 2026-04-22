@@ -11,6 +11,7 @@ export function ResearchFraming() {
           recent sessions, recency of last exposure, and positional match.
         </p>
         <DisplayEquation
+          latex={String.raw`C = 0.35H + 0.30K + 0.20E + 0.15M`}
           note={
             <>
               <strong>Interpretation.</strong> <em>C</em> is the final confidence score.{" "}
@@ -18,11 +19,7 @@ export function ResearchFraming() {
               recency, and <em>M</em> is positional match.
             </>
           }
-        >
-          <span>
-            <em>C</em> = 0.35<em>H</em> + 0.30<em>K</em> + 0.20<em>E</em> + 0.15<em>M</em>
-          </span>
-        </DisplayEquation>
+        />
         <p>
           The confidence label is intentionally coarse. High confidence means the data is
           dense and coherent. Medium confidence means the recommendation is useful but should

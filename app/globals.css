@@ -233,10 +233,14 @@ a {
 }
 
 .action-row {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
   margin-top: 0.2rem;
+}
+
+.action-row .btn {
+  min-width: 0;
 }
 
 .btn {
@@ -683,11 +687,4 @@ a {
     width: min(100%, 31.5rem);
   }
 
-  .action-row {
-    flex-direction: row;
-  }
-
-  .action-row .btn {
-    flex: 1;
-  }
 }

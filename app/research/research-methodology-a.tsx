@@ -1,5 +1,4 @@
-import { styles } from "./page.styles";
-import { DisplayEquation, Fraction } from "./research-equation";
+import { DisplayEquation } from "./research-equation";
 
 export function ResearchMethodologyA() {
   return (
@@ -11,6 +10,10 @@ export function ResearchMethodologyA() {
           model therefore converts each set into a capped strength signal.
         </p>
         <DisplayEquation
+          latex={[
+            String.raw`r_{\mathrm{eff}} = \min(r, 12)`,
+            String.raw`S = w \times \left(1 + \frac{r_{\mathrm{eff}}}{30}\right)`,
+          ]}
           note={
             <>
               <strong>Interpretation.</strong> <em>r</em>
@@ -18,26 +21,7 @@ export function ResearchMethodologyA() {
               twelve. <em>S</em> is the capped strength score used by the predictor.
             </>
           }
-        >
-          <span>
-            <em>r</em>
-            <sub>eff</sub> = min(<em>r</em>, 12)
-          </span>
-          <span className={styles.equationGap} />
-          <span>
-            <em>S</em> = <em>w</em> × (1 +{" "}
-            <Fraction
-              numerator={
-                <>
-                  <em>r</em>
-                  <sub>eff</sub>
-                </>
-              }
-              denominator="30"
-            />
-            )
-          </span>
-        </DisplayEquation>
+        />
         <p>
           The cap is intentional. High-rep sets can distort e1RM-style estimates. The
           predictor is more stable when very long sets are prevented from dominating the
@@ -54,6 +38,7 @@ export function ResearchMethodologyA() {
           earliest set.
         </p>
         <DisplayEquation
+          latex={String.raw`a_k = \operatorname*{arg\,max}_j S_{k,j}`}
           note={
             <>
               <strong>Interpretation.</strong> For session <em>k</em>, the anchor <em>a</em>
@@ -61,14 +46,7 @@ export function ResearchMethodologyA() {
               session.
             </>
           }
-        >
-          <span>
-            <em>a</em>
-            <sub>k</sub> = arg max
-            <sub>j</sub> <em>S</em>
-            <sub>k,j</sub>
-          </span>
-        </DisplayEquation>
+        />
         <p>
           If a session contains only bodyweight sets, the model falls back to the highest-rep
           set and lowers the eventual confidence ceiling.
@@ -82,6 +60,10 @@ export function ResearchMethodologyA() {
           one unusual day does not take over the estimate.
         </p>
         <DisplayEquation
+          latex={[
+            String.raw`\omega_i = e^{-0.35i}`,
+            String.raw`B = \frac{\sum_i S_i \omega_i}{\sum_i \omega_i}`,
+          ]}
           note={
             <>
               <strong>Interpretation.</strong> <em>ω</em>
@@ -90,33 +72,7 @@ export function ResearchMethodologyA() {
               adjustments.
             </>
           }
-        >
-          <span>
-            <em>ω</em>
-            <sub>i</sub> = e
-            <sup>-0.35i</sup>
-          </span>
-          <span className={styles.equationGap} />
-          <span>
-            <em>B</em> ={" "}
-            <Fraction
-              numerator={
-                <>
-                  Σ<sub>i</sub> <em>S</em>
-                  <sub>i</sub>
-                  <em>ω</em>
-                  <sub>i</sub>
-                </>
-              }
-              denominator={
-                <>
-                  Σ<sub>i</sub> <em>ω</em>
-                  <sub>i</sub>
-                </>
-              }
-            />
-          </span>
-        </DisplayEquation>
+        />
       </section>
 
       <section className="legal-section">
@@ -126,6 +82,10 @@ export function ResearchMethodologyA() {
           noisy, so trend is allowed to nudge the anchor estimate rather than drive it.
         </p>
         <DisplayEquation
+          latex={[
+            String.raw`\tau = \frac{S_0 - S_2}{S_2}`,
+            String.raw`T = \operatorname{clamp}(1 + 0.35\tau, 0.97, 1.03)`,
+          ]}
           note={
             <>
               <strong>Interpretation.</strong> <em>τ</em> measures the relative change
@@ -133,30 +93,7 @@ export function ResearchMethodologyA() {
               a damped trend multiplier.
             </>
           }
-        >
-          <span>
-            <em>τ</em> ={" "}
-            <Fraction
-              numerator={
-                <>
-                  <em>S</em>
-                  <sub>0</sub> - <em>S</em>
-                  <sub>2</sub>
-                </>
-              }
-              denominator={
-                <>
-                  <em>S</em>
-                  <sub>2</sub>
-                </>
-              }
-            />
-          </span>
-          <span className={styles.equationGap} />
-          <span>
-            <em>T</em> = clamp(1 + 0.35<em>τ</em>, 0.97, 1.03)
-          </span>
-        </DisplayEquation>
+        />
       </section>
     </>
   );
