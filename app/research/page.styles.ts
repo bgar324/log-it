@@ -4,6 +4,8 @@ export const styles = {
     "m-0 text-[clamp(1.35rem,5vw,1.7rem)] leading-[1.02] tracking-[-0.04em] font-[560]",
   sectionList: "flex flex-col gap-[1.15rem]",
   paperDirectory: "flex flex-col gap-[0.72rem]",
+  pageIntro:
+    "m-0 text-[0.9rem] leading-[1.6] text-[color-mix(in_srgb,var(--text)_88%,var(--muted))]",
   paperCard:
     "flex items-center justify-between gap-[1rem] rounded-[0.72rem] border border-[color-mix(in_srgb,var(--text)_10%,transparent)] bg-transparent px-[1rem] py-[0.95rem] text-[var(--text)] transition-[border-color,background-color] duration-150 hover:border-[color-mix(in_srgb,var(--text)_18%,transparent)] hover:bg-[color-mix(in_srgb,var(--text)_3%,transparent)]",
   paperCardBody: "flex flex-col gap-[0.62rem]",
@@ -35,4 +37,6 @@ export const styles = {
   tableWrap: "overflow-x-auto",
   curveTable:
     "w-full border-collapse text-[0.84rem] leading-[1.45] [&_th]:border-b [&_td]:border-b [&_th]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_td]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_th]:px-0 [&_td]:px-0 [&_th]:py-[0.62rem] [&_td]:py-[0.62rem] [&_th]:text-left [&_td]:text-left [&_th]:text-[var(--muted)] [&_th]:text-[0.72rem] [&_th]:tracking-[0.08em] [&_th]:uppercase [&_th]:font-medium [&_th:last-child]:text-right [&_td:last-child]:text-right",
+  definitionTable:
+    "w-full border-collapse text-[0.84rem] leading-[1.5] [&_th]:border-b [&_td]:border-b [&_th]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_td]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_th]:px-0 [&_td]:px-0 [&_th]:py-[0.62rem] [&_td]:py-[0.7rem] [&_th]:text-left [&_td]:text-left [&_th]:align-bottom [&_td]:align-top [&_th]:text-[var(--muted)] [&_th]:text-[0.72rem] [&_th]:tracking-[0.08em] [&_th]:uppercase [&_th]:font-medium",
 } as const;

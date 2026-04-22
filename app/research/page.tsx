@@ -2,10 +2,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ThemeToggle } from "../components/theme-toggle";
 import { styles } from "./page.styles";
-import {
-  SCORED_HEURISTIC_PREDICTOR_TITLE,
-  SCORED_HEURISTIC_PREDICTOR_UPDATED_AT,
-} from "./scored-heuristic-predictor-paper";
+import { RESEARCH_PAPERS } from "./papers";
 
 export default function ResearchPage() {
   return (
@@ -21,21 +18,19 @@ export default function ResearchPage() {
 
           <h1 className="title legal-title">research</h1>
           <section className={styles.paperDirectory} aria-label="Research papers">
-            <Link href="/research/shp" className={styles.paperCard}>
-              <div className={styles.paperCardBody}>
-                <h2 className={styles.paperCardTitle}>
-                  {SCORED_HEURISTIC_PREDICTOR_TITLE}
-                </h2>
-                <p className={styles.paperCardDate}>
-                  Last updated {SCORED_HEURISTIC_PREDICTOR_UPDATED_AT}
-                </p>
-              </div>
-              <ChevronRight
-                className={styles.paperCardArrow}
-                aria-hidden="true"
-                strokeWidth={1.8}
-              />
-            </Link>
+            {RESEARCH_PAPERS.map((paper) => (
+              <Link key={paper.href} href={paper.href} className={styles.paperCard}>
+                <div className={styles.paperCardBody}>
+                  <h2 className={styles.paperCardTitle}>{paper.title}</h2>
+                  <p className={styles.paperCardDate}>Last updated {paper.updatedAt}</p>
+                </div>
+                <ChevronRight
+                  className={styles.paperCardArrow}
+                  aria-hidden="true"
+                  strokeWidth={1.8}
+                />
+              </Link>
+            ))}
           </section>
         </div>
       </section>
