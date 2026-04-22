@@ -12,7 +12,6 @@ import { styles } from "../dashboard.styles";
 type DashboardShellProps = {
   activeView: DashboardView;
   title: string;
-  greeting: string;
   profileLabel: string;
   canLogWorkout: boolean;
   mobileMenuOpen: boolean;
@@ -25,7 +24,6 @@ type DashboardShellProps = {
 export function DashboardShell({
   activeView,
   title,
-  greeting,
   profileLabel,
   canLogWorkout,
   mobileMenuOpen,
@@ -108,9 +106,6 @@ export function DashboardShell({
       <section className={styles.main}>
         <header className={styles.header}>
           <div className={styles.headerText}>
-            <p className={styles.headerGreeting} suppressHydrationWarning>
-              {greeting}
-            </p>
             <h1 className={styles.title}>{title}</h1>
           </div>
 

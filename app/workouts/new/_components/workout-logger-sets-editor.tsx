@@ -32,16 +32,6 @@ export function WorkoutLoggerSetsEditor({
 }: WorkoutLoggerSetsEditorProps) {
   return (
     <div className={styles.setsStack}>
-      <div
-        className={`${styles.setRow} ${styles.setRowHeader}`}
-        aria-hidden="true"
-      >
-        <span className={styles.setHeadLabel}>Set</span>
-        <span className={styles.setHeadLabel}>Weight ({weightUnitLabel})</span>
-        <span className={styles.setHeadLabel}>Reps</span>
-        <span className={styles.setHeadLabel}>Action</span>
-      </div>
-
       {exercise.sets.map((setItem, setIndex) => (
         <div key={setItem.id} className={styles.setRow}>
           <p className={styles.setNumber}>#{setIndex + 1}</p>

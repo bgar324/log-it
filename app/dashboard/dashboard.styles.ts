@@ -40,8 +40,7 @@ export const styles = {
     "mx-auto flex w-full max-w-[92rem] flex-1 flex-col gap-[0.86rem] bg-[var(--bg)] px-[0.96rem] pt-[1rem] pb-[1.2rem] max-[760px]:px-[0.82rem] min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:overflow-y-auto min-[900px]:overscroll-contain min-[900px]:px-[1.18rem] min-[900px]:pt-[1.06rem] min-[900px]:pb-[1.3rem] [scrollbar-gutter:stable]",
   header:
     "flex items-start justify-between gap-[0.75rem] max-[760px]:items-center",
-  headerText: "flex min-w-0 flex-col gap-[0.14rem]",
-  headerGreeting: "m-0 min-h-[1.05rem] text-[0.72rem] text-[var(--muted)]",
+  headerText: "flex min-w-0 flex-col",
   title:
     "m-0 text-[clamp(1.55rem,6.8vw,2.2rem)] leading-[1.05] tracking-[-0.03em] font-[540]",
   headerActions:

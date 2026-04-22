@@ -35,10 +35,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     data.split,
   );
   const todayPlan = useDashboardTodayPlan(activeView, data.overview.todayPlan);
-  const greetingName = useMemo(() => {
-    const trimmed = (profileFormState.profile.firstName ?? "").trim();
-    return trimmed || profileFormState.profile.username;
-  }, [profileFormState.profile.firstName, profileFormState.profile.username]);
   const profileLabel = useMemo(() => {
     const firstName = (profileFormState.profile.firstName ?? "").trim();
     const lastName = (profileFormState.profile.lastName ?? "").trim();
@@ -50,16 +46,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     profileFormState.profile.lastName,
     profileFormState.profile.username,
   ]);
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    const prefix =
-      hour < 12
-        ? "Good morning"
-        : hour < 17
-          ? "Good afternoon"
-          : "Good evening";
-    return `${prefix}, ${greetingName}`;
-  }, [greetingName]);
   const displayWeightUnit = profileFormState.profile.preferredWeightUnit;
 
   function navigateToView(view: DashboardView) {
@@ -78,7 +64,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     <DashboardShell
       activeView={activeView}
       title={VIEW_TITLES[activeView]}
-      greeting={greeting}
       profileLabel={profileLabel}
       canLogWorkout={!todayPlan.isRestDay}
       mobileMenuOpen={mobileMenuOpen}

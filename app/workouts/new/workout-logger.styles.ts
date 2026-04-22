@@ -58,6 +58,43 @@ export const styles = {
     iconButtonBase,
     "!h-auto !w-auto shrink-0 self-stretch aspect-square rounded-[0.52rem]",
   ),
+  confirmOverlay: cn(
+    "fixed inset-0 z-[80] flex items-end justify-center",
+    "bg-[color:color-mix(in_srgb,#000_36%,transparent)] px-[0.78rem] pt-[0.78rem]",
+    "pb-[calc(0.78rem+env(safe-area-inset-bottom))]",
+    "min-[620px]:items-center min-[620px]:p-[1rem]",
+  ),
+  confirmDialog: cn(
+    "flex w-full max-w-[26rem] flex-col gap-[0.62rem] rounded-[0.82rem] border bg-[var(--bg)] p-[0.82rem]",
+    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
+    "shadow-[0_18px_44px_color-mix(in_srgb,#000_24%,transparent)]",
+  ),
+  confirmEyebrow:
+    "m-0 text-[0.72rem] uppercase tracking-[0.08em] text-[var(--muted)]",
+  confirmTitle:
+    "m-0 text-[1rem] leading-[1.15] tracking-[-0.015em] font-[560] text-[var(--text)]",
+  confirmBody:
+    "m-0 text-[0.84rem] leading-[1.45] text-[color:color-mix(in_srgb,var(--text)_92%,var(--muted))]",
+  confirmActions:
+    "flex flex-col gap-[0.5rem] pt-[0.1rem] min-[620px]:flex-row min-[620px]:justify-end",
+  confirmSecondaryButton: cn(
+    "inline-flex min-h-[2.75rem] items-center justify-center rounded-[0.56rem] border bg-[var(--bg)] px-[0.9rem]",
+    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
+    "text-[0.84rem] text-[var(--text)] [touch-action:manipulation]",
+    "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
+    "disabled:cursor-not-allowed disabled:opacity-[0.45]",
+    "min-[620px]:min-w-[9.5rem]",
+  ),
+  confirmPrimaryButton: cn(
+    "inline-flex min-h-[2.75rem] items-center justify-center rounded-[0.56rem] border px-[0.9rem]",
+    "border-[color:color-mix(in_srgb,#b13d48_34%,transparent)]",
+    "bg-[color:color-mix(in_srgb,#b13d48_10%,var(--bg))]",
+    "text-[0.84rem] text-[#b13d48] [touch-action:manipulation]",
+    "hover:border-[color:color-mix(in_srgb,#b13d48_46%,transparent)]",
+    "hover:bg-[color:color-mix(in_srgb,#b13d48_14%,var(--bg))]",
+    "disabled:cursor-not-allowed disabled:opacity-[0.45]",
+    "min-[620px]:min-w-[9.5rem]",
+  ),
   label: "text-[0.68rem] text-[var(--muted)]",
   input: inputBase,
   datePickerWrapper:
@@ -126,7 +163,7 @@ export const styles = {
     "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
     "bg-[var(--field-bg)]",
   ),
-  searchResultsLabel: "m-0 text-[0.7rem] tracking-[0.04em] text-[var(--muted)]",
+  searchResultsLabel: "m-0 text-[0.7rem] text-[var(--muted)]",
   searchResultsList:
     "flex max-h-[12rem] flex-wrap gap-[0.42rem] overflow-y-auto max-[420px]:max-h-[14rem] max-[420px]:flex-col max-[420px]:flex-nowrap",
   searchResultButton: cn(
@@ -151,7 +188,7 @@ export const styles = {
   ),
   compareGrid: "flex flex-col gap-[0.44rem]",
   compareItem: "flex flex-col gap-[0.12rem]",
-  compareLabel: "m-0 text-[0.67rem] tracking-[0.04em] text-[var(--muted)]",
+  compareLabel: "m-0 text-[0.67rem] text-[var(--muted)]",
   compareValue: "m-0 text-[0.88rem] leading-[1.2]",
   compareSnapshot: "flex flex-col gap-[0.4rem]",
   compareSetList: "flex flex-col gap-[0.36rem]",
@@ -209,7 +246,7 @@ export const styles = {
   setFieldLabel:
     "text-[0.64rem] text-[var(--muted)] min-[620px]:hidden",
   setRemoveButton:
-    "order-2 h-[1.65rem] w-[1.65rem] self-start justify-self-end rounded-[0.4rem] min-[620px]:order-4",
+    "order-2 !h-[2.55rem] !w-[2.55rem] self-start justify-self-end !rounded-[0.52rem] min-[620px]:order-4",
   setActions: "flex w-full min-[620px]:justify-end [&>button]:w-full",
   secondaryButton: cn(
     "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center gap-[0.44rem] rounded-[0.56rem] border bg-[var(--bg)] px-[0.85rem]",
