@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken, getSessionUser, setSessionCookie } from "@/lib/auth";
 import { isWeightUnit } from "@/lib/weight-unit";
 import { prisma } from "@/lib/prisma";
+import {
+  getInvalidRequestOriginError,
+  isTrustedMutationRequest,
+} from "@/lib/request-security";
 
 function toOptionalName(value: unknown) {
   if (typeof value !== "string") {
@@ -18,6 +22,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 export async function PATCH(request: NextRequest) {
+  if (!isTrustedMutationRequest(request)) {
+    return NextResponse.json({ ok: false, error: getInvalidRequestOriginError() }, { status: 403 });
+  }
+
   const user = await getSessionUser();
 
   if (!user) {
@@ -75,7 +83,7 @@ export async function PATCH(request: NextRequest) {
       },
     });
     const token = await createSessionToken(updated);
-    setSessionCookie(response, token);
+    setSessionCookie(response, token, request);
 
     return response;
   } catch (error) {
@@ -84,14 +92,14 @@ export async function PATCH(request: NextRequest) {
       (error.code === "P2021" || error.code === "P2022")
     ) {
       return NextResponse.json(
-        { ok: false, error: "Database schema mismatch. Apply Prisma schema updates and retry." },
+        { ok: false, error: "Service temporarily unavailable." },
         { status: 503 },
       );
     }
 
     if (error instanceof Prisma.PrismaClientInitializationError) {
       return NextResponse.json(
-        { ok: false, error: "Database unavailable. Check DATABASE_URL and restart dev server." },
+        { ok: false, error: "Service temporarily unavailable." },
         { status: 503 },
       );
     }

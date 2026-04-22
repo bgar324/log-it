@@ -1,22 +1,20 @@
+import { randomBytes } from "node:crypto";
 import { compare, hash } from "bcryptjs";
 import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextResponse } from "next/server";
 import { prisma } from "./prisma";
-import { DEFAULT_WEIGHT_UNIT, type WeightUnit } from "./weight-unit";
 
 const SESSION_COOKIE = "logit_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+const SESSION_ISSUER = "logit";
+
+let developmentSessionSecret: Uint8Array | null = null;
+let hasWarnedAboutMissingAuthSecret = false;
 
 type SessionClaims = {
   sub: string;
-  email: string;
-  username: string;
-  firstName: string | null;
-  lastName?: string | null;
-  preferredWeightUnit?: WeightUnit;
-  createdAt?: string;
   iat?: number;
   exp?: number;
 };
@@ -38,11 +36,24 @@ function getSessionSecret() {
     return new TextEncoder().encode(secret);
   }
 
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("AUTH_SECRET must be set in production.");
+  if (process.env.NODE_ENV === "test") {
+    return new TextEncoder().encode("test-only-auth-secret");
   }
 
-  return new TextEncoder().encode("dev-only-auth-secret-change-me");
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error("AUTH_SECRET must be set outside development.");
+  }
+
+  if (!developmentSessionSecret) {
+    developmentSessionSecret = randomBytes(32);
+  }
+
+  if (!hasWarnedAboutMissingAuthSecret) {
+    hasWarnedAboutMissingAuthSecret = true;
+    console.warn("AUTH_SECRET is not set. Using an ephemeral development session secret.");
+  }
+
+  return developmentSessionSecret;
 }
 
 export async function hashPassword(rawPassword: string) {
@@ -55,46 +66,60 @@ export async function verifyPassword(rawPassword: string, passwordHash: string) 
 
 export async function createSessionToken(user: {
   id: string;
-  email: string;
-  username: string;
-  firstName: string | null;
-  lastName?: string | null;
-  preferredWeightUnit?: WeightUnit;
-  createdAt?: Date;
 }) {
-  return new SignJWT({
-    email: user.email,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName ?? null,
-    preferredWeightUnit: user.preferredWeightUnit ?? DEFAULT_WEIGHT_UNIT,
-    createdAt: user.createdAt?.toISOString() ?? new Date(0).toISOString(),
-  })
-    .setProtectedHeader({ alg: "HS256" })
+  return new SignJWT({})
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setSubject(user.id)
     .setIssuedAt()
+    .setIssuer(SESSION_ISSUER)
     .setExpirationTime(`${SESSION_MAX_AGE_SECONDS}s`)
     .sign(getSessionSecret());
 }
 
-export function setSessionCookie(response: NextResponse, token: string) {
+function shouldUseSecureCookies(request?: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return true;
+  }
+
+  if (!request) {
+    return false;
+  }
+
+  const forwardedProto = request.headers
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim()
+    .toLowerCase();
+
+  if (forwardedProto) {
+    return forwardedProto === "https";
+  }
+
+  return new URL(request.url).protocol === "https:";
+}
+
+export function setSessionCookie(
+  response: NextResponse,
+  token: string,
+  request?: Request,
+) {
   response.cookies.set({
     name: SESSION_COOKIE,
     value: token,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookies(request),
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,
   });
 }
 
-export function clearSessionCookie(response: NextResponse) {
+export function clearSessionCookie(response: NextResponse, request?: Request) {
   response.cookies.set({
     name: SESSION_COOKIE,
     value: "",
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookies(request),
     sameSite: "lax",
     path: "/",
     maxAge: 0,
@@ -110,28 +135,14 @@ export async function getSessionClaims() {
   }
 
   try {
-    const { payload } = await jwtVerify(token, getSessionSecret());
+    const { payload } = await jwtVerify(token, getSessionSecret(), {
+      algorithms: ["HS256"],
+      issuer: SESSION_ISSUER,
+    });
     return payload as SessionClaims;
   } catch {
     return null;
   }
-}
-
-function claimsHaveEmbeddedProfile(
-  claims: SessionClaims,
-): claims is SessionClaims & {
-  lastName: string | null;
-  preferredWeightUnit: WeightUnit;
-  createdAt: string;
-} {
-  return (
-    typeof claims.email === "string" &&
-    typeof claims.username === "string" &&
-    (claims.firstName === null || typeof claims.firstName === "string") &&
-    (claims.lastName === null || typeof claims.lastName === "string") &&
-    (claims.preferredWeightUnit === "LB" || claims.preferredWeightUnit === "KG") &&
-    typeof claims.createdAt === "string"
-  );
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
@@ -139,22 +150,6 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
   if (!claims?.sub) {
     return null;
-  }
-
-  if (claimsHaveEmbeddedProfile(claims)) {
-    const createdAt = new Date(claims.createdAt);
-
-    if (!Number.isNaN(createdAt.getTime())) {
-      return {
-        id: claims.sub,
-        email: claims.email,
-        username: claims.username,
-        firstName: claims.firstName ?? null,
-        lastName: claims.lastName ?? null,
-        preferredWeightUnit: claims.preferredWeightUnit,
-        createdAt,
-      };
-    }
   }
 
   return prisma.user.findUnique({

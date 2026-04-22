@@ -8,7 +8,9 @@ export function ResearchFraming() {
         <p>
           A recommendation without confidence invites false precision. The model therefore
           scores the output using four dimensions: history depth, internal consistency of
-          recent sessions, recency of last exposure, and positional match.
+          recent sessions, recency of last exposure, and positional match. The confidence
+          score is not meant to impress. It is meant to communicate how much trust the
+          available evidence deserves.
         </p>
         <DisplayEquation
           latex={String.raw`C = 0.35H + 0.30K + 0.20E + 0.15M`}
@@ -25,6 +27,11 @@ export function ResearchFraming() {
           dense and coherent. Medium confidence means the recommendation is useful but should
           be treated with some caution. Low confidence means the product is surfacing a
           best-effort starting point, not a strong claim.
+        </p>
+        <p>
+          The implementation also applies hard conservative rules on top of the weighted
+          score. A prediction based on only one matching session is forced to low confidence,
+          and bodyweight-only predictions cannot exceed medium confidence.
         </p>
       </section>
 
@@ -44,8 +51,9 @@ export function ResearchFraming() {
         </p>
         <p>
           For that reason, the Scored Heuristic Predictor is framed as a recommendation engine
-          rather than a perfect predictor. Its job is to provide a credible place to start.
-          Its job is not to claim certainty where the evidence does not support it.
+          rather than a perfect predictor, a programming oracle, or a hidden physiology model.
+          Its job is to provide a credible place to start. Its job is not to claim certainty
+          where the evidence does not support it.
         </p>
       </section>
     </>

@@ -3,6 +3,16 @@ export const styles = {
   paperTitle:
     "m-0 text-[clamp(1.35rem,5vw,1.7rem)] leading-[1.02] tracking-[-0.04em] font-[560]",
   sectionList: "flex flex-col gap-[1.15rem]",
+  paperDirectory: "flex flex-col gap-[0.72rem]",
+  paperCard:
+    "flex items-center justify-between gap-[1rem] rounded-[0.72rem] border border-[color-mix(in_srgb,var(--text)_10%,transparent)] bg-transparent px-[1rem] py-[0.95rem] text-[var(--text)] transition-[border-color,background-color] duration-150 hover:border-[color-mix(in_srgb,var(--text)_18%,transparent)] hover:bg-[color-mix(in_srgb,var(--text)_3%,transparent)]",
+  paperCardBody: "flex flex-col gap-[0.62rem]",
+  paperCardTitle:
+    "m-0 text-[clamp(1.08rem,4vw,1.28rem)] leading-[1.08] tracking-[-0.03em] font-[560]",
+  paperCardDate:
+    "m-0 text-[0.82rem] text-[color-mix(in_srgb,var(--text)_18%,var(--muted))]",
+  paperCardArrow:
+    "h-[1.15rem] w-[1.15rem] shrink-0 stroke-current text-[color-mix(in_srgb,var(--text)_78%,var(--muted))]",
   inputRows: "flex flex-col gap-[0.7rem]",
   inputRow: "grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[0.8rem]",
   inputKey:

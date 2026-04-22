@@ -247,7 +247,6 @@ a {
   border: none;
   border-radius: 0.52rem;
   font-size: 0.92rem;
-  letter-spacing: 0.003em;
   padding: 0.8rem 0.95rem;
   text-align: center;
   cursor: pointer;
@@ -383,7 +382,6 @@ a {
   margin: -0.3rem 0 0;
   color: var(--muted);
   font-size: 0.78rem;
-  letter-spacing: 0.02em;
 }
 
 .legal-subtitle {
@@ -407,7 +405,6 @@ a {
   background: var(--field-bg);
   color: var(--text);
   font-size: 0.8rem;
-  letter-spacing: 0.02em;
   transition: filter 150ms ease;
 }
 
@@ -427,7 +424,6 @@ a {
 .legal-heading {
   margin: 0;
   font-size: 0.96rem;
-  letter-spacing: 0.01em;
   font-weight: 600;
 }
 

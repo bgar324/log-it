@@ -19,9 +19,8 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   password_mismatch: "Password and confirm password do not match.",
   account_exists: "An account with that email or username already exists.",
   invalid_credentials: "Username or password is incorrect.",
-  invalid_db_credentials:
-    "Database credentials are invalid. Update DATABASE_URL and restart dev server.",
-  database_error: "Database is unavailable. Restart dev server and try again.",
+  invalid_request: "Unable to validate that request.",
+  service_unavailable: "Service is temporarily unavailable. Please try again.",
   server_error: "Something went wrong. Please try again.",
 };
 

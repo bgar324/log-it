@@ -5,6 +5,10 @@ import { getSessionUser } from "@/lib/auth";
 import { getWorkoutDataTag } from "@/lib/cache-tags";
 import { syncWorkoutReadModels } from "@/lib/workout-read-models";
 import { deleteWorkout, WORKOUT_NOT_FOUND_ERROR } from "@/lib/workouts/service";
+import {
+  getInvalidRequestOriginError,
+  isTrustedMutationRequest,
+} from "@/lib/request-security";
 
 type RouteContext = {
   params: Promise<{ workoutId: string }>;
@@ -16,7 +20,7 @@ function toWorkoutDeleteErrorResponse(error: unknown) {
     (error.code === "P2021" || error.code === "P2022")
   ) {
     return NextResponse.json(
-      { error: "Database schema mismatch. Apply Prisma migrations and retry." },
+      { error: "Service temporarily unavailable." },
       { status: 503 },
     );
   }
@@ -26,14 +30,14 @@ function toWorkoutDeleteErrorResponse(error: unknown) {
     error.code === "P2028"
   ) {
     return NextResponse.json(
-      { error: "Database transaction timed out. Please retry." },
+      { error: "Service temporarily unavailable." },
       { status: 503 },
     );
   }
 
   if (error instanceof Prisma.PrismaClientInitializationError) {
     return NextResponse.json(
-      { error: "Database unavailable. Check DATABASE_URL and restart dev server." },
+      { error: "Service temporarily unavailable." },
       { status: 503 },
     );
   }
@@ -44,7 +48,11 @@ function toWorkoutDeleteErrorResponse(error: unknown) {
   );
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
+  if (!isTrustedMutationRequest(request)) {
+    return NextResponse.json({ error: getInvalidRequestOriginError() }, { status: 403 });
+  }
+
   const user = await getSessionUser();
 
   if (!user) {

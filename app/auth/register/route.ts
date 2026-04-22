@@ -6,6 +6,7 @@ import {
   setSessionCookie,
 } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isTrustedMutationRequest } from "@/lib/request-security";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,24}$/;
@@ -16,6 +17,10 @@ function redirectWithError(request: NextRequest, error: string) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isTrustedMutationRequest(request)) {
+    return redirectWithError(request, "invalid_request");
+  }
+
   try {
     const formData = await request.formData();
 
@@ -99,7 +104,7 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.redirect(new URL("/dashboard", request.url), {
       status: 303,
     });
-    setSessionCookie(response, token);
+    setSessionCookie(response, token, request);
 
     return response;
   } catch (error) {
@@ -112,22 +117,13 @@ export async function POST(request: NextRequest) {
 
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2021"
+      (error.code === "P2021" || error.code === "P2022")
     ) {
-      return redirectWithError(request, "database_error");
+      return redirectWithError(request, "service_unavailable");
     }
 
     if (error instanceof Prisma.PrismaClientInitializationError) {
-      const message = error.message.toLowerCase();
-
-      if (
-        message.includes("authentication failed") ||
-        message.includes("tenant or user not found")
-      ) {
-        return redirectWithError(request, "invalid_db_credentials");
-      }
-
-      return redirectWithError(request, "database_error");
+      return redirectWithError(request, "service_unavailable");
     }
 
     console.error("register route failure:", error);

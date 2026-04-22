@@ -10,7 +10,9 @@ export function ResearchMethodologyB() {
           Recovery is not modeled as a linear reward for more time away from the lift. Very
           short gaps often imply residual fatigue. Very long gaps often imply some detraining
           or loss of recent movement groove. The model therefore uses a centered recovery
-          window rather than a monotonic rule.
+          window rather than a monotonic rule. The product assumption is simple: there is a
+          normal range where repeat exposure is timely without being so close that residual
+          fatigue or so distant that recent specificity is lost.
         </p>
         <DisplayEquation
           latex={String.raw`R = f(d)`}
@@ -30,13 +32,13 @@ export function ResearchMethodologyB() {
               </tr>
             </thead>
             <tbody>
-              <tr><td>0–1</td><td>0.94</td></tr>
+              <tr><td>0-1</td><td>0.94</td></tr>
               <tr><td>2</td><td>0.98</td></tr>
-              <tr><td>3–5</td><td>1.00</td></tr>
-              <tr><td>6–8</td><td>0.99</td></tr>
-              <tr><td>9–14</td><td>0.97</td></tr>
-              <tr><td>15–28</td><td>0.94</td></tr>
-              <tr><td>29–60</td><td>0.90</td></tr>
+              <tr><td>3-5</td><td>1.00</td></tr>
+              <tr><td>6-8</td><td>0.99</td></tr>
+              <tr><td>9-14</td><td>0.97</td></tr>
+              <tr><td>15-28</td><td>0.94</td></tr>
+              <tr><td>29-60</td><td>0.90</td></tr>
               <tr><td>60+</td><td>0.85</td></tr>
             </tbody>
           </table>
@@ -48,7 +50,9 @@ export function ResearchMethodologyB() {
         <p>
           The same exercise performed first is not directly comparable to the same exercise
           performed third. Position therefore enters the model as a relative adjustment
-          against the user&apos;s own historical median placement.
+          against the user&apos;s own historical median placement. If the system has no
+          meaningful positional history for the lift, this term defaults to neutral rather
+          than inventing a penalty or bonus.
         </p>
         <DisplayEquation
           latex={[
@@ -70,7 +74,8 @@ export function ResearchMethodologyB() {
         <p>
           The predictor does not solve every visible set from scratch. It predicts the anchor
           set first and then reconstructs later sets using the user&apos;s historical backoff
-          structure.
+          structure. This keeps the output closer to how the user actually trains instead of
+          treating each later set as an isolated forecasting problem.
         </p>
         <DisplayEquation
           latex={[
@@ -89,7 +94,8 @@ export function ResearchMethodologyB() {
         <p>
           Across recent sessions, the model takes the median ratio and median rep delta for
           each set index. If no stable history exists for a later set, it falls back to a
-          conservative stepped pattern rather than inventing unnecessary precision.
+          conservative stepped pattern rather than inventing unnecessary precision. Missing
+          information makes the model simpler, not more confident.
         </p>
       </section>
 
@@ -97,7 +103,9 @@ export function ResearchMethodologyB() {
         <h3 className="legal-heading">8. Final anchor prediction</h3>
         <p>
           The final anchor estimate is the weighted baseline after applying recovery,
-          position, and trend adjustments.
+          position, and trend adjustments. That strength estimate is then translated back into
+          load using a target rep count from the user&apos;s recent anchor history, clamped to
+          a practical working range.
         </p>
         <DisplayEquation
           latex={[
@@ -113,6 +121,13 @@ export function ResearchMethodologyB() {
             </>
           }
         />
+        <p>
+          Before the recommendation is surfaced, the implementation applies a few guardrails.
+          The predicted load is rounded to the available gym increment, then sanity-clamped
+          against the most recent anchor. Upward movement is intentionally limited to one
+          increment. Downward movement is also bounded, with a little more room allowed after
+          a longer layoff.
+        </p>
         <DisplayEquation
           latex={[
             String.raw`\hat{w}_j = \hat{w}_{\mathrm{anchor}} \times \operatorname{median}(\rho_j)`,
@@ -126,6 +141,10 @@ export function ResearchMethodologyB() {
             </>
           }
         />
+        <p>
+          This produces a recommendation that behaves like a plausible workout for today
+          rather than a disconnected estimate for one set in isolation.
+        </p>
       </section>
     </>
   );

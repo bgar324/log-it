@@ -7,6 +7,10 @@ import { getWorkoutDataTag } from "@/lib/cache-tags";
 import { getWorkoutSplitSeedForDate } from "@/lib/workout-splits/service";
 import { syncWorkoutReadModels } from "@/lib/workout-read-models";
 import {
+  getInvalidRequestOriginError,
+  isTrustedMutationRequest,
+} from "@/lib/request-security";
+import {
   isObject,
   normalizeWorkoutPayload,
   toOptionalTrimmedString,
@@ -39,7 +43,7 @@ function toWorkoutWriteErrorResponse(error: unknown, fallbackMessage: string) {
     (error.code === "P2021" || error.code === "P2022")
   ) {
     return NextResponse.json(
-      { error: "Database schema mismatch. Apply Prisma migrations and retry." },
+      { error: "Service temporarily unavailable." },
       { status: 503 },
     );
   }
@@ -49,14 +53,14 @@ function toWorkoutWriteErrorResponse(error: unknown, fallbackMessage: string) {
     error.code === "P2028"
   ) {
     return NextResponse.json(
-      { error: "Database transaction timed out. Please retry." },
+      { error: "Service temporarily unavailable." },
       { status: 503 },
     );
   }
 
   if (error instanceof Prisma.PrismaClientInitializationError) {
     return NextResponse.json(
-      { error: "Database unavailable. Check DATABASE_URL and restart dev server." },
+      { error: "Service temporarily unavailable." },
       { status: 503 },
     );
   }
@@ -65,6 +69,10 @@ function toWorkoutWriteErrorResponse(error: unknown, fallbackMessage: string) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isTrustedMutationRequest(request)) {
+    return NextResponse.json({ error: getInvalidRequestOriginError() }, { status: 403 });
+  }
+
   const user = await getSessionUser();
 
   if (!user) {
@@ -109,6 +117,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  if (!isTrustedMutationRequest(request)) {
+    return NextResponse.json({ error: getInvalidRequestOriginError() }, { status: 403 });
+  }
+
   const user = await getSessionUser();
 
   if (!user) {

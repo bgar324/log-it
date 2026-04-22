@@ -6,8 +6,10 @@ export function ResearchMethodologyA() {
       <section className="legal-section">
         <h3 className="legal-heading">1. Capped strength calculation</h3>
         <p>
-          Raw weight and raw reps do not compare cleanly across nearby working sets. The
-          model therefore converts each set into a capped strength signal.
+          Raw load and raw reps do not compare cleanly across nearby working sets. The model
+          therefore converts each candidate set into a capped strength signal. This preserves
+          the useful intuition behind e1RM-style rep adjustment while preventing very high-rep
+          sets from dominating the estimate.
         </p>
         <DisplayEquation
           latex={[
@@ -23,9 +25,9 @@ export function ResearchMethodologyA() {
           }
         />
         <p>
-          The cap is intentional. High-rep sets can distort e1RM-style estimates. The
-          predictor is more stable when very long sets are prevented from dominating the
-          score.
+          The rep cap is intentional. High-rep sets can distort strength proxies and create
+          unstable anchor selection. The predictor is more reliable when unusually long sets
+          are allowed to inform the score without overwhelming it.
         </p>
       </section>
 
@@ -33,9 +35,9 @@ export function ResearchMethodologyA() {
         <h3 className="legal-heading">2. Anchor set selection</h3>
         <p>
           Each historical session is reduced to one representative anchor working set.
-          Because the product does not store explicit warmup flags, the anchor is defined as
-          the weighted set with the highest capped strength score. Ties break toward the
-          earliest set.
+          Because the product does not store explicit warmup flags, the implementation defines
+          the anchor as the weighted set with the highest capped strength score. Ties break
+          toward the earliest set, which keeps the rule deterministic and inspectable.
         </p>
         <DisplayEquation
           latex={String.raw`a_k = \operatorname*{arg\,max}_j S_{k,j}`}
@@ -49,15 +51,17 @@ export function ResearchMethodologyA() {
         />
         <p>
           If a session contains only bodyweight sets, the model falls back to the highest-rep
-          set and lowers the eventual confidence ceiling.
+          set. Those predictions remain useful, but they are treated more conservatively and
+          cannot earn the same confidence ceiling as weighted history.
         </p>
       </section>
 
       <section className="legal-section">
         <h3 className="legal-heading">3. Recency weighting and baseline strength</h3>
         <p>
-          More recent sessions matter more, but the weighting must decay smoothly enough that
-          one unusual day does not take over the estimate.
+          The engine looks at up to five recent anchors. More recent sessions matter more, but
+          the weighting decays smoothly enough that one unusual day does not take over the
+          estimate. The result is a baseline that stays responsive without becoming jumpy.
         </p>
         <DisplayEquation
           latex={[
@@ -79,7 +83,8 @@ export function ResearchMethodologyA() {
         <h3 className="legal-heading">4. Trend adjustment</h3>
         <p>
           The predictor includes only a mild trend term. Short-term strength behavior is
-          noisy, so trend is allowed to nudge the anchor estimate rather than drive it.
+          noisy, so trend is allowed to nudge the anchor estimate rather than drive it. In the
+          implementation, this term only activates once at least three anchor sessions exist.
         </p>
         <DisplayEquation
           latex={[
@@ -94,6 +99,11 @@ export function ResearchMethodologyA() {
             </>
           }
         />
+        <p>
+          This clamp is deliberately tight. The model is allowed to acknowledge a recent rise
+          or cooling-off period, but not to turn a short run of sessions into an aggressive
+          extrapolation.
+        </p>
       </section>
     </>
   );
