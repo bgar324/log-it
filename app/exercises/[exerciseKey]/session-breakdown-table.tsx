@@ -9,6 +9,7 @@ const PAGE_SIZE = 5;
 type SessionBreakdownRow = {
   workoutId: string;
   workoutTitle: string;
+  workoutType: string | null;
   performedAtLabel: string;
   setCount: number;
   totalReps: number;
@@ -49,8 +50,12 @@ export function SessionBreakdownTable({
               className={`${styles.sessionRow} ${styles.sessionLinkRow}`}
             >
               <div>
-                <p className={styles.sessionTitle}>{session.workoutTitle}</p>
-                <p className={styles.sessionMeta}>Open workout</p>
+                <p className={styles.sessionTitle}>
+                  {session.workoutTitle.trim() || "Workout"}
+                </p>
+                {session.workoutType?.trim() ? (
+                  <p className={styles.sessionMeta}>{session.workoutType.trim()}</p>
+                ) : null}
               </div>
               <span>{session.performedAtLabel}</span>
               <span>{session.setCount}</span>

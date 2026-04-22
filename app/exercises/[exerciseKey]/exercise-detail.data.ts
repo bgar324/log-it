@@ -22,6 +22,7 @@ type ExerciseLogRow = {
   workoutLog: {
     id: string;
     title: string;
+    workoutType: string | null;
     performedAt: Date;
   };
   sets: Array<{
@@ -69,6 +70,7 @@ async function fetchExerciseLogs(
       select: {
         id: true,
         title: true,
+        workoutType: true,
         performedAt: true,
       },
     },
@@ -179,6 +181,7 @@ function summarizeExerciseSessions(exerciseLogs: ExerciseLogRow[], weightUnit: W
     {
       workoutId: string;
       workoutTitle: string;
+      workoutType: string | null;
       performedAt: Date;
       setCount: number;
       totalReps: number;
@@ -195,6 +198,7 @@ function summarizeExerciseSessions(exerciseLogs: ExerciseLogRow[], weightUnit: W
     const session = sessionsByWorkout.get(exerciseLog.workoutLog.id) ?? {
       workoutId: exerciseLog.workoutLog.id,
       workoutTitle: exerciseLog.workoutLog.title,
+      workoutType: exerciseLog.workoutLog.workoutType,
       performedAt: exerciseLog.workoutLog.performedAt,
       setCount: 0,
       totalReps: 0,
@@ -297,6 +301,7 @@ export async function loadExerciseDetailPageData(rawExerciseKey: string) {
     sessionBreakdownRows: summary.sessions.map((session) => ({
       workoutId: session.workoutId,
       workoutTitle: session.workoutTitle,
+      workoutType: session.workoutType,
       performedAtLabel: formatDate(session.performedAt),
       setCount: session.setCount,
       totalReps: session.totalReps,
