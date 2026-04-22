@@ -20,6 +20,7 @@ import {
 import {
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
   WORKOUT_DRAFT_STORAGE_KEY,
+  formatWorkoutLoggerDateLabel,
   type WorkoutLoggerInitialData,
 } from "./workout-logger.utils";
 
@@ -31,6 +32,7 @@ type WorkoutLoggerProps = {
   mode?: WorkoutLoggerMode;
   workoutId?: string;
   initialData?: WorkoutLoggerInitialData;
+  splitTemplateData?: WorkoutLoggerInitialData;
   weightUnit: WeightUnit;
 };
 
@@ -38,6 +40,7 @@ export function WorkoutLogger({
   mode = "create",
   workoutId,
   initialData,
+  splitTemplateData,
   weightUnit,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
@@ -47,6 +50,7 @@ export function WorkoutLogger({
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const {
+    clearAll,
     clearPendingLookup: clearPendingSuggestionLookup,
     clearResults: clearExerciseSearchResults,
     queueLookup: queueExerciseSuggestionLookup,
@@ -60,6 +64,7 @@ export function WorkoutLogger({
     weightUnit,
   });
   const {
+    clearAllExerciseInsights,
     clearExerciseInsight,
     exerciseInsightById,
     fetchExerciseInsight,
@@ -69,6 +74,12 @@ export function WorkoutLogger({
     exercises: draft.exercises,
     performedAt: draft.performedAt,
   });
+
+  const hasSplitReset =
+    !isEditMode &&
+    Boolean(splitTemplateData) &&
+    (splitTemplateData?.workoutType.trim() !== "" ||
+      splitTemplateData?.exercises.length !== 0);
 
   function handleRemoveExercise(exerciseId: string) {
     draft.removeExercise(exerciseId);
@@ -109,6 +120,17 @@ export function WorkoutLogger({
 
     const context = getExerciseInsightContext(exerciseId, normalized);
     await fetchExerciseInsight(exerciseId, normalized, context);
+  }
+
+  function handleResetFromSplit() {
+    if (!splitTemplateData) {
+      return;
+    }
+
+    setFormError(null);
+    clearAll();
+    clearAllExerciseInsights();
+    draft.resetExercisesFromSnapshot(splitTemplateData.exercises);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -175,7 +197,13 @@ export function WorkoutLogger({
 
   const backHref = isEditMode ? `/workouts/${workoutId}` : "/dashboard?view=workouts";
   const backLabel = "Back";
-  const pageTitle = isEditMode ? "Edit workout" : "Log workout";
+  const workoutTypeLabel = draft.workoutType.trim();
+  const dateEyebrow = formatWorkoutLoggerDateLabel(draft.performedAt);
+  const pageTitle = workoutTypeLabel
+    ? `${isEditMode ? "Edit" : "Log"} ${workoutTypeLabel} workout`
+    : isEditMode
+      ? "Edit workout"
+      : "Log workout";
   const savingLabel = isEditMode ? "Saving changes..." : "Saving workout...";
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
@@ -193,17 +221,19 @@ export function WorkoutLogger({
         </div>
 
         <header className={styles.header}>
-          <h1 className={styles.title}>{pageTitle}</h1>
+          {dateEyebrow ? <p className={styles.headerEyebrow}>{dateEyebrow}</p> : null}
+          <div className={styles.titleRow}>
+            <h1 className={styles.title}>{pageTitle}</h1>
+          </div>
         </header>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <WorkoutLoggerMetaCard
             title={draft.title}
-            workoutType={draft.workoutType}
-            performedAtDate={draft.performedAtDate}
+            canResetFromSplit={hasSplitReset}
             onTitleChange={draft.setTitle}
-            onWorkoutTypeChange={draft.setWorkoutType}
-            onPerformedAtChange={draft.setPerformedAt}
+            onResetFromSplit={handleResetFromSplit}
+            resetDisabled={isSaving}
           />
 
           <section className={styles.exerciseSection}>

@@ -6,7 +6,6 @@ import {
   useReducer,
   useRef,
 } from "react";
-import { toDatabaseDateFromInput } from "@/lib/workout-utils";
 import type { WeightUnit } from "@/lib/weight-unit";
 import {
   WORKOUT_AUTOSAVE_DELAY_MS,
@@ -103,11 +102,6 @@ export function useWorkoutLoggerDraft({
     },
   });
 
-  const performedAtDate = useMemo(
-    () => toDatabaseDateFromInput(draftState.performedAt),
-    [draftState.performedAt],
-  );
-
   useEffect(() => {
     dispatch({
       type: "replace",
@@ -136,8 +130,8 @@ export function useWorkoutLoggerDraft({
         type: "replace",
         value: {
           title: storedDraft.title,
-          workoutType: storedDraft.workoutType,
-          performedAt: storedDraft.performedAt,
+          workoutType: initialState.workoutType,
+          performedAt: initialState.performedAt,
           exercises: hydrated.exercises,
         },
       });
@@ -147,7 +141,7 @@ export function useWorkoutLoggerDraft({
     }
 
     autosaveReadyRef.current = true;
-  }, [isEditMode, weightUnit]);
+  }, [initialState.performedAt, initialState.workoutType, isEditMode, weightUnit]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -303,6 +297,17 @@ export function useWorkoutLoggerDraft({
     }));
   }
 
+  function resetExercisesFromSnapshot(
+    exercises: WorkoutDraftSnapshot["exercises"],
+  ) {
+    const hydrated = hydrateExercisesFromSnapshot(exercises);
+    idCounterRef.current = hydrated.counters;
+    dispatch({
+      type: "update_exercises",
+      updater: () => hydrated.exercises,
+    });
+  }
+
   return {
     addExercise,
     addSet,
@@ -314,9 +319,9 @@ export function useWorkoutLoggerDraft({
     handleExercisePointerMove,
     handleExercisePointerUp,
     performedAt: draftState.performedAt,
-    performedAtDate,
     removeExercise,
     removeSet,
+    resetExercisesFromSnapshot,
     setExerciseName,
     setPerformedAt: (value: string) => {
       dispatch({ type: "set_performed_at", value });

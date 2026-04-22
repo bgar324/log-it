@@ -1,25 +1,22 @@
 "use client";
 
-import DatePicker from "react-datepicker";
-import { formatDatabaseDateValue } from "@/lib/workout-utils";
+import { RotateCcw } from "lucide-react";
 import { styles } from "../workout-logger.styles";
 
 type WorkoutLoggerMetaCardProps = {
   title: string;
-  workoutType: string;
-  performedAtDate: Date;
+  canResetFromSplit?: boolean;
   onTitleChange: (value: string) => void;
-  onWorkoutTypeChange: (value: string) => void;
-  onPerformedAtChange: (value: string) => void;
+  onResetFromSplit?: () => void;
+  resetDisabled?: boolean;
 };
 
 export function WorkoutLoggerMetaCard({
   title,
-  workoutType,
-  performedAtDate,
+  canResetFromSplit = false,
   onTitleChange,
-  onWorkoutTypeChange,
-  onPerformedAtChange,
+  onResetFromSplit,
+  resetDisabled = false,
 }: WorkoutLoggerMetaCardProps) {
   return (
     <section className={styles.card}>
@@ -27,48 +24,30 @@ export function WorkoutLoggerMetaCard({
         <label className={styles.label} htmlFor="workout-title">
           Workout title
         </label>
-        <input
-          id="workout-title"
-          className={styles.input}
-          value={title}
-          onChange={(event) => onTitleChange(event.target.value)}
-          placeholder="Push day"
-        />
-      </div>
-
-      <div className={styles.metaGrid}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="workout-type">
-            Workout type
-          </label>
+        <div className={styles.fieldInputRow}>
           <input
-            id="workout-type"
+            id="workout-title"
             className={styles.input}
-            value={workoutType}
-            onChange={(event) => onWorkoutTypeChange(event.target.value)}
-            placeholder="Push"
+            value={title}
+            onChange={(event) => onTitleChange(event.target.value)}
+            placeholder="Push day"
           />
-        </div>
-
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="workout-performed-at">
-            Date
-          </label>
-          <DatePicker
-            id="workout-performed-at"
-            selected={performedAtDate}
-            onChange={(value: Date | null) => {
-              if (value) {
-                onPerformedAtChange(formatDatabaseDateValue(value));
-              }
-            }}
-            dateFormat="MM/dd/yyyy"
-            calendarClassName={styles.datePickerCalendar}
-            wrapperClassName={styles.datePickerWrapper}
-            popperClassName={styles.datePickerPopper}
-            className={`${styles.input} ${styles.dateInput}`}
-            showPopperArrow={false}
-          />
+          {canResetFromSplit && onResetFromSplit ? (
+            <button
+              type="button"
+              className={styles.fieldActionButton}
+              onClick={onResetFromSplit}
+              disabled={resetDisabled}
+              aria-label="Reset exercises from your split"
+              title="Reset exercises from your split"
+            >
+              <RotateCcw
+                className={styles.icon}
+                aria-hidden="true"
+                strokeWidth={1.9}
+              />
+            </button>
+          ) : null}
         </div>
       </div>
     </section>

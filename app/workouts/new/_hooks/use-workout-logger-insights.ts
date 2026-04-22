@@ -181,6 +181,11 @@ export function useWorkoutLoggerInsights({
     delete latestInsightLookupRef.current[exerciseId];
   }, []);
 
+  const clearAllExerciseInsights = useCallback(() => {
+    latestInsightLookupRef.current = {};
+    setExerciseInsightById({});
+  }, []);
+
   const resetExerciseInsightState = useCallback((exerciseId: string) => {
     setExerciseInsightById((current) => {
       const previous = current[exerciseId];
@@ -209,6 +214,7 @@ export function useWorkoutLoggerInsights({
   }, [exerciseInsightById, exerciseInsightContexts, fetchExerciseInsight]);
 
   return {
+    clearAllExerciseInsights,
     clearExerciseInsight,
     exerciseInsightById,
     fetchExerciseInsight,

@@ -123,9 +123,6 @@ export default async function WorkoutDetailPage({
   const totalSets = workout.exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
   const totalWeight = convertStoredWeightToDisplay(workout.totalWeightLb, unit) ?? 0;
   const summaryItems = [
-    ...(workout.workoutType
-      ? [{ label: "Type", value: workout.workoutType }]
-      : []),
     { label: "Date", value: formatDate(workout.performedAt) },
     { label: "Exercises", value: `${workout.exercises.length}` },
     { label: "Sets", value: `${totalSets}` },
@@ -171,6 +168,9 @@ export default async function WorkoutDetailPage({
         </header>
 
         <section className={styles.summaryCard}>
+          {workout.workoutType ? (
+            <p className={styles.titleEyebrow}>{workout.workoutType}</p>
+          ) : null}
           <h1 className={styles.title}>{workout.title}</h1>
           <div className={styles.metaRow}>
             {summaryItems.map((item) => (

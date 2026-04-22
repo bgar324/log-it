@@ -15,6 +15,7 @@ export {
   formatConfidenceLabel,
   formatDelta,
   formatExerciseInsightDate,
+  formatWorkoutLoggerDateLabel,
   formatLoggedSetSnapshot,
   formatPredictedSetSnapshot,
   formatRepRange,

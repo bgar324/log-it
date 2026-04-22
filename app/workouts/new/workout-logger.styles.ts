@@ -37,9 +37,14 @@ export const styles = {
     "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
   ),
   backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
-  header: "flex flex-col gap-[0.25rem]",
+  header: "flex flex-col gap-[0.28rem]",
+  headerEyebrow:
+    "m-0 text-xs font-semibold text-[var(--muted)]",
+  titleRow: "flex min-w-0 items-start justify-between gap-[0.5rem]",
+  titleActions: "inline-flex shrink-0 items-center gap-[0.35rem]",
+  headerIconButton: iconButtonBase,
   title:
-    "m-0 text-[clamp(1.8rem,7vw,2.35rem)] leading-[1.02] tracking-[-0.02em] font-[560]",
+    "m-0 min-w-0 flex-1 text-[clamp(1.8rem,7vw,2.35rem)] leading-[1.02] tracking-[-0.02em] font-[560]",
   autosaveMeta: "m-0 text-[0.74rem] tracking-[0.02em] text-[var(--muted)]",
   form: "flex flex-col gap-[0.62rem] p-[2px]",
   card: cn(
@@ -48,7 +53,12 @@ export const styles = {
   ),
   metaGrid: "grid gap-[0.55rem] min-[620px]:grid-cols-2",
   field: "flex flex-col gap-[0.22rem]",
-  label: "text-[0.68rem] tracking-[0.08em] text-[var(--muted)]",
+  fieldInputRow: "flex items-stretch gap-[0.55rem]",
+  fieldActionButton: cn(
+    iconButtonBase,
+    "!h-auto !w-auto shrink-0 self-stretch aspect-square rounded-[0.52rem]",
+  ),
+  label: "text-[0.68rem] text-[var(--muted)]",
   input: inputBase,
   datePickerWrapper:
     "w-full [&_.react-datepicker__input-container]:block [&_.react-datepicker__input-container]:w-full",
@@ -197,7 +207,7 @@ export const styles = {
   setFieldWeight: "order-3 min-[620px]:order-2",
   setFieldReps: "order-4 min-[620px]:order-3",
   setFieldLabel:
-    "text-[0.64rem] uppercase tracking-[0.07em] text-[var(--muted)] min-[620px]:hidden",
+    "text-[0.64rem] text-[var(--muted)] min-[620px]:hidden",
   setRemoveButton:
     "order-2 h-[1.65rem] w-[1.65rem] self-start justify-self-end rounded-[0.4rem] min-[620px]:order-4",
   setActions: "flex w-full min-[620px]:justify-end [&>button]:w-full",

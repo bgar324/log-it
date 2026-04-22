@@ -2,6 +2,11 @@
 
 :root {
   color-scheme: light;
+  --theme-toggle-transition-duration: 180ms;
+  --theme-toggle-slot-transition-duration: 200ms;
+  --theme-toggle-transition-easing: ease;
+  --theme-color-transition-duration: 280ms;
+  --theme-color-transition-easing: cubic-bezier(0.2, 0.7, 0.2, 1);
   --bg: #ffffff;
   --surface: #ffffff;
   --text: #000000;
@@ -24,8 +29,11 @@
   --font-heading: var(--font-body);
 }
 
-:root[data-theme="dark"] {
+:root[data-color-scheme="dark"] {
   color-scheme: dark;
+}
+
+:root[data-theme="dark"] {
   --bg: #000000;
   --surface: #000000;
   --text: #ffffff;
@@ -54,17 +62,51 @@ body {
   min-height: 100%;
 }
 
+html {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
 body {
   margin: 0;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme-transition="true"],
+:root[data-theme-transition="true"] *,
+:root[data-theme-transition="true"] *::before,
+:root[data-theme-transition="true"] *::after {
   transition:
-    background-color 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    color 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    background-color var(--theme-color-transition-duration)
+      var(--theme-color-transition-easing),
+    border-color var(--theme-color-transition-duration)
+      var(--theme-color-transition-easing),
+    color var(--theme-color-transition-duration) var(--theme-color-transition-easing),
+    fill var(--theme-color-transition-duration) var(--theme-color-transition-easing),
+    stroke var(--theme-color-transition-duration) var(--theme-color-transition-easing),
+    box-shadow var(--theme-color-transition-duration)
+      var(--theme-color-transition-easing);
+}
+
+:root[data-theme-transition="true"] .theme-icon-toggle {
+  transition:
+    border-color var(--theme-toggle-transition-duration)
+      var(--theme-toggle-transition-easing),
+    background-color var(--theme-toggle-transition-duration)
+      var(--theme-toggle-transition-easing);
+}
+
+:root[data-theme-transition="true"] .theme-toggle-slot {
+  transition:
+    color var(--theme-toggle-slot-transition-duration)
+      var(--theme-toggle-transition-easing),
+    background-color var(--theme-toggle-slot-transition-duration)
+      var(--theme-toggle-transition-easing);
 }
 
 h1,
@@ -138,8 +180,10 @@ a {
   line-height: 1;
   cursor: pointer;
   transition:
-    border-color 180ms ease,
-    background-color 180ms ease;
+    border-color var(--theme-toggle-transition-duration)
+      var(--theme-toggle-transition-easing),
+    background-color var(--theme-toggle-transition-duration)
+      var(--theme-toggle-transition-easing);
 }
 
 .theme-toggle-slot {
@@ -151,8 +195,10 @@ a {
   border-radius: 999px;
   color: var(--toggle-icon);
   transition:
-    color 200ms ease,
-    background-color 200ms ease;
+    color var(--theme-toggle-slot-transition-duration)
+      var(--theme-toggle-transition-easing),
+    background-color var(--theme-toggle-slot-transition-duration)
+      var(--theme-toggle-transition-easing);
 }
 
 .theme-toggle-icon {
@@ -164,39 +210,6 @@ a {
 .theme-toggle-slot[data-active="true"] {
   background: var(--toggle-active-bg);
   color: var(--toggle-active-icon);
-}
-
-.dashboard-theme-scope,
-.dashboard-theme-scope :where(
-    aside,
-    section,
-    article,
-    nav,
-    div,
-    p,
-    span,
-    h1,
-    h2,
-    h3,
-    a,
-    input,
-    select,
-    table,
-    thead,
-    tbody,
-    tr,
-    th,
-    td,
-    svg,
-    svg *
-  ) {
-  transition:
-    background-color 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    border-color 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    color 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    fill 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    stroke 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    box-shadow 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .title {
@@ -676,14 +689,5 @@ a {
 
   .action-row .btn {
     flex: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
   }
 }

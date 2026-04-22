@@ -42,16 +42,16 @@ export const splitStyles = {
   editorSectionTitle: "m-0 text-[1rem] tracking-[-0.015em] font-[560]",
   editorExerciseList: "flex flex-col gap-[0.55rem]",
   exerciseRow:
-    "flex items-end gap-[0.68rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent p-[0.76rem] max-[700px]:flex-col max-[700px]:items-stretch",
+    "flex min-w-0 items-end gap-[0.68rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent p-[0.76rem]",
   exerciseMain:
-    "grid flex-1 grid-cols-[minmax(0,1fr)_6rem] gap-[0.68rem] max-[700px]:flex max-[700px]:flex-col max-[700px]:items-stretch",
+    "grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_6rem] gap-[0.68rem]",
   setsInput: "text-center",
   inlineButton:
     "inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--split-border-strong)]",
   primaryButton:
     "inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--split-border-strong)]",
   iconGhostButton:
-    "inline-flex h-[2.5rem] w-[2.5rem] cursor-pointer items-center justify-center self-auto rounded-[0.52rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] max-[700px]:self-end",
+    "inline-flex h-[2.5rem] w-[2.5rem] shrink-0 cursor-pointer items-center justify-center self-auto rounded-[0.52rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)]",
   inlineIcon: "h-[0.92rem] w-[0.92rem]",
   searchResults:
     "mt-[0.42rem] flex flex-col gap-[0.42rem] rounded-[0.52rem] border border-[var(--split-border)] bg-[color-mix(in_srgb,var(--bg)_86%,transparent)] p-[0.48rem]",

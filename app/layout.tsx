@@ -11,8 +11,10 @@ const themeInitScript = `(() => {
           ? "dark"
           : "light";
     document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.colorScheme = theme;
   } catch {
     document.documentElement.dataset.theme = "light";
+    document.documentElement.dataset.colorScheme = "light";
   }
 })();`;
 
@@ -27,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="light" suppressHydrationWarning>
+    <html lang="en" data-theme="light" data-color-scheme="light" suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {children}

@@ -55,6 +55,8 @@ export const styles = {
     "rounded-[0.54rem] border bg-transparent px-[0.95rem] py-[0.84rem] min-[760px]:p-[0.95rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
+  titleEyebrow:
+    "m-0 text-xs text-[var(--muted)]",
   exerciseCard: cn(
     "rounded-[0.54rem] border bg-transparent p-[0.75rem] min-[760px]:p-[0.82rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",

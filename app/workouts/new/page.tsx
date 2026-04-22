@@ -57,6 +57,7 @@ export default async function NewWorkoutPage({
   return (
     <WorkoutLogger
       initialData={initialData}
+      splitTemplateData={splitSeed.split.id ? splitSeed.initialData : undefined}
       weightUnit={user.preferredWeightUnit}
     />
   );

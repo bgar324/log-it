@@ -65,7 +65,7 @@ export function summarizeDraftSets(exercise: ExerciseDraft) {
   };
 }
 
-export function formatExerciseInsightDate(value: string) {
+export function formatWorkoutLoggerDateLabel(value: string) {
   if (!value.trim()) {
     return "";
   }
@@ -75,6 +75,10 @@ export function formatExerciseInsightDate(value: string) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+export function formatExerciseInsightDate(value: string) {
+  return formatWorkoutLoggerDateLabel(value);
 }
 
 export function formatDelta(value: number, suffix: string) {
