@@ -14,6 +14,8 @@ const iconButtonBase = cn(
   "inline-flex h-[2.05rem] w-[2.05rem] cursor-pointer items-center justify-center rounded-[0.45rem] border",
   "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
   "bg-[var(--bg)] text-[var(--muted)] [touch-action:manipulation]",
+  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+  "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
   "disabled:cursor-not-allowed disabled:opacity-[0.35]",
   "hover:enabled:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
   "hover:enabled:text-[var(--text)]",
@@ -34,6 +36,8 @@ export const styles = {
     "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] whitespace-nowrap rounded-full border",
     "border-[color:color-mix(in_srgb,var(--text)_14%,transparent)]",
     "bg-[var(--bg)] px-[0.72rem] text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
   ),
   backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
@@ -45,7 +49,7 @@ export const styles = {
   headerIconButton: iconButtonBase,
   title:
     "m-0 min-w-0 flex-1 text-[clamp(1.8rem,7vw,2.35rem)] leading-[1.02] tracking-[-0.02em] font-[560]",
-  autosaveMeta: "m-0 text-[0.74rem] tracking-[0.02em] text-[var(--muted)]",
+  autosaveMeta: "m-0 text-[0.74rem] text-[var(--muted)]",
   form: "flex flex-col gap-[0.62rem] p-[2px]",
   card: cn(
     "flex flex-col gap-[0.6rem] rounded-[0.72rem] border bg-[var(--bg)] p-[0.78rem]",
@@ -70,7 +74,7 @@ export const styles = {
     "shadow-[0_18px_44px_color-mix(in_srgb,#000_24%,transparent)]",
   ),
   confirmEyebrow:
-    "m-0 text-[0.72rem] uppercase tracking-[0.08em] text-[var(--muted)]",
+    "m-0 text-[0.72rem] text-[var(--muted)]",
   confirmTitle:
     "m-0 text-[1rem] leading-[1.15] tracking-[-0.015em] font-[560] text-[var(--text)]",
   confirmBody:
@@ -78,18 +82,22 @@ export const styles = {
   confirmActions:
     "flex flex-col gap-[0.5rem] pt-[0.1rem] min-[620px]:flex-row min-[620px]:justify-end",
   confirmSecondaryButton: cn(
-    "inline-flex min-h-[2.75rem] items-center justify-center rounded-[0.56rem] border bg-[var(--bg)] px-[0.9rem]",
+    "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center rounded-[0.56rem] border bg-[var(--bg)] px-[0.9rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
     "text-[0.84rem] text-[var(--text)] [touch-action:manipulation]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
     "disabled:cursor-not-allowed disabled:opacity-[0.45]",
     "min-[620px]:min-w-[9.5rem]",
   ),
   confirmPrimaryButton: cn(
-    "inline-flex min-h-[2.75rem] items-center justify-center rounded-[0.56rem] border px-[0.9rem]",
+    "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center rounded-[0.56rem] border px-[0.9rem]",
     "border-[color:color-mix(in_srgb,#b13d48_34%,transparent)]",
     "bg-[color:color-mix(in_srgb,#b13d48_10%,var(--bg))]",
     "text-[0.84rem] text-[#b13d48] [touch-action:manipulation]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,#b13d48_46%,transparent)]",
     "hover:bg-[color:color-mix(in_srgb,#b13d48_14%,var(--bg))]",
     "disabled:cursor-not-allowed disabled:opacity-[0.45]",
@@ -100,7 +108,7 @@ export const styles = {
   datePickerWrapper:
     "w-full [&_.react-datepicker__input-container]:block [&_.react-datepicker__input-container]:w-full",
   datePickerCalendar: "",
-  dateInput: "w-full [font-variant-numeric:tabular-nums] tracking-[0.01em]",
+  dateInput: "w-full [font-variant-numeric:tabular-nums]",
   datePickerPopper: cn(
     "z-[60]",
     "[&_.react-datepicker]:overflow-hidden [&_.react-datepicker]:rounded-[0.82rem]",
@@ -170,6 +178,8 @@ export const styles = {
     "min-h-[2.4rem] cursor-pointer rounded-full border bg-[var(--bg)] px-[0.78rem] py-[0.45rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
     "text-left text-[0.86rem] leading-[1.2] text-[var(--text)] [touch-action:manipulation]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
     "max-[420px]:w-full max-[420px]:rounded-[0.56rem]",
   ),
@@ -198,7 +208,7 @@ export const styles = {
     "max-[420px]:min-h-[3.7rem]",
   ),
   compareSetIndex:
-    "m-0 text-[0.78rem] font-[560] tracking-[0.02em] text-[var(--muted)]",
+    "m-0 text-[0.78rem] font-[560] text-[var(--muted)]",
   compareSetValue: "text-left text-[0.82rem] leading-[1.2]",
   compareDelta:
     "m-0 text-[0.77rem] leading-[1.35] text-[color:color-mix(in_srgb,var(--text)_86%,var(--muted))]",
@@ -214,6 +224,8 @@ export const styles = {
     "inline-flex min-h-[2.55rem] cursor-pointer items-center gap-[0.35rem] rounded-[0.5rem] border bg-[var(--bg)] px-[0.7rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
     "text-[0.78rem] text-[var(--text)] [touch-action:manipulation]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
   ),
   actionIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
@@ -234,11 +246,11 @@ export const styles = {
     "min-[620px]:mb-[2px]",
   ),
   setHeadLabel:
-    "whitespace-nowrap text-[0.64rem] uppercase tracking-[0.07em] text-[var(--muted)]",
+    "whitespace-nowrap text-[0.64rem] text-[var(--muted)]",
   setNumber: cn(
-    "order-1 m-0 text-[0.78rem] font-[560] tracking-[0.02em] text-[var(--muted)]",
+    "order-1 m-0 text-[0.78rem] font-[560] text-[var(--muted)]",
     "min-[620px]:min-w-[1.4rem] min-[620px]:text-center",
-    "min-[620px]:text-[0.72rem] min-[620px]:font-normal min-[620px]:tracking-[0]",
+    "min-[620px]:text-[0.72rem] min-[620px]:font-normal",
   ),
   setField: "min-w-0 flex flex-col gap-[0.3rem] min-[620px]:gap-0",
   setFieldWeight: "order-3 min-[620px]:order-2",
@@ -252,6 +264,8 @@ export const styles = {
     "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center gap-[0.44rem] rounded-[0.56rem] border bg-[var(--bg)] px-[0.85rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
     "text-[0.84rem] text-[var(--text)] [touch-action:manipulation]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
   ),
   formError: cn(
@@ -260,5 +274,5 @@ export const styles = {
     "text-[color:color-mix(in_srgb,var(--text)_90%,#9e1f1f)]",
   ),
   saveButton:
-    "inline-flex min-h-[2.95rem] w-full cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.58rem] border-0 bg-[var(--button-bg)] px-[0.95rem] text-[0.92rem] text-[var(--button-text)] [touch-action:manipulation] disabled:cursor-progress disabled:opacity-70",
+    "inline-flex min-h-[2.95rem] w-full cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.58rem] border-0 bg-[var(--button-bg)] px-[0.95rem] text-[0.92rem] text-[var(--button-text)] [touch-action:manipulation] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 transition-[transform,filter,box-shadow] duration-150 hover:brightness-[0.98] active:translate-y-[1px] disabled:cursor-progress disabled:opacity-70",
 } as const;

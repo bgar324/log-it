@@ -1,9 +1,9 @@
-import { randomBytes } from "node:crypto";
 import { compare, hash } from "bcryptjs";
 import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextResponse } from "next/server";
+import { deriveDevelopmentSessionSecret } from "./auth-secret";
 import { prisma } from "./prisma";
 
 const SESSION_COOKIE = "logit_session";
@@ -45,12 +45,14 @@ function getSessionSecret() {
   }
 
   if (!developmentSessionSecret) {
-    developmentSessionSecret = randomBytes(32);
+    developmentSessionSecret = deriveDevelopmentSessionSecret();
   }
 
   if (!hasWarnedAboutMissingAuthSecret) {
     hasWarnedAboutMissingAuthSecret = true;
-    console.warn("AUTH_SECRET is not set. Using an ephemeral development session secret.");
+    console.warn(
+      "AUTH_SECRET is not set. Using a stable development-only session secret derived from the project path.",
+    );
   }
 
   return developmentSessionSecret;

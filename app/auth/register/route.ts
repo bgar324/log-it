@@ -11,14 +11,22 @@ import { isTrustedMutationRequest } from "@/lib/request-security";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,24}$/;
 
-function redirectWithError(request: NextRequest, error: string) {
-  const url = new URL(`/auth?mode=register&error=${encodeURIComponent(error)}`, request.url);
-  return NextResponse.redirect(url, { status: 303 });
+function redirectTo(path: string) {
+  return new NextResponse(null, {
+    status: 303,
+    headers: {
+      location: path,
+    },
+  });
+}
+
+function redirectWithError(error: string) {
+  return redirectTo(`/auth?mode=register&error=${encodeURIComponent(error)}`);
 }
 
 export async function POST(request: NextRequest) {
   if (!isTrustedMutationRequest(request)) {
-    return redirectWithError(request, "invalid_request");
+    return redirectWithError("invalid_request");
   }
 
   try {
@@ -45,27 +53,27 @@ export async function POST(request: NextRequest) {
       !password ||
       !confirmPassword
     ) {
-      return redirectWithError(request, "missing_fields");
+      return redirectWithError("missing_fields");
     }
 
     if (!EMAIL_REGEX.test(email)) {
-      return redirectWithError(request, "invalid_email");
+      return redirectWithError("invalid_email");
     }
 
     if (email !== confirmEmail) {
-      return redirectWithError(request, "email_mismatch");
+      return redirectWithError("email_mismatch");
     }
 
     if (!USERNAME_REGEX.test(username)) {
-      return redirectWithError(request, "invalid_username");
+      return redirectWithError("invalid_username");
     }
 
     if (password.length < 8) {
-      return redirectWithError(request, "weak_password");
+      return redirectWithError("weak_password");
     }
 
     if (password !== confirmPassword) {
-      return redirectWithError(request, "password_mismatch");
+      return redirectWithError("password_mismatch");
     }
 
     const existingUser = await prisma.user.findFirst({
@@ -76,7 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
-      return redirectWithError(request, "account_exists");
+      return redirectWithError("account_exists");
     }
 
     const passwordHash = await hashPassword(password);
@@ -101,9 +109,7 @@ export async function POST(request: NextRequest) {
     });
 
     const token = await createSessionToken(user);
-    const response = NextResponse.redirect(new URL("/dashboard", request.url), {
-      status: 303,
-    });
+    const response = redirectTo("/dashboard");
     setSessionCookie(response, token, request);
 
     return response;
@@ -112,21 +118,21 @@ export async function POST(request: NextRequest) {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      return redirectWithError(request, "account_exists");
+      return redirectWithError("account_exists");
     }
 
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       (error.code === "P2021" || error.code === "P2022")
     ) {
-      return redirectWithError(request, "service_unavailable");
+      return redirectWithError("service_unavailable");
     }
 
     if (error instanceof Prisma.PrismaClientInitializationError) {
-      return redirectWithError(request, "service_unavailable");
+      return redirectWithError("service_unavailable");
     }
 
     console.error("register route failure:", error);
-    return redirectWithError(request, "server_error");
+    return redirectWithError("server_error");
   }
 }

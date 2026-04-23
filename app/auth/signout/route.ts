@@ -10,8 +10,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: getInvalidRequestOriginError() }, { status: 403 });
   }
 
-  const response = NextResponse.redirect(new URL("/", request.url), {
+  const response = new NextResponse(null, {
     status: 303,
+    headers: {
+      location: "/",
+    },
   });
   clearSessionCookie(response, request);
   return response;

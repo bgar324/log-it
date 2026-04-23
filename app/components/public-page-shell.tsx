@@ -34,7 +34,7 @@ export function PublicPageShell({
             {backHref ? (
               <Link
                 href={backHref}
-                className="app-focus-ring inline-flex h-11 items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-surface)] px-4 text-sm font-medium text-[var(--app-text)] backdrop-blur-xl"
+                className="app-focus-ring inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-surface)] px-4 text-sm font-medium text-[var(--app-text)] backdrop-blur-xl transition-[transform,border-color,background-color,box-shadow] duration-150 hover:border-[var(--app-border-strong)] hover:bg-[var(--app-accent-soft)] active:translate-y-px"
               >
                 <ChevronLeft className="h-4 w-4" strokeWidth={1.9} />
                 {backLabel}
@@ -48,7 +48,7 @@ export function PublicPageShell({
           </div>
 
           <div className="space-y-6">
-            <div className="inline-flex rounded-full border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--app-text-subtle)] backdrop-blur-xl">
+            <div className="inline-flex rounded-full border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-[11px] font-semibold text-[var(--app-text-subtle)] backdrop-blur-xl">
               Minimal performance journal
             </div>
             <div className="space-y-4">

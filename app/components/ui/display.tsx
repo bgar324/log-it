@@ -26,7 +26,7 @@ export function StatCard({ label, value, detail, className }: StatCardProps) {
   return (
     <SurfaceCard className={cn("min-h-40", className)}>
       <div className="flex h-full flex-col gap-4 px-5 py-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--app-text-subtle)]">
+        <p className="text-xs font-semibold text-[var(--app-text-subtle)]">
           {label}
         </p>
         <p className="font-[var(--font-heading)] text-4xl leading-none tracking-[-0.06em] text-[var(--app-text)]">
@@ -50,7 +50,7 @@ export function MetaPill({ label, value, className }: MetaPillProps) {
         className,
       )}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--app-text-subtle)]">
+      <p className="text-[11px] font-semibold text-[var(--app-text-subtle)]">
         {label}
       </p>
       <p className="mt-1 text-sm font-medium text-[var(--app-text)]">{value}</p>

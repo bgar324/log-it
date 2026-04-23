@@ -96,7 +96,7 @@ export function PageHeader({
     >
       <div className="space-y-2">
         {eyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--app-text-subtle)]">
+          <p className="text-xs font-semibold text-[var(--app-text-subtle)]">
             {eyebrow}
           </p>
         ) : null}

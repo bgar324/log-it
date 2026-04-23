@@ -8,14 +8,22 @@ import {
 import { prisma } from "@/lib/prisma";
 import { isTrustedMutationRequest } from "@/lib/request-security";
 
-function redirectWithError(request: NextRequest, error: string) {
-  const url = new URL(`/auth?mode=signin&error=${encodeURIComponent(error)}`, request.url);
-  return NextResponse.redirect(url, { status: 303 });
+function redirectTo(path: string) {
+  return new NextResponse(null, {
+    status: 303,
+    headers: {
+      location: path,
+    },
+  });
+}
+
+function redirectWithError(error: string) {
+  return redirectTo(`/auth?mode=signin&error=${encodeURIComponent(error)}`);
 }
 
 export async function POST(request: NextRequest) {
   if (!isTrustedMutationRequest(request)) {
-    return redirectWithError(request, "invalid_request");
+    return redirectWithError("invalid_request");
   }
 
   try {
@@ -26,7 +34,7 @@ export async function POST(request: NextRequest) {
     const password = String(formData.get("signinPassword") ?? "");
 
     if (!username || !password) {
-      return redirectWithError(request, "missing_fields");
+      return redirectWithError("missing_fields");
     }
 
     const user = await prisma.user.findUnique({
@@ -44,19 +52,17 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return redirectWithError(request, "invalid_credentials");
+      return redirectWithError("invalid_credentials");
     }
 
     const isValidPassword = await verifyPassword(password, user.passwordHash);
 
     if (!isValidPassword) {
-      return redirectWithError(request, "invalid_credentials");
+      return redirectWithError("invalid_credentials");
     }
 
     const token = await createSessionToken(user);
-    const response = NextResponse.redirect(new URL("/dashboard", request.url), {
-      status: 303,
-    });
+    const response = redirectTo("/dashboard");
     setSessionCookie(response, token, request);
 
     return response;
@@ -65,14 +71,14 @@ export async function POST(request: NextRequest) {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       (error.code === "P2021" || error.code === "P2022")
     ) {
-      return redirectWithError(request, "service_unavailable");
+      return redirectWithError("service_unavailable");
     }
 
     if (error instanceof Prisma.PrismaClientInitializationError) {
-      return redirectWithError(request, "service_unavailable");
+      return redirectWithError("service_unavailable");
     }
 
     console.error("signin route failure:", error);
-    return redirectWithError(request, "server_error");
+    return redirectWithError("server_error");
   }
 }

@@ -4,12 +4,16 @@ const actionBase = cn(
   "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] rounded-full border px-[0.72rem]",
   "border-[color:color-mix(in_srgb,var(--text)_14%,transparent)]",
   "text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
+  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+  "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
   "max-[759px]:w-[2.3rem] max-[759px]:min-w-[2.3rem] max-[759px]:px-0",
 );
 
 const actionMenuItemBase = cn(
   "inline-flex min-h-[2.2rem] w-full cursor-pointer items-center gap-[0.42rem] rounded-[0.42rem] border border-transparent bg-transparent px-[0.58rem]",
   "text-left text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
+  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+  "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
   "hover:border-[color:color-mix(in_srgb,var(--text)_14%,transparent)]",
 );
 
@@ -20,7 +24,7 @@ export const styles = {
     "flex items-center justify-between gap-[0.65rem]",
   topLead: "inline-flex items-center gap-[0.45rem]",
   backLink:
-    "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] rounded-full border border-[color:color-mix(in_srgb,var(--text)_14%,transparent)] bg-transparent px-[0.72rem] text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
+    "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] rounded-full border border-[color:color-mix(in_srgb,var(--text)_14%,transparent)] bg-transparent px-[0.72rem] text-[0.76rem] text-[var(--text)] [touch-action:manipulation] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 transition-[transform,border-color,background-color,color,box-shadow] duration-150 hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--text)_7%,transparent)] active:translate-y-[1px]",
   backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
   actionLink: actionBase,
   actionButton: cn(

@@ -1,137 +1,225 @@
-# Typography System
+# Typography and UI Language
 
-## Critical: Tailwind v4 + Buttons
+This file is a living snapshot of the current codebase, not a strict token contract.
+The old "single five-tier scale" story is no longer accurate. The app now has two main
+typography tracks plus one editorial variant:
 
-`globals.css` wraps `button, input, textarea, select { font: inherit }` inside `@layer base`.
-This is **required**. Without it, unlayered CSS has higher cascade priority than `@layer utilities`,
-meaning every Tailwind `text-[*]` class on a `<button>` is silently ignored. Font sizes on
-`<a>` links work without this fix; `<button>` elements do not.
+- Product surfaces: dashboard, split planner, workout logger, workout detail, exercise detail
+- Public surfaces: landing/auth/public-shell components built around `PublicPageShell` and `ui/*`
+- Editorial surface: research/methodology content
 
----
+## Foundations
 
-## Type Scale — 5 Tiers
+- `app/globals.css` defines `--font-body` and `--font-heading`. Both currently resolve to the same
+  Inter-based stack, but headings still opt into `var(--font-heading)` so the family can diverge later.
+- `body` defaults to `line-height: 1.45`. Research intentionally loosens body copy to `1.6`.
+- Keep `@layer base { button, input, textarea, select { font: inherit; } }`. In Tailwind v4 this is
+  required so utility font sizes on form controls actually win.
+- Casing is mixed case or title case. Do not add `uppercase`.
+- Tracking is negative or neutral only. Do not add positive tracking.
 
-| Size | Token | Role |
-|------|-------|------|
-| `0.65rem` | micro | Table column headers (`[&_th]`), calendar weekday labels, Prev/Next calendar buttons, search result section labels |
-| `0.72rem` | small | Sidebar nav labels, KPI labels, meta/muted info lines, dropdown menu items, table cell meta, pagination controls, form field labels (dashboard) |
-| `0.84rem` | body | Table cell data (`[&_td]`), mobile menu items, search inputs, sidebar action text |
-| `1rem` | ui | Panel titles, section headings, split editor section title, log-workout action link |
-| `clamp(...)` | display | Page titles — each page has its own clamp range (see below) |
+## System Split
 
-Do not introduce sizes outside this scale. The `0.76rem` and `0.78rem` values that appear in
-`workout-logger.styles.ts` and `workout-detail.styles.ts` are legacy; they are tolerated on those
-pages but should not be used for new work.
+### Public shell
 
----
+Public/auth surfaces are heading-led and visibly more spacious than the product shell.
 
-## Display / Page Title Sizes
+- Hero headlines use large responsive display sizes such as `text-5xl sm:text-6xl lg:text-7xl`
+  with `tracking-[-0.08em]`.
+- Shared public section headers and stat values sit at `text-4xl` or `text-2xl` with
+  `tracking-[-0.06em]` or `tracking-[-0.04em]`.
+- Supporting copy is usually `text-sm`, `text-base`, or `text-lg` with generous leading
+  (`leading-6` or `leading-7`).
+- Public cards are soft and rounded: `rounded-[28px]` to `rounded-[32px]`, semantic `--app-*`
+  color tokens, subtle blur, and larger spacing.
 
-Each page controls its own hero title via `clamp()`:
+### Product shell
 
-| Page | Style key | Value |
-|------|-----------|-------|
-| Dashboard | `styles.title` | `clamp(1.55rem, 6.8vw, 2.2rem)` |
-| Workout logger | `styles.title` | `clamp(1.8rem, 7vw, 2.35rem)` |
-| Workout detail | `styles.title` | `clamp(1.35rem, 5vw, 1.95rem)` |
-| Exercise detail | `styles.title` | `clamp(1.35rem, 5vw, 2rem)` |
-| Landing / auth | `.title` (global CSS) | `clamp(1.85rem, 6.2vw, 2.2rem)` |
-| Research | `styles.paperTitle` | `clamp(1.35rem, 5vw, 1.7rem)` |
+Product surfaces are denser, quieter, and mostly monochrome.
 
----
+- The strongest recurring anchors are `0.72rem` for meta/supporting text and `0.84rem` for
+  primary UI/body text.
+- Compact action pills frequently use `0.76rem` or `0.78rem`. Those are no longer outliers;
+  they are part of the current dense-control language.
+- Product displays use `clamp(...)` values rather than a single fixed token.
+- Borders, spacing, and weight do more work than casing or tracking.
 
-## Font Weights
+### Editorial research
 
-| Weight | Usage |
-|--------|-------|
-| `font-[520]` | Metric main values, brand logotype |
+Research pages keep the same overall palette but use a more document-like rhythm.
+
+- Body copy sits around `0.86rem` to `0.9rem` with `leading-[1.6]`.
+- Research titles still use negative tracking, but the page is less compressed than dashboard/product UI.
+- Tables and equations use explicit numeric and alignment utilities instead of dashboard card conventions.
+
+## Actual Size Bands
+
+These are the real ranges currently in use across the repo.
+
+| Band | Common values in code | Typical use |
+|------|------------------------|-------------|
+| Micro | `11px`, `0.64rem`, `0.65rem`, `0.67rem`, `0.68rem` | Eyebrows, field labels, table headers, set labels, compact meta pills |
+| Secondary | `0.71rem` to `0.78rem` | Muted meta, timestamps, action labels, toasts, pagination text, workout-detail action pills |
+| Body / compact UI | `0.82rem` to `0.92rem` | Table data, descriptions, inputs, most product buttons, research copy |
+| Section | `1rem` to `1.35rem` | Panel titles, exercise names, split-editor titles, research card titles |
+| Display | `clamp(...)`, `text-4xl`, `text-5xl`, `text-6xl`, `text-7xl` | Page titles, KPI numerics, public hero headlines |
+
+Do not force new work into a fake universal scale. Match the local surface you are editing.
+
+## Display Patterns
+
+| Surface | Pattern |
+|---------|---------|
+| Dashboard title | `clamp(1.55rem,6.8vw,2.2rem)` with `tracking-[-0.03em]` and `font-[540]` |
+| Workout logger title | `clamp(1.8rem,7vw,2.35rem)` with `tracking-[-0.02em]` and `font-[560]` |
+| Workout detail / exercise detail titles | `clamp(1.35rem,5vw,...)` with `tracking-[-0.02em]` |
+| Research title | `clamp(1.35rem,5vw,1.7rem)` with `tracking-[-0.04em]` |
+| Public hero | `text-5xl sm:text-6xl lg:text-7xl` with `tracking-[-0.08em]` |
+| Public page header / stat value | `text-4xl` or `text-2xl` with `tracking-[-0.06em]` or `tracking-[-0.04em]` |
+| KPI numerics | `tracking-[-0.05em]`, `font-[520]`, often `leading-none` |
+
+## Weight and Tracking
+
+### Font weights
+
+| Weight | Current role |
+|--------|--------------|
+| `font-[560]` | Default emphatic heading weight across product UI, research cards, and many compact numeric labels |
 | `font-[540]` | Dashboard page title |
-| `font-[560]` | Panel titles, exercise titles, set numbers (mobile), split editor title |
-| `font-medium` | Table column headers (via `[&_th]:font-medium`) |
-| normal (unset) | Everything else |
+| `font-[520]` | Brand logotype and large KPI/value numerics |
+| `font-semibold` | Public micro labels and small emphasis lines |
+| `font-medium` | Table headers and a few public value rows |
+| unset / normal | Supporting copy and most body text |
 
----
+### Tracking
 
-## Color Tokens for Text
+- `-0.08em`: public hero headlines and the public logotype
+- `-0.06em`: public page headers and large stat values
+- `-0.05em`: dashboard brand and KPI numerics
+- `-0.04em`: research title, public card titles, empty states
+- `-0.03em`: dashboard title, research card titles, medium display headings
+- `-0.02em`: workout logger and detail-page titles
+- `-0.015em`: panel titles and section headings
+- `-0.01em`: compact titles and the occasional dense button label
+- `0`: tolerated for a few tiny meta labels
+- none: default for almost all labels, table text, and body copy
 
-| Token | Usage |
-|-------|-------|
-| `var(--text)` | Primary content |
-| `var(--muted)` | Secondary / supporting labels |
-| `color-mix(in_srgb,var(--text)_92%,var(--muted))` | Table cell data (slightly softened) |
-| `color-mix(in_srgb,var(--text)_88%,var(--muted))` | Calendar day numbers |
-| `color-mix(in_srgb,var(--text)_78%,#ae2d2d)` | Sign-out menu item |
-| `#2f7b4d` / `#b13d48` | Success / error status text |
+## Line Height and Rhythm
 
----
+- `leading-none` and `leading-[0.98]` to `leading-[1.08]`: high-emphasis display numerics and hero titles
+- `leading-[1.1]` to `leading-[1.25]`: panel titles, exercise names, compact value blocks
+- `1.45`: global body default
+- `1.5` to `1.6`: research copy, explanatory text, and legal/auth supporting paragraphs
 
-## Tracking Conventions
+## Text Color Patterns
 
-- `-0.05em` — brand logotype, KPI values
-- `-0.02em` to `-0.03em` — page display titles
-- `-0.015em` — panel titles, section headings (1rem tier)
-- `0.08em` + `uppercase` — table column headers, form field labels, research notation keys
-- `0.04em` — search result section labels
-- none — body and secondary text
+| Token or mix | Usage |
+|--------------|-------|
+| `var(--text)` | Primary text |
+| `var(--muted)` | Secondary labels, support copy, table headers |
+| `color-mix(in_srgb,var(--text)_92%,var(--muted))` | Softened table/body data |
+| `color-mix(in_srgb,var(--text)_88%,var(--muted))` | Slightly dimmed primary values such as calendar-day text or research intro copy |
+| `#2f7b4d`, `#b13d48`, `#a43838` | Status, destructive, and error states |
 
----
+## Design Patterns Adjacent to Type
 
-## Line-Height Conventions
+Typography is now tied closely to control styling, not just text size.
 
-- `leading-none` (1) — KPI values, calendar day numbers
-- `leading-[1.05]` to `leading-[1.15]` — display titles
-- `1.45` (body default via `globals.css`) — body text, paragraphs
-- `1.6` — research body copy
+- Public surfaces use large headings, generous spacing, `SurfaceCard`, and rounded 28-32px frames.
+- Product surfaces use transparent backgrounds, thin monochrome borders, tight spacing, and lower-contrast meta text.
+- Small labels now rely on size, weight, and color rather than uppercase or positive tracking.
+- Tables generally follow: muted `font-medium` headers around `0.65rem` to `0.72rem`, body cells around
+  `0.81rem` to `0.84rem`, softened with `color-mix(...)`.
+- Numeric contexts use tabular figures where comparison matters, such as date input and research equations.
 
----
+## Button and Interaction Pattern
+
+The current repo-wide button pass should be treated as part of the design language.
+
+- Interactive controls use sentence case, not uppercase.
+- If it behaves like a button, it should look clickable: `cursor-pointer`.
+- Keyboard focus is explicit: `focus-visible:outline-2 ...` or `.app-focus-ring`.
+- Motion is subtle and consistent: short transitions plus `active:translate-y-[1px]` or `active:translate-y-px`.
+- Product buttons are usually pills or `0.5rem` to `0.58rem` rounded rectangles with monochrome borders.
+- Public buttons are larger, softer, and built from the semantic `--app-*` tokens.
+
+Reference implementations:
+
+- `app/globals.css` for `.btn`, `.theme-icon-toggle`, `.back-link`, `.legal-nav-link`, `.switch-option`
+- `app/components/ui/link-button.tsx` for public link-style buttons
+- `app/dashboard/dashboard.styles.ts` and `app/dashboard/split-system.styles.ts` for shared product button motion/focus helpers
 
 ## File Map
 
 ### `app/globals.css`
-Plain CSS classes for the landing page, auth, and legal pages. No Tailwind utilities.
-Key sizes: `.title` (clamp), `.subtitle` (0.95rem), `.btn` (0.92rem), `.tos` (0.76rem), `.label` (0.67rem).
+
+Public/auth/legal foundation. Defines font tokens, base line height, control font inheritance, shared
+focus-ring behavior, auth/legal copy sizes, and the non-Tailwind button styles.
+
+### `app/components/public-page-shell.tsx`
+
+Public hero shell. This is the clearest reference for current public-page display scale:
+large hero, supporting deck, small eyebrow, and larger rounded card framing.
+
+### `app/components/ui/cards.tsx`
+
+Shared public-card language. Use this to match section headers, public page headers, and card title/body ratios.
+
+### `app/components/ui/display.tsx`
+
+Shared public display primitives for stat cards, meta pills, and empty states.
+
+### `app/components/ui/link-button.tsx`
+
+Reference for public action buttons and sentence-case link-as-button styling.
 
 ### `app/dashboard/dashboard.styles.ts`
-The main dashboard shell, sidebar, calendar, tables, KPI cards, and user menu.
-All sizes follow the 5-tier scale. `navButton`, `sidebarAction`, `dashboardMenuItem` at `0.72rem`;
-`calendarNavButton` at `0.65rem`.
+
+Primary product-shell reference. Use this file to match dashboard headings, KPI numerics, table headers,
+pagination, nav labels, and compact control sizing.
 
 ### `app/dashboard/split-system.styles.ts`
-Split planner and editor panel. Follows the same scale.
-`splitDayWeekday`, `splitDayMeta`, `editorLabel`, `status` at `0.72rem`;
-`splitDayStats`, `inlineButton`, `primaryButton` at `0.84rem`;
-`searchResultsLabel` at `0.65rem`; `editorTitle` at `1.35rem`.
 
-### `app/workouts/[workoutId]/workout-detail.styles.ts`
-Workout detail view. All action buttons (Edit, Copy, Duplicate, Delete) share `actionBase`
-at `text-[0.76rem]`. This is the reference "correct size" for pill-style action buttons.
+Reference for split-planner editor typography: dense controls, `1rem` section titles, `0.72rem` meta,
+and `0.84rem` working-copy body text.
 
 ### `app/workouts/new/workout-logger.styles.ts`
-Workout logging form. Uses `text-base` → `min-[620px]:text-[0.9rem]` on inputs (touch-friendly).
-Labels at `0.68rem`, exercise meta at `0.72rem`, set head labels at `0.64rem` uppercase.
+
+Dense mobile-first form language. This file is the best reference for touch-friendly inputs, compact labels,
+exercise meta, inline compare blocks, and form action sizing.
+
+### `app/workouts/[workoutId]/workout-detail.styles.ts`
+
+Compact detail-page language. Use this for pill actions, dense data tables, compact meta pills,
+and low-friction secondary information.
 
 ### `app/exercises/[exerciseKey]/exercise-detail.styles.ts`
-Exercise history and chart view. Follows the 5-tier scale.
-Table uses `border-separate` with `[&_th]` at `0.68rem`, `[&_td]` at `0.82rem` (slight deviation — acceptable).
+
+Reference for historical data views: KPI rail, chart panel headings, session rows, and border-separated tables.
 
 ### `app/research/page.styles.ts`
-Research/methodology page. Uses `0.86rem` body copy and `0.76rem` uppercase keys — intentionally
-denser than the app UI. Do not apply dashboard scale here.
 
----
+Editorial variant. Use this when the content reads like documentation or methodology rather than app UI.
+
+## Guardrails
+
+- Match the local surface before introducing new sizes or weights.
+- On product pages, prefer the existing anchors: `0.72rem`, `0.84rem`, `1rem`, and local `clamp(...)` titles.
+- On public pages, prefer the existing heading ladder: `text-sm` support copy, `text-2xl`/`text-4xl` section headers,
+  and `text-5xl+` heroes.
+- Do not add uppercase utility classes.
+- Do not add positive tracking values.
 
 ## Active State Override Pattern
 
 Tailwind v4 generates utility CSS in property-alphabetical order. When a base class and a modifier
-class set the same property (e.g. `bg-[var(--surface)]` + `bg-[var(--calendar-active-bg)]`), the
-alphabetically-later value wins — which may be the wrong one.
+class set the same property, the alphabetically later value can win even when the modifier should override it.
 
-**Fix**: prefix the modifier's conflicting utilities with `!` to force `!important`.
+Use `!` on the modifier when a conditional state needs to beat the base class.
 
 ```ts
-// dashboard.styles.ts
 calendarDay: "... bg-[var(--surface)] border-[var(--dashboard-border)] ...",
 calendarDayActive: "!bg-[var(--calendar-active-bg)] !border-[var(--calendar-active-border)] ...",
 ```
 
-Apply this pattern to any element where a conditional class overrides a layout/base class property.
+Apply this pattern to any conditional state where the override must win predictably.

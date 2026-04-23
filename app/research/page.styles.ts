@@ -18,14 +18,14 @@ export const styles = {
   inputRows: "flex flex-col gap-[0.7rem]",
   inputRow: "grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[0.8rem]",
   inputKey:
-    "pt-[0.14rem] text-[var(--text)] text-[0.76rem] leading-[1.2] tracking-[0.08em] uppercase",
+    "pt-[0.14rem] text-[var(--text)] text-[0.76rem] leading-[1.2]",
   inputText:
     "m-0 text-[color-mix(in_srgb,var(--text)_90%,var(--muted))] text-[0.86rem] leading-[1.6] [&_strong]:text-[var(--text)] [&_strong]:font-[560]",
   notationGrid:
     "grid grid-cols-2 gap-y-[0.7rem] gap-x-[1rem] max-[540px]:grid-cols-1",
   notationRow: "grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[0.8rem]",
   notationSymbol:
-    "pt-[0.14rem] text-[var(--text)] text-[0.76rem] leading-[1.2] tracking-[0.08em] uppercase [&_em]:italic",
+    "pt-[0.14rem] text-[var(--text)] text-[0.76rem] leading-[1.2] [&_em]:italic",
   notationText:
     "m-0 text-[color-mix(in_srgb,var(--text)_90%,var(--muted))] text-[0.86rem] leading-[1.6]",
   equationFigure: "my-[0.05rem] flex flex-col gap-[0.5rem]",
@@ -36,7 +36,7 @@ export const styles = {
     "m-0 text-[color-mix(in_srgb,var(--text)_90%,var(--muted))] text-[0.86rem] leading-[1.6] [&_strong]:text-[var(--text)] [&_strong]:font-[560]",
   tableWrap: "overflow-x-auto",
   curveTable:
-    "w-full border-collapse text-[0.84rem] leading-[1.45] [&_th]:border-b [&_td]:border-b [&_th]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_td]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_th]:px-0 [&_td]:px-0 [&_th]:py-[0.62rem] [&_td]:py-[0.62rem] [&_th]:text-left [&_td]:text-left [&_th]:text-[var(--muted)] [&_th]:text-[0.72rem] [&_th]:tracking-[0.08em] [&_th]:uppercase [&_th]:font-medium [&_th:last-child]:text-right [&_td:last-child]:text-right",
+    "w-full border-collapse text-[0.84rem] leading-[1.45] [&_th]:border-b [&_td]:border-b [&_th]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_td]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_th]:px-0 [&_td]:px-0 [&_th]:py-[0.62rem] [&_td]:py-[0.62rem] [&_th]:text-left [&_td]:text-left [&_th]:text-[var(--muted)] [&_th]:text-[0.72rem] [&_th]:font-medium [&_th:last-child]:text-right [&_td:last-child]:text-right",
   definitionTable:
     "w-full border-collapse text-[0.84rem] leading-[1.5] [&_th]:border-b [&_td]:border-b [&_th]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_td]:border-[color-mix(in_srgb,var(--text)_8%,transparent)] [&_th]:px-0 [&_td]:px-0 [&_th]:py-[0.62rem] [&_td]:py-[0.7rem] [&_th]:text-left [&_td]:text-left [&_th]:align-bottom [&_td]:align-top [&_th]:text-[var(--muted)] [&_th]:text-[0.72rem] [&_th]:font-medium",
 } as const;

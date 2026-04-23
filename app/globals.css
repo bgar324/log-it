@@ -183,7 +183,18 @@ a {
     border-color var(--theme-toggle-transition-duration)
       var(--theme-toggle-transition-easing),
     background-color var(--theme-toggle-transition-duration)
-      var(--theme-toggle-transition-easing);
+      var(--theme-toggle-transition-easing),
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.theme-icon-toggle:active {
+  transform: translateY(1px);
+}
+
+.theme-icon-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .theme-toggle-slot {
@@ -254,7 +265,9 @@ a {
     transform 140ms ease,
     filter 140ms ease,
     background-color 180ms ease,
-    color 180ms ease;
+    color 180ms ease,
+    box-shadow 140ms ease,
+    border-color 180ms ease;
   font-family: inherit;
   display: inline-flex;
   align-items: center;
@@ -269,6 +282,11 @@ a {
 
 .btn:active {
   transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .btn-primary {
@@ -356,6 +374,25 @@ a {
   color: var(--text);
   background: var(--toggle-bg);
   box-shadow: var(--soft-shadow);
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 140ms ease;
+}
+
+.back-link:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.back-link:active {
+  transform: translateY(1px);
+}
+
+.back-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .back-icon {
@@ -405,11 +442,25 @@ a {
   background: var(--field-bg);
   color: var(--text);
   font-size: 0.8rem;
-  transition: filter 150ms ease;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    filter 150ms ease,
+    box-shadow 140ms ease,
+    border-color 180ms ease;
 }
 
 .legal-nav-link:hover {
   filter: brightness(0.99);
+}
+
+.legal-nav-link:active {
+  transform: translateY(1px);
+}
+
+.legal-nav-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .legal-section {
@@ -472,11 +523,36 @@ a {
   font-size: 0.78rem;
   padding: 0.56rem 0.62rem;
   text-align: center;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 140ms ease;
 }
 
 .switch-option[data-active="true"] {
   background: var(--text);
   color: var(--bg);
+}
+
+.switch-option:hover {
+  border-color: color-mix(in srgb, var(--text) 18%, transparent);
+  color: var(--text);
+}
+
+.switch-option[data-active="true"]:hover {
+  color: var(--bg);
+}
+
+.switch-option:active {
+  transform: translateY(1px);
+}
+
+.switch-option:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .form {
@@ -554,6 +630,11 @@ a {
 }
 
 .password-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.app-focus-ring:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--focus-ring);
 }

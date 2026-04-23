@@ -20,6 +20,7 @@
   "include": [
     "tests/**/*.ts",
     "app/api/workouts/insights/route.ts",
+    "lib/auth-secret.ts",
     "lib/auth.ts",
     "lib/exercise-autofill.ts",
     "lib/workouts/insight-request.ts",
