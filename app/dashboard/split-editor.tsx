@@ -11,6 +11,8 @@ import { splitStyles } from "./split-system.styles";
 type SplitEditorProps = {
   day: WorkoutSplitDayTemplate;
   exerciseSearchResults: Record<string, string[]>;
+  draggingExerciseIndex: number | null;
+  exerciseDropTargetIndex: number | null;
   onWorkoutTypeChange: (value: string) => void;
   onExerciseNameChange: (exerciseIndex: number, value: string) => void;
   onExerciseNameFocus: (exerciseIndex: number, value: string) => void;
@@ -19,11 +21,17 @@ type SplitEditorProps = {
   onExerciseSetsChange: (exerciseIndex: number, value: number) => void;
   onAddExercise: () => void;
   onRemoveExercise: (exerciseIndex: number) => void;
+  onExerciseDragStart: (exerciseIndex: number) => void;
+  onExerciseDragOver: (exerciseIndex: number) => void;
+  onExerciseDrop: (exerciseIndex: number) => void;
+  onExerciseDragEnd: () => void;
 };
 
 export function SplitEditor({
   day,
   exerciseSearchResults,
+  draggingExerciseIndex,
+  exerciseDropTargetIndex,
   onWorkoutTypeChange,
   onExerciseNameChange,
   onExerciseNameFocus,
@@ -32,6 +40,10 @@ export function SplitEditor({
   onExerciseSetsChange,
   onAddExercise,
   onRemoveExercise,
+  onExerciseDragStart,
+  onExerciseDragOver,
+  onExerciseDrop,
+  onExerciseDragEnd,
 }: SplitEditorProps) {
   const isRestDay = day.workoutTypeSlug === "rest";
 
@@ -81,6 +93,10 @@ export function SplitEditor({
               key={exercise.id ?? `${day.weekday}-${exercise.order}`}
               exercise={exercise}
               searchResults={exerciseSearchResults[`${day.weekday}-${index}`] ?? []}
+              isDragging={draggingExerciseIndex === index}
+              isDropTarget={
+                exerciseDropTargetIndex === index && draggingExerciseIndex !== index
+              }
               onNameChange={(value) => onExerciseNameChange(index, value)}
               onNameFocus={(value) => onExerciseNameFocus(index, value)}
               onNameBlur={(value) => onExerciseNameBlur(index, value)}
@@ -89,6 +105,10 @@ export function SplitEditor({
               }
               onSetsChange={(value) => onExerciseSetsChange(index, value)}
               onRemove={() => onRemoveExercise(index)}
+              onDragStart={() => onExerciseDragStart(index)}
+              onDragOver={() => onExerciseDragOver(index)}
+              onDrop={() => onExerciseDrop(index)}
+              onDragEnd={onExerciseDragEnd}
             />
           ))}
         </div>
