@@ -86,8 +86,12 @@ export function useSplitManagerState(
 
   useEffect(() => {
     clearAllExerciseSuggestions();
+  }, [clearAllExerciseSuggestions, selectedWeekday]);
+
+  function selectWeekday(weekday: SplitWeekdayValue) {
     exerciseActions.endExerciseDrag();
-  }, [clearAllExerciseSuggestions, exerciseActions, selectedWeekday]);
+    setSelectedWeekday(weekday);
+  }
 
   return {
     split,
@@ -101,7 +105,7 @@ export function useSplitManagerState(
     exerciseDropTargetIndex: exerciseActions.exerciseDropTargetIndex,
     selectedDayExerciseSearchResults: exerciseActions.selectedDayExerciseSearchResults,
     setSplitName: exerciseActions.setSplitName,
-    selectWeekday: setSelectedWeekday,
+    selectWeekday,
     startDraggingDay: dragState.startDraggingDay,
     dragOverDay: dragState.dragOverDay,
     dropDayAt: dragState.dropDayAt,
