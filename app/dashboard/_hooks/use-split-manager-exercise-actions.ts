@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, type Dispatch, type SetStateAction } from "react";
+import { useState, useMemo, type Dispatch, type SetStateAction } from "react";
 import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
 import { normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
-import { REST_DAY_WORKOUT_TYPE } from "@/lib/workout-splits/shared";
+import {
+  reorderSplitExercises,
+  REST_DAY_WORKOUT_TYPE,
+} from "@/lib/workout-splits/shared";
 import type {
   SplitWeekdayValue,
   WorkoutSplitTemplate,
@@ -36,6 +39,8 @@ export function useSplitManagerExerciseActions({
   clearExerciseSearchResults,
   queueExerciseSuggestionLookup,
 }: UseSplitManagerExerciseActionsOptions) {
+  const [draggingExerciseIndex, setDraggingExerciseIndex] = useState<number | null>(null);
+  const [exerciseDropTargetIndex, setExerciseDropTargetIndex] = useState<number | null>(null);
   const selectedDay = useMemo(
     () => split.days.find((day) => day.weekday === selectedWeekday) ?? split.days[0] ?? null,
     [selectedWeekday, split.days],
@@ -177,6 +182,7 @@ export function useSplitManagerExerciseActions({
     }
 
     clearAllExerciseSuggestions();
+    endExerciseDrag();
     updateSelectedDayExercises((day) => ({
       ...day,
       exercises: [...day.exercises, createExerciseDraft(day.exercises.length + 1)],
@@ -185,6 +191,7 @@ export function useSplitManagerExerciseActions({
 
   function removeExercise(exerciseIndex: number) {
     clearAllExerciseSuggestions();
+    endExerciseDrag();
     updateSelectedDayExercises((day) => ({
       ...day,
       exercises: day.exercises
@@ -196,9 +203,41 @@ export function useSplitManagerExerciseActions({
     }));
   }
 
+  function startDraggingExercise(exerciseIndex: number) {
+    setDraggingExerciseIndex(exerciseIndex);
+    setExerciseDropTargetIndex(exerciseIndex);
+  }
+
+  function dragOverExercise(exerciseIndex: number) {
+    setExerciseDropTargetIndex(exerciseIndex);
+  }
+
+  function endExerciseDrag() {
+    setDraggingExerciseIndex(null);
+    setExerciseDropTargetIndex(null);
+  }
+
+  function dropExerciseAt(exerciseIndex: number) {
+    const fromIndex = draggingExerciseIndex ?? exerciseIndex;
+
+    if (fromIndex === exerciseIndex) {
+      endExerciseDrag();
+      return;
+    }
+
+    clearAllExerciseSuggestions();
+    updateSelectedDayExercises((day) => ({
+      ...day,
+      exercises: reorderSplitExercises(day.exercises, fromIndex, exerciseIndex),
+    }));
+    endExerciseDrag();
+  }
+
   return {
     selectedDay,
     selectedDayExerciseSearchResults,
+    draggingExerciseIndex,
+    exerciseDropTargetIndex,
     setSplitName,
     handleExerciseNameChange,
     handleExerciseNameBlur,
@@ -208,5 +247,9 @@ export function useSplitManagerExerciseActions({
     setExerciseSets,
     addExercise,
     removeExercise,
+    startDraggingExercise,
+    dragOverExercise,
+    dropExerciseAt,
+    endExerciseDrag,
   };
 }

@@ -21,6 +21,8 @@ export type SplitManagerState = {
   copyState: SplitManagerCopyState;
   draggingIndex: number | null;
   dropTargetIndex: number | null;
+  draggingExerciseIndex: number | null;
+  exerciseDropTargetIndex: number | null;
   selectedDayExerciseSearchResults: Record<string, string[]>;
   setSplitName: (value: string) => void;
   selectWeekday: (weekday: SplitWeekdayValue) => void;
@@ -36,6 +38,10 @@ export type SplitManagerState = {
   setExerciseSets: (exerciseIndex: number, value: number) => void;
   addExercise: () => void;
   removeExercise: (exerciseIndex: number) => void;
+  startDraggingExercise: (exerciseIndex: number) => void;
+  dragOverExercise: (exerciseIndex: number) => void;
+  dropExerciseAt: (exerciseIndex: number) => void;
+  endExerciseDrag: () => void;
   handleSave: () => Promise<void>;
   handleCopySplit: () => Promise<void>;
 };
@@ -82,6 +88,11 @@ export function useSplitManagerState(
     clearAllExerciseSuggestions();
   }, [clearAllExerciseSuggestions, selectedWeekday]);
 
+  function selectWeekday(weekday: SplitWeekdayValue) {
+    exerciseActions.endExerciseDrag();
+    setSelectedWeekday(weekday);
+  }
+
   return {
     split,
     selectedDay: exerciseActions.selectedDay,
@@ -90,9 +101,11 @@ export function useSplitManagerState(
     copyState: persistence.copyState,
     draggingIndex: dragState.draggingIndex,
     dropTargetIndex: dragState.dropTargetIndex,
+    draggingExerciseIndex: exerciseActions.draggingExerciseIndex,
+    exerciseDropTargetIndex: exerciseActions.exerciseDropTargetIndex,
     selectedDayExerciseSearchResults: exerciseActions.selectedDayExerciseSearchResults,
     setSplitName: exerciseActions.setSplitName,
-    selectWeekday: setSelectedWeekday,
+    selectWeekday,
     startDraggingDay: dragState.startDraggingDay,
     dragOverDay: dragState.dragOverDay,
     dropDayAt: dragState.dropDayAt,
@@ -105,6 +118,10 @@ export function useSplitManagerState(
     setExerciseSets: exerciseActions.setExerciseSets,
     addExercise: exerciseActions.addExercise,
     removeExercise: exerciseActions.removeExercise,
+    startDraggingExercise: exerciseActions.startDraggingExercise,
+    dragOverExercise: exerciseActions.dragOverExercise,
+    dropExerciseAt: exerciseActions.dropExerciseAt,
+    endExerciseDrag: exerciseActions.endExerciseDrag,
     handleSave: persistence.handleSave,
     handleCopySplit: persistence.handleCopySplit,
   };

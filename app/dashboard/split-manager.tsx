@@ -99,6 +99,8 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
       <SplitEditor
         day={state.selectedDay}
         exerciseSearchResults={state.selectedDayExerciseSearchResults}
+        draggingExerciseIndex={state.draggingExerciseIndex}
+        exerciseDropTargetIndex={state.exerciseDropTargetIndex}
         onWorkoutTypeChange={state.setWorkoutType}
         onExerciseNameChange={state.handleExerciseNameChange}
         onExerciseNameFocus={state.handleExerciseNameFocus}
@@ -107,6 +109,10 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
         onExerciseSetsChange={state.setExerciseSets}
         onAddExercise={state.addExercise}
         onRemoveExercise={state.removeExercise}
+        onExerciseDragStart={state.startDraggingExercise}
+        onExerciseDragOver={state.dragOverExercise}
+        onExerciseDrop={state.dropExerciseAt}
+        onExerciseDragEnd={state.endExerciseDrag}
       />
     </div>
   );
