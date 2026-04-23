@@ -46,7 +46,11 @@ export const splitStyles = {
   editorSectionTitle: "m-0 text-[1rem] tracking-[-0.015em] font-[560]",
   editorExerciseList: "flex flex-col gap-[0.55rem]",
   exerciseRow:
-    "flex min-w-0 items-end gap-[0.68rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent p-[0.76rem]",
+    `flex min-w-0 items-end gap-[0.68rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent p-[0.76rem] ${buttonMotion}`,
+  exerciseRowDragging: "opacity-60",
+  exerciseRowDropTarget: "border-[var(--text)]",
+  exerciseRowHandle:
+    `inline-flex h-[2.5rem] w-[2.5rem] shrink-0 cursor-grab items-center justify-center self-auto rounded-[0.52rem] border border-[var(--split-border)] bg-transparent text-[var(--muted)] hover:border-[var(--split-border-strong)] active:cursor-grabbing ${buttonMotion} ${buttonFocusRing}`,
   exerciseMain:
     "grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_6rem] gap-[0.68rem]",
   setsInput: "text-center",
