@@ -127,6 +127,42 @@ export function reorderSplitDays<T extends { weekday: SplitWeekdayValue }>(
   })) as T[];
 }
 
+export function reorderSplitExercises<T extends { order: number }>(
+  exercises: T[],
+  fromIndex: number,
+  toIndex: number,
+) {
+  if (
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= exercises.length ||
+    toIndex >= exercises.length ||
+    fromIndex === toIndex
+  ) {
+    return exercises.map((exercise, index) => ({
+      ...exercise,
+      order: index + 1,
+    })) as T[];
+  }
+
+  const reorderedExercises = [...exercises];
+  const [movedExercise] = reorderedExercises.splice(fromIndex, 1);
+
+  if (!movedExercise) {
+    return exercises.map((exercise, index) => ({
+      ...exercise,
+      order: index + 1,
+    })) as T[];
+  }
+
+  reorderedExercises.splice(toIndex, 0, movedExercise);
+
+  return reorderedExercises.map((exercise, index) => ({
+    ...exercise,
+    order: index + 1,
+  })) as T[];
+}
+
 export function dateKeyFromDate(date: Date) {
   return formatDatabaseDateValue(date);
 }
