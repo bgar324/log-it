@@ -23,7 +23,7 @@ export function RecommendationGuardrailsPaper({
         <section className="legal-section">
           <h3 className="legal-heading">Why guardrails exist</h3>
           <p>
-            The predictor does not send its raw output straight into the logger. Logit adds a
+            The predictor does not send its raw output straight into the logger. logit adds a
             second layer whose job is not to be clever, but to keep recommendations within a
             believable working range for the next session.
           </p>
@@ -38,7 +38,7 @@ export function RecommendationGuardrailsPaper({
           <h3 className="legal-heading">1. Gym-increment rounding</h3>
           <p>
             Every weighted recommendation is snapped to the increment the user can actually load
-            in the gym. In Logit that increment is five pounds in pound mode and 2.5 kilograms
+            in the gym. In logit that increment is five pounds in pound mode and 2.5 kilograms
             in kilogram mode.
           </p>
           <DisplayEquation
@@ -90,7 +90,7 @@ export function RecommendationGuardrailsPaper({
           <h3 className="legal-heading">3. Later-set shape constraints</h3>
           <p>
             Later visible sets are rebuilt from the anchor prediction using historical median
-            backoff ratios and rep deltas. If a stable historical profile is missing, Logit uses
+            backoff ratios and rep deltas. If a stable historical profile is missing, logit uses
             a conservative fallback structure instead of pretending the later sets are known.
           </p>
           <DisplayEquation
@@ -128,7 +128,7 @@ export function RecommendationGuardrailsPaper({
         <section className="legal-section">
           <h3 className="legal-heading">4. Confidence-linked uncertainty bands</h3>
           <p>
-            The surfaced recommendation is not just a single number. Logit also shows a rep
+            The surfaced recommendation is not just a single number. logit also shows a rep
             range whose width depends on the confidence label. Low confidence gets a wider band;
             medium and high confidence get a tighter one.
           </p>

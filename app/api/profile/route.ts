@@ -21,6 +21,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function toBoolean(value: unknown) {
+  return typeof value === "boolean" ? value : null;
+}
+
 export async function PATCH(request: NextRequest) {
   if (!isTrustedMutationRequest(request)) {
     return NextResponse.json({ ok: false, error: getInvalidRequestOriginError() }, { status: 403 });
@@ -42,6 +46,7 @@ export async function PATCH(request: NextRequest) {
     const firstName = toOptionalName(body.firstName);
     const lastName = toOptionalName(body.lastName);
     const preferredWeightUnit = body.preferredWeightUnit;
+    const publicProfileEnabled = toBoolean(body.publicProfileEnabled);
 
     if ((firstName ?? "").length > 40 || (lastName ?? "").length > 40) {
       return NextResponse.json({ ok: false, error: "Name fields must be 40 characters or fewer." }, { status: 400 });
@@ -54,6 +59,13 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    if (publicProfileEnabled === null) {
+      return NextResponse.json(
+        { ok: false, error: "Public profile setting must be true or false." },
+        { status: 400 },
+      );
+    }
+
     const updated = await prisma.user.update({
       where: {
         id: user.id,
@@ -62,6 +74,7 @@ export async function PATCH(request: NextRequest) {
         firstName,
         lastName,
         preferredWeightUnit,
+        publicProfileEnabled,
       },
       select: {
         id: true,
@@ -70,6 +83,8 @@ export async function PATCH(request: NextRequest) {
         firstName: true,
         lastName: true,
         preferredWeightUnit: true,
+        publicProfileEnabled: true,
+        profileImageUpdatedAt: true,
         createdAt: true,
       },
     });
@@ -80,6 +95,8 @@ export async function PATCH(request: NextRequest) {
         firstName: updated.firstName,
         lastName: updated.lastName,
         preferredWeightUnit: updated.preferredWeightUnit,
+        publicProfileEnabled: updated.publicProfileEnabled,
+        profileImageUpdatedAt: updated.profileImageUpdatedAt?.toISOString() ?? null,
       },
     });
     const token = await createSessionToken(updated);

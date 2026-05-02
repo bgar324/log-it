@@ -31,11 +31,11 @@ export const splitStyles = {
     "inline-flex h-[1.65rem] w-[1.65rem] items-center justify-center rounded-[0.38rem] bg-[color-mix(in_srgb,var(--text)_7%,transparent)] text-[var(--muted)] cursor-grab",
   splitDayWeekday: "text-[0.72rem] text-[var(--muted)]",
   splitDayMeta: "text-[0.72rem] text-[var(--muted)]",
-  splitDayTitle: "text-[1rem] leading-[1.1] tracking-[-0.015em] font-[560]",
+  splitDayTitle: "text-[1rem] leading-[1.1] tracking-[-0.03em] font-[560]",
   splitDayStats: "mb-0 mt-auto text-[0.84rem]",
   editorHeader: "",
   editorTitle:
-    "m-0 text-[1.35rem] leading-[1.15] tracking-[-0.015em] font-[560]",
+    "m-0 text-[1.35rem] leading-[1.15] tracking-[-0.03em] font-[560]",
   editorField: "flex flex-col gap-[0.36rem]",
   editorLabel:
     "text-[0.72rem] text-[var(--muted)]",
@@ -43,7 +43,7 @@ export const splitStyles = {
     "min-h-[2.75rem] rounded-[0.52rem] border border-[var(--split-border)] bg-[var(--bg)] px-[0.9rem] text-[0.84rem] text-[var(--text)]",
   editorSectionHead:
     "flex items-center justify-between gap-[0.75rem] max-[700px]:flex-col max-[700px]:items-stretch",
-  editorSectionTitle: "m-0 text-[1rem] tracking-[-0.015em] font-[560]",
+  editorSectionTitle: "m-0 text-[1rem] tracking-[-0.03em] font-[560]",
   editorExerciseList: "flex flex-col gap-[0.55rem]",
   exerciseRow:
     `flex min-w-0 items-end gap-[0.68rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent p-[0.76rem] ${buttonMotion}`,

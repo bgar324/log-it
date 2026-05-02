@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "../components/theme-toggle";
 
 type ResearchPaperPageShellProps = {
@@ -18,7 +18,7 @@ export function ResearchPaperPageShell({
         <div className="content-stack legal-stack">
           <div className="auth-top-row">
             <Link href="/research" className="back-link" aria-label="Back">
-              <ChevronLeft className="back-icon" aria-hidden="true" strokeWidth={2.1} />
+              <ArrowLeft className="back-icon" aria-hidden="true" strokeWidth={1.9} />
             </Link>
             <ThemeToggle />
           </div>

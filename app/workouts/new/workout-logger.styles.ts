@@ -29,7 +29,7 @@ export const styles = {
   ),
   loggerStage: cn(
     "flex w-full max-w-[36rem] flex-col gap-[0.72rem]",
-    "min-[620px]:max-w-[50rem]",
+    "min-[620px]:max-w-[58rem]",
   ),
   topRow: "flex items-center justify-between gap-[0.5rem]",
   backLink: cn(
@@ -48,14 +48,16 @@ export const styles = {
   titleActions: "inline-flex shrink-0 items-center gap-[0.35rem]",
   headerIconButton: iconButtonBase,
   title:
-    "m-0 min-w-0 flex-1 text-[clamp(1.8rem,7vw,2.35rem)] leading-[1.02] tracking-[-0.02em] font-[560]",
+    "m-0 min-w-0 flex-1 text-[clamp(1.8rem,7vw,2.35rem)] leading-[1.02] tracking-[-0.03em] font-[560]",
   autosaveMeta: "m-0 text-[0.74rem] text-[var(--muted)]",
   form: "flex flex-col gap-[0.62rem] p-[2px]",
   card: cn(
     "flex flex-col gap-[0.6rem] rounded-[0.72rem] border bg-[var(--bg)] p-[0.78rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
-  metaGrid: "grid gap-[0.55rem] min-[620px]:grid-cols-2",
+  metaGrid:
+    "grid gap-[0.55rem] min-[620px]:grid-cols-2 min-[860px]:grid-cols-3",
+  singleMetaField: "grid gap-[0.55rem]",
   field: "flex flex-col gap-[0.22rem]",
   fieldInputRow: "flex items-stretch gap-[0.55rem]",
   fieldActionButton: cn(
@@ -76,7 +78,7 @@ export const styles = {
   confirmEyebrow:
     "m-0 text-[0.72rem] text-[var(--muted)]",
   confirmTitle:
-    "m-0 text-[1rem] leading-[1.15] tracking-[-0.015em] font-[560] text-[var(--text)]",
+    "m-0 text-[1rem] leading-[1.15] tracking-[-0.03em] font-[560] text-[var(--text)]",
   confirmBody:
     "m-0 text-[0.84rem] leading-[1.45] text-[color:color-mix(in_srgb,var(--text)_92%,var(--muted))]",
   confirmActions:
@@ -119,7 +121,7 @@ export const styles = {
     "[&_.react-datepicker__header]:border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
     "[&_.react-datepicker__header]:bg-[var(--bg)] [&_.react-datepicker__header]:pt-[0.56rem]",
     "[&_.react-datepicker__current-month]:text-[0.9rem]",
-    "[&_.react-datepicker__current-month]:tracking-[-0.01em]",
+    "[&_.react-datepicker__current-month]:tracking-[-0.03em]",
     "[&_.react-datepicker__current-month]:text-[var(--text)]",
     "[&_.react-datepicker__current-month]:font-[560]",
     "[&_.react-datepicker__day-names]:mt-[0.35rem]",

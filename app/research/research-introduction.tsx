@@ -60,7 +60,7 @@ export function ResearchIntroduction() {
         <h3 className="legal-heading">Why the system is heuristic-based</h3>
         <p>
           The predictor is heuristic on purpose because the underlying workout data is useful
-          but materially incomplete. Logit observes the exercise match, set order, reps, load,
+          but materially incomplete. logit observes the exercise match, set order, reps, load,
           workout date, exercise order inside the workout, and the number of visible set rows.
           That is enough to build a grounded recommendation engine. It is not enough to infer
           internal effort or physiology with high confidence.

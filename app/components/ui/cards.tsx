@@ -58,7 +58,7 @@ export function SectionCard({
     <SurfaceCard className={cn("overflow-hidden", className)}>
       <CardHeader className="flex flex-col gap-4 border-b border-[var(--app-border)] px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <CardTitle className="font-[var(--font-heading)] text-2xl tracking-[-0.04em] text-[var(--app-text)]">
+          <CardTitle className="font-[var(--font-heading)] text-2xl tracking-[-0.03em] text-[var(--app-text)]">
             {title}
           </CardTitle>
           {description ? (
@@ -100,7 +100,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="font-[var(--font-heading)] text-4xl leading-none tracking-[-0.06em] text-[var(--app-text)] sm:text-5xl">
+        <h1 className="font-[var(--font-heading)] text-4xl leading-none tracking-[-0.03em] text-[var(--app-text)] sm:text-5xl">
           {title}
         </h1>
         {description ? (

@@ -29,7 +29,7 @@ export function StatCard({ label, value, detail, className }: StatCardProps) {
         <p className="text-xs font-semibold text-[var(--app-text-subtle)]">
           {label}
         </p>
-        <p className="font-[var(--font-heading)] text-4xl leading-none tracking-[-0.06em] text-[var(--app-text)]">
+        <p className="font-[var(--font-heading)] text-4xl leading-none tracking-[-0.03em] text-[var(--app-text)]">
           {value}
         </p>
         {detail ? (
@@ -71,7 +71,7 @@ export function EmptyState({
         className,
       )}
     >
-      <p className="font-[var(--font-heading)] text-2xl tracking-[-0.04em] text-[var(--app-text)]">
+      <p className="font-[var(--font-heading)] text-2xl tracking-[-0.03em] text-[var(--app-text)]">
         {title}
       </p>
       {description ? (

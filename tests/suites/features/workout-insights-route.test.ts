@@ -76,6 +76,8 @@ test("workout insights route returns comparison data with prediction when contex
     firstName: "Ben",
     lastName: "G",
     preferredWeightUnit: "LB",
+    publicProfileEnabled: false,
+    profileImageUpdatedAt: null,
     createdAt: new Date("2026-01-01T12:00:00.000Z"),
   });
   prismaMutable.workoutExercise.findMany = async () => createExerciseLogs();
@@ -125,6 +127,8 @@ test("workout insights route prediction changes with exercise position and perfo
     firstName: "Ben",
     lastName: "G",
     preferredWeightUnit: "LB",
+    publicProfileEnabled: false,
+    profileImageUpdatedAt: null,
     createdAt: new Date("2026-01-01T12:00:00.000Z"),
   });
   prismaMutable.workoutExercise.findMany = async () => createExerciseLogs();
@@ -181,6 +185,8 @@ test("workout insights route keeps prediction backward-compatible when context i
     firstName: "Ben",
     lastName: "G",
     preferredWeightUnit: "LB",
+    publicProfileEnabled: false,
+    profileImageUpdatedAt: null,
     createdAt: new Date("2026-01-01T12:00:00.000Z"),
   });
   prismaMutable.workoutExercise.findMany = async () => createExerciseLogs();

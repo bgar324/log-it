@@ -156,6 +156,7 @@ export async function loadDashboardOverviewSection(
     id: log.id,
     title: log.title,
     workoutType: log.workoutType,
+    performedAtDate: log.performedAtDate,
     performedAtLabel: log.performedAtLabel,
     exerciseCount: log.exerciseCount,
     setCount: log.setCount,

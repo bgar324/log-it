@@ -33,6 +33,7 @@ type WorkoutLoggerProps = {
   workoutId?: string;
   initialData?: WorkoutLoggerInitialData;
   splitTemplateData?: WorkoutLoggerInitialData;
+  workoutTypeOptions?: string[];
   weightUnit: WeightUnit;
 };
 
@@ -41,6 +42,7 @@ export function WorkoutLogger({
   workoutId,
   initialData,
   splitTemplateData,
+  workoutTypeOptions = [],
   weightUnit,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
@@ -181,7 +183,7 @@ export function WorkoutLogger({
       const resolvedWorkoutId = data.id ?? workoutId;
 
       if (isEditMode && resolvedWorkoutId) {
-        router.push(`/workouts/${resolvedWorkoutId}`);
+        router.replace(`/workouts/${resolvedWorkoutId}`);
       } else {
         router.push("/workouts");
       }
@@ -230,10 +232,16 @@ export function WorkoutLogger({
         <form className={styles.form} onSubmit={handleSubmit}>
           <WorkoutLoggerMetaCard
             title={draft.title}
+            performedAt={draft.performedAt}
+            workoutType={draft.workoutType}
+            workoutTypeOptions={workoutTypeOptions}
             canResetFromSplit={hasSplitReset}
             onTitleChange={draft.setTitle}
+            onPerformedAtChange={draft.setPerformedAt}
+            onWorkoutTypeChange={draft.setWorkoutType}
             onResetFromSplit={handleResetFromSplit}
             resetDisabled={isSaving}
+            showEditFields={isEditMode}
           />
 
           <section className={styles.exerciseSection}>

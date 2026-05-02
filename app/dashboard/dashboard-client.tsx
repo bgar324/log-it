@@ -72,39 +72,49 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       onNavigate={navigateToView}
     >
       {activeView === "dashboard" ? (
-        <DashboardOverviewView
-          overview={data.overview}
-          recentSessions={recentSessions}
-          todayPlan={todayPlan}
-          weightUnit={displayWeightUnit}
-          calendar={calendarState}
-        />
+        <div key="dashboard" className="view-transition-shell">
+          <DashboardOverviewView
+            overview={data.overview}
+            recentSessions={recentSessions}
+            todayPlan={todayPlan}
+            weightUnit={displayWeightUnit}
+            calendar={calendarState}
+          />
+        </div>
       ) : null}
 
       {activeView === "workouts" ? (
-        <DashboardWorkoutsView
-          workoutMonths={data.workoutMonths}
-          displayWeightUnit={displayWeightUnit}
-        />
+        <div key="workouts" className="view-transition-shell">
+          <DashboardWorkoutsView
+            workoutMonths={data.workoutMonths}
+            displayWeightUnit={displayWeightUnit}
+          />
+        </div>
       ) : null}
 
       {activeView === "progress" ? (
-        <DashboardProgressView
-          progress={data.progress}
-          exercises={data.exercises}
-          weightUnit={displayWeightUnit}
-          state={progressState}
-        />
+        <div key="progress" className="view-transition-shell">
+          <DashboardProgressView
+            progress={data.progress}
+            exercises={data.exercises}
+            weightUnit={displayWeightUnit}
+            state={progressState}
+          />
+        </div>
       ) : null}
 
       {activeView === "split" ? (
-        <section className={styles.plainSection}>
-          <SplitManager initialSplit={data.split} />
-        </section>
+        <div key="split" className="view-transition-shell">
+          <section className={styles.plainSection}>
+            <SplitManager initialSplit={data.split} />
+          </section>
+        </div>
       ) : null}
 
       {activeView === "profile" ? (
-        <DashboardProfileView state={profileFormState} />
+        <div key="profile" className="view-transition-shell">
+          <DashboardProfileView state={profileFormState} />
+        </div>
       ) : null}
     </DashboardShell>
   );

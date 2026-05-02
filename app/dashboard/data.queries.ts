@@ -206,6 +206,7 @@ export function mapWorkoutSummaries(
       title: log.title,
       workoutType: log.workoutType,
       month: formatters.monthLabel(log.performedAt),
+      performedAtDate: formatDatabaseDateValue(log.performedAt),
       performedAtLabel: formatters.monthDateLabel(log.performedAt),
       timelineLabel: formatters.timelineDateLabel(log.performedAt),
       exerciseCount: log.exerciseCount,

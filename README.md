@@ -1,6 +1,6 @@
-# Logit
+# logit
 
-Logit is a lightweight workout journal built with Next.js App Router and Prisma.
+logit is a lightweight workout journal built with Next.js App Router and Prisma.
 It focuses on fast workout entry, exercise history, and progress views without
 turning the product into a full social or coaching platform.
 

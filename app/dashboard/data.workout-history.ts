@@ -8,7 +8,7 @@ export async function loadWorkoutHistorySection(
   userId: string,
   weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
 ) {
-  const recentLogSummaries = mapWorkoutSummaries(await loadRecentLogs(userId, 60), weightUnit, {
+  const recentLogSummaries = mapWorkoutSummaries(await loadRecentLogs(userId, 500), weightUnit, {
     monthLabel,
     monthDateLabel,
     timelineDateLabel,
@@ -22,6 +22,7 @@ export async function loadWorkoutHistorySection(
       id: log.id,
       title: log.title,
       workoutType: log.workoutType,
+      performedAtDate: log.performedAtDate,
       performedAtLabel: log.timelineLabel,
       exerciseCount: log.exerciseCount,
       setCount: log.setCount,

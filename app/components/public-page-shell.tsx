@@ -52,7 +52,7 @@ export function PublicPageShell({
               Minimal performance journal
             </div>
             <div className="space-y-4">
-              <h1 className="max-w-3xl font-[var(--font-heading)] text-5xl leading-none tracking-[-0.08em] text-[var(--app-text)] sm:text-6xl lg:text-7xl">
+              <h1 className="max-w-3xl font-[var(--font-heading)] text-5xl leading-none tracking-[-0.03em] text-[var(--app-text)] sm:text-6xl lg:text-7xl">
                 {title}
               </h1>
               <p className="max-w-2xl text-base leading-7 text-[var(--app-text-muted)] sm:text-lg">

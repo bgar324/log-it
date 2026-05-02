@@ -41,6 +41,8 @@ export function createEmptyDashboardData(
       firstName: user.firstName,
       lastName: user.lastName,
       preferredWeightUnit: user.preferredWeightUnit,
+      publicProfileEnabled: user.publicProfileEnabled,
+      profileImageUpdatedAt: user.profileImageUpdatedAt?.toISOString() ?? null,
       joinedAtLabel: monthLabel(user.createdAt),
     },
     overview: {
@@ -94,6 +96,8 @@ export async function loadAppShellContext() {
       firstName: user.firstName,
       lastName: user.lastName,
       preferredWeightUnit: user.preferredWeightUnit,
+      publicProfileEnabled: user.publicProfileEnabled,
+      profileImageUpdatedAt: user.profileImageUpdatedAt?.toISOString() ?? null,
       joinedAtLabel: monthLabel(user.createdAt),
     } satisfies DashboardClientData["user"],
   };

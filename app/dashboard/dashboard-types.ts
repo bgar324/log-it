@@ -15,6 +15,8 @@ export type DashboardClientData = {
     firstName: string | null;
     lastName: string | null;
     preferredWeightUnit: WeightUnit;
+    publicProfileEnabled: boolean;
+    profileImageUpdatedAt: string | null;
     joinedAtLabel: string;
   };
   overview: {
@@ -55,6 +57,7 @@ export type DashboardClientData = {
     id: string;
     title: string;
     workoutType: string | null;
+    performedAtDate: string;
     performedAtLabel: string;
     exerciseCount: number;
     setCount: number;
@@ -66,6 +69,7 @@ export type DashboardClientData = {
       id: string;
       title: string;
       workoutType: string | null;
+      performedAtDate: string;
       performedAtLabel: string;
       exerciseCount: number;
       setCount: number;

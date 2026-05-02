@@ -26,6 +26,8 @@ type SessionUser = {
   firstName: string | null;
   lastName: string | null;
   preferredWeightUnit: "LB" | "KG";
+  publicProfileEnabled: boolean;
+  profileImageUpdatedAt: Date | null;
   createdAt: Date;
 };
 
@@ -163,6 +165,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       firstName: true,
       lastName: true,
       preferredWeightUnit: true,
+      publicProfileEnabled: true,
+      profileImageUpdatedAt: true,
       createdAt: true,
     },
   });

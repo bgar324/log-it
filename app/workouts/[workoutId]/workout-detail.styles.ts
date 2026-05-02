@@ -66,20 +66,20 @@ export const styles = {
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
   title:
-    "m-0 text-[clamp(1.35rem,5vw,1.95rem)] leading-[1.05] tracking-[-0.02em] font-[560]",
+    "m-0 text-[clamp(1.35rem,5vw,1.95rem)] leading-[1.05] tracking-[-0.03em] font-[560]",
   metaRow:
     "mt-[0.78rem] grid grid-cols-[repeat(auto-fit,minmax(8.8rem,1fr))] gap-[0.42rem]",
   metaPill: cn(
     "inline-flex min-w-0 flex-col gap-[0.1rem] rounded-[0.5rem] border bg-transparent px-[0.58rem] py-[0.52rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
-  metaPillLabel: "text-[0.67rem] tracking-[0] text-[var(--muted)]",
+  metaPillLabel: "text-[0.67rem] tracking-[-0.03em] text-[var(--muted)]",
   metaPillValue:
     "text-[0.9rem] leading-[1.25] text-[color:color-mix(in_srgb,var(--text)_92%,var(--muted))]",
   exerciseList: "flex flex-col gap-[0.56rem]",
   exerciseHead: "flex items-baseline justify-between gap-[0.5rem]",
   exerciseOrder: "m-0 text-[0.74rem] text-[var(--muted)]",
-  exerciseName: "mt-[0.1rem] mb-0 text-[1.02rem] leading-[1.15] tracking-[-0.01em]",
+  exerciseName: "mt-[0.1rem] mb-0 text-[1.02rem] leading-[1.15] tracking-[-0.03em]",
   exerciseVolume: "m-0 text-[0.77rem] text-[var(--muted)]",
   tableWrap: "mt-[0.58rem] max-[759px]:hidden",
   table: "w-full border-collapse",

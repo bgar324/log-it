@@ -13,7 +13,7 @@ export function appLinkButtonClass(
   className?: string,
 ) {
   return cn(
-    "app-focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border px-5 text-sm font-medium tracking-[-0.01em] transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-px",
+    "app-focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border px-5 text-sm font-medium tracking-[-0.03em] transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-px",
     variant === "solid" &&
       "border-[var(--app-accent)] bg-[var(--app-accent)] text-[var(--app-bg)] hover:brightness-[0.98]",
     variant === "soft" &&

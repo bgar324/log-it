@@ -21,6 +21,12 @@ import {
   SPLIT_CALENDAR_MATH_TITLE,
   SPLIT_CALENDAR_MATH_UPDATED_AT,
 } from "./split-calendar-math-paper";
+import {
+  TRAINING_RADAR_CATEGORY,
+  TRAINING_RADAR_SUMMARY,
+  TRAINING_RADAR_TITLE,
+  TRAINING_RADAR_UPDATED_AT,
+} from "./training-radar-paper";
 
 export const RESEARCH_PAPERS = [
   {
@@ -43,6 +49,13 @@ export const RESEARCH_PAPERS = [
     title: DASHBOARD_METRIC_DEFINITIONS_TITLE,
     updatedAt: DASHBOARD_METRIC_DEFINITIONS_UPDATED_AT,
     summary: DASHBOARD_METRIC_DEFINITIONS_SUMMARY,
+  },
+  {
+    href: "/research/training-radar",
+    category: TRAINING_RADAR_CATEGORY,
+    title: TRAINING_RADAR_TITLE,
+    updatedAt: TRAINING_RADAR_UPDATED_AT,
+    summary: TRAINING_RADAR_SUMMARY,
   },
   {
     href: "/research/split-calendar",

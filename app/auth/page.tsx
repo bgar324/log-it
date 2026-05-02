@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 import type { HTMLInputTypeAttribute } from "react";
 import { ThemeToggle } from "../components/theme-toggle";
@@ -43,14 +43,14 @@ export default async function AuthPage({
 
   return (
     <main className="app-shell">
-      <section className="phone-stage auth-stage" aria-label="Logit auth page">
+      <section className="phone-stage auth-stage" aria-label="logit auth page">
         <div className="content-stack">
           <div className="auth-top-row">
             <Link href="/" className="back-link" aria-label="Back">
-              <ChevronLeft
+              <ArrowLeft
                 className="back-icon"
                 aria-hidden="true"
-                strokeWidth={2.1}
+                strokeWidth={1.9}
               />
             </Link>
             <ThemeToggle />

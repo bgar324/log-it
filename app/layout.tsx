@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
@@ -20,8 +22,22 @@ const themeInitScript = `(() => {
 })();`;
 
 export const metadata: Metadata = {
-  title: "Logit",
+  title: "logit",
   description: "A simple workout tracker.",
+  icons: {
+    icon: [
+      {
+        url: "/icon-light.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/icon-dark.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    shortcut: "/icon-light.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -30,7 +46,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="light" data-color-scheme="light" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      data-theme="light"
+      data-color-scheme="light"
+      suppressHydrationWarning
+    >
       <body>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {children}

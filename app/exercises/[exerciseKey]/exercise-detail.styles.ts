@@ -15,7 +15,7 @@ export const styles = {
   summaryCard:
     "rounded-[0.86rem] border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[color-mix(in_srgb,var(--surface)_88%,var(--bg))] p-[0.84rem]",
   title:
-    "m-[0.28rem_0_0] text-[clamp(1.35rem,5vw,2rem)] leading-[1.05] tracking-[-0.02em] font-[560]",
+    "m-[0.28rem_0_0] text-[clamp(1.35rem,5vw,2rem)] leading-[1.05] tracking-[-0.03em] font-[560]",
   subtitle: "m-[0.4rem_0_0] text-[0.82rem] text-[var(--muted)]",
   kpiRailWrap: "overflow-x-auto pb-[0.12rem]",
   kpiRail:
@@ -30,7 +30,7 @@ export const styles = {
     "rounded-[0.86rem] border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[color-mix(in_srgb,var(--surface)_88%,var(--bg))] p-[0.82rem]",
   panelGrid:
     "grid grid-cols-1 gap-[0.72rem] min-[980px]:grid-cols-2",
-  panelTitle: "m-0 text-[1rem] tracking-[-0.015em] font-[560]",
+  panelTitle: "m-0 text-[1rem] tracking-[-0.03em] font-[560]",
   panelSubtitle: "m-[0.2rem_0_0.7rem] text-[0.8rem] text-[var(--muted)]",
   chartFrame: "h-[15rem] w-full",
   metricList: "mt-[0.66rem] flex flex-col gap-[0.36rem] overflow-x-auto [scrollbar-width:thin]",

@@ -9,7 +9,7 @@ export const DASHBOARD_METRIC_DEFINITIONS_TITLE = "dashboard metric definitions"
 export const DASHBOARD_METRIC_DEFINITIONS_UPDATED_AT = "Apr 22, 2026";
 export const DASHBOARD_METRIC_DEFINITIONS_CATEGORY = "dashboard metrics";
 export const DASHBOARD_METRIC_DEFINITIONS_SUMMARY =
-  "A definitions paper for workout counts, month change, exercise summaries, weekly trends, personal bests, and total lifted volume as they are computed inside Logit today.";
+  "A definitions paper for workout counts, month change, exercise summaries, weekly trends, personal bests, and total lifted volume as they are computed inside logit today.";
 
 export function DashboardMetricDefinitionsPaper({
   id,
@@ -65,7 +65,7 @@ export function DashboardMetricDefinitionsPaper({
           <h3 className="legal-heading">2. Month change</h3>
           <p>
             Month change is a relative comparison between workouts logged this month and workouts
-            logged in the previous month. When the previous month has no workouts, Logit avoids a
+            logged in the previous month. When the previous month has no workouts, logit avoids a
             divide-by-zero explosion and uses a simple product rule instead.
           </p>
           <DisplayEquation

@@ -12,7 +12,7 @@ export default async function Home() {
 
   return (
     <main className="app-shell">
-      <section className="phone-stage" aria-label="Logit landing">
+      <section className="phone-stage" aria-label="logit landing">
         <div className="content-stack">
           <div className="top-row">
             <h1 className="title">logit</h1>

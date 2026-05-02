@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "../components/theme-toggle";
 
 export default function LegalPage() {
@@ -9,7 +9,7 @@ export default function LegalPage() {
         <div className="content-stack legal-stack">
           <div className="auth-top-row">
             <Link href="/" className="back-link" aria-label="Back">
-              <ChevronLeft className="back-icon" aria-hidden="true" strokeWidth={2.1} />
+              <ArrowLeft className="back-icon" aria-hidden="true" strokeWidth={1.9} />
             </Link>
             <ThemeToggle />
           </div>

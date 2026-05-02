@@ -1,7 +1,7 @@
 export const styles = {
   paper: "gap-[0.9rem]",
   paperTitle:
-    "m-0 text-[clamp(1.35rem,5vw,1.7rem)] leading-[1.02] tracking-[-0.04em] font-[560]",
+    "m-0 text-[clamp(1.35rem,5vw,1.7rem)] leading-[1.02] tracking-[-0.03em] font-[560]",
   sectionList: "flex flex-col gap-[1.15rem]",
   paperDirectory: "flex flex-col gap-[0.72rem]",
   pageIntro:

@@ -6,18 +6,30 @@ import { styles } from "../workout-logger.styles";
 
 type WorkoutLoggerMetaCardProps = {
   title: string;
+  performedAt?: string;
+  workoutType?: string;
+  workoutTypeOptions?: string[];
   canResetFromSplit?: boolean;
   onTitleChange: (value: string) => void;
+  onPerformedAtChange?: (value: string) => void;
+  onWorkoutTypeChange?: (value: string) => void;
   onResetFromSplit?: () => void;
   resetDisabled?: boolean;
+  showEditFields?: boolean;
 };
 
 export function WorkoutLoggerMetaCard({
   title,
+  performedAt,
+  workoutType,
+  workoutTypeOptions = [],
   canResetFromSplit = false,
   onTitleChange,
+  onPerformedAtChange,
+  onWorkoutTypeChange,
   onResetFromSplit,
   resetDisabled = false,
+  showEditFields = false,
 }: WorkoutLoggerMetaCardProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const dialogTitleId = useId();
@@ -63,35 +75,86 @@ export function WorkoutLoggerMetaCard({
   return (
     <>
       <section className={styles.card}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="workout-title">
-            Workout title
-          </label>
-          <div className={styles.fieldInputRow}>
-            <input
-              id="workout-title"
-              className={styles.input}
-              value={title}
-              onChange={(event) => onTitleChange(event.target.value)}
-              placeholder="Push day"
-            />
-            {canResetFromSplit && onResetFromSplit ? (
-              <button
-                type="button"
-                className={styles.fieldActionButton}
-                onClick={handleOpenResetConfirm}
-                disabled={resetDisabled}
-                aria-label="Reset exercises from your split"
-                title="Reset exercises from your split"
-              >
-                <RotateCcw
-                  className={styles.icon}
-                  aria-hidden="true"
-                  strokeWidth={1.9}
-                />
-              </button>
-            ) : null}
+        <div className={showEditFields ? styles.metaGrid : styles.singleMetaField}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="workout-title">
+              Workout title
+            </label>
+            <div className={styles.fieldInputRow}>
+              <input
+                id="workout-title"
+                className={styles.input}
+                value={title}
+                onChange={(event) => onTitleChange(event.target.value)}
+                placeholder="Push day"
+              />
+              {canResetFromSplit && onResetFromSplit ? (
+                <button
+                  type="button"
+                  className={styles.fieldActionButton}
+                  onClick={handleOpenResetConfirm}
+                  disabled={resetDisabled}
+                  aria-label="Reset exercises from your split"
+                  title="Reset exercises from your split"
+                >
+                  <RotateCcw
+                    className={styles.icon}
+                    aria-hidden="true"
+                    strokeWidth={1.9}
+                  />
+                </button>
+              ) : null}
+            </div>
           </div>
+
+          {showEditFields ? (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="workout-type">
+                Workout type
+              </label>
+              <select
+                id="workout-type"
+                className={styles.input}
+                value={workoutType ?? ""}
+                onChange={(event) => onWorkoutTypeChange?.(event.target.value)}
+                required
+                disabled={workoutTypeOptions.length === 0}
+              >
+                {workoutType ? null : (
+                  <option value="" disabled>
+                    Select workout type
+                  </option>
+                )}
+                {workoutTypeOptions.length > 0 ? (
+                  workoutTypeOptions.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>
+                    No workout types
+                  </option>
+                )}
+              </select>
+            </div>
+          ) : null}
+
+          {showEditFields ? (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="workout-date">
+                Workout date
+              </label>
+              <input
+                id="workout-date"
+                className={`${styles.input} ${styles.dateInput}`}
+                type="date"
+                value={performedAt ?? ""}
+                onChange={(event) => onPerformedAtChange?.(event.target.value)}
+                required
+              />
+            </div>
+          ) : null}
         </div>
       </section>
 

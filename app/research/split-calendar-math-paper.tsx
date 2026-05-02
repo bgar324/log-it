@@ -9,7 +9,7 @@ export const SPLIT_CALENDAR_MATH_TITLE = "split and calendar math";
 export const SPLIT_CALENDAR_MATH_UPDATED_AT = "Apr 22, 2026";
 export const SPLIT_CALENDAR_MATH_CATEGORY = "scheduling model";
 export const SPLIT_CALENDAR_MATH_SUMMARY =
-  "A paper on Logit’s date model: why workout dates are stored as normalized day values, how Pacific time defines today, how Monday-first weeks and month grids are built, and how split templates become enforceable schedules.";
+  "A paper on logit’s date model: why workout dates are stored as normalized day values, how Pacific time defines today, how Monday-first weeks and month grids are built, and how split templates become enforceable schedules.";
 
 export function SplitCalendarMathPaper({
   id,
@@ -23,7 +23,7 @@ export function SplitCalendarMathPaper({
         <section className="legal-section">
           <h3 className="legal-heading">1. Date-only storage without timezone drift</h3>
           <p>
-            Logit treats workout dates as calendar facts rather than timestamp moments. To keep a
+            logit treats workout dates as calendar facts rather than timestamp moments. To keep a
             date stable across parsing, formatting, and timezone transitions, the stored date is
             normalized to a UTC-noon value for the intended year, month, and day.
           </p>
@@ -61,7 +61,7 @@ export function SplitCalendarMathPaper({
             }
           />
           <p>
-            When a user types an explicit <code>YYYY-MM-DD</code> date, Logit preserves that exact
+            When a user types an explicit <code>YYYY-MM-DD</code> date, logit preserves that exact
             calendar value if it parses cleanly. If parsing fails, the system falls back to the
             current normalized date rather than leaving the schedule in an undefined state.
           </p>
