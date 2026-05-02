@@ -3,16 +3,23 @@
 import { useMemo, useState } from "react";
 import type { DashboardClientData } from "../dashboard-types";
 import { styles } from "../dashboard.styles";
+import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
 import { DashboardWorkoutList } from "./dashboard-workout-list";
 
 type DashboardWorkoutsViewProps = {
   workoutMonths: DashboardClientData["workoutMonths"];
   displayWeightUnit: DashboardClientData["user"]["preferredWeightUnit"];
+  isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 };
 
 export function DashboardWorkoutsView({
   workoutMonths,
   displayWeightUnit,
+  isLoading = false,
+  error = null,
+  onRetry,
 }: DashboardWorkoutsViewProps) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -75,6 +82,23 @@ export function DashboardWorkoutsView({
     setDateTo("");
     setWorkoutType("");
     setTitleQuery("");
+  }
+
+  if (error) {
+    return (
+      <section className={styles.panel} role="alert">
+        <p className={styles.empty}>{error}</p>
+        {onRetry ? (
+          <button type="button" className={styles.workoutFilterReset} onClick={onRetry}>
+            Retry
+          </button>
+        ) : null}
+      </section>
+    );
+  }
+
+  if (isLoading) {
+    return <DashboardViewSkeleton kind="workouts" />;
   }
 
   return (

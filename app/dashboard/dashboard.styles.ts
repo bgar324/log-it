@@ -252,4 +252,19 @@ export const styles = {
   avatarModalFooter:
     "flex flex-col gap-[0.5rem] pt-[0.1rem] min-[520px]:flex-row min-[520px]:justify-end",
   empty: "m-[0.68rem_0_0] text-[0.84rem] text-[var(--muted)]",
+  skeletonBlock:
+    "block rounded-[0.42rem] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]",
+  skeletonPanel: `${dashboardSurface} flex flex-col gap-[0.82rem] p-[0.82rem]`,
+  skeletonPanelHead:
+    "flex items-center justify-between gap-[0.7rem] max-[760px]:flex-col max-[760px]:items-stretch",
+  skeletonKpiCard:
+    `${dashboardSurface} flex min-h-[4.95rem] flex-col justify-between gap-[0.28rem] px-[0.7rem] py-[0.62rem]`,
+  skeletonMetricList: "flex flex-col gap-[0.42rem]",
+  skeletonWorkoutFilterGrid:
+    "grid grid-cols-1 gap-[0.62rem] min-[620px]:grid-cols-2 min-[1080px]:grid-cols-4",
+  skeletonTimeline: "mt-[0.66rem] flex flex-col gap-[0.42rem]",
+  skeletonSplitLayout:
+    "grid grid-cols-[minmax(0,1fr)_minmax(20rem,0.66fr)] gap-[0.9rem] max-[1020px]:grid-cols-1",
+  skeletonSplitGrid:
+    "grid grid-cols-1 gap-[0.62rem] min-[620px]:grid-cols-2 min-[1200px]:grid-cols-3",
 } as const;

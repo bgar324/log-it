@@ -6,6 +6,7 @@ import { styles } from "../dashboard.styles";
 import type { DashboardClientData } from "../dashboard-types";
 import type { DashboardProgressState } from "../_hooks/use-dashboard-progress";
 import { DashboardMetricHeader } from "./dashboard-metric-header";
+import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
 
 const ProgressCharts = dynamic(
   () => import("../progress-charts").then((module) => module.ProgressCharts),
@@ -16,6 +17,9 @@ type DashboardProgressViewProps = {
   exercises: DashboardClientData["exercises"];
   weightUnit: WeightUnit;
   state: DashboardProgressState;
+  isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 };
 
 export function DashboardProgressView({
@@ -23,6 +27,9 @@ export function DashboardProgressView({
   exercises,
   weightUnit,
   state,
+  isLoading = false,
+  error = null,
+  onRetry,
 }: DashboardProgressViewProps) {
   function formatWeight(value: number) {
     return formatWeightWithUnit(value, weightUnit);
@@ -32,6 +39,23 @@ export function DashboardProgressView({
     return formatWeightWithUnit(value, weightUnit, {
       maximumFractionDigits: 0,
     });
+  }
+
+  if (error) {
+    return (
+      <section className={styles.panel} role="alert">
+        <p className={styles.empty}>{error}</p>
+        {onRetry ? (
+          <button type="button" className={styles.workoutFilterReset} onClick={onRetry}>
+            Retry
+          </button>
+        ) : null}
+      </section>
+    );
+  }
+
+  if (isLoading) {
+    return <DashboardViewSkeleton kind="progress" />;
   }
 
   return (

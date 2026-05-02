@@ -45,11 +45,11 @@ const axisDefinitions = [
 
 export function TrainingRadarPaper({ id }: TrainingRadarPaperProps) {
   return (
-    <article id={id} className={styles.paper}>
+    <article id={id} className={`legal-section ${styles.paper}`}>
       <h2 className={styles.paperTitle}>{TRAINING_RADAR_TITLE}</h2>
 
       <div className={styles.sectionList}>
-        <section>
+        <section className="legal-section">
           <p className={styles.pageIntro}>
             The training radar is a compact public-profile summary. It is not a readiness
             score, coaching prescription, or ranking system. Each axis converts one observable

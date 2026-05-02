@@ -94,4 +94,8 @@ export const styles = {
   mobileSetNumber: "text-[0.84rem] font-[560] text-[var(--text)]",
   mobileSetMeta: "text-[0.72rem] text-[var(--muted)]",
   mobileSetValue: "text-[0.84rem] text-[var(--text)]",
+  skeletonBlock:
+    "block rounded-[0.42rem] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]",
+  skeletonSetList:
+    "mt-[0.58rem] flex flex-col gap-[0.42rem]",
 } as const;

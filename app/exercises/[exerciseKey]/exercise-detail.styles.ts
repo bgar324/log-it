@@ -55,4 +55,7 @@ export const styles = {
     `cursor-pointer text-inherit no-underline hover:border-[color-mix(in_srgb,var(--text)_18%,transparent)] ${buttonFocusRing} ${buttonMotion}`,
   sessionTitle: "m-0 text-[0.84rem] font-[520] text-[var(--text)]",
   sessionMeta: "m-[0.16rem_0_0] text-[0.72rem] text-[var(--muted)]",
+  skeletonBlock:
+    "block rounded-[0.42rem] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]",
+  skeletonMetricList: "mt-[0.66rem] flex flex-col gap-[0.42rem]",
 } as const;
