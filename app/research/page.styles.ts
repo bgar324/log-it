@@ -30,7 +30,7 @@ export const styles = {
     "m-0 text-[color-mix(in_srgb,var(--text)_90%,var(--muted))] text-[0.86rem] leading-[1.6]",
   equationFigure: "my-[0.05rem] flex flex-col gap-[0.5rem]",
   equation:
-    "flex flex-wrap items-center justify-center gap-[0.85rem] overflow-x-auto rounded-[0.72rem] border border-[color-mix(in_srgb,var(--text)_10%,transparent)] bg-transparent px-[1rem] py-[0.9rem] text-center text-[clamp(1.02rem,2.1vw,1.28rem)] leading-[1.45] text-[var(--text)] [font-variant-numeric:lining-nums_tabular-nums] [&_.katex]:text-[1em] [&_.katex]:text-[var(--text)] [&_.katex-display]:m-0 [&_.katex-display]:overflow-x-auto max-[540px]:justify-start max-[540px]:text-left",
+    "flex flex-wrap items-center justify-center gap-[0.85rem] overflow-x-auto rounded-[0.72rem] border border-[color-mix(in_srgb,var(--text)_10%,transparent)] bg-transparent px-[1rem] py-[0.9rem] text-center text-[clamp(1.02rem,2.1vw,1.01rem)] leading-[1.45] text-[var(--text)] [font-variant-numeric:lining-nums_tabular-nums] [&_.katex]:text-[1em] [&_.katex]:text-[var(--text)] [&_.katex-display]:m-0 [&_.katex-display]:overflow-x-auto max-[540px]:justify-start max-[540px]:text-left",
   equationExpression: "shrink-0",
   equationCaption:
     "m-0 text-[color-mix(in_srgb,var(--text)_90%,var(--muted))] text-[0.86rem] leading-[1.6] [&_strong]:text-[var(--text)] [&_strong]:font-[560]",

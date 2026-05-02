@@ -54,8 +54,10 @@ export const publicProfileStyles = {
   chartHead: "flex items-center justify-between gap-[0.75rem]",
   chartTitle: "m-0 text-[1rem] leading-[1.15] font-[560]",
   infoLink:
-    "inline-flex h-[2rem] w-[2rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.45rem] border border-[var(--profile-border)] text-[var(--muted)] transition-[transform,border-color,color] duration-150 hover:border-[var(--profile-border-strong)] hover:text-[var(--text)] active:translate-y-[1px] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "group relative inline-flex h-[2rem] w-[2rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.45rem] border border-[var(--profile-border)] text-[var(--muted)] transition-[transform,border-color,color] duration-150 hover:border-[var(--profile-border-strong)] hover:text-[var(--text)] active:translate-y-[1px] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
   infoIcon: "h-[0.92rem] w-[0.92rem]",
+  infoTooltip:
+    "pointer-events-none absolute right-0 top-[calc(100%+0.42rem)] z-20 w-max max-w-[12rem] rounded-[0.46rem] border border-[var(--profile-border)] bg-[var(--bg)] px-[0.62rem] py-[0.42rem] text-[0.72rem] leading-[1.2] text-[var(--text)] opacity-0 shadow-[0_10px_28px_color-mix(in_srgb,#000_14%,transparent)] transition-[opacity,transform] duration-150 translate-y-[-0.12rem] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100",
   chartWrap: "mt-[0.4rem] flex flex-1 items-center justify-center",
   radarSvg: "h-auto w-full max-w-[22rem] overflow-visible",
   radarGrid: "fill-none stroke-[color-mix(in_srgb,var(--text)_38%,transparent)]",

@@ -8,6 +8,7 @@ type BackButtonProps = {
   label: string;
   className: string;
   iconClassName?: string;
+  showLabel?: boolean;
 };
 
 export function BackButton({
@@ -15,6 +16,7 @@ export function BackButton({
   label,
   className,
   iconClassName,
+  showLabel = true,
 }: BackButtonProps) {
   const router = useRouter();
 
@@ -30,7 +32,7 @@ export function BackButton({
   return (
     <button type="button" className={className} onClick={handleClick} aria-label={label}>
       <ArrowLeft className={iconClassName} aria-hidden="true" strokeWidth={1.9} />
-      <span>{label}</span>
+      {showLabel ? <span>{label}</span> : null}
     </button>
   );
 }

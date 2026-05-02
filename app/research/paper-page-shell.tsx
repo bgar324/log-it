@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { BackButton } from "../components/back-button";
 import { ThemeToggle } from "../components/theme-toggle";
 
 type ResearchPaperPageShellProps = {
@@ -17,13 +17,19 @@ export function ResearchPaperPageShell({
       <section className="phone-stage legal-stage" aria-label={ariaLabel}>
         <div className="content-stack legal-stack">
           <div className="auth-top-row">
-            <Link href="/research" className="back-link" aria-label="Back">
-              <ArrowLeft className="back-icon" aria-hidden="true" strokeWidth={1.9} />
-            </Link>
+            <BackButton
+              fallbackHref="/research"
+              label="Back"
+              className="back-link"
+              iconClassName="back-icon"
+              showLabel={false}
+            />
             <ThemeToggle />
           </div>
 
-          <h1 className="title legal-title">research</h1>
+          <Link href="/research" aria-label="View all research papers">
+            <h1 className="title legal-title">research</h1>
+          </Link>
           {children}
         </div>
       </section>

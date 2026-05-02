@@ -80,19 +80,11 @@ export default async function PublicProfilePage({
     notFound();
   }
 
-  const activeSplitDays = profile.splitDays.filter((day) => !day.isRestDay).length;
   const stats = [
     { label: "Workouts", value: profile.totalWorkoutsLabel },
     { label: "Sets", value: profile.totalSetsLabel },
     { label: "Volume", value: profile.totalVolumeLabel },
-    {
-      label: "Active split days",
-      value: activeSplitDays
-        ? `${activeSplitDays}`
-        : profile.currentSplitName === "No public split"
-          ? "No split"
-          : "0",
-    },
+    { label: "Consistency", value: profile.consistencyLabel },
   ];
 
   return (
@@ -167,6 +159,9 @@ export default async function PublicProfilePage({
                 aria-label="How training radar is calculated"
               >
                 <Info className={styles.infoIcon} aria-hidden="true" strokeWidth={1.9} />
+                <span className={styles.infoTooltip} role="tooltip">
+                  How is this calculated?
+                </span>
               </Link>
             </div>
             <div className={styles.chartWrap}>

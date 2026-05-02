@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { BackButton } from "../components/back-button";
 import { ThemeToggle } from "../components/theme-toggle";
 import { styles } from "./page.styles";
 import { RESEARCH_PAPERS } from "./papers";
@@ -20,9 +21,13 @@ export default function ResearchPage() {
       <section className="phone-stage legal-stage" aria-label="logit research">
         <div className="content-stack legal-stack">
           <div className="auth-top-row">
-            <Link href="/" className="back-link" aria-label="Back">
-              <ArrowLeft className="back-icon" aria-hidden="true" strokeWidth={1.9} />
-            </Link>
+            <BackButton
+              fallbackHref="/"
+              label="Back"
+              className="back-link"
+              iconClassName="back-icon"
+              showLabel={false}
+            />
             <ThemeToggle />
           </div>
 

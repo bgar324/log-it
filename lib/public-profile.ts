@@ -6,7 +6,6 @@ import {
 } from "./weight-unit";
 import { prisma } from "./prisma";
 import {
-  getSplitWeekdayIndex,
   getSplitWeekdayLabel,
   REST_DAY_WORKOUT_TYPE,
   sortSplitDays,
@@ -23,12 +22,12 @@ import {
 
 const RADAR_MAX_SCORE = 12;
 const RECENT_WEEK_COUNT = 8;
-const STRENGTH_CAP_E1RM_LB = 500;
-const FREQUENCY_CAP_WORKOUTS_PER_WEEK = 5;
-const VOLUME_CAP_LB_PER_WEEK = 50_000;
-const VARIETY_CAP_EXERCISES = 24;
-const EXPERIENCE_CAP_MONTHS = 24;
-const EXPERIENCE_CAP_WORKOUTS = 200;
+const STRENGTH_CAP_E1RM_LB = 700;
+const FREQUENCY_CAP_WORKOUTS_PER_WEEK = 6;
+const VOLUME_CAP_LB_PER_WEEK = 80_000;
+const VARIETY_CAP_EXERCISES = 60;
+const EXPERIENCE_CAP_DAYS = 730;
+const EXPERIENCE_CAP_WORKOUTS = 500;
 
 type PublicProfileSetInput = {
   reps: number;
@@ -105,6 +104,7 @@ export type PublicProfileData = {
   totalWorkoutsLabel: string;
   totalSetsLabel: string;
   totalVolumeLabel: string;
+  consistencyLabel: string;
   mostTrainedExerciseLabel: string;
   mostTrainedExerciseBackoffs: PublicProfileFeatureBackoff[];
   splitDays: PublicProfileSplitDay[];
@@ -125,6 +125,14 @@ function scoreFromCap(value: number, cap: number) {
   }
 
   return clampScore((value / cap) * RADAR_MAX_SCORE);
+}
+
+function toPercentLabel(value: number) {
+  if (!Number.isFinite(value)) {
+    return "0%";
+  }
+
+  return `${Math.max(0, Math.min(100, Math.round(value)))}%`;
 }
 
 function formatCount(value: number) {
@@ -156,17 +164,7 @@ function createTenureLabel(createdAt: Date, now: Date) {
     Math.floor((now.getTime() - createdAt.getTime()) / (24 * 60 * 60 * 1000)),
   );
 
-  if (days < 30) {
-    return days === 1 ? "1 day on logit" : `${days} days on logit`;
-  }
-
-  if (days < 365) {
-    const months = Math.max(1, Math.floor(days / 30));
-    return months === 1 ? "1 month on logit" : `${months} months on logit`;
-  }
-
-  const years = Math.max(1, Math.floor(days / 365));
-  return years === 1 ? "1 year on logit" : `${years} years on logit`;
+  return days === 1 ? "1 day on logit" : `${formatCount(days)} days on logit`;
 }
 
 function getExerciseKey(exercise: PublicProfileWorkoutInput["exercises"][number]) {
@@ -175,10 +173,6 @@ function getExerciseKey(exercise: PublicProfileWorkoutInput["exercises"][number]
 
 function estimateOneRepMaxLb(weightLb: number, reps: number) {
   return weightLb * (1 + reps / 30);
-}
-
-function getWeekKey(date: Date) {
-  return formatDatabaseDateValue(startOfDatabaseWeek(date));
 }
 
 type StrongestLiftRanking = {
@@ -260,9 +254,11 @@ export function buildPublicProfileData(input: PublicProfileBuildInput): PublicPr
   const strongestByExercise = new Map<string, StrongestLiftRanking>();
   const exerciseCounts = new Map<string, { name: string; count: number }>();
   const distinctExercises = new Set<string>();
+  const loggedTrainingDays = new Set<string>();
 
   for (const workout of input.workouts) {
     totalVolumeLb += toWeightNumber(workout.totalWeightLb) ?? 0;
+    loggedTrainingDays.add(formatDatabaseDateValue(workout.performedAt));
 
     for (const exercise of workout.exercises) {
       const exerciseKey = getExerciseKey(exercise);
@@ -309,20 +305,28 @@ export function buildPublicProfileData(input: PublicProfileBuildInput): PublicPr
   const recentWorkouts = input.workouts.filter(
     (workout) => workout.performedAt.getTime() >= recentStart.getTime(),
   );
-  const activeRecentWeeks = new Set(recentWorkouts.map((workout) => getWeekKey(workout.performedAt)));
   const recentVolumeLb = recentWorkouts.reduce(
     (sum, workout) => sum + (toWeightNumber(workout.totalWeightLb) ?? 0),
     0,
   );
   const averageRecentWorkouts = recentWorkouts.length / RECENT_WEEK_COUNT;
   const averageRecentVolumeLb = recentVolumeLb / RECENT_WEEK_COUNT;
-  const ageMonths = Math.max(
+  const ageDays = Math.max(
     0,
-    (now.getUTCFullYear() - input.user.createdAt.getUTCFullYear()) * 12 +
-      (now.getUTCMonth() - input.user.createdAt.getUTCMonth()),
+    Math.floor((now.getTime() - input.user.createdAt.getTime()) / (24 * 60 * 60 * 1000)),
+  );
+  const activeSplitDayCount = input.split?.activeDayCount ?? 7;
+  const daysOnLogit = Math.max(1, ageDays);
+  const expectedActiveDays = Math.max(
+    1,
+    Math.round(daysOnLogit * (Math.max(0, activeSplitDayCount) / 7)),
+  );
+  const consistencyPercent = Math.min(
+    100,
+    (loggedTrainingDays.size / expectedActiveDays) * 100,
   );
   const experienceScore = clampScore(
-    (Math.min(ageMonths, EXPERIENCE_CAP_MONTHS) / EXPERIENCE_CAP_MONTHS) * 6 +
+    (Math.min(ageDays, EXPERIENCE_CAP_DAYS) / EXPERIENCE_CAP_DAYS) * 6 +
       (Math.min(totalWorkouts, EXPERIENCE_CAP_WORKOUTS) / EXPERIENCE_CAP_WORKOUTS) * 6,
   );
   const strongestRankings = Array.from(strongestByExercise.values()).sort(
@@ -372,7 +376,7 @@ export function buildPublicProfileData(input: PublicProfileBuildInput): PublicPr
     })}`,
     tenureLabel: createTenureLabel(input.user.createdAt, now),
     currentSplitLabel: input.split
-      ? `${input.split.name} · ${input.split.activeDayCount} active day${
+      ? `${input.split.activeDayCount} active day${
           input.split.activeDayCount === 1 ? "" : "s"
         }`
       : "No public split yet",
@@ -404,6 +408,7 @@ export function buildPublicProfileData(input: PublicProfileBuildInput): PublicPr
       input.user.preferredWeightUnit,
       { maximumFractionDigits: 0 },
     ),
+    consistencyLabel: toPercentLabel(consistencyPercent),
     mostTrainedExerciseLabel: mostTrainedExercise
       ? `${mostTrainedExercise.name} · ${formatCount(mostTrainedExercise.count)} session${
           mostTrainedExercise.count === 1 ? "" : "s"
@@ -427,7 +432,7 @@ export function buildPublicProfileData(input: PublicProfileBuildInput): PublicPr
       {
         key: "consistency",
         label: "Consistency",
-        value: scoreFromCap(activeRecentWeeks.size, RECENT_WEEK_COUNT),
+        value: scoreFromCap(consistencyPercent, 100),
       },
       {
         key: "frequency",
