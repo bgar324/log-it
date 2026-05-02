@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Info } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ThemeToggle } from "@/app/components/theme-toggle";
+import { AppBrand } from "@/app/components/ui";
 import {
   loadPublicProfile,
   type PublicProfileFeatureBackoff,
@@ -99,7 +100,10 @@ export default async function PublicProfilePage({
       <section className={styles.stage} aria-label={`${profile.displayName} public profile`}>
         <div className={styles.topRow}>
           <Link href="/" className={styles.homeLink}>
-            logit
+            <AppBrand
+              compact
+              textClassName="text-[2rem] leading-none font-[520]"
+            />
           </Link>
           <ThemeToggle />
         </div>

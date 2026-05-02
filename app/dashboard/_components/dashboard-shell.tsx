@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import type { DashboardView } from "../dashboard-types";
 import { ThemeToggle } from "@/app/components/theme-toggle";
+import { AppBrand } from "@/app/components/ui";
 import { NAV_ITEMS } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
 
@@ -55,7 +56,10 @@ export function DashboardShell({
     <main className={styles.shell} aria-label="Training dashboard shell">
       <aside className={styles.sidebar} aria-label="Dashboard sidebar">
         <Link href="/dashboard" className={styles.brand}>
-          logit
+          <AppBrand
+            compact
+            textClassName="text-[2.2rem] leading-[0.92] font-[520]"
+          />
         </Link>
 
         <nav className={styles.sideNav} aria-label="Main navigation">

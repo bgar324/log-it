@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AppBrand } from "./components/ui";
 import { ThemeToggle } from "./components/theme-toggle";
 import { getSessionUser } from "@/lib/auth";
 
@@ -15,7 +16,9 @@ export default async function Home() {
       <section className="phone-stage" aria-label="logit landing">
         <div className="content-stack">
           <div className="top-row">
-            <h1 className="title">logit</h1>
+            <h1 className="title">
+              <AppBrand textClassName="text-[inherit] leading-[inherit] font-[inherit]" />
+            </h1>
             <ThemeToggle />
           </div>
           <div className="action-row">
