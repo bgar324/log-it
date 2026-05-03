@@ -12,7 +12,15 @@ import { DashboardProfileView } from "./_components/dashboard-profile-view";
 import { DashboardProgressView } from "./_components/dashboard-progress-view";
 import { DashboardShell } from "./_components/dashboard-shell";
 import { DashboardViewSkeleton } from "./_components/dashboard-view-skeleton";
-import { DashboardWorkoutsView } from "./_components/dashboard-workouts-view";
+import {
+  DashboardWorkoutFiltersControl,
+  DashboardWorkoutsView,
+  emptyWorkoutFilters,
+  getFilteredWorkoutMonths,
+  getWorkoutCount,
+  getWorkoutTypes,
+  hasActiveWorkoutFilters,
+} from "./_components/dashboard-workouts-view";
 import { useDashboardCalendar } from "./_hooks/use-dashboard-calendar";
 import { useDashboardProfileForm } from "./_hooks/use-dashboard-profile-form";
 import { useDashboardProgress } from "./_hooks/use-dashboard-progress";
@@ -114,6 +122,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const loadedViewsRef = useRef<Set<DashboardView>>(getCachedDashboardViews());
   const inFlightViewsRef = useRef<Set<DashboardView>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [workoutFilters, setWorkoutFilters] = useState(emptyWorkoutFilters);
   const recentSessions = dashboardData.workouts.slice(0, 5);
   const profileFormState = useDashboardProfileForm(dashboardData.user, () => {
     router.refresh();
@@ -138,6 +147,19 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     profileFormState.profile.username,
   ]);
   const displayWeightUnit = profileFormState.profile.preferredWeightUnit;
+  const workoutTypes = useMemo(
+    () => getWorkoutTypes(dashboardData.workoutMonths),
+    [dashboardData.workoutMonths],
+  );
+  const filteredWorkoutMonths = useMemo(
+    () => getFilteredWorkoutMonths(dashboardData.workoutMonths, workoutFilters),
+    [dashboardData.workoutMonths, workoutFilters],
+  );
+  const filteredWorkoutCount = useMemo(
+    () => getWorkoutCount(filteredWorkoutMonths),
+    [filteredWorkoutMonths],
+  );
+  const hasWorkoutFilters = hasActiveWorkoutFilters(workoutFilters);
 
   useEffect(() => {
     const nextData = createCachedDashboardData(initialView, data);
@@ -276,6 +298,18 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       onToggleMobileMenu={() => setMobileMenuOpen((open) => !open)}
       onCloseMobileMenu={() => setMobileMenuOpen(false)}
       onNavigate={navigateToView}
+      renderHeaderAccessory={() =>
+        activeView === "workouts" && dashboardData.workoutMonths.length > 0 ? (
+          <DashboardWorkoutFiltersControl
+            filters={workoutFilters}
+            workoutTypes={workoutTypes}
+            filteredCount={filteredWorkoutCount}
+            hasFilters={hasWorkoutFilters}
+            onChange={setWorkoutFilters}
+            onClear={() => setWorkoutFilters(emptyWorkoutFilters)}
+          />
+        ) : null
+      }
     >
       {activeView === "dashboard" ? (
         <div key="dashboard" className="view-transition-shell">
@@ -309,6 +343,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
           <DashboardWorkoutsView
             workoutMonths={dashboardData.workoutMonths}
             displayWeightUnit={displayWeightUnit}
+            filters={workoutFilters}
             isLoading={activeViewIsLoading && !loadedViews.has("workouts")}
             error={activeViewError}
             onRetry={() => void loadViewData("workouts", { showError: true, showLoading: true })}

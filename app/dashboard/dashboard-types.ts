@@ -94,6 +94,7 @@ export type DashboardClientData = {
     totalWeightLifted: number;
     weeklySeries: Array<{
       label: string;
+      rangeLabel: string;
       sessions: number;
       volume: number;
     }>;

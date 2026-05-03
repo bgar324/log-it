@@ -19,6 +19,7 @@ type DashboardShellProps = {
   onToggleMobileMenu: () => void;
   onCloseMobileMenu: () => void;
   onNavigate: (view: DashboardView) => void;
+  renderHeaderAccessory?: () => ReactNode;
   children: ReactNode;
 };
 
@@ -31,6 +32,7 @@ export function DashboardShell({
   onToggleMobileMenu,
   onCloseMobileMenu,
   onNavigate,
+  renderHeaderAccessory,
   children,
 }: DashboardShellProps) {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -114,10 +116,12 @@ export function DashboardShell({
           </div>
 
           <div className={styles.headerActions}>
+            {renderHeaderAccessory?.()}
             <ThemeToggle />
           </div>
 
           <div className={styles.mobileHeaderActions}>
+            {renderHeaderAccessory?.()}
             <ThemeToggle />
             <div className={styles.mobileMenu} ref={mobileMenuRef}>
               <button

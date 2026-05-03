@@ -158,12 +158,12 @@ export default async function WorkoutDetailPage({
             />
           </div>
           <div className={styles.topActions}>
-            <ThemeToggle />
             <WorkoutDetailActions
               editHref={`/workouts/${workout.id}/edit`}
               workoutId={workout.id}
               workoutExport={workoutExport}
             />
+            <ThemeToggle />
           </div>
         </header>
 

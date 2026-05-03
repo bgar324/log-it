@@ -75,9 +75,11 @@ export async function loadProgressSection(
 
   const weeklySeries = progressWeeks.map((weekStartDate) => {
     const current = progressCounts.get(dateKey(weekStartDate));
+    const weekEndDate = addDaysToDatabaseDate(weekStartDate, 7);
 
     return {
       label: shortDate(weekStartDate),
+      rangeLabel: `${shortDate(weekStartDate)} - ${shortDate(weekEndDate)}`,
       sessions: current?.sessions ?? 0,
       volume: convertStoredWeightToDisplay(current?.volume ?? 0, weightUnit) ?? 0,
     };

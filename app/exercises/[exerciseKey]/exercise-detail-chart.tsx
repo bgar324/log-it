@@ -1,9 +1,9 @@
 "use client";
 
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -57,7 +57,7 @@ export function ExerciseDetailChart({
   return (
     <div className={styles.chartFrame}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart
+        <AreaChart
           data={series}
           margin={{ top: 8, right: 8, left: -8, bottom: 4 }}
         >
@@ -103,15 +103,17 @@ export function ExerciseDetailChart({
               ];
             }}
           />
-          <Line
+          <Area
             type="monotone"
             dataKey={dataKey}
             stroke={stroke}
             strokeWidth={2}
+            fill={stroke}
+            fillOpacity={0.08}
             dot={{ r: 2 }}
             activeDot={{ r: 4 }}
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

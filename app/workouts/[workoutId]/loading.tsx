@@ -27,10 +27,11 @@ export default function WorkoutDetailLoading() {
             />
           </div>
           <div className={styles.topActions}>
-            <ThemeToggle />
+            <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
             <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
             <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
             <SkeletonBlock className="hidden h-[2.3rem] w-[2.3rem] rounded-full max-[759px]:block" />
+            <ThemeToggle />
           </div>
         </header>
 
