@@ -1,7 +1,6 @@
 "use client";
 
 import { GripVertical, Trash2 } from "lucide-react";
-import type { PointerEvent as ReactPointerEvent } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../workout-logger.styles";
 import type {
@@ -28,16 +27,10 @@ type WorkoutLoggerExerciseCardProps = {
   onExerciseNameBlur: (value: string) => Promise<void> | void;
   onExerciseNameChange: (value: string) => void;
   onExerciseNameFocus: (value: string) => void;
-  onExercisePointerCancel: (
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ) => void;
-  onExercisePointerDown: (
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ) => void;
-  onExercisePointerMove: (
-    event: ReactPointerEvent<HTMLButtonElement>,
-  ) => void;
-  onExercisePointerUp: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onExerciseDragEnd: () => void;
+  onExerciseDragOver: () => void;
+  onExerciseDragStart: () => void;
+  onExerciseDrop: () => void;
   onRemoveExercise: () => void;
   onRemoveSet: (setId: string) => void;
   onUpdateSet: (
@@ -63,10 +56,10 @@ export function WorkoutLoggerExerciseCard({
   onExerciseNameBlur,
   onExerciseNameChange,
   onExerciseNameFocus,
-  onExercisePointerCancel,
-  onExercisePointerDown,
-  onExercisePointerMove,
-  onExercisePointerUp,
+  onExerciseDragEnd,
+  onExerciseDragOver,
+  onExerciseDragStart,
+  onExerciseDrop,
   onRemoveExercise,
   onRemoveSet,
   onUpdateSet,
@@ -76,18 +69,28 @@ export function WorkoutLoggerExerciseCard({
       className={`${styles.exerciseCard} ${
         isDragging ? styles.exerciseCardDragging : ""
       } ${isDropTarget && !isDragging ? styles.exerciseCardDropTarget : ""}`}
-      data-exercise-card="true"
-      data-exercise-index={exerciseIndex}
+      onDragOver={(event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        onExerciseDragOver();
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        onExerciseDrop();
+      }}
     >
       <div className={styles.exerciseHead}>
         <div className={styles.exerciseHeading}>
           <button
             type="button"
+            draggable={true}
             className={`${styles.iconButton} ${styles.dragHandle}`}
-            onPointerDown={onExercisePointerDown}
-            onPointerMove={onExercisePointerMove}
-            onPointerUp={onExercisePointerUp}
-            onPointerCancel={onExercisePointerCancel}
+            onDragStart={(event) => {
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", exercise.name);
+              onExerciseDragStart();
+            }}
+            onDragEnd={onExerciseDragEnd}
             aria-label={`Drag to reorder exercise ${exerciseIndex + 1}`}
             title="Drag to reorder"
           >

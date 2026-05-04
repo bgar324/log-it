@@ -89,10 +89,10 @@ export function useWorkoutLoggerDraft({
   const {
     draggingExerciseIndex,
     dropTargetExerciseIndex,
-    handleExercisePointerCancel,
-    handleExercisePointerDown,
-    handleExercisePointerMove,
-    handleExercisePointerUp,
+    dragOverExercise,
+    dropExerciseAt,
+    endExerciseDrag,
+    startDraggingExercise,
   } = useWorkoutLoggerDrag({
     onReorder: (updater) => {
       dispatch({
@@ -312,12 +312,11 @@ export function useWorkoutLoggerDraft({
     addExercise,
     addSet,
     draggingExerciseIndex,
+    dragOverExercise,
+    dropExerciseAt,
+    endExerciseDrag,
     dropTargetExerciseIndex,
     exercises: draftState.exercises,
-    handleExercisePointerCancel,
-    handleExercisePointerDown,
-    handleExercisePointerMove,
-    handleExercisePointerUp,
     performedAt: draftState.performedAt,
     removeExercise,
     removeSet,
@@ -329,6 +328,7 @@ export function useWorkoutLoggerDraft({
     setTitle: (value: string) => {
       dispatch({ type: "set_title", value });
     },
+    startDraggingExercise,
     setWorkoutType: (value: string) => {
       dispatch({ type: "set_workout_type", value });
     },

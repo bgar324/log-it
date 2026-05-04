@@ -165,7 +165,7 @@ export const styles = {
   exerciseTitle: "",
   exerciseMeta: "mt-[0.12rem] text-[0.72rem] text-[var(--muted)]",
   iconButton: iconButtonBase,
-  dragHandle: "shrink-0 cursor-grab [touch-action:none] active:cursor-grabbing",
+  dragHandle: "shrink-0 cursor-grab active:cursor-grabbing",
   icon: "h-4 w-4 shrink-0 stroke-current",
   inlineRow: "block",
   searchResults: cn(

@@ -275,12 +275,12 @@ export function WorkoutLogger({
                 onExerciseNameFocus={(value) =>
                   handleExerciseNameFocus(exercise.id, value)
                 }
-                onExercisePointerCancel={draft.handleExercisePointerCancel}
-                onExercisePointerDown={(event) =>
-                  draft.handleExercisePointerDown(event, exerciseIndex)
+                onExerciseDragStart={() =>
+                  draft.startDraggingExercise(exerciseIndex)
                 }
-                onExercisePointerMove={draft.handleExercisePointerMove}
-                onExercisePointerUp={draft.handleExercisePointerUp}
+                onExerciseDragOver={() => draft.dragOverExercise(exerciseIndex)}
+                onExerciseDrop={() => draft.dropExerciseAt(exerciseIndex)}
+                onExerciseDragEnd={draft.endExerciseDrag}
                 onRemoveExercise={() => handleRemoveExercise(exercise.id)}
                 onRemoveSet={(setId) => draft.removeSet(exercise.id, setId)}
                 onUpdateSet={(setId, field, value) =>
