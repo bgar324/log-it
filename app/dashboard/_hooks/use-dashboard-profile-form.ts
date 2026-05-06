@@ -1,15 +1,14 @@
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { WeightUnit } from "@/lib/weight-unit";
 import type { DashboardClientData } from "../dashboard-types";
 
 type DashboardUser = DashboardClientData["user"];
 
 type SaveState =
-  | { kind: "idle"; message: string }
-  | { kind: "saving"; message: string }
-  | { kind: "success"; message: string }
-  | { kind: "error"; message: string };
+  | { kind: "idle" }
+  | { kind: "saving" };
 
 type ProfileResponse =
   | {
@@ -74,7 +73,6 @@ export function useDashboardProfileForm(
   const [avatarRemovalPending, setAvatarRemovalPending] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>({
     kind: "idle",
-    message: "",
   });
 
   useEffect(() => {
@@ -104,7 +102,8 @@ export function useDashboardProfileForm(
   async function handleProfileSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setSaveState({ kind: "saving", message: "Saving profile..." });
+    const toastId = toast.loading("Saving profile...");
+    setSaveState({ kind: "saving" });
 
     try {
       const response = await fetch("/api/profile", {
@@ -186,13 +185,16 @@ export function useDashboardProfileForm(
       setPublicProfileEnabledInput(payload.user.publicProfileEnabled);
       setAvatarFileInput(null);
       setAvatarRemovalPending(false);
-      setSaveState({ kind: "success", message: "Profile updated." });
+      toast.success("Profile updated.", {
+        id: toastId,
+      });
       onProfileSaved();
     } catch (error) {
-      setSaveState({
-        kind: "error",
-        message: error instanceof Error ? error.message : "Unable to save profile.",
+      toast.error(error instanceof Error ? error.message : "Unable to save profile.", {
+        id: toastId,
       });
+    } finally {
+      setSaveState({ kind: "idle" });
     }
   }
 
@@ -203,7 +205,9 @@ export function useDashboardProfileForm(
 
     setAvatarFileInput(file);
     setAvatarRemovalPending(false);
-    setSaveState({ kind: "idle", message: "" });
+    toast.message("Profile photo ready.", {
+      description: "Save profile to apply it.",
+    });
   }
 
   function handleAvatarDelete() {
@@ -213,7 +217,9 @@ export function useDashboardProfileForm(
       setAvatarRemovalPending(true);
     }
 
-    setSaveState({ kind: "idle", message: "" });
+    toast.message("Profile photo marked for removal.", {
+      description: "Save profile to apply it.",
+    });
   }
 
   return {

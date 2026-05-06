@@ -3,6 +3,7 @@
 import { Loader2, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { BackButton } from "@/app/components/back-button";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
@@ -49,7 +50,6 @@ export function WorkoutLogger({
   const router = useRouter();
   const weightUnitLabel = getWeightUnitLabel(weightUnit);
   const weightUnitName = weightUnit === "KG" ? "kilograms" : "pounds";
-  const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const {
     clearAll,
@@ -129,10 +129,10 @@ export function WorkoutLogger({
       return;
     }
 
-    setFormError(null);
     clearAll();
     clearAllExerciseInsights();
     draft.resetExercisesFromSnapshot(splitTemplateData.exercises);
+    toast.success("Workout reset from split.");
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -141,8 +141,6 @@ export function WorkoutLogger({
     if (isSaving) {
       return;
     }
-
-    setFormError(null);
 
     const payload = buildWorkoutLoggerPayload({
       exercises: draft.exercises,
@@ -153,10 +151,11 @@ export function WorkoutLogger({
     });
 
     if ("error" in payload) {
-      setFormError(payload.error ?? "Unable to validate workout.");
+      toast.error(payload.error ?? "Unable to validate workout.");
       return;
     }
 
+    const toastId = toast.loading(isEditMode ? "Saving changes..." : "Saving workout...");
     setIsSaving(true);
 
     try {
@@ -167,11 +166,14 @@ export function WorkoutLogger({
       });
 
       if (!response.ok) {
-        setFormError(
+        toast.error(
           data.error ??
             (isEditMode
               ? "Unable to update workout."
               : "Unable to save workout."),
+          {
+            id: toastId,
+          },
         );
         return;
       }
@@ -181,6 +183,9 @@ export function WorkoutLogger({
       }
 
       const resolvedWorkoutId = data.id ?? workoutId;
+      toast.success(isEditMode ? "Workout updated." : "Workout saved.", {
+        id: toastId,
+      });
 
       if (isEditMode && resolvedWorkoutId) {
         router.replace(`/workouts/${resolvedWorkoutId}`);
@@ -189,8 +194,11 @@ export function WorkoutLogger({
       }
       router.refresh();
     } catch {
-      setFormError(
+      toast.error(
         isEditMode ? "Unable to update workout." : "Unable to save workout.",
+        {
+          id: toastId,
+        },
       );
     } finally {
       setIsSaving(false);
@@ -206,7 +214,6 @@ export function WorkoutLogger({
     : isEditMode
       ? "Edit workout"
       : "Log workout";
-  const savingLabel = isEditMode ? "Saving changes..." : "Saving workout...";
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
   return (
@@ -303,8 +310,6 @@ export function WorkoutLogger({
             </button>
           </section>
 
-          {formError ? <p className={styles.formError}>{formError}</p> : null}
-
           <button
             type="submit"
             className={styles.saveButton}
@@ -317,7 +322,7 @@ export function WorkoutLogger({
                   aria-hidden="true"
                   strokeWidth={1.9}
                 />
-                {savingLabel}
+                {submitLabel}
               </>
             ) : (
               <>

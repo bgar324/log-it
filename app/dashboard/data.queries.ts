@@ -185,6 +185,57 @@ export async function loadWorkoutCalendarSummary(userId: string) {
   }));
 }
 
+export async function loadWorkoutCalendarWorkouts(userId: string) {
+  try {
+    const rows = await prisma.workoutLog.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        performedAt: "asc",
+      },
+      select: {
+        id: true,
+        title: true,
+        workoutType: true,
+        performedAt: true,
+      },
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      workoutType: row.workoutType,
+      dateKey: formatDatabaseDateValue(row.performedAt),
+    }));
+  } catch (error) {
+    if (!isPrismaSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    const rows = await prisma.workoutLog.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        performedAt: "asc",
+      },
+      select: {
+        id: true,
+        title: true,
+        performedAt: true,
+      },
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      workoutType: null,
+      dateKey: formatDatabaseDateValue(row.performedAt),
+    }));
+  }
+}
+
 export function mapWorkoutSummaries(
   logs: Awaited<ReturnType<typeof loadRecentLogs>>,
   weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],

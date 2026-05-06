@@ -270,11 +270,6 @@ export const styles = {
     "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
   ),
-  formError: cn(
-    "m-0 rounded-[0.56rem] px-[0.7rem] py-[0.62rem] text-[0.82rem]",
-    "bg-[color:color-mix(in_srgb,#9e1f1f_12%,var(--field-bg))]",
-    "text-[color:color-mix(in_srgb,var(--text)_90%,#9e1f1f)]",
-  ),
   saveButton:
     "inline-flex min-h-[2.95rem] w-full cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.58rem] border-0 bg-[var(--button-bg)] px-[0.95rem] text-[0.92rem] text-[var(--button-text)] [touch-action:manipulation] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 transition-[transform,filter,box-shadow] duration-150 hover:brightness-[0.98] active:translate-y-[1px] disabled:cursor-progress disabled:opacity-70",
 } as const;

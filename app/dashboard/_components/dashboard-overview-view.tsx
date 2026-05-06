@@ -158,24 +158,31 @@ export function DashboardOverviewView({
               cell.dayNumber === null ? (
                 <span key={cell.key} className={styles.calendarDayEmpty} aria-hidden="true" />
               ) : (
-                <div
-                  key={cell.key}
-                  role="gridcell"
-                  className={`${styles.calendarDay} ${
-                    cell.workoutCount > 0 ? styles.calendarDayActive : ""
-                  }`}
-                  title={
-                    cell.workoutCount > 0
-                      ? `${cell.workoutCount} workout${
-                          cell.workoutCount === 1 ? "" : "s"
-                        } logged${
-                          cell.workoutType ? ` · ${cell.workoutType} day on your split` : ""
-                        }`
-                      : "No workout logged"
-                  }
-                >
-                  <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
-                </div>
+                cell.workouts[0] ? (
+                  <Link
+                    key={cell.key}
+                    href={`/workouts/${cell.workouts[0].id}`}
+                    role="gridcell"
+                    className={`${styles.calendarDay} ${styles.calendarDayClickable} ${styles.calendarDayActive}`}
+                    aria-label={`View ${cell.workouts[0].title}`}
+                    title={`${cell.workoutCount} workout${
+                      cell.workoutCount === 1 ? "" : "s"
+                    } logged${
+                      cell.workoutType ? ` · ${cell.workoutType} day on your split` : ""
+                    }`}
+                  >
+                    <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
+                  </Link>
+                ) : (
+                  <div
+                    key={cell.key}
+                    role="gridcell"
+                    className={styles.calendarDay}
+                    title="No workout logged"
+                  >
+                    <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
+                  </div>
+                )
               ),
             )}
           </div>

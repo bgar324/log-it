@@ -45,6 +45,14 @@ export type DashboardClientData = {
         dateKey: string;
         count: number;
       }>;
+      workoutsByDay: Array<{
+        dateKey: string;
+        workouts: Array<{
+          id: string;
+          title: string;
+          workoutType: string | null;
+        }>;
+      }>;
       monthCounts: Array<{
         monthKey: string;
         label: string;

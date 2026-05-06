@@ -6,7 +6,6 @@ import type { SplitWeekdayValue, WorkoutSplitTemplate } from "@/lib/workout-spli
 import {
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
   getInitialSelectedWeekday,
-  type SplitManagerCopyState,
   type SplitManagerSaveState,
 } from "../split-manager.shared";
 import { useSplitManagerDayDrag } from "./use-split-manager-day-drag";
@@ -18,7 +17,6 @@ export type SplitManagerState = {
   selectedDay: WorkoutSplitTemplate["days"][number] | null;
   selectedWeekday: SplitWeekdayValue;
   saveState: SplitManagerSaveState;
-  copyState: SplitManagerCopyState;
   draggingIndex: number | null;
   dropTargetIndex: number | null;
   draggingExerciseIndex: number | null;
@@ -98,7 +96,6 @@ export function useSplitManagerState(
     selectedDay: exerciseActions.selectedDay,
     selectedWeekday,
     saveState: persistence.saveState,
-    copyState: persistence.copyState,
     draggingIndex: dragState.draggingIndex,
     dropTargetIndex: dragState.dropTargetIndex,
     draggingExerciseIndex: exerciseActions.draggingExerciseIndex,

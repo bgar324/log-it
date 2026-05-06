@@ -4,6 +4,7 @@ import { Copy, Ellipsis, SquarePen, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { styles } from "./workout-detail.styles";
 
@@ -22,10 +23,6 @@ export function WorkoutDetailActions({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState<"idle" | "deleting">("idle");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [feedback, setFeedback] = useState<{
-    kind: "idle" | "success" | "error";
-    message: string;
-  }>({ kind: "idle", message: "" });
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -44,61 +41,39 @@ export function WorkoutDetailActions({
     };
   }, [isMenuOpen]);
 
-  useEffect(() => {
-    if (feedback.kind !== "success") {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setFeedback({ kind: "idle", message: "" });
-    }, 1600);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [feedback.kind]);
-
   async function handleCopy() {
     if (status !== "idle") {
       return;
     }
 
+    const toastId = toast.loading("Copying workout...");
+
     try {
       setIsMenuOpen(false);
       const result = await copyTextToClipboard(workoutExport);
-      setFeedback({
-        kind: "success",
-        message:
+      toast.success(
           result === "clipboard"
             ? "Copied workout to clipboard."
             : "Clipboard blocked. Workout text opened for manual copy.",
-      });
+        { id: toastId },
+      );
     } catch (caughtError) {
-      setFeedback({
-        kind: "error",
-        message:
+      toast.error(
           caughtError instanceof Error
             ? caughtError.message
             : "Unable to copy workout.",
-      });
+        { id: toastId },
+      );
     }
   }
 
-  async function handleDelete() {
+  async function deleteWorkout(toastId: string | number) {
     if (status !== "idle") {
       return;
     }
 
-    const confirmed = window.confirm(
-      "Delete this workout? This cannot be undone.",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+    toast.loading("Deleting workout...", { id: toastId });
     setStatus("deleting");
-    setFeedback({ kind: "idle", message: "" });
     setIsMenuOpen(false);
 
     try {
@@ -111,18 +86,37 @@ export function WorkoutDetailActions({
         throw new Error(payload.error ?? "Unable to delete workout.");
       }
 
+      toast.success("Workout deleted.", { id: toastId });
       router.push("/workouts");
       router.refresh();
     } catch (caughtError) {
-      setFeedback({
-        kind: "error",
-        message:
+      toast.error(
           caughtError instanceof Error
             ? caughtError.message
             : "Unable to delete workout.",
-      });
+        { id: toastId },
+      );
       setStatus("idle");
     }
+  }
+
+  function handleDelete() {
+    if (status !== "idle") {
+      return;
+    }
+
+    setIsMenuOpen(false);
+    const toastId = toast("Delete this workout?", {
+      description: "This cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: () => void deleteWorkout(toastId),
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => toast.dismiss(toastId),
+      },
+    });
   }
 
   return (
@@ -152,11 +146,10 @@ export function WorkoutDetailActions({
           onClick={handleDelete}
           disabled={status !== "idle"}
           aria-label={status === "deleting" ? "Deleting workout" : "Delete workout"}
+          aria-busy={status === "deleting"}
         >
           <Trash2 className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
-          <span className={styles.actionButtonLabel}>
-            {status === "deleting" ? "Deleting..." : "Delete workout"}
-          </span>
+          <span className={styles.actionButtonLabel}>Delete workout</span>
         </button>
       </div>
       <div className={styles.mobileActionMenu} ref={menuRef}>
@@ -201,28 +194,14 @@ export function WorkoutDetailActions({
               onClick={handleDelete}
               disabled={status !== "idle"}
               role="menuitem"
+              aria-busy={status === "deleting"}
             >
               <Trash2 className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
-              <span>{status === "deleting" ? "Deleting..." : "Delete workout"}</span>
+              <span>Delete workout</span>
             </button>
           </div>
         ) : null}
       </div>
-      {feedback.kind === "success" ? (
-        <div className={styles.copyToast} role="status" aria-live="polite">
-          {feedback.message}
-        </div>
-      ) : null}
-      {feedback.kind === "error" ? (
-        <p
-          className={`${styles.actionStatus} ${
-            styles.actionStatusError
-          }`}
-          role="alert"
-        >
-          {feedback.message}
-        </p>
-      ) : null}
     </>
   );
 }

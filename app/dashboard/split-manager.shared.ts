@@ -9,15 +9,8 @@ import {
 } from "@/lib/workout-splits/shared";
 
 export type SplitManagerSaveState =
-  | { kind: "idle"; message: string }
-  | { kind: "saving"; message: string }
-  | { kind: "success"; message: string }
-  | { kind: "error"; message: string };
-
-export type SplitManagerCopyState = {
-  kind: "idle" | "success" | "error";
-  message: string;
-};
+  | { kind: "idle" }
+  | { kind: "saving" };
 
 export type SaveSplitResponse =
   | {

@@ -21,6 +21,7 @@ import {
   loadExerciseSummaryRows,
   loadRecentLogs,
   loadWorkoutCalendarSummary,
+  loadWorkoutCalendarWorkouts,
   mapWorkoutSummaries,
 } from "./data.queries";
 
@@ -49,13 +50,28 @@ function sumWorkoutCounts(
 
 function buildWorkoutCalendarOverview(
   dayCounts: DashboardClientData["overview"]["workoutCalendar"]["dayCounts"],
+  workouts: Awaited<ReturnType<typeof loadWorkoutCalendarWorkouts>>,
   now: Date,
 ) {
   const workoutMonthCountMap = new Map<string, number>();
+  const workoutsByDateKey = new Map<
+    string,
+    DashboardClientData["overview"]["workoutCalendar"]["workoutsByDay"][number]["workouts"]
+  >();
 
   for (const entry of dayCounts) {
     const month = entry.dateKey.slice(0, 7);
     workoutMonthCountMap.set(month, (workoutMonthCountMap.get(month) ?? 0) + entry.count);
+  }
+
+  for (const workout of workouts) {
+    const dayWorkouts = workoutsByDateKey.get(workout.dateKey) ?? [];
+    dayWorkouts.push({
+      id: workout.id,
+      title: workout.title,
+      workoutType: workout.workoutType,
+    });
+    workoutsByDateKey.set(workout.dateKey, dayWorkouts);
   }
 
   const sortedMonthKeys = Array.from(workoutMonthCountMap.keys()).sort();
@@ -95,6 +111,10 @@ function buildWorkoutCalendarOverview(
 
   return {
     dayCounts,
+    workoutsByDay: Array.from(workoutsByDateKey.entries()).map(([dateKey, dayWorkouts]) => ({
+      dateKey,
+      workouts: dayWorkouts,
+    })),
     monthCounts,
     latestMonthKey: monthCounts[monthCounts.length - 1]?.monthKey ?? null,
   };
@@ -113,10 +133,17 @@ export async function loadDashboardOverviewSection(
   const previousMonthStart = addMonthsToDatabaseDate(monthStart, -1);
   const previousMonthEnd = monthStart;
 
-  const [exerciseSummaries, recentLogs, workoutCalendarDayCounts, todayPlan] = await Promise.all([
+  const [
+    exerciseSummaries,
+    recentLogs,
+    workoutCalendarDayCounts,
+    workoutCalendarWorkouts,
+    todayPlan,
+  ] = await Promise.all([
     loadExerciseSummaryRows(userId),
     loadRecentLogs(userId, 5),
     loadWorkoutCalendarSummary(userId),
+    loadWorkoutCalendarWorkouts(userId),
     loadTodayPlan(userId, now),
   ]);
 
@@ -184,7 +211,11 @@ export async function loadDashboardOverviewSection(
       monthChange,
       weeklyBars,
       personalBests,
-      workoutCalendar: buildWorkoutCalendarOverview(workoutCalendarDayCounts, now),
+      workoutCalendar: buildWorkoutCalendarOverview(
+        workoutCalendarDayCounts,
+        workoutCalendarWorkouts,
+        now,
+      ),
     },
     workouts,
   };

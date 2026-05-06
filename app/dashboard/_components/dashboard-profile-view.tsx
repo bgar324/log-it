@@ -4,6 +4,7 @@ import { Download, ImagePlus, Trash2, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { PointerEvent } from "react";
+import { toast } from "sonner";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../dashboard.styles";
 import type { DashboardProfileFormState } from "../_hooks/use-dashboard-profile-form";
@@ -41,7 +42,6 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
   const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
   const [cropFrameSize, setCropFrameSize] = useState(0);
   const [cropImageSize, setCropImageSize] = useState<CropSize>({ width: 0, height: 0 });
-  const [cropError, setCropError] = useState("");
   const avatarUrl =
     state.profile.profileImageUpdatedAt
       ? `/api/profile/avatar?v=${encodeURIComponent(state.profile.profileImageUpdatedAt)}`
@@ -107,7 +107,6 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
     setCropZoom(1);
     setCropOffset({ x: 0, y: 0 });
     setCropImageSize({ height: 0, width: 0 });
-    setCropError("");
   }
 
   function handleAvatarFile(file: File | null) {
@@ -232,11 +231,13 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
       setIsAvatarModalOpen(false);
       resetCrop();
     } catch (error) {
-      setCropError(error instanceof Error ? error.message : "Unable to crop this profile photo.");
+      toast.error(error instanceof Error ? error.message : "Unable to crop this profile photo.");
     }
   }
 
   async function handleDownloadAvatar() {
+    const toastId = toast.loading("Preparing profile photo...");
+
     try {
       const blob = await createCroppedAvatarBlob();
       const url = URL.createObjectURL(blob);
@@ -247,8 +248,13 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      toast.success("Profile photo downloaded.", {
+        id: toastId,
+      });
     } catch (error) {
-      setCropError(error instanceof Error ? error.message : "Unable to download this profile photo.");
+      toast.error(error instanceof Error ? error.message : "Unable to download this profile photo.", {
+        id: toastId,
+      });
     }
   }
 
@@ -426,8 +432,9 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
                 form="profileSettingsForm"
                 className={styles.profileSaveButton}
                 disabled={isSaving}
+                aria-busy={isSaving}
               >
-                {isSaving ? "Saving..." : "Save profile"}
+                Save profile
               </button>
 
               <form method="post" action="/auth/signout" className={styles.profileActionForm}>
@@ -436,16 +443,6 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
                 </button>
               </form>
             </div>
-
-            {state.saveState.kind !== "idle" ? (
-              <p
-                className={styles.profileStatus}
-                data-state={state.saveState.kind}
-                role={state.saveState.kind === "error" ? "alert" : undefined}
-              >
-                {state.saveState.message}
-              </p>
-            ) : null}
           </div>
         </div>
       </div>
@@ -569,13 +566,6 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
                 </div>
               </div>
             </div>
-
-            {cropError ? (
-              <p className={styles.profileStatus} data-state="error" role="alert">
-                {cropError}
-              </p>
-            ) : null}
-
             <div className={styles.avatarModalFooter}>
               <button
                 type="button"

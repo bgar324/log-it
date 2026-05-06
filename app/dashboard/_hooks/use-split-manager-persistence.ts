@@ -2,11 +2,11 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
 import {
   copyWorkoutSplit,
   saveWorkoutSplit,
-  type SplitManagerCopyState,
   type SplitManagerSaveState,
 } from "../split-manager.shared";
 
@@ -24,50 +24,46 @@ export function useSplitManagerPersistence({
   const router = useRouter();
   const [saveState, setSaveState] = useState<SplitManagerSaveState>({
     kind: "idle",
-    message: "",
-  });
-  const [copyState, setCopyState] = useState<SplitManagerCopyState>({
-    kind: "idle",
-    message: "",
   });
 
   async function handleSave() {
-    setSaveState({ kind: "saving", message: "Saving split..." });
+    const toastId = toast.loading("Saving split...");
+    setSaveState({ kind: "saving" });
 
     try {
       const savedSplit = await saveWorkoutSplit(split);
       setSplit(savedSplit);
       clearAllExerciseSuggestions();
-      setSaveState({
-        kind: "success",
-        message: "Workout split saved. Calendar and logger autofill are updated.",
+      toast.success("Workout split saved.", {
+        id: toastId,
+        description: "Calendar and logger autofill are updated.",
       });
       router.refresh();
     } catch (error) {
-      setSaveState({
-        kind: "error",
-        message: error instanceof Error ? error.message : "Unable to save split.",
+      toast.error(error instanceof Error ? error.message : "Unable to save split.", {
+        id: toastId,
       });
+    } finally {
+      setSaveState({ kind: "idle" });
     }
   }
 
   async function handleCopySplit() {
+    const toastId = toast.loading("Copying split...");
+
     try {
-      setCopyState({
-        kind: "success",
-        message: await copyWorkoutSplit(split),
+      toast.success(await copyWorkoutSplit(split), {
+        id: toastId,
       });
     } catch (error) {
-      setCopyState({
-        kind: "error",
-        message: error instanceof Error ? error.message : "Unable to copy split.",
+      toast.error(error instanceof Error ? error.message : "Unable to copy split.", {
+        id: toastId,
       });
     }
   }
 
   return {
     saveState,
-    copyState,
     handleSave,
     handleCopySplit,
   };

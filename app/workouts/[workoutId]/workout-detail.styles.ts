@@ -50,11 +50,6 @@ export const styles = {
     "border-[color:color-mix(in_srgb,#a43838_35%,transparent)] text-[#a43838] hover:bg-[color:color-mix(in_srgb,#a43838_12%,transparent)]",
   actionButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
   actionButtonLabel: "whitespace-nowrap max-[759px]:hidden text-[0.76rem]",
-  copyToast:
-    "pointer-events-none fixed left-1/2 top-[1rem] z-30 -translate-x-1/2 rounded-full border border-[color:color-mix(in_srgb,var(--text)_14%,transparent)] bg-[var(--bg)] px-[0.86rem] py-[0.5rem] text-[0.76rem] text-[var(--text)] shadow-[0_10px_30px_color-mix(in_srgb,var(--text)_8%,transparent)]",
-  actionStatus: "m-0 text-[0.74rem] max-[759px]:basis-full max-[759px]:text-right",
-  actionStatusSuccess: "text-[#2f7b4d]",
-  actionStatusError: "text-[#a43838]",
   summaryCard: cn(
     "rounded-[0.54rem] border bg-transparent px-[0.95rem] py-[0.84rem] min-[760px]:p-[0.95rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",

@@ -1,7 +1,12 @@
 "use client";
 
 import { Filter } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/app/components/ui/popover";
 import type { DashboardClientData } from "../dashboard-types";
 import { styles } from "../dashboard.styles";
 import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
@@ -112,32 +117,6 @@ export function DashboardWorkoutFiltersControl({
   onClear,
 }: WorkoutFiltersControlProps) {
   const [open, setOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!popoverRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
 
   function updateFilter<Key extends keyof WorkoutFiltersState>(
     key: Key,
@@ -150,21 +129,26 @@ export function DashboardWorkoutFiltersControl({
   }
 
   return (
-    <div className={styles.workoutFilterMenu} ref={popoverRef}>
-      <button
-        type="button"
-        className={styles.workoutFilterToggle}
-        data-active={open || hasFilters}
-        aria-label="Filter workouts"
-        aria-expanded={open}
-        aria-controls="dashboard-workout-filters"
-        aria-haspopup="dialog"
-        onClick={() => setOpen((current) => !current)}
-      >
-        <Filter className={styles.workoutFilterToggleIcon} aria-hidden="true" strokeWidth={1.9} />
-      </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={styles.workoutFilterToggle}
+          data-active={open || hasFilters}
+          aria-label="Filter workouts"
+          aria-controls="dashboard-workout-filters"
+        >
+          <Filter className={styles.workoutFilterToggleIcon} aria-hidden="true" strokeWidth={1.9} />
+        </button>
+      </PopoverTrigger>
 
-      {open ? (
+      <PopoverContent
+        asChild
+        side="bottom"
+        align="end"
+        avoidCollisions
+        collisionPadding={13}
+      >
         <div
           id="dashboard-workout-filters"
           className={styles.workoutFilterPopover}
@@ -233,8 +217,8 @@ export function DashboardWorkoutFiltersControl({
             </button>
           </div>
         </div>
-      ) : null}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

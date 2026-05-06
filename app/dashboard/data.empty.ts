@@ -61,6 +61,7 @@ export function createEmptyDashboardData(
       personalBests: [],
       workoutCalendar: {
         dayCounts: [],
+        workoutsByDay: [],
         monthCounts: [
           {
             monthKey: emptyMonthKey,
@@ -130,6 +131,7 @@ export function createEmptyOverview(user: DashboardClientData["user"]) {
       personalBests: [],
       workoutCalendar: {
         dayCounts: [],
+        workoutsByDay: [],
         monthCounts: [
           {
             monthKey: emptyMonthKey,

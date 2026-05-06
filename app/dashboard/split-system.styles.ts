@@ -73,7 +73,4 @@ export const splitStyles = {
     "flex flex-col gap-[0.22rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[1rem] text-[0.84rem] text-[var(--muted)]",
   restEmptyState:
     "flex flex-col gap-[0.22rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[1rem] text-[0.84rem] text-[var(--muted)]",
-  status: "m-0 text-[0.72rem] text-[var(--muted)]",
-  statusSuccess: "text-[#2f7b4d]",
-  statusError: "text-[#b13d48]",
 } as const;

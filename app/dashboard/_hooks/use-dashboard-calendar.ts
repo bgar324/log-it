@@ -12,6 +12,7 @@ export type DashboardCalendarCell = {
   dayNumber: number | null;
   workoutCount: number;
   workoutType: string | null;
+  workouts: WorkoutCalendarData["workoutsByDay"][number]["workouts"];
 };
 
 export type DashboardCalendarState = {
@@ -51,6 +52,10 @@ export function useDashboardCalendar(
       new Map(workoutCalendar.dayCounts.map((entry) => [entry.dateKey, entry.count])),
     [workoutCalendar.dayCounts],
   );
+  const workoutsByDateKey = useMemo(
+    () => new Map(workoutCalendar.workoutsByDay.map((entry) => [entry.dateKey, entry.workouts])),
+    [workoutCalendar.workoutsByDay],
+  );
   const splitDayByWeekday = useMemo(
     () => new Map(split.days.map((day) => [day.weekday, day])),
     [split.days],
@@ -73,12 +78,14 @@ export function useDashboardCalendar(
         dayNumber: null,
         workoutCount: 0,
         workoutType: null,
+        workouts: [],
       });
     }
 
     for (let day = 1; day <= daysInMonth; day += 1) {
       const currentDateKey = dateKeyForParts(parsedMonth.year, parsedMonth.month, day);
       const workoutCount = workoutDaysByDateKey.get(currentDateKey) ?? 0;
+      const workouts = workoutsByDateKey.get(currentDateKey) ?? [];
       const splitDay =
         split.id === null
           ? null
@@ -91,6 +98,7 @@ export function useDashboardCalendar(
         dayNumber: day,
         workoutCount,
         workoutType: splitDay?.workoutType ?? null,
+        workouts,
       });
     }
 
@@ -102,11 +110,12 @@ export function useDashboardCalendar(
         dayNumber: null,
         workoutCount: 0,
         workoutType: null,
+        workouts: [],
       });
     }
 
     return nextCells;
-  }, [selectedMonth.monthKey, split.id, splitDayByWeekday, workoutDaysByDateKey]);
+  }, [selectedMonth.monthKey, split.id, splitDayByWeekday, workoutDaysByDateKey, workoutsByDateKey]);
 
   function goToPreviousMonth() {
     if (calendarMonthIndex <= 0) {

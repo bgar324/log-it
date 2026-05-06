@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { Toaster } from "./components/ui/toaster";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {children}
+        <Toaster />
       </body>
     </html>
   );

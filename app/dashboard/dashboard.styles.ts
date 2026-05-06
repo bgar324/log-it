@@ -108,6 +108,8 @@ export const styles = {
     "relative flex aspect-square items-center justify-center rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--surface)] text-[color-mix(in_srgb,var(--text)_88%,var(--muted))]",
   calendarDayActive:
     "!border-[var(--calendar-active-border)] !bg-[var(--calendar-active-bg)] text-[var(--text)]",
+  calendarDayClickable:
+    `cursor-pointer text-inherit no-underline hover:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
   calendarDayNumber: "text-[0.84rem] leading-none",
   calendarDayEmpty: "aspect-square rounded-[0.42rem] border border-transparent",
   searchInput:
@@ -150,12 +152,11 @@ export const styles = {
     "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,0.9fr)_minmax(0,0.85fr)_minmax(0,1fr)] w-[max(100%,40rem)]",
   metricMain: "m-0 text-[0.84rem] leading-[1.3] font-[520] text-[var(--text)]",
   metricSubtle: "m-[0.18rem_0_0] text-[0.72rem] text-[var(--muted)]",
-  workoutFilterMenu: "relative inline-flex shrink-0",
   workoutFilterToggle:
     `relative inline-flex h-[1.95rem] w-[1.95rem] cursor-pointer items-center justify-center rounded-full border border-[var(--dashboard-border)] bg-[var(--toggle-bg)] text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:bg-[var(--toggle-active-bg)] data-[active=true]:text-[var(--toggle-active-icon)] ${buttonMotion} ${buttonFocusRing}`,
   workoutFilterToggleIcon: "h-[0.92rem] w-[0.92rem]",
   workoutFilterPopover:
-    `${dashboardSurface} absolute right-0 top-[calc(100%+0.42rem)] z-30 flex w-[min(35rem,calc(100vw-1.64rem))] flex-col gap-[0.72rem] !bg-[var(--bg)] p-[0.82rem] shadow-[0_18px_44px_color-mix(in_srgb,#000_14%,transparent)] max-[760px]:right-[-4rem] max-[420px]:right-[-3.95rem]`,
+    `${dashboardBorder} ${dashboardSurface} z-50 flex w-[min(35rem,calc(100vw-1.64rem))] max-w-[calc(100vw-1.64rem)] flex-col gap-[0.72rem] !bg-[var(--bg)] p-[0.82rem] shadow-[0_18px_44px_color-mix(in_srgb,#000_14%,transparent)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out max-[760px]:max-h-[min(34rem,calc(100dvh-1.64rem))] max-[760px]:overflow-y-auto`,
   workoutFilterGrid:
     "grid grid-cols-1 gap-[0.62rem] min-[620px]:grid-cols-2 min-[1080px]:grid-cols-4",
   workoutFilterField:
@@ -163,11 +164,11 @@ export const styles = {
   workoutFilterInput:
     "min-h-[2.5rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.84rem] text-[var(--text)] outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
   workoutFilterFooter:
-    "flex flex-wrap items-center justify-between gap-[0.55rem] border-t border-[var(--dashboard-border)] pt-[0.68rem]",
+    "flex flex-wrap items-center justify-between gap-[0.55rem] border-t border-[var(--dashboard-border)] pt-[0.68rem] max-[420px]:items-stretch",
   workoutFilterMeta:
     "m-0 text-[0.72rem] text-[var(--muted)]",
   workoutFilterReset:
-    `inline-flex min-h-[2.18rem] cursor-pointer items-center justify-center rounded-[0.46rem] border border-[var(--dashboard-border)] bg-transparent px-[0.74rem] text-[0.76rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-40 ${buttonMotion} ${buttonFocusRing}`,
+    `inline-flex min-h-[2.18rem] cursor-pointer items-center justify-center rounded-[0.46rem] border border-[var(--dashboard-border)] bg-transparent px-[0.74rem] text-[0.76rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-40 max-[420px]:w-full ${buttonMotion} ${buttonFocusRing}`,
   timeline: "mt-[0.66rem] flex flex-col gap-[0.9rem]",
   monthSection: "flex flex-col gap-[0.42rem]",
   monthTitle:
@@ -225,8 +226,6 @@ export const styles = {
     `inline-flex min-h-[2.34rem] cursor-pointer items-center justify-center gap-[0.38rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[760px]:min-h-[2.52rem] ${buttonMotion} ${buttonFocusRing}`,
   secondaryButton:
     `inline-flex min-h-[2.34rem] cursor-pointer items-center justify-center gap-[0.38rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[760px]:min-h-[2.52rem] ${buttonMotion} ${buttonFocusRing}`,
-  profileStatus:
-    "m-0 text-[0.72rem] data-[state=success]:text-[#2f7b4d] data-[state=error]:text-[#b13d48] min-[900px]:col-span-2",
   avatarModalOverlay:
     "fixed inset-0 z-[80] flex items-end justify-center bg-[color-mix(in_srgb,#000_36%,transparent)] px-[0.78rem] pt-[0.78rem] pb-[calc(0.78rem+env(safe-area-inset-bottom))] min-[720px]:items-center min-[720px]:p-[1rem]",
   avatarModal:

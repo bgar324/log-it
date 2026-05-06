@@ -44,8 +44,9 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
               className={splitStyles.primaryButton}
               onClick={() => void state.handleSave()}
               disabled={state.saveState.kind === "saving"}
+              aria-busy={state.saveState.kind === "saving"}
             >
-              {state.saveState.kind === "saving" ? "Saving..." : "Save split"}
+              Save split
             </button>
           </div>
         </div>
@@ -66,34 +67,6 @@ export function SplitManager({ initialSplit }: SplitManagerProps) {
             />
           ))}
         </div>
-
-        {state.saveState.kind !== "idle" ? (
-          <p
-            className={`${splitStyles.status} ${
-              state.saveState.kind === "success"
-                ? splitStyles.statusSuccess
-                : state.saveState.kind === "error"
-                  ? splitStyles.statusError
-                  : ""
-            }`}
-            role={state.saveState.kind === "error" ? "alert" : undefined}
-          >
-            {state.saveState.message}
-          </p>
-        ) : null}
-
-        {state.copyState.kind !== "idle" ? (
-          <p
-            className={`${splitStyles.status} ${
-              state.copyState.kind === "success"
-                ? splitStyles.statusSuccess
-                : splitStyles.statusError
-            }`}
-            role={state.copyState.kind === "error" ? "alert" : "status"}
-          >
-            {state.copyState.message}
-          </p>
-        ) : null}
       </section>
 
       <SplitEditor
