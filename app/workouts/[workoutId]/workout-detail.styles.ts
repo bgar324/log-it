@@ -75,7 +75,7 @@ export const styles = {
   exerciseHead: "flex items-baseline justify-between gap-[0.5rem]",
   exerciseOrder: "m-0 text-[0.74rem] text-[var(--muted)]",
   exerciseName: "mt-[0.1rem] mb-0 text-[1.02rem] leading-[1.15] tracking-[-0.03em]",
-  exerciseVolume: "m-0 text-[0.77rem] text-[var(--muted)]",
+  exerciseVolume: "m-0 text-[0.77rem] text-[var(--muted)] max-[759px]:hidden",
   tableWrap: "mt-[0.58rem] max-[759px]:hidden",
   table: "w-full border-collapse",
   tableHeadCell:
@@ -84,13 +84,11 @@ export const styles = {
     "border-t border-[color:color-mix(in_srgb,var(--text)_10%,transparent)] px-[0.2rem] py-[0.5rem] text-[0.81rem]",
   mobileSetList: "mt-[0.58rem] hidden flex-col gap-[0.42rem] max-[759px]:flex",
   mobileSetCard:
-    "grid grid-cols-3 gap-[0.52rem] rounded-[0.52rem] border border-[color:color-mix(in_srgb,var(--text)_10%,transparent)] p-[0.62rem]",
+    "grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-[0.52rem] rounded-[0.52rem] border border-[color:color-mix(in_srgb,var(--text)_10%,transparent)] px-[0.58rem] py-[0.52rem]",
   mobileSetCell: "flex min-w-0 flex-col gap-[0.14rem]",
   mobileSetNumber: "text-[0.84rem] font-[560] text-[var(--text)]",
-  mobileSetMeta: "text-[0.72rem] text-[var(--muted)]",
+  mobileSetMeta: "hidden text-[0.72rem] text-[var(--muted)]",
   mobileSetValue: "text-[0.84rem] text-[var(--text)]",
   skeletonBlock:
     "block rounded-[0.42rem] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]",
-  skeletonSetList:
-    "mt-[0.58rem] flex flex-col gap-[0.42rem]",
 } as const;

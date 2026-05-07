@@ -25,16 +25,31 @@ export function DashboardWorkoutList({
           href={`/workouts/${workout.id}`}
           className={`${styles.metricRow} ${styles.workoutHistoryRow} ${styles.clickableMetricRow}`}
         >
-          <span>{workout.performedAtLabel}</span>
+          <span className={styles.metricMobileLabel} data-label="Date">
+            {workout.performedAtLabel}
+          </span>
           <div>
-            <p className={styles.metricMain}>{workout.title}</p>
+            <p className={styles.workoutSummaryLine}>
+              {workout.title}
+              {workout.workoutType ? (
+                <span className={styles.workoutSummaryMeta}> · {workout.workoutType}</span>
+              ) : null}
+            </p>
+            <p className={`${styles.metricMain} max-[760px]:hidden`}>{workout.title}</p>
             {workout.workoutType ? (
-              <p className={styles.metricSubtle}>{workout.workoutType}</p>
+              <p className={`${styles.metricSubtle} max-[760px]:hidden`}>{workout.workoutType}</p>
             ) : null}
           </div>
-          <span>{workout.exerciseCount} ex</span>
-          <span>{workout.setCount} sets</span>
-          <span>
+          <span className={`${styles.metricMobileLabel} ${styles.workoutDesktopStat}`} data-label="Exercises">
+            {workout.exerciseCount} ex
+          </span>
+          <span className={`${styles.metricMobileLabel} ${styles.workoutDesktopStat}`} data-label="Sets">
+            {workout.setCount} sets
+          </span>
+          <span className={styles.workoutMobileStats}>
+            {workout.exerciseCount} ex · {workout.setCount} sets
+          </span>
+          <span className={styles.metricMobileLabel} data-label="Volume">
             {formatWeightWithUnit(workout.volume, weightUnit, {
               maximumFractionDigits: 0,
             })}

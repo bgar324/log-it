@@ -67,21 +67,14 @@ export async function createWorkoutRecord(
   db: WorkoutDbClient,
   userId: string,
   payload: ParsedWorkout,
-  options?: {
-    includeWorkoutType?: boolean;
-  },
 ) {
   const totalWeightLb = computeWorkoutTotalWeightLb(payload);
   const workoutLog = await db.workoutLog.create({
     data: {
       userId,
       title: payload.title,
-      ...(options?.includeWorkoutType === false
-        ? {}
-        : {
-            workoutType: payload.workoutType,
-            workoutTypeSlug: payload.workoutTypeSlug,
-          }),
+      workoutType: payload.workoutType,
+      workoutTypeSlug: payload.workoutTypeSlug,
       totalWeightLb,
       performedAt: payload.performedAt,
       status: "COMPLETED",

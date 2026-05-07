@@ -100,14 +100,18 @@ export function DashboardOverviewView({
           {overview.personalBests.length > 0 ? (
             <div className={styles.metricList}>
               <DashboardMetricHeader
-                columns={["Exercise", "Best weight", "Date"]}
+                columns={["Date", "Exercise", "Best weight"]}
                 rowClassName={styles.personalBestRow}
               />
               {overview.personalBests.map((row) => (
                 <div key={row.id} className={`${styles.metricRow} ${styles.personalBestRow}`}>
+                  <span className={styles.metricMobileLabel} data-label="Date">
+                    {row.dateLabel}
+                  </span>
                   <span className={styles.metricMain}>{row.lift}</span>
-                  <span>{formatWeight(row.weight)}</span>
-                  <span className={styles.metricSubtle}>{row.dateLabel}</span>
+                  <span className={styles.metricMobileLabel} data-label="Best weight">
+                    {formatWeight(row.weight)}
+                  </span>
                 </div>
               ))}
             </div>

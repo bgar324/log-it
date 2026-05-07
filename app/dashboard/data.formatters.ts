@@ -1,6 +1,7 @@
 import {
   formatDatabaseDateLabel,
   formatDatabaseDateValue,
+  formatDatabaseCompactDateLabel,
   formatDatabaseMonthValue,
 } from "@/lib/workout-utils";
 
@@ -25,11 +26,7 @@ export function shortDate(date: Date) {
 }
 
 export function monthDateLabel(date: Date) {
-  return formatDatabaseDateLabel(date, {
-    month: "2-digit",
-    day: "2-digit",
-    year: "2-digit",
-  });
+  return formatDatabaseCompactDateLabel(date);
 }
 
 export function monthLabel(date: Date) {

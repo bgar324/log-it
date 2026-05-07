@@ -12,6 +12,7 @@ export {
   addMonthsToDatabaseDate,
   createDatabaseDate,
   daysBetweenDatabaseDates,
+  formatDatabaseCompactDateLabel,
   formatDatabaseDateLabel,
   formatDatabaseDateValue,
   formatDatabaseMonthValue,

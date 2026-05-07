@@ -1,5 +1,6 @@
 export {
   createDatabaseDate,
+  formatDatabaseCompactDateLabel,
   formatDatabaseDateLabel,
   formatDatabaseDateValue,
   formatDatabaseMonthValue,

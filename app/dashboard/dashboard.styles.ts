@@ -66,8 +66,6 @@ export const styles = {
     "data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)]",
   ),
   mobileMenuItemIcon: "h-[0.92rem] w-[0.92rem]",
-  tableCellTitle: "block font-[560]",
-  tableCellMeta: "mt-[0.14rem] block text-[0.72rem] text-[var(--muted)]",
   kpiGrid:
     "grid grid-cols-1 gap-[0.56rem] min-[900px]:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]",
   dashboardKpiGrid:
@@ -114,19 +112,8 @@ export const styles = {
   calendarDayEmpty: "aspect-square rounded-[0.42rem] border border-transparent",
   searchInput:
     "h-[2.18rem] w-[clamp(9rem,34vw,14rem)] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.74rem] text-[0.84rem] text-[var(--text)] placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:h-[2.5rem] max-[760px]:w-full",
-  tableWrap: "mt-[0.56rem] overflow-x-auto",
-  table:
-    "min-w-[42rem] w-full table-fixed border-collapse border-spacing-0 [&_th]:border-b [&_th]:border-[var(--dashboard-border)] [&_th]:px-[0.48rem] [&_th]:py-[0.4rem] [&_th]:text-left [&_th]:text-[0.65rem] [&_th]:font-medium  [&_th]:text-[var(--muted)] [&_th:last-child]:whitespace-nowrap [&_th:last-child]:pr-[0.48rem] [&_td]:border-b [&_td]:border-[var(--dashboard-border)] [&_td]:bg-transparent [&_td]:px-[0.48rem] [&_td]:py-[0.64rem] [&_td]:text-[0.84rem] [&_td]:text-[color-mix(in_srgb,var(--text)_92%,var(--muted))] [&_td:last-child]:whitespace-nowrap [&_td:last-child]:pr-[0.48rem] [&_td:last-child]:text-left",
-  workoutTableDateColumn: "w-[14%]",
-  workoutTableWorkoutColumn: "w-[26%]",
-  workoutTableExercisesColumn: "w-[12%]",
-  workoutTableSetsColumn: "w-[12%]",
-  workoutTableVolumeColumn: "w-[18%]",
-  workoutTableActionsColumn: "w-[12%]",
-  tableLink:
-    `inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[0.42rem] border border-[var(--dashboard-border)] px-[0.56rem] py-[0.2rem] text-[0.72rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
   metricList:
-    "mt-[0.66rem] flex flex-col gap-[0.36rem] overflow-x-auto [scrollbar-width:thin]",
+    "mt-[0.66rem] flex flex-col gap-[0.36rem] overflow-x-visible min-[761px]:overflow-x-auto min-[761px]:[scrollbar-width:thin]",
   paginationRow:
     "mt-[0.58rem] flex flex-wrap items-center justify-between gap-[0.5rem]",
   paginationMeta: "m-0 text-[0.72rem] text-[var(--muted)]",
@@ -136,20 +123,38 @@ export const styles = {
   paginationPage:
     "text-[0.72rem] text-[var(--muted)]",
   metricHeader:
-    "grid w-[max(100%,34rem)] items-center gap-[0.44rem] px-[0.6rem] max-[760px]:w-[max(100%,30rem)]",
+    "grid w-[max(100%,34rem)] items-center gap-[0.44rem] px-[0.6rem] max-[760px]:hidden",
   metricHeaderCell:
     "whitespace-nowrap text-[0.65rem] font-medium text-[var(--muted)]",
   metricHeaderPrimary: "pl-[0.06rem]",
   metricRow:
-    "grid w-[max(100%,34rem)] items-center gap-[0.44rem] rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent p-[0.58rem] text-[0.84rem] transition-[border-color,background-color] duration-150 hover:border-[var(--dashboard-border-strong)] max-[760px]:w-[max(100%,30rem)]",
+    "grid w-full min-w-0 items-center gap-[0.44rem] rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent p-[0.58rem] text-[0.84rem] transition-[border-color,background-color] duration-150 hover:border-[var(--dashboard-border-strong)] min-[761px]:w-[max(100%,34rem)] max-[760px]:gap-x-[0.48rem] max-[760px]:gap-y-[0.12rem] max-[760px]:px-[0.56rem] max-[760px]:py-[0.52rem]",
   clickableMetricRow:
     `cursor-pointer text-inherit no-underline hover:translate-y-0 ${buttonFocusRing} ${buttonMotion}`,
+  metricMobileLabel:
+    "min-w-0",
   personalBestRow:
-    "grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)_minmax(0,1fr)] w-[max(100%,24rem)] max-[760px]:w-[max(100%,22rem)]",
+    "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,1fr)] min-[761px]:w-[max(100%,24rem)] max-[760px]:grid-cols-[4.8rem_minmax(0,1fr)_auto] max-[760px]:[&>*:nth-child(3)]:justify-self-end",
+  workoutSummaryLine:
+    "m-0 hidden min-w-0 truncate text-[0.84rem] leading-[1.3] font-[520] text-[var(--text)] max-[760px]:block",
+  workoutSummaryMeta:
+    "text-[var(--muted)] font-[400]",
+  workoutMobileStats:
+    "hidden min-w-0 whitespace-nowrap text-right max-[760px]:block",
+  workoutDesktopStat:
+    "min-w-0 max-[760px]:hidden",
+  exerciseMobileStats:
+    "hidden min-w-0 text-right max-[760px]:flex max-[760px]:flex-col max-[760px]:gap-[0.12rem] max-[760px]:whitespace-nowrap",
+  exerciseMobileStatPrimary:
+    "text-[0.84rem] text-[var(--text)]",
+  exerciseMobileStatSecondary:
+    "text-[0.72rem] text-[var(--muted)]",
+  exerciseDesktopStat:
+    "min-w-0 max-[760px]:hidden",
   exerciseRow:
-    "grid-cols-[minmax(0,1.95fr)_repeat(4,minmax(0,0.9fr))] w-[max(100%,36rem)]",
+    "grid-cols-[minmax(0,1.95fr)_repeat(4,minmax(0,0.9fr))] min-[761px]:w-[max(100%,36rem)] max-[760px]:grid-cols-[minmax(0,1fr)_auto] max-[760px]:items-center max-[760px]:gap-x-[0.62rem]",
   workoutHistoryRow:
-    "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,0.9fr)_minmax(0,0.85fr)_minmax(0,1fr)] w-[max(100%,40rem)]",
+    "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,0.9fr)_minmax(0,0.85fr)_minmax(0,1fr)] min-[761px]:w-[max(100%,40rem)] max-[760px]:grid-cols-[4.8rem_minmax(0,1fr)_auto] max-[760px]:[&>*:nth-child(2)]:min-w-0 max-[760px]:[&>*:nth-child(5)]:justify-self-end max-[760px]:[&>*:nth-child(6)]:hidden",
   metricMain: "m-0 text-[0.84rem] leading-[1.3] font-[520] text-[var(--text)]",
   metricSubtle: "m-[0.18rem_0_0] text-[0.72rem] text-[var(--muted)]",
   workoutFilterToggle:
@@ -263,8 +268,6 @@ export const styles = {
   skeletonKpiCard:
     `${dashboardSurface} flex min-h-[4.95rem] flex-col justify-between gap-[0.28rem] px-[0.7rem] py-[0.62rem]`,
   skeletonMetricList: "flex flex-col gap-[0.42rem]",
-  skeletonWorkoutFilterGrid:
-    "grid grid-cols-1 gap-[0.62rem] min-[620px]:grid-cols-2 min-[1080px]:grid-cols-4",
   skeletonTimeline: "mt-[0.66rem] flex flex-col gap-[0.42rem]",
   skeletonSplitLayout:
     "grid grid-cols-[minmax(0,1fr)_minmax(20rem,0.66fr)] gap-[0.9rem] max-[1020px]:grid-cols-1",

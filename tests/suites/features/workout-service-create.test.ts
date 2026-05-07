@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Prisma } from "@prisma/client";
 import { createWorkout } from "../../../lib/workouts/service";
 import { formatDatabaseDateValue } from "../../../lib/workout-utils";
 import {
@@ -75,31 +74,4 @@ test("createWorkout writes a nested workout payload and returns read-model sync 
       },
     },
   ]);
-});
-
-test("createWorkout retries without workout type columns on schema mismatch", async () => {
-  const { tx, calls } = createDefaultTransactionMock();
-  let invocationCount = 0;
-
-  withMockedTransaction(async (callback) => {
-    invocationCount += 1;
-
-    if (invocationCount === 1) {
-      throw new Prisma.PrismaClientKnownRequestError("missing column", {
-        code: "P2021",
-        clientVersion: "test",
-      });
-    }
-
-    return callback(tx);
-  });
-
-  const result = await createWorkout("user-1", BASE_WORKOUT);
-
-  assert.equal(result.id, "workout-created");
-  assert.equal(invocationCount, 2);
-
-  const createdWorkout = calls.workoutLogCreate[0]?.data as Record<string, unknown>;
-  assert.equal("workoutType" in createdWorkout, false);
-  assert.equal("workoutTypeSlug" in createdWorkout, false);
 });

@@ -37,7 +37,7 @@ export function SessionBreakdownTable({
       <div className={styles.tableWrap}>
         <div className={styles.metricList}>
           <div className={styles.sessionHeader}>
-            {["Workout", "Date", "Sets", "Reps", "Best weight", "Volume"].map((label) => (
+            {["Date", "Workout", "Sets", "Reps", "Best weight", "Volume"].map((label) => (
               <span key={label} className={styles.sessionHeaderCell}>
                 {label}
               </span>
@@ -49,19 +49,40 @@ export function SessionBreakdownTable({
               href={`/workouts/${session.workoutId}`}
               className={`${styles.sessionRow} ${styles.sessionLinkRow}`}
             >
-              <div>
-                <p className={styles.sessionTitle}>
+              <span className={styles.sessionMobileLabel} data-label="Date">
+                {session.performedAtLabel}
+              </span>
+              <div className={styles.sessionMobileWorkout}>
+                <p className={styles.sessionWorkoutTitleLine}>
+                  {session.workoutTitle.trim() || "Workout"}
+                  {session.workoutType?.trim() ? (
+                    <span className={styles.sessionMeta}> · {session.workoutType.trim()}</span>
+                  ) : null}
+                </p>
+                <p className={`${styles.sessionTitle} ${styles.sessionDesktopTitle}`}>
                   {session.workoutTitle.trim() || "Workout"}
                 </p>
                 {session.workoutType?.trim() ? (
-                  <p className={styles.sessionMeta}>{session.workoutType.trim()}</p>
+                  <p className={`${styles.sessionMeta} ${styles.sessionDesktopTitle}`}>
+                    {session.workoutType.trim()}
+                  </p>
                 ) : null}
               </div>
-              <span>{session.performedAtLabel}</span>
-              <span>{session.setCount}</span>
-              <span>{session.totalReps}</span>
-              <span>{session.bestWeightLabel}</span>
-              <span>{session.totalLoadLabel}</span>
+              <span className={`${styles.sessionMobileLabel} ${styles.sessionDesktopValue}`} data-label="Sets">
+                {session.setCount}
+              </span>
+              <span className={`${styles.sessionMobileLabel} ${styles.sessionDesktopValue}`} data-label="Reps">
+                {session.totalReps}
+              </span>
+              <span className={styles.sessionMobileStats}>
+                {session.setCount} sets · {session.totalReps} reps
+              </span>
+              <span className={`${styles.sessionMobileLabel} ${styles.sessionMobileHidden}`} data-label="Best weight">
+                {session.bestWeightLabel}
+              </span>
+              <span className={`${styles.sessionMobileLabel} ${styles.sessionDesktopValue}`} data-label="Volume">
+                {session.totalLoadLabel}
+              </span>
             </Link>
           ))}
         </div>

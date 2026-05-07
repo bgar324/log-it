@@ -10,6 +10,59 @@ function SkeletonBlock({
   return <span className={`${styles.skeletonBlock} ${className}`} aria-hidden="true" />;
 }
 
+function SetTableSkeleton() {
+  return (
+    <div className={styles.tableWrap}>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th className={styles.tableHeadCell}>
+              <SkeletonBlock className="h-[0.62rem] w-[2rem]" />
+            </th>
+            <th className={styles.tableHeadCell}>
+              <SkeletonBlock className="h-[0.62rem] w-[3.2rem]" />
+            </th>
+            <th className={styles.tableHeadCell}>
+              <SkeletonBlock className="h-[0.62rem] w-[2.4rem]" />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 4 }, (_, index) => (
+            <tr key={index}>
+              <td className={styles.tableBodyCell}>
+                <SkeletonBlock className="h-[0.78rem] w-[1.8rem]" />
+              </td>
+              <td className={styles.tableBodyCell}>
+                <SkeletonBlock className="h-[0.78rem] w-[4.2rem]" />
+              </td>
+              <td className={styles.tableBodyCell}>
+                <SkeletonBlock className="h-[0.78rem] w-[2.7rem]" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MobileSetSkeleton() {
+  return (
+    <div className={styles.mobileSetCard}>
+      <div className={styles.mobileSetCell}>
+        <SkeletonBlock className="h-[0.84rem] w-[2.4rem]" />
+      </div>
+      <div className={styles.mobileSetCell}>
+        <SkeletonBlock className="h-[0.84rem] w-[4.2rem]" />
+      </div>
+      <div className={styles.mobileSetCell}>
+        <SkeletonBlock className="h-[0.84rem] w-[3.5rem]" />
+      </div>
+    </div>
+  );
+}
+
 export default function WorkoutDetailLoading() {
   return (
     <main className={styles.shell}>
@@ -59,9 +112,10 @@ export default function WorkoutDetailLoading() {
                 <SkeletonBlock className="h-[0.77rem] w-[6.4rem]" />
               </header>
 
-              <div className={styles.skeletonSetList}>
+              <SetTableSkeleton />
+              <div className={styles.mobileSetList}>
                 {Array.from({ length: 4 }, (_, setIndex) => (
-                  <SkeletonBlock key={setIndex} className="h-[2.42rem] w-full" />
+                  <MobileSetSkeleton key={setIndex} />
                 ))}
               </div>
             </article>

@@ -3,7 +3,6 @@ import { WorkoutLogger } from "@/app/workouts/new/workout-logger";
 import type { WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger.utils";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import { formatWeightInputValueFromPounds, toWeightNumber } from "@/lib/weight-unit";
 import { getUserWorkoutSplit } from "@/lib/workout-splits/service";
 import { REST_DAY_WORKOUT_TYPE } from "@/lib/workout-splits/shared";
@@ -45,79 +44,35 @@ export default async function EditWorkoutPage({
   const user = await requireSessionUser();
 
   const [workout, split] = await Promise.all([
-    (async () => {
-      try {
-        return await prisma.workoutLog.findFirst({
-          where: {
-            id: workoutId,
-            userId: user.id,
+    prisma.workoutLog.findFirst({
+      where: {
+        id: workoutId,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        title: true,
+        workoutType: true,
+        performedAt: true,
+        exercises: {
+          orderBy: {
+            order: "asc",
           },
           select: {
-            id: true,
-            title: true,
-            workoutType: true,
-            performedAt: true,
-            exercises: {
+            name: true,
+            sets: {
               orderBy: {
                 order: "asc",
               },
               select: {
-                name: true,
-                sets: {
-                  orderBy: {
-                    order: "asc",
-                  },
-                  select: {
-                    reps: true,
-                    weightLb: true,
-                  },
-                },
+                reps: true,
+                weightLb: true,
               },
             },
           },
-        });
-      } catch (error) {
-        if (!isPrismaSchemaMismatchError(error)) {
-          throw error;
-        }
-
-        const legacyWorkout = await prisma.workoutLog.findFirst({
-          where: {
-            id: workoutId,
-            userId: user.id,
-          },
-          select: {
-            id: true,
-            title: true,
-            performedAt: true,
-            exercises: {
-              orderBy: {
-                order: "asc",
-              },
-              select: {
-                name: true,
-                sets: {
-                  orderBy: {
-                    order: "asc",
-                  },
-                  select: {
-                    reps: true,
-                    weightLb: true,
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        return legacyWorkout
-          ? {
-              ...legacyWorkout,
-              workoutType: null,
-            }
-          : null;
-      }
-    })(),
+        },
+      },
+    }),
     getUserWorkoutSplit(user.id),
   ]);
 

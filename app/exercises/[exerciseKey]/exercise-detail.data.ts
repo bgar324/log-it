@@ -11,6 +11,7 @@ import {
 } from "@/lib/weight-unit";
 import {
   daysBetweenDatabaseDates,
+  formatDatabaseCompactDateLabel,
   formatDatabaseDateLabel,
   getCurrentPacificDate,
   normalizeExerciseName,
@@ -302,7 +303,7 @@ export async function loadExerciseDetailPageData(rawExerciseKey: string) {
       workoutId: session.workoutId,
       workoutTitle: session.workoutTitle,
       workoutType: session.workoutType,
-      performedAtLabel: formatDate(session.performedAt),
+      performedAtLabel: formatDatabaseCompactDateLabel(session.performedAt),
       setCount: session.setCount,
       totalReps: session.totalReps,
       bestWeightLabel: formatWeightWithUnit(session.bestWeight, weightUnit, {

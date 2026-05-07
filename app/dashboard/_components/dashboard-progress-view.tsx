@@ -114,10 +114,26 @@ export function DashboardProgressView({
                       Last {exercise.lastPerformedAtLabel} · {daysAgoLabel(exercise.daysSinceLastHit)}
                     </p>
                   </div>
-                  <span>{exercise.sessionCount} sessions</span>
-                  <span>{exercise.setCount} sets</span>
-                  <span>{exercise.totalReps} reps</span>
-                  <span>{formatWeight(exercise.bestWeight)}</span>
+                  <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Sessions">
+                    {exercise.sessionCount} sessions
+                  </span>
+                  <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Sets">
+                    {exercise.setCount} sets
+                  </span>
+                  <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Reps">
+                    {exercise.totalReps} reps
+                  </span>
+                  <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Best weight">
+                    {formatWeight(exercise.bestWeight)}
+                  </span>
+                  <span className={styles.exerciseMobileStats}>
+                    <span className={styles.exerciseMobileStatPrimary}>
+                      {exercise.sessionCount} sessions · {exercise.setCount} sets
+                    </span>
+                    <span className={styles.exerciseMobileStatSecondary}>
+                      {exercise.totalReps} reps · {formatWeight(exercise.bestWeight)}
+                    </span>
+                  </span>
                 </Link>
               ))}
             </div>

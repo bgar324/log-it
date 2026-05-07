@@ -12,6 +12,42 @@ function SkeletonLine({
   return <span className={`${styles.skeletonBlock} ${className}`} aria-hidden="true" />;
 }
 
+function WorkoutRowSkeleton() {
+  return (
+    <div className={`${styles.metricRow} ${styles.workoutHistoryRow}`}>
+      <SkeletonLine className="h-[0.9rem] w-[4.8rem]" />
+      <div className="min-w-0">
+        <SkeletonLine className="hidden h-[0.88rem] w-[7rem] max-[760px]:block" />
+        <SkeletonLine className="h-[0.88rem] w-[6.2rem] max-[760px]:hidden" />
+        <SkeletonLine className="mt-[0.22rem] h-[0.72rem] w-[4.8rem] max-[760px]:hidden" />
+      </div>
+      <SkeletonLine className={`${styles.workoutDesktopStat} h-[0.82rem] w-[2.4rem]`} />
+      <SkeletonLine className={`${styles.workoutDesktopStat} h-[0.82rem] w-[3.1rem]`} />
+      <SkeletonLine className={`${styles.workoutMobileStats} h-[0.82rem] w-[5.9rem]`} />
+      <SkeletonLine className="h-[0.82rem] w-[4.4rem] max-[760px]:hidden" />
+    </div>
+  );
+}
+
+function ExerciseRowSkeleton() {
+  return (
+    <div className={`${styles.metricRow} ${styles.exerciseRow}`}>
+      <div className="min-w-0">
+        <SkeletonLine className="h-[0.88rem] w-[8.2rem]" />
+        <SkeletonLine className="mt-[0.22rem] h-[0.72rem] w-[9.6rem] max-[520px]:w-[7.2rem]" />
+      </div>
+      <SkeletonLine className={`${styles.exerciseDesktopStat} h-[0.82rem] w-[4.8rem]`} />
+      <SkeletonLine className={`${styles.exerciseDesktopStat} h-[0.82rem] w-[3.8rem]`} />
+      <SkeletonLine className={`${styles.exerciseDesktopStat} h-[0.82rem] w-[4rem]`} />
+      <SkeletonLine className={`${styles.exerciseDesktopStat} h-[0.82rem] w-[4.6rem]`} />
+      <span className={styles.exerciseMobileStats} aria-hidden="true">
+        <SkeletonLine className="h-[0.82rem] w-[8.2rem]" />
+        <SkeletonLine className="h-[0.72rem] w-[6.7rem]" />
+      </span>
+    </div>
+  );
+}
+
 export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
   if (kind === "dashboard") {
     return (
@@ -60,6 +96,17 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
             </article>
           ))}
         </section>
+        <section className={styles.chartGrid} aria-hidden="true">
+          {Array.from({ length: 2 }, (_, index) => (
+            <article key={index} className={styles.chartPanel}>
+              <SkeletonLine className="h-[1rem] w-[8rem]" />
+              <SkeletonLine className="h-[0.72rem] w-[10rem]" />
+              <div className={styles.chartFrame}>
+                <SkeletonLine className="h-full w-full" />
+              </div>
+            </article>
+          ))}
+        </section>
         <section className={styles.skeletonPanel} aria-hidden="true">
           <div className={styles.skeletonPanelHead}>
             <SkeletonLine className="h-[1rem] w-[7rem]" />
@@ -67,7 +114,7 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
           </div>
           <div className={styles.skeletonMetricList}>
             {Array.from({ length: 5 }, (_, index) => (
-              <SkeletonLine key={index} className="h-[3rem] w-full" />
+              <ExerciseRowSkeleton key={index} />
             ))}
           </div>
         </section>
@@ -115,20 +162,20 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
         Loading workouts
       </p>
       <section className={styles.plainSection} aria-hidden="true">
-        <section className={styles.skeletonPanel}>
-          <div className={styles.skeletonWorkoutFilterGrid}>
-            {Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className="flex flex-col gap-[0.28rem]">
-                <SkeletonLine className="h-[0.72rem] w-[3.4rem]" />
-                <SkeletonLine className="h-[2.5rem] w-full" />
-              </div>
-            ))}
-          </div>
-        </section>
         <div className={styles.skeletonTimeline}>
-          {Array.from({ length: 4 }, (_, index) => (
-            <SkeletonLine key={index} className="h-[3.15rem] w-full" />
-          ))}
+          <section className={styles.monthSection}>
+            <SkeletonLine className="h-[0.72rem] w-[5.4rem]" />
+            <div className={styles.metricList}>
+              <div className={`${styles.metricHeader} ${styles.workoutHistoryRow}`}>
+                {Array.from({ length: 5 }, (_, index) => (
+                  <SkeletonLine key={index} className="h-[0.62rem] w-[4rem]" />
+                ))}
+              </div>
+              {Array.from({ length: 5 }, (_, index) => (
+                <WorkoutRowSkeleton key={index} />
+              ))}
+            </div>
+          </section>
         </div>
       </section>
     </>

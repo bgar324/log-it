@@ -3,7 +3,6 @@ import { BackButton } from "@/app/components/back-button";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import { formatWorkoutForClipboard } from "@/lib/workout-export";
 import {
   convertStoredWeightToDisplay,
@@ -31,89 +30,40 @@ export default async function WorkoutDetailPage({
   const { workoutId } = await params;
   const user = await requireSessionUser();
 
-  const workout = await (async () => {
-    try {
-      return await prisma.workoutLog.findFirst({
-        where: {
-          id: workoutId,
-          userId: user.id,
+  const workout = await prisma.workoutLog.findFirst({
+    where: {
+      id: workoutId,
+      userId: user.id,
+    },
+    select: {
+      id: true,
+      title: true,
+      workoutType: true,
+      performedAt: true,
+      totalWeightLb: true,
+      exercises: {
+        orderBy: {
+          order: "asc",
         },
         select: {
           id: true,
-          title: true,
-          workoutType: true,
-          performedAt: true,
-          totalWeightLb: true,
-          exercises: {
+          order: true,
+          name: true,
+          sets: {
             orderBy: {
               order: "asc",
             },
             select: {
               id: true,
               order: true,
-              name: true,
-              sets: {
-                orderBy: {
-                  order: "asc",
-                },
-                select: {
-                  id: true,
-                  order: true,
-                  reps: true,
-                  weightLb: true,
-                },
-              },
+              reps: true,
+              weightLb: true,
             },
           },
         },
-      });
-    } catch (error) {
-      if (!isPrismaSchemaMismatchError(error)) {
-        throw error;
-      }
-
-      const legacyWorkout = await prisma.workoutLog.findFirst({
-        where: {
-          id: workoutId,
-          userId: user.id,
-        },
-        select: {
-          id: true,
-          title: true,
-          performedAt: true,
-          totalWeightLb: true,
-          exercises: {
-            orderBy: {
-              order: "asc",
-            },
-            select: {
-              id: true,
-              order: true,
-              name: true,
-              sets: {
-                orderBy: {
-                  order: "asc",
-                },
-                select: {
-                  id: true,
-                  order: true,
-                  reps: true,
-                  weightLb: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      return legacyWorkout
-        ? {
-            ...legacyWorkout,
-            workoutType: null,
-          }
-        : null;
-    }
-  })();
+      },
+    },
+  });
 
   if (!workout) {
     notFound();
@@ -257,7 +207,7 @@ export default async function WorkoutDetailPage({
                       </div>
                       <div className={styles.mobileSetCell}>
                         <span className={styles.mobileSetMeta}>Reps</span>
-                        <span className={styles.mobileSetValue}>{set.reps}</span>
+                        <span className={styles.mobileSetValue}>{set.reps} reps</span>
                       </div>
                     </div>
                   ))}
