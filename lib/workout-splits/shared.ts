@@ -37,6 +37,7 @@ export type WorkoutSplitDayTemplate = {
 export type WorkoutSplitTemplate = {
   id: string | null;
   name: string;
+  isActive: boolean;
   days: WorkoutSplitDayTemplate[];
 };
 

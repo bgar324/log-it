@@ -15,6 +15,7 @@ import { normalizeWorkoutTypeSlug } from "../workout-utils";
 export type StoredWorkoutSplit = {
   id: string;
   name: string;
+  isActive: boolean;
   days: Array<{
     id: string;
     weekday: SplitWeekdayValue;
@@ -30,7 +31,7 @@ export type StoredWorkoutSplit = {
 };
 
 export type WorkoutSplitSeedForDate = {
-  split: Pick<WorkoutSplitTemplate, "id" | "name">;
+  split: Pick<WorkoutSplitTemplate, "id" | "name" | "isActive">;
   day: WorkoutSplitDayTemplate;
 };
 
@@ -87,6 +88,7 @@ export function serializeWorkoutSplit(split: StoredWorkoutSplit | null): Workout
   return {
     id: split?.id ?? null,
     name: split?.name ?? DEFAULT_WORKOUT_SPLIT_NAME,
+    isActive: split?.isActive ?? false,
     days,
   };
 }

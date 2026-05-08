@@ -10,7 +10,7 @@ export function Toaster() {
       toastOptions={{
         classNames: {
           toast:
-            "!rounded-[0.58rem] !border !border-[color:color-mix(in_srgb,var(--text)_14%,transparent)] !bg-[var(--bg)] !text-[var(--text)] !shadow-[0_14px_40px_color-mix(in_srgb,#000_14%,transparent)]",
+            "!rounded-[0.58rem] !border !border-[color:color-mix(in_srgb,var(--text)_14%,transparent)] !bg-[var(--bg)] !text-[var(--text)] !shadow-[0_14px_40px_color-mix(in_srgb,#000_14%,transparent)] [--toast-button-margin-start:0] [&_[data-content]]:flex-1",
           description: "!text-[var(--muted)]",
           actionButton:
             "!rounded-[0.44rem] !bg-[var(--button-bg)] !text-[var(--button-text)]",

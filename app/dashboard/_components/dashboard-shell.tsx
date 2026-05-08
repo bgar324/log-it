@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Moon, Plus, User2, X } from "lucide-react";
+import { Check, Menu, Moon, PanelLeftClose, PanelLeftOpen, Plus, User2, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
@@ -15,8 +15,11 @@ type DashboardShellProps = {
   title: string;
   profileLabel: string;
   canLogWorkout: boolean;
+  hasLoggedToday: boolean;
   mobileMenuOpen: boolean;
+  sidebarCollapsed: boolean;
   onToggleMobileMenu: () => void;
+  onToggleSidebar: () => void;
   onCloseMobileMenu: () => void;
   onNavigate: (view: DashboardView) => void;
   renderHeaderAccessory?: () => ReactNode;
@@ -28,8 +31,11 @@ export function DashboardShell({
   title,
   profileLabel,
   canLogWorkout,
+  hasLoggedToday,
   mobileMenuOpen,
+  sidebarCollapsed,
   onToggleMobileMenu,
+  onToggleSidebar,
   onCloseMobileMenu,
   onNavigate,
   renderHeaderAccessory,
@@ -55,16 +61,74 @@ export function DashboardShell({
   }, [mobileMenuOpen, onCloseMobileMenu]);
 
   return (
-    <main className={styles.shell} aria-label="Training dashboard shell">
-      <aside className={styles.sidebar} aria-label="Dashboard sidebar">
-        <Link href="/dashboard" className={styles.brand}>
-          <AppBrand
-            compact
-            textClassName="text-[2.2rem] leading-[0.92] font-[520]"
-          />
-        </Link>
+    <main
+      className={`${styles.shell} ${sidebarCollapsed ? styles.shellSidebarCollapsed : ""}`}
+      aria-label="Training dashboard shell"
+      data-sidebar-collapsed={sidebarCollapsed}
+    >
+      <aside
+        className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}
+        aria-label="Dashboard sidebar"
+      >
+        <div
+          className={`${styles.sidebarTop} ${
+            sidebarCollapsed ? styles.sidebarTopCollapsed : ""
+          }`}
+        >
+          {sidebarCollapsed ? (
+            <button
+              type="button"
+              className={styles.sidebarCollapsedLogoToggle}
+              onClick={onToggleSidebar}
+              aria-label="Open sidebar"
+              title="Open sidebar"
+              aria-expanded={false}
+            >
+              <span className={styles.sidebarCollapsedLogo} aria-hidden="true">
+                <AppBrand
+                  compact
+                  iconClassName="h-[1.35rem] w-[1.35rem]"
+                  textClassName="sr-only"
+                />
+              </span>
+              <span className={styles.sidebarCollapsedToggleIconWrap} aria-hidden="true">
+                <PanelLeftOpen
+                  className={styles.sidebarToggleIcon}
+                  aria-hidden="true"
+                  strokeWidth={1.9}
+                />
+              </span>
+            </button>
+          ) : (
+            <>
+              <Link href="/dashboard" className={styles.brand}>
+                <AppBrand
+                  compact
+                  textClassName="text-[2.2rem] leading-[0.92] font-[520]"
+                />
+              </Link>
+              <button
+                type="button"
+                className={styles.sidebarToggle}
+                onClick={onToggleSidebar}
+                aria-label="Close sidebar"
+                title="Close sidebar"
+                aria-expanded={true}
+              >
+                <PanelLeftClose
+                  className={styles.sidebarToggleIcon}
+                  aria-hidden="true"
+                  strokeWidth={1.9}
+                />
+              </button>
+            </>
+          )}
+        </div>
 
-        <nav className={styles.sideNav} aria-label="Main navigation">
+        <nav
+          className={`${styles.sideNav} ${sidebarCollapsed ? styles.sideNavCollapsed : ""}`}
+          aria-label="Main navigation"
+        >
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.view;
@@ -73,38 +137,80 @@ export function DashboardShell({
               <button
                 key={item.view}
                 type="button"
-                className={styles.navButton}
+                className={`${styles.navButton} ${
+                  sidebarCollapsed ? styles.navButtonCollapsed : ""
+                }`}
                 data-active={isActive}
                 onClick={() => onNavigate(item.view)}
+                title={sidebarCollapsed ? item.label : undefined}
+                aria-label={sidebarCollapsed ? item.label : undefined}
               >
                 <Icon className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
-                <span>{item.label}</span>
+                <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
+                  {item.label}
+                </span>
               </button>
             );
           })}
         </nav>
 
-        <div className={styles.sidebarUtilityStack}>
-          {canLogWorkout ? (
-            <Link href="/workouts/new" className={styles.sidebarAction}>
+        <div
+          className={`${styles.sidebarUtilityStack} ${
+            sidebarCollapsed ? styles.sidebarUtilityStackCollapsed : ""
+          }`}
+        >
+          {hasLoggedToday ? (
+            <div
+              className={`${styles.sidebarAction} ${styles.sidebarActionLogged} ${
+                sidebarCollapsed ? styles.sidebarActionCollapsed : ""
+              }`}
+              title={sidebarCollapsed ? "Logged!" : undefined}
+              aria-label={sidebarCollapsed ? "Logged!" : undefined}
+            >
+              <Check className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
+              <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
+                Logged!
+              </span>
+            </div>
+          ) : canLogWorkout ? (
+            <Link
+              href="/workouts/new"
+              className={`${styles.sidebarAction} ${
+                sidebarCollapsed ? styles.sidebarActionCollapsed : ""
+              }`}
+              title={sidebarCollapsed ? "Log workout" : undefined}
+              aria-label={sidebarCollapsed ? "Log workout" : undefined}
+            >
               <Plus className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
-              Log workout
+              <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Log workout</span>
             </Link>
           ) : (
-            <div className={`${styles.sidebarAction} ${styles.sidebarActionDisabled}`}>
+            <div
+              className={`${styles.sidebarAction} ${styles.sidebarActionDisabled} ${
+                sidebarCollapsed ? styles.sidebarActionCollapsed : ""
+              }`}
+              title={sidebarCollapsed ? "Rest" : undefined}
+              aria-label={sidebarCollapsed ? "Rest" : undefined}
+            >
               <Moon className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
-              Rest
+              <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Rest</span>
             </div>
           )}
           <div className={styles.sidebarDivider} aria-hidden="true" />
           <button
             type="button"
-            className={styles.sidebarSecondaryAction}
+            className={`${styles.sidebarSecondaryAction} ${
+              sidebarCollapsed ? styles.sidebarActionCollapsed : ""
+            }`}
             data-active={activeView === "profile"}
             onClick={() => onNavigate("profile")}
+            title={sidebarCollapsed ? profileLabel : undefined}
+            aria-label={sidebarCollapsed ? profileLabel : undefined}
           >
             <User2 className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
-            <span>{profileLabel}</span>
+            <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
+              {profileLabel}
+            </span>
           </button>
         </div>
       </aside>

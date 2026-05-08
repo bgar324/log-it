@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { requireSessionUser } from "@/lib/auth";
 import { getSplitDataTag, getWorkoutDataTag } from "@/lib/cache-tags";
-import { getUserWorkoutSplit } from "@/lib/workout-splits/service";
+import { getUserWorkoutSplit, getUserWorkoutSplits } from "@/lib/workout-splits/service";
 import { getCurrentPacificDate, startOfDatabaseWeek } from "@/lib/workout-utils";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
 import { dateKey } from "./data.formatters";
@@ -65,6 +65,7 @@ function loadCachedSplitSection(userId: string) {
   return unstable_cache(
     async () => ({
       split: await getUserWorkoutSplit(userId),
+      splits: await getUserWorkoutSplits(userId),
     }),
     ["split-view", userId],
     {
@@ -100,6 +101,7 @@ export async function loadSplitPageData(userId: string) {
 
   return {
     split: result.split ?? createDefaultSplit(),
+    splits: result.splits ?? [],
   };
 }
 

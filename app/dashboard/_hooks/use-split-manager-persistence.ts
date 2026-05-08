@@ -13,12 +13,14 @@ import {
 type UseSplitManagerPersistenceOptions = {
   split: WorkoutSplitTemplate;
   setSplit: Dispatch<SetStateAction<WorkoutSplitTemplate>>;
+  setSplits: Dispatch<SetStateAction<WorkoutSplitTemplate[]>>;
   clearAllExerciseSuggestions: () => void;
 };
 
 export function useSplitManagerPersistence({
   split,
   setSplit,
+  setSplits,
   clearAllExerciseSuggestions,
 }: UseSplitManagerPersistenceOptions) {
   const router = useRouter();
@@ -33,6 +35,9 @@ export function useSplitManagerPersistence({
     try {
       const savedSplit = await saveWorkoutSplit(split);
       setSplit(savedSplit);
+      setSplits((current) =>
+        current.map((item) => (item.id === split.id ? savedSplit : item)),
+      );
       clearAllExerciseSuggestions();
       toast.success("Workout split saved.", {
         id: toastId,

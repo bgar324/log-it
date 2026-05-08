@@ -5,6 +5,7 @@ import {
   addDaysToDatabaseDate,
   addMonthsToDatabaseDate,
   createDatabaseDate,
+  normalizeWorkoutTypeSlug,
   startOfDatabaseMonth,
   startOfDatabaseWeek,
 } from "@/lib/workout-utils";
@@ -200,6 +201,16 @@ export async function loadDashboardOverviewSection(
       weight: convertStoredWeightToDisplay(item.bestWeightLb, weightUnit) ?? 0,
       dateLabel: item.lastPerformedAt ? monthDateLabel(item.lastPerformedAt) : "--",
     }));
+  const todayKey = dateKey(now);
+  const todayPlanSlug = todayPlan.workoutTypeSlug;
+  const isLoggedToday =
+    !todayPlan.isRestDay &&
+    todayPlanSlug !== null &&
+    workoutCalendarWorkouts.some(
+      (workout) =>
+        workout.dateKey === todayKey &&
+        normalizeWorkoutTypeSlug(workout.workoutType ?? "") === todayPlanSlug,
+    );
 
   return {
     overview: {
@@ -207,7 +218,10 @@ export async function loadDashboardOverviewSection(
       workoutsThisWeek,
       totalExercises: exerciseSummaries.length,
       totalSets: exerciseSummaries.reduce((sum, item) => sum + item.setCount, 0),
-      todayPlan,
+      todayPlan: {
+        ...todayPlan,
+        isLoggedToday,
+      },
       monthChange,
       weeklyBars,
       personalBests,

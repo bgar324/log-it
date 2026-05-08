@@ -112,6 +112,54 @@ body {
   }
 }
 
+@keyframes dashboard-modal-backdrop {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+@keyframes dashboard-modal-backdrop-exit {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes dashboard-modal-panel {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.38rem, 0) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes dashboard-modal-panel-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, 0.28rem, 0) scale(0.99);
+  }
+}
+
 @keyframes dashboard-skeleton {
   0% {
     background-position: 120% 0;

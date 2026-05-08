@@ -470,7 +470,11 @@ export async function loadPublicProfile(username: string) {
       preferredWeightUnit: true,
       publicProfileEnabled: true,
       profileImageUpdatedAt: true,
-      workoutSplit: {
+      workoutSplits: {
+        where: {
+          isActive: true,
+        },
+        take: 1,
         select: {
           name: true,
           days: {
@@ -497,6 +501,8 @@ export async function loadPublicProfile(username: string) {
     return null;
   }
 
+  const activeSplit = user.workoutSplits[0] ?? null;
+
   const workouts = await prisma.workoutLog.findMany({
     where: { userId: user.id },
     orderBy: {
@@ -521,13 +527,13 @@ export async function loadPublicProfile(username: string) {
     },
   });
   const activeDayCount =
-    user.workoutSplit?.days.filter(
+    activeSplit?.days.filter(
       (day) =>
         normalizeWorkoutTypeSlug(day.workoutType) !==
         normalizeWorkoutTypeSlug(REST_DAY_WORKOUT_TYPE),
     ).length ?? 0;
   const splitDays =
-    user.workoutSplit?.days.map((day) => {
+    activeSplit?.days.map((day) => {
       const isRestDay =
         normalizeWorkoutTypeSlug(day.workoutType) ===
         normalizeWorkoutTypeSlug(REST_DAY_WORKOUT_TYPE);
@@ -547,9 +553,9 @@ export async function loadPublicProfile(username: string) {
 
   return buildPublicProfileData({
     user,
-    split: user.workoutSplit
+    split: activeSplit
       ? {
-          name: user.workoutSplit.name,
+          name: activeSplit.name,
           activeDayCount,
           days: sortSplitDays(splitDays),
         }

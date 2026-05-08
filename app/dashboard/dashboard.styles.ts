@@ -27,23 +27,49 @@ const buttonFocusRing =
 
 export const styles = {
   shell:
-    `dashboard-theme-scope flex min-h-dvh bg-[var(--bg)] ${dashboardBorder} min-[900px]:grid min-[900px]:h-dvh min-[900px]:grid-cols-[12.4rem_minmax(0,1fr)] min-[900px]:overflow-hidden`,
+    `dashboard-theme-scope flex min-h-dvh bg-[var(--bg)] ${dashboardBorder} min-[900px]:grid min-[900px]:h-dvh min-[900px]:grid-cols-[12.4rem_minmax(0,1fr)] min-[900px]:overflow-hidden min-[900px]:transition-[grid-template-columns] min-[900px]:duration-300 min-[900px]:ease-[cubic-bezier(0.2,0.7,0.2,1)]`,
+  shellSidebarCollapsed:
+    "min-[900px]:!grid-cols-[4.25rem_minmax(0,1fr)]",
   sidebar:
-    "hidden min-[900px]:sticky min-[900px]:top-0 min-[900px]:flex min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:self-start min-[900px]:flex-col min-[900px]:gap-[1rem] min-[900px]:border-r min-[900px]:border-[var(--dashboard-border)] min-[900px]:bg-transparent min-[900px]:px-[0.68rem] min-[900px]:py-[1.08rem]",
+    "hidden min-[900px]:sticky min-[900px]:top-0 min-[900px]:flex min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:self-start min-[900px]:flex-col min-[900px]:gap-[1rem] min-[900px]:overflow-hidden min-[900px]:border-r min-[900px]:border-[var(--dashboard-border)] min-[900px]:bg-transparent min-[900px]:px-[0.68rem] min-[900px]:py-[1.08rem] min-[900px]:transition-[padding,background-color,border-color] min-[900px]:duration-300 min-[900px]:ease-[cubic-bezier(0.2,0.7,0.2,1)]",
+  sidebarCollapsed:
+    "min-[900px]:items-center min-[900px]:px-[0.48rem]",
+  sidebarTop:
+    "flex items-center justify-between gap-[0.5rem] transition-[justify-content] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)]",
+  sidebarTopCollapsed:
+    "justify-center",
+  sidebarToggle:
+    `inline-flex h-[2.1rem] w-[2.1rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.5rem] border-0 bg-transparent text-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] transition-[transform,background-color,color,box-shadow,opacity] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
+  sidebarCollapsedLogoToggle:
+    `group relative inline-flex h-[2.36rem] w-[2.36rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.5rem] border-0 bg-transparent text-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] transition-[transform,background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
+  sidebarCollapsedLogo:
+    "absolute inset-0 flex items-center justify-center opacity-100 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-90 group-hover:opacity-0 group-focus-visible:scale-90 group-focus-visible:opacity-0",
+  sidebarCollapsedToggleIconWrap:
+    "absolute inset-0 flex scale-110 items-center justify-center opacity-0 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100",
+  sidebarToggleIcon: "h-[1rem] w-[1rem]",
   brand: "text-[2.2rem] leading-[0.92] tracking-[-0.03em] font-[520]",
   sideNav: "flex flex-col gap-[0.28rem]",
+  sideNavCollapsed: "items-center",
   navButton:
-    `inline-flex min-h-[2.36rem] cursor-pointer items-center gap-[0.55rem] rounded-[0.5rem] border border-transparent bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--muted)] hover:border-[var(--dashboard-border)] hover:text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)] ${buttonMotion} ${buttonFocusRing}`,
+    `inline-flex min-h-[2.36rem] cursor-pointer items-center gap-[0.55rem] overflow-hidden rounded-[0.5rem] border border-transparent bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--muted)] hover:border-[var(--dashboard-border)] hover:text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)] transition-[width,min-width,transform,border-color,background-color,color,box-shadow,padding,gap] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
+  navButtonCollapsed:
+    "h-[2.36rem] w-[2.36rem] justify-center gap-0 px-0",
   navIcon: "h-[0.85rem] w-[0.85rem]",
+  navLabelCollapsed: "sr-only",
   sidebarUtilityStack: "mt-auto flex flex-col gap-[0.52rem]",
+  sidebarUtilityStackCollapsed: "items-center",
   sidebarAction:
-    `inline-flex min-h-[2.42rem] cursor-pointer items-center gap-[0.55rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
+    `inline-flex min-h-[2.42rem] cursor-pointer items-center gap-[0.55rem] overflow-hidden rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] transition-[width,min-width,transform,border-color,background-color,color,box-shadow,padding,gap] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
+  sidebarActionCollapsed:
+    "h-[2.42rem] w-[2.42rem] justify-center gap-0 px-0",
   sidebarActionDisabled:
     "cursor-default border-[var(--calendar-active-border)] bg-[var(--calendar-active-bg)] text-[var(--muted)] hover:border-[var(--calendar-active-border)] active:translate-y-0",
+  sidebarActionLogged:
+    "cursor-default !border-[color-mix(in_srgb,#21834d_42%,transparent)] !bg-[color-mix(in_srgb,#21834d_10%,var(--bg))] !text-[color-mix(in_srgb,#21834d_82%,var(--text))] hover:!border-[color-mix(in_srgb,#21834d_42%,transparent)] active:translate-y-0",
   sidebarActionIcon: "h-[0.9rem] w-[0.9rem]",
   sidebarDivider: "h-px w-full bg-[var(--dashboard-border)]",
   sidebarSecondaryAction:
-    `inline-flex min-h-[2.36rem] cursor-pointer items-center gap-[0.55rem] rounded-[0.5rem] border border-transparent bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--muted)] hover:border-[var(--dashboard-border)] hover:text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)] ${buttonMotion} ${buttonFocusRing}`,
+    `inline-flex min-h-[2.36rem] cursor-pointer items-center gap-[0.55rem] overflow-hidden rounded-[0.5rem] border border-transparent bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--muted)] hover:border-[var(--dashboard-border)] hover:text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)] transition-[width,min-width,transform,border-color,background-color,color,box-shadow,padding,gap] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
   main:
     "mx-auto flex w-full max-w-[92rem] flex-1 flex-col gap-[0.86rem] bg-[var(--bg)] px-[0.96rem] pt-[1rem] pb-[1.2rem] max-[760px]:px-[0.82rem] min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:overflow-y-auto min-[900px]:overscroll-contain min-[900px]:px-[1.18rem] min-[900px]:pt-[1.06rem] min-[900px]:pb-[1.3rem] [scrollbar-gutter:stable]",
   header:
@@ -77,6 +103,8 @@ export const styles = {
     `dashboard-kpi-action-card cursor-pointer items-start justify-center gap-[0.42rem] border-dashed text-[var(--text)] no-underline hover:border-[var(--dashboard-border-strong)] max-[760px]:gap-[0.28rem] ${buttonMotion} ${buttonFocusRing}`,
   kpiActionCardDisabled:
     "cursor-default border-[var(--calendar-active-border)] bg-[var(--calendar-active-bg)] text-[var(--muted)] hover:border-[var(--calendar-active-border)]",
+  kpiActionCardLogged:
+    "cursor-default !border-[color-mix(in_srgb,#21834d_42%,transparent)] !bg-[color-mix(in_srgb,#21834d_10%,var(--bg))] !text-[color-mix(in_srgb,#21834d_82%,var(--text))] hover:!border-[color-mix(in_srgb,#21834d_42%,transparent)] active:translate-y-0",
   kpiActionIcon: "h-[1.02rem] w-[1.02rem] max-[760px]:h-[0.92rem] max-[760px]:w-[0.92rem] -mt-3",
   kpiActionText:
     "text-[1rem] leading-[1.1] max-[760px]:text-[clamp(1.4rem,4.6vw,2rem)] max-[760px]:leading-none max-[760px]:tracking-[-0.03em] max-[760px]:font-[520]",
@@ -89,7 +117,7 @@ export const styles = {
   panel: `${dashboardSurface} p-[0.82rem]`,
   dashboardInsightGrid:
     "grid grid-cols-1 gap-[0.56rem] min-[900px]:grid-cols-2",
-  plainSection: "p-0",
+  plainSection: "min-h-0 p-0",
   panelHead:
     "flex items-center justify-between gap-[0.5rem] max-[760px]:flex-wrap max-[760px]:items-stretch",
   panelTitle: "m-0 text-[1rem] tracking-[-0.03em] font-[560]",
@@ -183,9 +211,9 @@ export const styles = {
   chartPanel: `${dashboardSurface} p-[0.82rem]`,
   chartFrame: "mt-[0.52rem] h-[15rem] w-full",
   profilePanel:
-    "mx-auto w-full max-w-[78rem]",
+    "w-full",
   profileBody:
-    "grid grid-cols-[15.5rem_minmax(0,1fr)] gap-[1.08rem] max-[900px]:grid-cols-1",
+    "grid w-full grid-cols-[18rem_minmax(0,1fr)] gap-[1.08rem] max-[900px]:grid-cols-1",
   profileIdentityPanel:
     `${dashboardSurface} flex min-w-0 flex-col gap-[0.72rem] p-[1rem] max-[900px]:grid max-[900px]:grid-cols-[auto_minmax(0,1fr)] max-[900px]:items-center max-[900px]:gap-x-[0.86rem] max-[760px]:p-[0.82rem]`,
   profileEditorPanel:
@@ -232,9 +260,9 @@ export const styles = {
   secondaryButton:
     `inline-flex min-h-[2.34rem] cursor-pointer items-center justify-center gap-[0.38rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[760px]:min-h-[2.52rem] ${buttonMotion} ${buttonFocusRing}`,
   avatarModalOverlay:
-    "fixed inset-0 z-[80] flex items-end justify-center bg-[color-mix(in_srgb,#000_36%,transparent)] px-[0.78rem] pt-[0.78rem] pb-[calc(0.78rem+env(safe-area-inset-bottom))] min-[720px]:items-center min-[720px]:p-[1rem]",
+    `dashboard-theme-scope fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-[color-mix(in_srgb,var(--bg)_12%,transparent)] px-[0.78rem] py-[calc(0.78rem+env(safe-area-inset-bottom))] backdrop-blur-[8px] animate-[dashboard-modal-backdrop_180ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-backdrop-exit_160ms_cubic-bezier(0.4,0,1,1)_both] min-[720px]:p-[1rem] ${dashboardBorder}`,
   avatarModal:
-    "flex w-full max-w-[46rem] flex-col gap-[1rem] rounded-[0.72rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[1.1rem] shadow-[0_18px_44px_color-mix(in_srgb,#000_24%,transparent)] max-[520px]:p-[0.82rem]",
+    "my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-[46rem] flex-col gap-[1rem] overflow-y-auto rounded-[0.72rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[1.1rem] shadow-[0_18px_44px_color-mix(in_srgb,var(--text)_12%,transparent)] animate-[dashboard-modal-panel_220ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-panel-exit_160ms_cubic-bezier(0.4,0,1,1)_both] max-[520px]:p-[0.82rem]",
   avatarModalHead:
     "flex items-center justify-between gap-[0.75rem]",
   avatarModalTitle:

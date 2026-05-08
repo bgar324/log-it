@@ -81,6 +81,7 @@ test("formatWorkoutSplitForClipboard produces weekday-by-weekday plain text", ()
   const formatted = formatWorkoutSplitForClipboard({
     id: "split-1",
     name: "Powerbuilding",
+    isActive: true,
     days: [
       {
         id: "wed",

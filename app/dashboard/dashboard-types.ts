@@ -26,8 +26,10 @@ export type DashboardClientData = {
     totalSets: number;
     todayPlan: {
       workoutType: string;
+      workoutTypeSlug: string | null;
       subtitle: string;
       isRestDay: boolean;
+      isLoggedToday: boolean;
     };
     monthChange: number;
     weeklyBars: Array<{
@@ -108,4 +110,5 @@ export type DashboardClientData = {
     }>;
   };
   split: WorkoutSplitTemplate;
+  splits: WorkoutSplitTemplate[];
 };

@@ -18,6 +18,7 @@ export function createDefaultSplit(): WorkoutSplitTemplate {
   return {
     id: null,
     name: "Weekly Split",
+    isActive: false,
     days: SPLIT_WEEKDAYS.map((weekday) => ({
       id: null,
       weekday,
@@ -83,6 +84,7 @@ export function createEmptyDashboardData(
       weeklySeries: [],
     },
     split: createDefaultSplit(),
+    splits: [],
   };
 }
 

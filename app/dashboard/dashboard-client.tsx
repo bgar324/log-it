@@ -71,6 +71,7 @@ function getDashboardViewData(view: DashboardView, data: DashboardClientData): D
   if (view === "split") {
     return {
       split: data.split,
+      splits: data.splits,
     };
   }
 
@@ -122,6 +123,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const loadedViewsRef = useRef<Set<DashboardView>>(getCachedDashboardViews());
   const inFlightViewsRef = useRef<Set<DashboardView>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [workoutFilters, setWorkoutFilters] = useState(emptyWorkoutFilters);
   const recentSessions = dashboardData.workouts.slice(0, 5);
   const profileFormState = useDashboardProfileForm(dashboardData.user, () => {
@@ -294,8 +296,11 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       title={VIEW_TITLES[activeView]}
       profileLabel={profileLabel}
       canLogWorkout={!todayPlan.isRestDay}
+      hasLoggedToday={todayPlan.isLoggedToday}
       mobileMenuOpen={mobileMenuOpen}
+      sidebarCollapsed={sidebarCollapsed}
       onToggleMobileMenu={() => setMobileMenuOpen((open) => !open)}
+      onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
       onCloseMobileMenu={() => setMobileMenuOpen(false)}
       onNavigate={navigateToView}
       renderHeaderAccessory={() =>
@@ -366,8 +371,11 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       ) : null}
 
       {activeView === "split" ? (
-        <div key="split" className="view-transition-shell">
-          <section className={styles.plainSection}>
+        <div
+          key="split"
+          className="view-transition-shell min-[900px]:h-[calc(100dvh-5.35rem)] min-[900px]:min-h-0 min-[900px]:overflow-hidden"
+        >
+          <section className={`${styles.plainSection} min-[900px]:h-full`}>
             {activeViewError ? (
               <div className={styles.panel} role="alert">
                 <p className={styles.empty}>{activeViewError}</p>
@@ -382,7 +390,10 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
             ) : activeViewIsLoading && !loadedViews.has("split") ? (
               <DashboardViewSkeleton kind="split" />
             ) : (
-              <SplitManager initialSplit={dashboardData.split} />
+              <SplitManager
+                initialSplit={dashboardData.split}
+                initialSplits={dashboardData.splits}
+              />
             )}
           </section>
         </div>

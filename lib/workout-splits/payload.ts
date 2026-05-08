@@ -187,6 +187,7 @@ export function normalizeWorkoutSplitPayload(
     value: {
       id: null,
       name: splitName,
+      isActive: false,
       days,
     } satisfies ParsedWorkoutSplit,
   };

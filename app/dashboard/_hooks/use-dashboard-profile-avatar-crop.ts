@@ -21,12 +21,14 @@ type CropSize = {
 
 type UseDashboardProfileAvatarCropArgs = {
   displayedAvatarUrl: string | null;
+  onAvatarModalClose?: () => void;
   onAvatarDelete: () => void;
   onAvatarFileChange: (file: File | null) => void;
 };
 
 export function useDashboardProfileAvatarCrop({
   displayedAvatarUrl,
+  onAvatarModalClose,
   onAvatarDelete,
   onAvatarFileChange,
 }: UseDashboardProfileAvatarCropArgs) {
@@ -94,6 +96,11 @@ export function useDashboardProfileAvatarCrop({
     setCropZoom(1);
     setCropOffset({ x: 0, y: 0 });
     setCropImageSize({ height: 0, width: 0 });
+  }
+
+  function closeAvatarModal() {
+    onAvatarModalClose?.();
+    setIsAvatarModalOpen(false);
   }
 
   function getCropMetrics(
@@ -213,7 +220,7 @@ export function useDashboardProfileAvatarCrop({
       const blob = await createCroppedAvatarBlob();
       const file = new File([blob], "profile-photo.jpg", { type: "image/jpeg" });
       onAvatarFileChange(file);
-      setIsAvatarModalOpen(false);
+      closeAvatarModal();
       resetCrop();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to crop this profile photo.");
@@ -305,7 +312,7 @@ export function useDashboardProfileAvatarCrop({
     }
     setAvatarEditorSourceUrl(null);
     onAvatarDelete();
-    setIsAvatarModalOpen(false);
+    closeAvatarModal();
     resetCrop();
   }
 

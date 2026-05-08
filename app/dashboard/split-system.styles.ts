@@ -6,18 +6,44 @@ const buttonFocusRing =
   "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2";
 
 export const splitStyles = {
+  splitLibraryLayout:
+    "grid min-h-0 grid-cols-[15.5rem_minmax(0,1fr)] gap-[0.9rem] min-[900px]:h-full max-[1100px]:grid-cols-1",
+  splitSidebar:
+    `${splitPanel} flex min-h-0 min-w-0 flex-col gap-[0.72rem] p-[0.82rem] max-[1100px]:order-2`,
+  splitSidebarHeader:
+    "flex items-center justify-between gap-[0.7rem]",
+  splitSidebarTitle:
+    "m-0 text-[1rem] leading-[1.1] tracking-[-0.03em] font-[560]",
+  splitSidebarMeta:
+    "m-[0.18rem_0_0] text-[0.72rem] text-[var(--muted)]",
+  splitSidebarList:
+    "flex min-h-0 flex-1 flex-col gap-[0.38rem] overflow-y-auto pr-[0.08rem] [scrollbar-width:thin] max-[1100px]:grid max-[1100px]:max-h-[12rem] max-[1100px]:grid-cols-[repeat(auto-fit,minmax(12rem,1fr))]",
+  splitSidebarItem:
+    `flex min-h-[4.1rem] cursor-pointer flex-col justify-center gap-[0.26rem] rounded-[0.48rem] border border-[var(--split-border)] bg-transparent px-[0.68rem] py-[0.58rem] text-left text-[var(--text)] hover:border-[var(--split-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
+  splitSidebarItemActive:
+    "border-[var(--split-border-strong)] bg-[color-mix(in_srgb,var(--text)_7%,transparent)]",
+  splitSidebarItemTitle:
+    "min-w-0 truncate text-[0.88rem] leading-[1.15] font-[560]",
+  splitSidebarItemTitleRow:
+    "flex min-w-0 items-baseline gap-[0.26rem]",
+  splitSidebarActiveMeta:
+    "shrink-0 text-[0.72rem] font-[400] text-[var(--muted)]",
+  splitSidebarItemMeta:
+    "min-w-0 truncate text-[0.72rem] text-[var(--muted)]",
+  splitSidebarCreateButton:
+    `inline-flex min-h-[2.75rem] w-full shrink-0 cursor-pointer items-center justify-center rounded-[0.52rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
   splitLayout:
-    "grid grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] gap-[0.9rem] max-[980px]:grid-cols-1",
+    "grid min-h-0 grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] gap-[0.9rem] min-[900px]:h-full max-[980px]:grid-cols-1",
   splitSummary:
-    `${splitPanel} flex flex-col gap-[0.9rem] p-[1rem]`,
+    `${splitPanel} flex min-h-0 flex-col gap-[0.9rem] overflow-hidden p-[1rem]`,
   splitEditor:
-    `${splitPanel} flex flex-col gap-[0.9rem] p-[1rem]`,
+    `${splitPanel} flex min-h-0 flex-col gap-[0.9rem] overflow-hidden p-[1rem]`,
   splitSummaryHead:
     "flex items-center justify-between gap-[0.75rem] max-[700px]:flex-col max-[700px]:items-stretch",
   splitSummaryActions:
-    "inline-flex flex-wrap items-center justify-end gap-[0.55rem] max-[700px]:grid max-[700px]:grid-cols-2",
+    "inline-flex flex-wrap items-center justify-end gap-[0.45rem] max-[700px]:justify-start",
   splitGrid:
-    "grid grid-cols-2 gap-[0.65rem]",
+    "grid min-h-0 flex-1 grid-cols-2 content-start gap-[0.65rem] overflow-y-auto pr-[0.08rem] [scrollbar-width:thin]",
   splitDayCard:
     `flex min-h-[7.6rem] cursor-pointer flex-col gap-[0.45rem] rounded-[0.54rem] border border-[var(--split-border)] bg-transparent p-[0.85rem] text-left text-[var(--text)] ${buttonMotion} ${buttonFocusRing}`,
   splitDayCardActive:
@@ -44,7 +70,8 @@ export const splitStyles = {
   editorSectionHead:
     "flex items-center justify-between gap-[0.75rem] max-[700px]:flex-col max-[700px]:items-stretch",
   editorSectionTitle: "m-0 text-[1rem] tracking-[-0.03em] font-[560]",
-  editorExerciseList: "flex flex-col gap-[0.55rem]",
+  editorExerciseList:
+    "flex min-h-0 flex-1 flex-col gap-[0.55rem] overflow-y-auto pr-[0.08rem] [scrollbar-width:thin]",
   exerciseRow:
     `flex min-w-0 items-end gap-[0.68rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent p-[0.76rem] ${buttonMotion}`,
   exerciseRowDragging: "opacity-60",
@@ -58,6 +85,12 @@ export const splitStyles = {
     `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--split-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
   primaryButton:
     `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--split-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
+  dangerButton:
+    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[color-mix(in_srgb,#b13d48_34%,transparent)] bg-[color-mix(in_srgb,#b13d48_8%,var(--bg))] px-[0.92rem] text-[0.84rem] text-[#b13d48] hover:border-[color-mix(in_srgb,#b13d48_48%,transparent)] ${buttonMotion} ${buttonFocusRing}`,
+  iconActionButton:
+    `inline-flex h-[2.5rem] w-[2.5rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.52rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
+  dangerIconButton:
+    `inline-flex h-[2.5rem] w-[2.5rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.52rem] border border-[color-mix(in_srgb,#b13d48_34%,transparent)] bg-[color-mix(in_srgb,#b13d48_8%,var(--bg))] text-[#b13d48] hover:border-[color-mix(in_srgb,#b13d48_48%,transparent)] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
   iconGhostButton:
     `inline-flex h-[2.5rem] w-[2.5rem] shrink-0 cursor-pointer items-center justify-center self-auto rounded-[0.52rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
   inlineIcon: "h-[0.92rem] w-[0.92rem]",

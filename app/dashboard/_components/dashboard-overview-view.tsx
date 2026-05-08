@@ -1,4 +1,4 @@
-import { Moon, Plus } from "lucide-react";
+import { Check, Moon, Plus } from "lucide-react";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import type { DashboardClientData } from "../dashboard-types";
@@ -64,7 +64,12 @@ export function DashboardOverviewView({
           <p className={styles.kpiValue}>{todayPlan.workoutType}</p>
         </article>
 
-        {todayPlan.isRestDay ? (
+        {todayPlan.isLoggedToday ? (
+          <div className={`${styles.kpiCard} ${styles.kpiActionCard} ${styles.kpiActionCardLogged}`}>
+            <Check className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
+            <span className={styles.kpiActionText}>Logged!</span>
+          </div>
+        ) : todayPlan.isRestDay ? (
           <div className={`${styles.kpiCard} ${styles.kpiActionCard} ${styles.kpiActionCardDisabled}`}>
             <Moon className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
             <span className={styles.kpiActionText}>Rest</span>
@@ -171,9 +176,7 @@ export function DashboardOverviewView({
                     aria-label={`View ${cell.workouts[0].title}`}
                     title={`${cell.workoutCount} workout${
                       cell.workoutCount === 1 ? "" : "s"
-                    } logged${
-                      cell.workoutType ? ` · ${cell.workoutType} day on your split` : ""
-                    }`}
+                    } logged`}
                   >
                     <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
                   </Link>

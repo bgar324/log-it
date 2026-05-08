@@ -56,12 +56,12 @@ export function SplitEditor({
       </div>
 
       <label className={splitStyles.editorField}>
-        <span className={splitStyles.editorLabel}>Workout type</span>
         <input
           className={splitStyles.editorInput}
           value={day.workoutType}
           onChange={(event) => onWorkoutTypeChange(event.target.value)}
-          placeholder="Push"
+          placeholder="Workout type"
+          aria-label="Workout type"
         />
       </label>
 
