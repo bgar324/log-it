@@ -11,6 +11,7 @@ import {
   deleteWorkoutSplit,
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
   getInitialSelectedWeekday,
+  saveGeneratedWorkoutSplit,
   type SplitManagerSaveState,
 } from "../split-manager.shared";
 import { useSplitManagerDayDrag } from "./use-split-manager-day-drag";
@@ -34,6 +35,7 @@ export type SplitManagerState = {
   createSplit: () => Promise<void>;
   deleteSplit: (splitId: string) => Promise<void>;
   activateSplit: (splitId: string) => Promise<void>;
+  saveGeneratedSplit: (split: WorkoutSplitTemplate) => Promise<void>;
   selectWeekday: (weekday: SplitWeekdayValue) => void;
   startDraggingDay: (index: number) => void;
   dragOverDay: (index: number) => void;
@@ -219,6 +221,22 @@ export function useSplitManagerState(
     }
   }
 
+  async function saveGeneratedSplit(generatedSplit: WorkoutSplitTemplate) {
+    const toastId = toast.loading("Creating split...");
+
+    try {
+      const saved = await saveGeneratedWorkoutSplit(generatedSplit);
+      setSplits((current) => [saved, ...current]);
+      setSelectedSplitId(saved.id);
+      toast.success("Split created.", { id: toastId });
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to create split.", {
+        id: toastId,
+      });
+    }
+  }
+
   function selectWeekday(weekday: SplitWeekdayValue) {
     exerciseActions.endExerciseDrag();
     setSelectedWeekday(weekday);
@@ -241,6 +259,7 @@ export function useSplitManagerState(
     createSplit,
     deleteSplit,
     activateSplit,
+    saveGeneratedSplit,
     selectWeekday,
     startDraggingDay: dragState.startDraggingDay,
     dragOverDay: dragState.dragOverDay,

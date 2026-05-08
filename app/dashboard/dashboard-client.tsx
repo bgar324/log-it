@@ -40,13 +40,6 @@ type DashboardViewData = Partial<DashboardClientData>;
 
 const dashboardViewDataCache = new Map<DashboardView, DashboardViewData>();
 
-function getCachedDashboardViews() {
-  return new Set<DashboardView>([
-    ...dashboardViewDataCache.keys(),
-    "profile",
-  ]);
-}
-
 function getDashboardViewData(view: DashboardView, data: DashboardClientData): DashboardViewData {
   if (view === "dashboard") {
     return {
@@ -107,20 +100,27 @@ function createCachedDashboardData(
   );
 }
 
+function createInitialLoadedDashboardViews(initialView: DashboardView) {
+  return new Set<DashboardView>([initialView, "profile"]);
+}
+
 export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const router = useRouter();
   const [activeView, setActiveView] = useState(initialView);
-  const [dashboardData, setDashboardData] = useState(() =>
-    createCachedDashboardData(initialView, data),
-  );
+  const [dashboardData, setDashboardData] = useState(() => {
+    seedDashboardViewCache(initialView, data);
+    return data;
+  });
   const [loadedViews, setLoadedViews] = useState<ReadonlySet<DashboardView>>(
-    () => getCachedDashboardViews(),
+    () => createInitialLoadedDashboardViews(initialView),
   );
   const [loadingViews, setLoadingViews] = useState<ReadonlySet<DashboardView>>(
     () => new Set(),
   );
   const [viewErrors, setViewErrors] = useState<Partial<Record<DashboardView, string>>>({});
-  const loadedViewsRef = useRef<Set<DashboardView>>(getCachedDashboardViews());
+  const loadedViewsRef = useRef<Set<DashboardView>>(
+    createInitialLoadedDashboardViews(initialView),
+  );
   const inFlightViewsRef = useRef<Set<DashboardView>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

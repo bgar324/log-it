@@ -98,6 +98,22 @@ export async function saveWorkoutSplit(split: WorkoutSplitTemplate) {
   return payload.split;
 }
 
+export async function saveGeneratedWorkoutSplit(split: WorkoutSplitTemplate) {
+  return saveWorkoutSplit({
+    ...split,
+    id: null,
+    isActive: false,
+    days: split.days.map((day) => ({
+      ...day,
+      id: null,
+      exercises: day.exercises.map((exercise) => ({
+        ...exercise,
+        id: null,
+      })),
+    })),
+  });
+}
+
 export async function createWorkoutSplit() {
   const response = await fetch("/api/workout-split", {
     method: "POST",

@@ -13,6 +13,7 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 - Users can log, edit, duplicate, and delete workouts.
 - Users can inspect workouts and exercise-specific history.
 - Users can save multiple weekly splits and choose one active split to seed the workout logger.
+- Users can ask Ben for beginner split advice from the split view. The assistant gathers schedule, experience, equipment, session length, goals, focus areas, and avoidances before drafting a previewable split.
 - Public profiles exist at `/u/[username]` when enabled.
 
 ## Workout Logging
@@ -40,6 +41,9 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 - Deleting the active split activates the most recently updated remaining split when one exists.
 - Split deletion uses a Sonner confirmation toast rather than `window.confirm`.
 - Split data is cached by user and invalidated after writes.
+- AI-generated split drafts are not saved automatically. Users preview the draft, including day assignments and generated exercises, and must explicitly create it before it appears in their split library.
+- Split assistant draft generation is capped at five generated drafts per user per Pacific day; clarification chat can continue when the cap is reached.
+- The split assistant is advisory workout-structure help only. It should avoid medical advice, injury rehab, diagnosis, and guaranteed outcome claims.
 
 ## Progress And History
 

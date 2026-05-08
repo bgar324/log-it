@@ -1,8 +1,10 @@
 "use client";
 
-import { CheckCircle2, Circle, Copy, Plus, Save, Trash2 } from "lucide-react";
+import { Bot, CheckCircle2, Circle, Copy, Plus, Save, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
+import { SplitAssistantPanel } from "./split-assistant-panel";
 import { SplitEditor } from "./split-editor";
 import { splitStyles } from "./split-system.styles";
 import { SplitDayCard } from "./split-day-card";
@@ -15,6 +17,8 @@ type SplitManagerProps = {
 
 export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps) {
   const state = useSplitManagerState(initialSplit, initialSplits);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantDraft, setAssistantDraft] = useState<WorkoutSplitTemplate | null>(null);
 
   if (!state.selectedDay) {
     return null;
@@ -72,7 +76,10 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
                 className={`${splitStyles.splitSidebarItem} ${
                   isSelected ? splitStyles.splitSidebarItemActive : ""
                 }`}
-                onClick={() => state.selectSplit(split.id)}
+                onClick={() => {
+                  state.selectSplit(split.id);
+                  setAssistantOpen(false);
+                }}
               >
                 <span className={splitStyles.splitSidebarItemTitleRow}>
                   <span className={splitStyles.splitSidebarItemTitle}>
@@ -94,6 +101,20 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
 
         <button
           type="button"
+          className={`${splitStyles.splitSidebarAssistantButton} ${
+            assistantOpen ? splitStyles.splitSidebarAssistantButtonActive : ""
+          }`}
+          onClick={() => setAssistantOpen(true)}
+        >
+          <span className={splitStyles.splitSidebarItemTitleRow}>
+            <Bot className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
+            <span className={splitStyles.splitSidebarItemTitle}>Ask Ben</span>
+          </span>
+          <span className={splitStyles.splitSidebarItemMeta}>Build a beginner split</span>
+        </button>
+
+        <button
+          type="button"
           className={splitStyles.splitSidebarCreateButton}
           onClick={() => void state.createSplit()}
           aria-label="Create split"
@@ -104,18 +125,26 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
         </button>
       </aside>
 
-      <div className={splitStyles.splitLayout}>
-        <section className={splitStyles.splitSummary}>
-          <div className={splitStyles.splitSummaryHead}>
-            <label className={splitStyles.editorField}>
-              <input
-                className={splitStyles.editorInput}
-                value={state.split.name}
-                onChange={(event) => state.setSplitName(event.target.value)}
-                placeholder="Split name"
-                aria-label="Split name"
-              />
-            </label>
+      {assistantOpen ? (
+        <SplitAssistantPanel
+          draft={assistantDraft}
+          onDraftChange={setAssistantDraft}
+          onBack={() => setAssistantOpen(false)}
+          onSaveGeneratedSplit={state.saveGeneratedSplit}
+        />
+      ) : (
+        <div className={splitStyles.splitLayout}>
+          <section className={splitStyles.splitSummary}>
+            <div className={splitStyles.splitSummaryHead}>
+              <label className={splitStyles.editorField}>
+                <input
+                  className={splitStyles.editorInput}
+                  value={state.split.name}
+                  onChange={(event) => state.setSplitName(event.target.value)}
+                  placeholder="Split name"
+                  aria-label="Split name"
+                />
+              </label>
 
             <div className={splitStyles.splitSummaryActions}>
               <button
@@ -214,7 +243,8 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
           onExerciseDrop={state.dropExerciseAt}
           onExerciseDragEnd={state.endExerciseDrag}
         />
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -22,6 +22,10 @@ Workout payload parsing lives in `lib/workouts/payload.ts`; create/update/delete
 
 The data model allows multiple `WorkoutSplit` rows per user. Service code maintains one active split with `isActive`; the active split drives dashboard planning, rest-day blocking, and workout logger preload. Split saves replace nested days/exercises, normalize all weekdays, and default missing days to `Rest`.
 
+## AI Split Drafts Are Unsaved Until Accepted
+
+The split assistant uses direct provider REST calls and keeps chat transcripts in browser state for v1. The server can return normalized split drafts, but it does not persist them until the user explicitly creates a split through the existing split save path. Generated draft counts are capped per user per Pacific date through `SplitAssistantUsage`. Assistant drafts are validated through existing split normalization before the client can preview or save them.
+
 ## Logged Today Means Date Plus Split Type
 
 The dashboard `Logged!` state is based on today's Pacific date and normalized workout type matching the active split day assignment. It does not treat any workout on the same date as sufficient unless the workout type matches.

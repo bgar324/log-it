@@ -32,6 +32,10 @@ export const splitStyles = {
     "min-w-0 truncate text-[0.72rem] text-[var(--muted)]",
   splitSidebarCreateButton:
     `inline-flex min-h-[2.75rem] w-full shrink-0 cursor-pointer items-center justify-center rounded-[0.52rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
+  splitSidebarAssistantButton:
+    `flex min-h-[4.1rem] cursor-pointer flex-col justify-center gap-[0.26rem] rounded-[0.48rem] border border-dashed border-[var(--split-border-strong)] bg-transparent px-[0.68rem] py-[0.58rem] text-left text-[var(--text)] hover:border-[var(--text)] ${buttonMotion} ${buttonFocusRing}`,
+  splitSidebarAssistantButtonActive:
+    "border-[var(--text)] bg-[color-mix(in_srgb,var(--text)_7%,transparent)]",
   splitLayout:
     "grid min-h-0 grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] gap-[0.9rem] min-[900px]:h-full max-[980px]:grid-cols-1",
   splitSummary:
@@ -106,4 +110,60 @@ export const splitStyles = {
     "flex flex-col gap-[0.22rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[1rem] text-[0.84rem] text-[var(--muted)]",
   restEmptyState:
     "flex flex-col gap-[0.22rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[1rem] text-[0.84rem] text-[var(--muted)]",
+  assistantPanel:
+    `${splitPanel} flex min-h-0 flex-col gap-[0.86rem] overflow-hidden p-[1rem]`,
+  assistantHeader:
+    "flex items-center gap-[0.75rem]",
+  assistantTitleWrap:
+    "flex min-w-0 items-center gap-[0.68rem]",
+  assistantIconWrap:
+    "inline-flex h-[2.4rem] w-[2.4rem] shrink-0 items-center justify-center rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] text-[var(--text)]",
+  assistantTitle:
+    "m-0 text-[1.35rem] leading-[1.15] tracking-[-0.03em] font-[560]",
+  assistantBody:
+    "grid min-h-0 flex-1 grid-cols-1 gap-[0.8rem]",
+  assistantBodyWithDraft:
+    "grid-cols-[minmax(0,1fr)_minmax(16rem,0.5fr)] max-[980px]:grid-cols-1",
+  assistantLanding:
+    "flex min-h-0 flex-1 flex-col items-center justify-center gap-[1.6rem] px-[1rem] pb-[7vh]",
+  assistantLandingPrompt:
+    "m-0 max-w-[42rem] text-center text-[1.26rem] leading-[1.35] tracking-[-0.03em] font-[520] text-[var(--text)] max-[700px]:text-[1.05rem] whitespace-pre-line",
+  assistantLandingComposer:
+    "w-full max-w-[54rem]",
+  assistantConversation:
+    "flex min-h-[18rem] flex-col gap-[0.55rem] overflow-y-auto p-[0.72rem] [scrollbar-width:thin]",
+  assistantMessage:
+    "max-w-[82%] whitespace-pre-wrap rounded-[0.52rem] bg-transparent px-[0.76rem] py-[0.62rem] text-[0.86rem] leading-[1.45] text-[var(--text)]",
+  assistantMessageUser:
+    "ml-auto border border-[var(--split-border-strong)] bg-[color-mix(in_srgb,var(--text)_7%,transparent)]",
+  assistantMarkdown:
+    "whitespace-normal [&_em]:italic [&_li+li]:mt-[0.2rem] [&_p]:m-0 [&_p+p]:mt-[0.72rem] [&_strong]:font-[650] [&_ul]:m-[0.58rem_0_0] [&_ul]:list-disc [&_ul]:pl-[1.15rem]",
+  assistantDraft:
+    "flex min-h-0 flex-col gap-[0.7rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[0.82rem]",
+  assistantDraftHeader:
+    "flex items-start justify-between gap-[0.75rem]",
+  assistantDraftEyebrow:
+    "m-0 text-[0.65rem] uppercase tracking-[0.08em] text-[var(--muted)]",
+  assistantDraftTitle:
+    "m-[0.12rem_0_0] text-[1rem] leading-[1.15] tracking-[-0.03em] font-[560]",
+  assistantDraftMeta:
+    "m-[0.16rem_0_0] text-[0.72rem] text-[var(--muted)]",
+  assistantDraftDays:
+    "flex min-h-0 flex-col gap-[0.38rem] overflow-y-auto [scrollbar-width:thin]",
+  assistantDraftDay:
+    "flex flex-col gap-[0.44rem] rounded-[0.42rem] border border-[var(--split-border)] px-[0.6rem] py-[0.52rem] text-[0.78rem] text-[var(--muted)]",
+  assistantDraftDayHeader:
+    "grid grid-cols-[5.8rem_minmax(0,1fr)] items-baseline gap-[0.5rem] [&_strong]:min-w-0 [&_strong]:truncate [&_strong]:text-[var(--text)] [&_strong]:font-[520]",
+  assistantDraftExercises:
+    "m-0 flex list-none flex-col gap-[0.24rem] border-t border-[var(--split-border)] p-[0.42rem_0_0]",
+  assistantDraftExercise:
+    "grid grid-cols-[minmax(0,1fr)_3.4rem] items-baseline gap-[0.5rem] text-[0.72rem] leading-[1.25] [&_span]:min-w-0 [&_span]:truncate [&_span]:text-[var(--text)] [&_em]:text-right [&_em]:not-italic [&_em]:text-[var(--muted)]",
+  assistantDraftActions:
+    "mt-auto flex flex-wrap gap-[0.45rem]",
+  assistantComposer:
+    "relative flex items-center",
+  assistantInput:
+    "min-h-[2.95rem] min-w-0 flex-1 rounded-[0.72rem] border border-[var(--split-border)] bg-[var(--bg)] px-[0.9rem] pr-[3.1rem] text-[0.84rem] text-[var(--text)] shadow-none",
+  assistantSendButton:
+    `absolute right-[0.36rem] top-1/2 inline-flex h-[2.18rem] w-[2.18rem] shrink-0 -translate-y-1/2 cursor-pointer items-center justify-center rounded-[0.56rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
 } as const;
