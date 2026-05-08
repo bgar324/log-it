@@ -446,10 +446,23 @@ function encodeSseEvent(event: string, payload: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`;
 }
 
-function assistantReplyStillNeedsUserInput(reply: string) {
+function assistantReplyShouldAttemptDraft(reply: string) {
   const trimmed = reply.trim();
 
   if (!trimmed) {
+    return false;
+  }
+
+  const lower = trimmed.toLowerCase();
+  const draftIntentPatterns = [
+    /\bdraft(?:ing|ed)?\b/,
+    /\bhere(?:'s| is) your split\b/,
+    /\bhere(?:'s| is) your structure\b/,
+    /\bbased on what you(?:'ve| have) told me\b/,
+    /\byou(?:'re| are) all set\b/,
+  ];
+
+  if (draftIntentPatterns.some((pattern) => pattern.test(lower))) {
     return true;
   }
 
@@ -459,7 +472,7 @@ function assistantReplyStillNeedsUserInput(reply: string) {
     trimmed.lastIndexOf("!"),
   );
 
-  return lastQuestionIndex > lastSentenceIndex;
+  return lastQuestionIndex <= lastSentenceIndex;
 }
 
 export async function POST(request: NextRequest) {
@@ -508,7 +521,7 @@ export async function POST(request: NextRequest) {
 
         send("message_done", { content: assistantReply });
 
-        if (assistantReplyStillNeedsUserInput(assistantReply)) {
+        if (!assistantReplyShouldAttemptDraft(assistantReply)) {
           return;
         }
 

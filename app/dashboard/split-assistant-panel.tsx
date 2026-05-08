@@ -1,7 +1,7 @@
 "use client";
 
 import { Bot, Send, Sparkles } from "lucide-react";
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
 import { getSplitWeekdayLabel } from "@/lib/workout-splits/shared";
 import { splitStyles } from "./split-system.styles";
@@ -111,6 +111,16 @@ function AssistantMarkdown({ content }: { content: string }) {
   );
 }
 
+function ThinkingIndicator() {
+  return (
+    <span className={splitStyles.assistantThinking} aria-label="Ben is thinking">
+      <span aria-hidden="true" />
+      <span aria-hidden="true" />
+      <span aria-hidden="true" />
+    </span>
+  );
+}
+
 export function SplitAssistantPanel({
   draft,
   onDraftChange,
@@ -122,12 +132,20 @@ export function SplitAssistantPanel({
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const conversationEndRef = useRef<HTMLDivElement | null>(null);
   const assistantMessageIdRef = useRef<string | null>(null);
   const hasStartedChat = messages.some((message) => message.role === "user");
   const totalTrainingDays = useMemo(
     () => draft?.days.filter((day) => day.workoutTypeSlug !== "rest").length ?? 0,
     [draft],
   );
+
+  useEffect(() => {
+    conversationEndRef.current?.scrollIntoView({
+      block: "end",
+      behavior: "smooth",
+    });
+  }, [messages, draft]);
 
   function appendAssistantContent(content: string) {
     const assistantMessageId = assistantMessageIdRef.current;
@@ -360,11 +378,14 @@ export function SplitAssistantPanel({
                 >
                   {message.role === "assistant" && message.content ? (
                     <AssistantMarkdown content={message.content} />
+                  ) : message.role === "assistant" ? (
+                    <ThinkingIndicator />
                   ) : (
-                    message.content || "Thinking..."
+                    message.content
                   )}
                 </div>
               ))}
+              <div ref={conversationEndRef} aria-hidden="true" />
             </div>
 
             {draft ? (

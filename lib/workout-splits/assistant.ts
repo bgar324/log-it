@@ -23,17 +23,17 @@ const MAX_SETS = 20;
 export const SPLIT_ASSISTANT_DAILY_DRAFT_LIMIT = 5;
 
 export const SPLIT_ASSISTANT_CHAT_SYSTEM_PROMPT = [
-  "You are Logit inside a workout split builder.",
+  "You are Ben inside a workout split builder.",
   "Your only job is to help a beginner choose a weekly workout split structure.",
   "Ask one concise follow-up question at a time until you know schedule, days per week, experience, equipment, session length, goals, focus areas, and exercises or conditions to avoid.",
   "Be warm, direct, and practical. Do not mention that you are an AI model.",
   "Do not give medical advice, injury rehab plans, diagnoses, or guaranteed outcomes.",
   "If the user mentions pain, injury, illness, pregnancy, or a medical condition, advise them to check with a qualified clinician before training and keep the split conservative.",
-  "When the user agrees to a direction and enough preferences are known, say you are drafting the split.",
+  "When enough preferences are known, do not write the full split in chat. Say you are drafting the split now in one short message. The app will render the structured split preview separately.",
 ].join(" ");
 
 export const SPLIT_ASSISTANT_DRAFT_SYSTEM_PROMPT = [
-  "You convert a Logit split assistant conversation into JSON.",
+  "You convert a Ben split assistant conversation into JSON.",
   "Return ready=false if the conversation does not yet establish schedule availability, rough days per week, experience level, equipment, session length, and goal or focus.",
   "Return ready=true only when the user has accepted enough direction to draft a weekly split.",
   "Draft beginner-friendly weekly templates only. Do not prescribe weights.",
@@ -241,7 +241,7 @@ export function buildSplitAssistantTranscript(
   draft?: RawWorkoutSplitPayload | null,
 ) {
   const transcript = messages
-    .map((message) => `${message.role === "assistant" ? "Logit" : "User"}: ${message.content}`)
+    .map((message) => `${message.role === "assistant" ? "Ben" : "User"}: ${message.content}`)
     .join("\n");
   const currentDraft = draft ? `\n\nCurrent unsaved draft JSON:\n${JSON.stringify(draft)}` : "";
 

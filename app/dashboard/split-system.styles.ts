@@ -33,7 +33,7 @@ export const splitStyles = {
   splitSidebarCreateButton:
     `inline-flex min-h-[2.75rem] w-full shrink-0 cursor-pointer items-center justify-center rounded-[0.52rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
   splitSidebarAssistantButton:
-    `flex min-h-[4.1rem] cursor-pointer flex-col justify-center gap-[0.26rem] rounded-[0.48rem] border border-dashed border-[var(--split-border-strong)] bg-transparent px-[0.68rem] py-[0.58rem] text-left text-[var(--text)] hover:border-[var(--text)] ${buttonMotion} ${buttonFocusRing}`,
+    `flex min-h-[4.1rem] cursor-pointer flex-col justify-center gap-[0.26rem] rounded-[0.48rem] border border-dashed border-[var(--split-border-strong)] bg-transparent px-[0.68rem] py-[0.58rem] text-left text-[var(--text)] hover:border-[var(--text)] [&_svg]:translate-y-[0.1rem] ${buttonMotion} ${buttonFocusRing}`,
   splitSidebarAssistantButtonActive:
     "border-[var(--text)] bg-[color-mix(in_srgb,var(--text)_7%,transparent)]",
   splitLayout:
@@ -117,7 +117,7 @@ export const splitStyles = {
   assistantTitleWrap:
     "flex min-w-0 items-center gap-[0.68rem]",
   assistantIconWrap:
-    "inline-flex h-[2.4rem] w-[2.4rem] shrink-0 items-center justify-center rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] text-[var(--text)]",
+    "inline-flex h-[1.85rem] w-[1.85rem] shrink-0 -translate-y-[0.04rem] items-center justify-center text-[var(--text)] [&_svg]:h-[1.55rem] [&_svg]:w-[1.55rem]",
   assistantTitle:
     "m-0 text-[1.35rem] leading-[1.15] tracking-[-0.03em] font-[560]",
   assistantBody:
@@ -138,6 +138,8 @@ export const splitStyles = {
     "ml-auto border border-[var(--split-border-strong)] bg-[color-mix(in_srgb,var(--text)_7%,transparent)]",
   assistantMarkdown:
     "whitespace-normal [&_em]:italic [&_li+li]:mt-[0.2rem] [&_p]:m-0 [&_p+p]:mt-[0.72rem] [&_strong]:font-[650] [&_ul]:m-[0.58rem_0_0] [&_ul]:list-disc [&_ul]:pl-[1.15rem]",
+  assistantThinking:
+    "inline-flex min-h-[1.45rem] items-center gap-[0.26rem] py-[0.18rem] [&_span]:h-[0.34rem] [&_span]:w-[0.34rem] [&_span]:rounded-full [&_span]:bg-[var(--muted)] [&_span]:animate-[assistant-thinking-dot_1.05s_ease-in-out_infinite] [&_span:nth-child(2)]:[animation-delay:140ms] [&_span:nth-child(3)]:[animation-delay:280ms]",
   assistantDraft:
     "flex min-h-0 flex-col gap-[0.7rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[0.82rem]",
   assistantDraftHeader:
@@ -163,7 +165,7 @@ export const splitStyles = {
   assistantComposer:
     "relative flex items-center",
   assistantInput:
-    "min-h-[2.95rem] min-w-0 flex-1 rounded-[0.72rem] border border-[var(--split-border)] bg-[var(--bg)] px-[0.9rem] pr-[3.1rem] text-[0.84rem] text-[var(--text)] shadow-none",
+    "min-h-[2.95rem] min-w-0 flex-1 rounded-[0.72rem] border border-[var(--split-border)] bg-[var(--bg)] px-[0.9rem] pr-[3.1rem] text-[0.84rem] text-[var(--text)] shadow-none outline-none focus:border-[var(--split-border-strong)] focus:ring-0",
   assistantSendButton:
     `absolute right-[0.36rem] top-1/2 inline-flex h-[2.18rem] w-[2.18rem] shrink-0 -translate-y-1/2 cursor-pointer items-center justify-center rounded-[0.56rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
 } as const;

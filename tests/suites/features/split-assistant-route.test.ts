@@ -53,13 +53,18 @@ function mockSessionUser() {
   });
 }
 
-function mockGeminiFetch(draftReady = true) {
+function mockGeminiFetch(
+  draftReady = true,
+  chatReply = "Sounds good. I can draft that now.",
+) {
   globalThis.fetch = (async (input: string | URL | Request) => {
     const url = String(input);
 
     if (url.includes(":streamGenerateContent")) {
       return new Response(
-        'data: {"candidates":[{"content":{"parts":[{"text":"Sounds good. I can draft that now."}]}}]}\n\n',
+        `data: ${JSON.stringify({
+          candidates: [{ content: { parts: [{ text: chatReply }] } }],
+        })}\n\n`,
         {
           status: 200,
           headers: { "Content-Type": "text/event-stream" },
@@ -190,6 +195,28 @@ test("split assistant route streams a normalized draft without saving it", async
   assert.match(text, /Beginner Upper Lower/);
   assert.match(text, /"workoutType":"Rest"/);
   assert.equal(upsertCalled, true);
+});
+
+test("split assistant route drafts when the assistant says drafting and ends with a question", async () => {
+  process.env.GEMINI_API_KEY = "test-key";
+  process.env.SPLIT_ASSISTANT_PROVIDER = "gemini";
+  delete process.env.SPLIT_ASSISTANT_MODEL;
+  mockSessionUser();
+  mockGeminiFetch(
+    true,
+    "I'm drafting your split now. Here's your split direction. Does this direction feel right?",
+  );
+  prismaMutable.splitAssistantUsage.findUnique = async () => ({ generatedCount: 0 });
+  prismaMutable.splitAssistantUsage.upsert = async () => ({ generatedCount: 1 });
+
+  const response = await POST(
+    createAssistantRequest({ origin: "http://localhost" }),
+  );
+  const text = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(text, /event: split_draft/);
+  assert.match(text, /Beginner Upper Lower/);
 });
 
 test("split assistant route reports the daily draft limit after chat reply", async () => {
