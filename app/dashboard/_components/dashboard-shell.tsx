@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Menu, Moon, PanelLeftClose, PanelLeftOpen, Plus, User2, X } from "lucide-react";
+import { Check, Menu, Moon, PanelLeft, Plus, User2, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
@@ -92,7 +92,7 @@ export function DashboardShell({
                 />
               </span>
               <span className={styles.sidebarCollapsedToggleIconWrap} aria-hidden="true">
-                <PanelLeftOpen
+                <PanelLeft
                   className={styles.sidebarToggleIcon}
                   aria-hidden="true"
                   strokeWidth={1.9}
@@ -115,7 +115,7 @@ export function DashboardShell({
                 title="Close sidebar"
                 aria-expanded={true}
               >
-                <PanelLeftClose
+                <PanelLeft
                   className={styles.sidebarToggleIcon}
                   aria-hidden="true"
                   strokeWidth={1.9}

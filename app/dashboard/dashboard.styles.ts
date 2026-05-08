@@ -39,9 +39,9 @@ export const styles = {
   sidebarTopCollapsed:
     "justify-center",
   sidebarToggle:
-    `inline-flex h-[2.1rem] w-[2.1rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.5rem] border-0 bg-transparent text-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] transition-[transform,background-color,color,box-shadow,opacity] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
+    `inline-flex h-[2.1rem] w-[2.1rem] shrink-0 cursor-w-resize items-center justify-center rounded-[0.5rem] border-0 bg-transparent text-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] transition-[transform,background-color,color,box-shadow,opacity] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
   sidebarCollapsedLogoToggle:
-    `group relative inline-flex h-[2.36rem] w-[2.36rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.5rem] border-0 bg-transparent text-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] transition-[transform,background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
+    `group relative inline-flex h-[2.36rem] w-[2.36rem] shrink-0 cursor-e-resize items-center justify-center rounded-[0.5rem] border-0 bg-transparent text-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] transition-[transform,background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
   sidebarCollapsedLogo:
     "absolute inset-0 flex items-center justify-center opacity-100 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-90 group-hover:opacity-0 group-focus-visible:scale-90 group-focus-visible:opacity-0",
   sidebarCollapsedToggleIconWrap:
