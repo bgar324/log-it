@@ -144,8 +144,8 @@ export const splitStyles = {
     "flex min-h-0 flex-col gap-[0.7rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[0.82rem]",
   assistantDraftHeader:
     "flex items-start justify-between gap-[0.75rem]",
-  assistantDraftEyebrow:
-    "m-0 text-[0.65rem] uppercase tracking-[0.08em] text-[var(--muted)]",
+  assistantDraftLabel:
+    "m-0 text-[0.72rem] text-[var(--muted)]",
   assistantDraftTitle:
     "m-[0.12rem_0_0] text-[1rem] leading-[1.15] tracking-[-0.03em] font-[560]",
   assistantDraftMeta:
@@ -165,7 +165,7 @@ export const splitStyles = {
   assistantComposer:
     "relative flex items-center",
   assistantInput:
-    "min-h-[2.95rem] min-w-0 flex-1 rounded-[0.72rem] border border-[var(--split-border)] bg-[var(--bg)] px-[0.9rem] pr-[3.1rem] text-[0.84rem] text-[var(--text)] shadow-none outline-none focus:border-[var(--split-border-strong)] focus:ring-0",
+    "min-h-[2.95rem] min-w-0 flex-1 rounded-[0.54rem] border border-[var(--split-border)] bg-[var(--bg)] px-[0.9rem] pr-[3.1rem] text-[0.84rem] text-[var(--text)] shadow-none outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
   assistantSendButton:
     `absolute right-[0.36rem] top-1/2 inline-flex h-[2.18rem] w-[2.18rem] shrink-0 -translate-y-1/2 cursor-pointer items-center justify-center rounded-[0.56rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
 } as const;

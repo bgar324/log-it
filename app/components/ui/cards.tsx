@@ -32,7 +32,7 @@ export function SurfaceCard({ className, children }: SurfaceCardProps) {
   return (
     <Card
       className={cn(
-        "rounded-[28px] border border-[var(--app-border)] bg-[var(--app-surface)] shadow-[var(--app-shadow-soft)] backdrop-blur-xl",
+        "rounded-[0.54rem] border border-[var(--field-line)] bg-transparent shadow-none",
         className,
       )}
     >
@@ -56,32 +56,32 @@ export function SectionCard({
 }) {
   return (
     <SurfaceCard className={cn("overflow-hidden", className)}>
-      <CardHeader className="flex flex-col gap-4 border-b border-[var(--app-border)] px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <CardTitle className="font-[var(--font-heading)] text-2xl tracking-[-0.03em] text-[var(--app-text)]">
+      <CardHeader className="flex flex-col gap-[0.5rem] border-b border-[var(--field-line)] px-[0.82rem] py-[0.76rem] sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-[0.14rem]">
+          <CardTitle className="font-[var(--font-heading)] text-[1rem] leading-[1.15] tracking-[-0.03em] text-[var(--text)] font-[560]">
             {title}
           </CardTitle>
           {description ? (
-            <CardDescription className="max-w-2xl text-sm text-[var(--app-text-muted)]">
+            <CardDescription className="max-w-2xl text-[0.78rem] leading-[1.45] text-[var(--muted)]">
               {description}
             </CardDescription>
           ) : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </CardHeader>
-      <CardContent className="px-6 py-5">{children}</CardContent>
+      <CardContent className="px-[0.82rem] py-[0.76rem]">{children}</CardContent>
     </SurfaceCard>
   );
 }
 
 export function PageHeader({
-  eyebrow,
+  meta,
   title,
   description,
   actions,
   className,
 }: {
-  eyebrow?: string;
+  meta?: string;
   title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
@@ -94,22 +94,22 @@ export function PageHeader({
         className,
       )}
     >
-      <div className="space-y-2">
-        {eyebrow ? (
-          <p className="text-xs font-semibold text-[var(--app-text-subtle)]">
-            {eyebrow}
+      <div className="space-y-[0.22rem]">
+        {meta ? (
+          <p className="text-xs text-[var(--muted)]">
+            {meta}
           </p>
         ) : null}
-        <h1 className="font-[var(--font-heading)] text-4xl leading-none tracking-[-0.03em] text-[var(--app-text)] sm:text-5xl">
+        <h1 className="font-[var(--font-heading)] text-[clamp(1.55rem,5vw,2rem)] leading-[1.05] tracking-[-0.03em] text-[var(--text)] font-[560]">
           {title}
         </h1>
         {description ? (
-          <p className="max-w-3xl text-sm leading-6 text-[var(--app-text-muted)] sm:text-base">
+          <p className="max-w-3xl text-[0.84rem] leading-[1.45] text-[var(--muted)]">
             {description}
           </p>
         ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap gap-[0.45rem]">{actions}</div> : null}
     </header>
   );
 }

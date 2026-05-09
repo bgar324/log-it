@@ -42,8 +42,8 @@ export const styles = {
   ),
   backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
   header: "flex flex-col gap-[0.28rem]",
-  headerEyebrow:
-    "m-0 text-xs font-semibold text-[var(--muted)]",
+  headerMeta:
+    "m-0 text-xs text-[var(--muted)]",
   titleRow: "flex min-w-0 items-start justify-between gap-[0.5rem]",
   titleActions: "inline-flex shrink-0 items-center gap-[0.35rem]",
   headerIconButton: iconButtonBase,
@@ -52,7 +52,7 @@ export const styles = {
   autosaveMeta: "m-0 text-[0.74rem] text-[var(--muted)]",
   form: "flex flex-col gap-[0.62rem] p-[2px]",
   card: cn(
-    "flex flex-col gap-[0.6rem] rounded-[0.72rem] border bg-[var(--bg)] p-[0.78rem]",
+    "flex flex-col gap-[0.6rem] rounded-[0.54rem] border bg-transparent p-[0.78rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
   metaGrid:
@@ -71,11 +71,11 @@ export const styles = {
     "min-[620px]:items-center min-[620px]:p-[1rem]",
   ),
   confirmDialog: cn(
-    "flex w-full max-w-[26rem] flex-col gap-[0.62rem] rounded-[0.82rem] border bg-[var(--bg)] p-[0.82rem]",
+    "flex w-full max-w-[26rem] flex-col gap-[0.62rem] rounded-[0.56rem] border bg-[var(--bg)] p-[0.82rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "shadow-[0_18px_44px_color-mix(in_srgb,#000_24%,transparent)]",
+    "shadow-[0_14px_32px_color-mix(in_srgb,#000_14%,transparent)]",
   ),
-  confirmEyebrow:
+  confirmMeta:
     "m-0 text-[0.72rem] text-[var(--muted)]",
   confirmTitle:
     "m-0 text-[1rem] leading-[1.15] tracking-[-0.03em] font-[560] text-[var(--text)]",
@@ -113,10 +113,10 @@ export const styles = {
   dateInput: "w-full [font-variant-numeric:tabular-nums]",
   datePickerPopper: cn(
     "z-[60]",
-    "[&_.react-datepicker]:overflow-hidden [&_.react-datepicker]:rounded-[0.82rem]",
+    "[&_.react-datepicker]:overflow-hidden [&_.react-datepicker]:rounded-[0.56rem]",
     "[&_.react-datepicker]:border [&_.react-datepicker]:border-[color:color-mix(in_srgb,var(--text)_14%,transparent)]",
     "[&_.react-datepicker]:bg-[var(--bg)] [&_.react-datepicker]:text-[var(--text)]",
-    "[&_.react-datepicker]:shadow-[0_16px_30px_color-mix(in_srgb,#000_28%,transparent)]",
+    "[&_.react-datepicker]:shadow-[0_14px_28px_color-mix(in_srgb,#000_14%,transparent)]",
     "[&_.react-datepicker__header]:border-b",
     "[&_.react-datepicker__header]:border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
     "[&_.react-datepicker__header]:bg-[var(--bg)] [&_.react-datepicker__header]:pt-[0.56rem]",
@@ -146,13 +146,13 @@ export const styles = {
   ),
   exerciseSection: "flex flex-col gap-[0.62rem]",
   exerciseCard: cn(
-    "flex flex-col gap-[0.58rem] rounded-[0.72rem] border bg-[var(--bg)] p-[0.78rem]",
+    "flex flex-col gap-[0.58rem] rounded-[0.54rem] border bg-transparent p-[0.78rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
     "transition-[border-color,background-color,transform,box-shadow]",
   ),
   exerciseCardDragging: cn(
     "border-[color:color-mix(in_srgb,var(--text)_18%,transparent)]",
-    "bg-[var(--bg)] [box-shadow:0_12px_24px_color-mix(in_srgb,#000_14%,transparent)]",
+    "bg-[var(--bg)] [box-shadow:0_10px_22px_color-mix(in_srgb,#000_10%,transparent)]",
     "scale-[0.99]",
   ),
   exerciseCardDropTarget: cn(
@@ -234,7 +234,7 @@ export const styles = {
   spinningIcon: "h-[0.85rem] w-[0.85rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
   setsStack: "flex flex-col gap-[0.58rem] overflow-x-visible py-[6px]",
   setRow: cn(
-    "grid grid-cols-2 items-start gap-[0.6rem] rounded-[0.72rem] border bg-[var(--bg)] p-[0.72rem]",
+    "grid grid-cols-2 items-start gap-[0.6rem] rounded-[0.54rem] border bg-transparent p-[0.72rem]",
     "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
     "min-[620px]:grid-cols-[auto_minmax(4.8rem,0.95fr)_minmax(4.8rem,0.85fr)_auto]",
     "min-[620px]:items-center min-[620px]:gap-[0.5rem]",

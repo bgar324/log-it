@@ -119,7 +119,7 @@ export default async function WorkoutDetailPage({
 
         <section className={styles.summaryCard}>
           {workout.workoutType ? (
-            <p className={styles.titleEyebrow}>{workout.workoutType}</p>
+            <p className={styles.titleMeta}>{workout.workoutType}</p>
           ) : null}
           <h1 className={styles.title}>{workout.title}</h1>
           <div className={styles.metaRow}>

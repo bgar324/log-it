@@ -12,7 +12,7 @@ Logit uses a restrained monochrome product UI. The working surfaces are dense, d
 
 ## Surfaces
 
-- Public/auth shell: `app/globals.css`, `app/page.tsx`, `app/auth/page.tsx`, `app/components/ui/*`.
+- Public/auth shell: `app/globals.css`, `app/page.tsx`, `app/auth/page.tsx`, `app/components/ui/*`. Public primitives use the same `--bg`, `--text`, `--muted`, `--field-*`, and `--focus-ring` tokens as product surfaces.
 - Product dashboard shell: `app/dashboard/dashboard.styles.ts` and dashboard components/hooks. Desktop sidebar supports an icon-only collapsed state; mobile navigation remains a separate menu.
 - Split planner: `app/dashboard/split-system.styles.ts`, `app/dashboard/split-manager.tsx`, `app/dashboard/split-assistant-panel.tsx`, and related hooks. The split view uses a split-library sidebar plus the weekday grid/editor work area. The dotted `Ask Ben` sidebar item replaces the main work area with the assistant panel. Split summary actions are icon-only with accessible labels; active state is communicated by icon and sidebar metadata.
 - Workout logger: `app/workouts/new/workout-logger.styles.ts` and logger components/hooks.
@@ -26,6 +26,7 @@ Logit uses a restrained monochrome product UI. The working surfaces are dense, d
 - Dominant palette is black, white, transparent surfaces, thin borders, and muted text.
 - Product surfaces favor transparent or page-background panels with subtle borders over heavy cards.
 - Buttons are usually bordered, natural-case, and use compact radii.
+- Shared cards, public shells, and product panels use compact radii around `0.5rem` to `0.58rem`; avoid large rounded marketing cards, blur-heavy surfaces, and decorative shadows.
 - Icon buttons use Lucide icons where applicable.
 - Green success states use a darker green border with a light green fill, for example the dashboard `Logged!` action.
 - Focus states should be visible through `focus-visible` styles using `--focus-ring`.
@@ -41,6 +42,7 @@ Logit uses a restrained monochrome product UI. The working surfaces are dense, d
 - Avoid nested card patterns in product surfaces; use sections, rows, lists, borders, and spacing.
 - Keep filters, split editing, profile editing, and logger controls feature-complete rather than decorative.
 - Assistant-generated split previews should remain scannable: show weekday, workout type, and generated exercise/set rows directly in the preview instead of hiding the useful structure behind decorative cards.
+- Muted title metadata such as workout type, selected date, last-hit status, or preview status is allowed when it helps scanning. Keep it natural-case and untracked; do not use uppercase eyebrow styling for hierarchy.
 
 ## State And Feedback
 
@@ -53,5 +55,4 @@ Logit uses a restrained monochrome product UI. The working surfaces are dense, d
 
 ## Known Drift / Needs Verification
 
-- Some older components still use `eyebrow` naming or title prefaces; typography docs mark this as legacy drift.
 - There is no single typed design-token module; CSS variables and Tailwind arbitrary values are the current source of truth.

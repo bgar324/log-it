@@ -26,17 +26,16 @@ export function PublicPageShell({
   className,
 }: PublicPageShellProps) {
   return (
-    <main className={cn("app-shell overflow-hidden", className)}>
-      <div className="subtle-grid absolute inset-0 opacity-40" aria-hidden="true" />
-      <div className="app-container relative grid min-h-dvh gap-8 py-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] lg:items-center lg:py-8">
-        <section className="flex flex-col justify-between gap-10 py-4 lg:min-h-[calc(100dvh-4rem)] lg:py-8">
-          <div className="flex items-center justify-between gap-4">
+    <main className={cn("min-h-dvh bg-[var(--bg)] px-[0.95rem] py-[0.95rem] text-[var(--text)] min-[760px]:p-[1.1rem]", className)}>
+      <div className="mx-auto grid w-full max-w-[58rem] gap-[0.75rem]">
+        <section className="flex flex-col gap-[0.75rem]">
+          <div className="flex items-center justify-between gap-[0.65rem]">
             {backHref ? (
               <Link
                 href={backHref}
-                className="app-focus-ring inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-surface)] px-4 text-sm font-medium text-[var(--app-text)] backdrop-blur-xl transition-[transform,border-color,background-color,box-shadow] duration-150 hover:border-[var(--app-border-strong)] hover:bg-[var(--app-accent-soft)] active:translate-y-px"
+                className="app-focus-ring inline-flex min-h-[2rem] cursor-pointer items-center gap-[0.35rem] rounded-full border border-[var(--field-line)] bg-transparent px-[0.72rem] text-[0.76rem] text-[var(--text)] transition-[transform,border-color,background-color,box-shadow] duration-150 hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--text)_7%,transparent)] active:translate-y-px"
               >
-                <ChevronLeft className="h-4 w-4" strokeWidth={1.9} />
+                <ChevronLeft className="h-[0.88rem] w-[0.88rem]" strokeWidth={1.9} />
                 {backLabel}
               </Link>
             ) : (
@@ -47,33 +46,33 @@ export function PublicPageShell({
             <ThemeToggle />
           </div>
 
-          <div className="space-y-6">
-            <div className="inline-flex rounded-full border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-2 text-[11px] font-semibold text-[var(--app-text-subtle)] backdrop-blur-xl">
+          <div className="rounded-[0.54rem] border border-[var(--field-line)] bg-transparent px-[0.95rem] py-[0.84rem] min-[760px]:p-[0.95rem]">
+            <p className="m-0 text-xs text-[var(--muted)]">
               Minimal performance journal
-            </div>
-            <div className="space-y-4">
-              <h1 className="max-w-3xl font-[var(--font-heading)] text-5xl leading-none tracking-[-0.03em] text-[var(--app-text)] sm:text-6xl lg:text-7xl">
+            </p>
+            <div className="mt-[0.22rem]">
+              <h1 className="max-w-3xl font-[var(--font-heading)] text-[clamp(1.55rem,5vw,1.95rem)] leading-[1.05] tracking-[-0.03em] text-[var(--text)] font-[560]">
                 {title}
               </h1>
-              <p className="max-w-2xl text-base leading-7 text-[var(--app-text-muted)] sm:text-lg">
+              <p className="mt-[0.4rem] max-w-2xl text-[0.84rem] leading-[1.45] text-[var(--muted)]">
                 {subtitle}
               </p>
             </div>
           </div>
 
-          <div className="hidden lg:block">{aside}</div>
+          <div className="hidden min-[900px]:block">{aside}</div>
         </section>
 
-        <div className="flex flex-col gap-5 lg:justify-center">
-          <SurfaceCard className="overflow-hidden rounded-[32px]">
+        <div className="flex flex-col gap-[0.75rem]">
+          <SurfaceCard className="overflow-hidden">
             {children}
           </SurfaceCard>
           {footer ? (
-            <p className="px-1 text-sm leading-6 text-[var(--app-text-muted)]">
+            <p className="px-[0.1rem] text-[0.78rem] leading-[1.45] text-[var(--muted)]">
               {footer}
             </p>
           ) : null}
-          <div className="lg:hidden">{aside}</div>
+          <div className="min-[900px]:hidden">{aside}</div>
         </div>
       </div>
     </main>

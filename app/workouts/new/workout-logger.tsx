@@ -208,7 +208,7 @@ export function WorkoutLogger({
   const backHref = isEditMode ? `/workouts/${workoutId}` : "/dashboard?view=workouts";
   const backLabel = "Back";
   const workoutTypeLabel = draft.workoutType.trim();
-  const dateEyebrow = formatWorkoutLoggerDateLabel(draft.performedAt);
+  const dateMeta = formatWorkoutLoggerDateLabel(draft.performedAt);
   const pageTitle = workoutTypeLabel
     ? `${isEditMode ? "Edit" : "Log"} ${workoutTypeLabel} workout`
     : isEditMode
@@ -230,7 +230,7 @@ export function WorkoutLogger({
         </div>
 
         <header className={styles.header}>
-          {dateEyebrow ? <p className={styles.headerEyebrow}>{dateEyebrow}</p> : null}
+          {dateMeta ? <p className={styles.headerMeta}>{dateMeta}</p> : null}
           <div className={styles.titleRow}>
             <h1 className={styles.title}>{pageTitle}</h1>
           </div>

@@ -392,7 +392,7 @@ export function SplitAssistantPanel({
               <aside className={splitStyles.assistantDraft} aria-label="Generated split preview">
                 <div className={splitStyles.assistantDraftHeader}>
                   <div>
-                    <p className={splitStyles.assistantDraftEyebrow}>Preview</p>
+                    <p className={splitStyles.assistantDraftLabel}>Preview</p>
                     <h3 className={splitStyles.assistantDraftTitle}>{draft.name}</h3>
                     <p className={splitStyles.assistantDraftMeta}>
                       {totalTrainingDays} days ·{" "}

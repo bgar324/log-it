@@ -46,17 +46,14 @@ export default function ExerciseDetailLoading() {
         </header>
 
         <section className={styles.summaryCard} aria-hidden="true">
-          <SkeletonBlock className="h-[2rem] w-[min(100%,21rem)]" />
-          <SkeletonBlock className="mt-[0.5rem] h-[0.82rem] w-[min(100%,18rem)]" />
-        </section>
-
-        <section className={styles.kpiRailWrap} aria-hidden="true">
-          <div className={styles.kpiRail}>
+          <SkeletonBlock className="h-[0.76rem] w-[min(100%,16rem)]" />
+          <SkeletonBlock className="mt-[0.48rem] h-[2rem] w-[min(100%,21rem)]" />
+          <div className={styles.metaRow}>
             {Array.from({ length: 4 }, (_, index) => (
-              <article key={index} className={styles.kpiCard}>
+              <span key={index} className={styles.metaPill}>
                 <SkeletonBlock className="h-[0.76rem] w-[5.4rem]" />
-                <SkeletonBlock className="h-[2.1rem] w-[6rem]" />
-              </article>
+                <SkeletonBlock className="h-[1rem] w-[6rem]" />
+              </span>
             ))}
           </div>
         </section>

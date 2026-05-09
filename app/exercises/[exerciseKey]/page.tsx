@@ -29,28 +29,20 @@ export default async function ExerciseDetailPage({
         </header>
 
         <section className={styles.summaryCard}>
+          <p className={styles.titleMeta}>{data.subtitle}</p>
           <h1 className={styles.title}>{data.displayName}</h1>
-          <p className={styles.subtitle}>{data.subtitle}</p>
-        </section>
-
-        <section className={styles.kpiRailWrap} aria-label="Exercise metrics">
-          <div className={styles.kpiRail}>
-            <article className={styles.kpiCard}>
-              <p className={styles.kpiLabel}>Sessions</p>
-              <p className={styles.kpiValue}>{data.sessionsCount}</p>
-            </article>
-            <article className={styles.kpiCard}>
-              <p className={styles.kpiLabel}>Sets</p>
-              <p className={styles.kpiValue}>{data.totalSetCount}</p>
-            </article>
-            <article className={styles.kpiCard}>
-              <p className={styles.kpiLabel}>Average Reps</p>
-              <p className={styles.kpiValue}>{data.averageRepsPerSet}</p>
-            </article>
-            <article className={styles.kpiCard}>
-              <p className={styles.kpiLabel}>Best weight</p>
-              <p className={styles.kpiValue}>{data.bestWeightLabel}</p>
-            </article>
+          <div className={styles.metaRow} aria-label="Exercise metrics">
+            {[
+              { label: "Sessions", value: data.sessionsCount },
+              { label: "Sets", value: data.totalSetCount },
+              { label: "Average reps", value: data.averageRepsPerSet },
+              { label: "Best weight", value: data.bestWeightLabel },
+            ].map((item) => (
+              <span key={item.label} className={styles.metaPill}>
+                <span className={styles.metaPillLabel}>{item.label}</span>
+                <span className={styles.metaPillValue}>{item.value}</span>
+              </span>
+            ))}
           </div>
         </section>
 

@@ -71,7 +71,7 @@ export const styles = {
   sidebarSecondaryAction:
     `inline-flex min-h-[2.36rem] cursor-pointer items-center gap-[0.55rem] overflow-hidden rounded-[0.5rem] border border-transparent bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--muted)] hover:border-[var(--dashboard-border)] hover:text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)] transition-[width,min-width,transform,border-color,background-color,color,box-shadow,padding,gap] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
   main:
-    "mx-auto flex w-full max-w-[92rem] flex-1 flex-col gap-[0.86rem] bg-[var(--bg)] px-[0.96rem] pt-[1rem] pb-[1.2rem] max-[760px]:px-[0.82rem] min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:overflow-y-auto min-[900px]:overscroll-contain min-[900px]:px-[1.18rem] min-[900px]:pt-[1.06rem] min-[900px]:pb-[1.3rem] [scrollbar-gutter:stable]",
+    "flex w-full min-w-0 flex-1 flex-col gap-[0.86rem] bg-[var(--bg)] px-[0.96rem] pt-[1rem] pb-[1.2rem] max-[760px]:px-[0.82rem] min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:overflow-y-auto min-[900px]:overscroll-contain min-[900px]:px-[1.18rem] min-[900px]:pt-[1.06rem] min-[900px]:pb-[1.3rem] [scrollbar-gutter:stable]",
   header:
     "flex items-start justify-between gap-[0.75rem] max-[760px]:items-center",
   headerText: "flex min-w-0 flex-col",
@@ -189,7 +189,7 @@ export const styles = {
     `relative inline-flex h-[1.95rem] w-[1.95rem] cursor-pointer items-center justify-center rounded-full border border-[var(--dashboard-border)] bg-[var(--toggle-bg)] text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:bg-[var(--toggle-active-bg)] data-[active=true]:text-[var(--toggle-active-icon)] ${buttonMotion} ${buttonFocusRing}`,
   workoutFilterToggleIcon: "h-[0.92rem] w-[0.92rem]",
   workoutFilterPopover:
-    `${dashboardBorder} ${dashboardSurface} z-50 flex w-[min(35rem,calc(100vw-1.64rem))] max-w-[calc(100vw-1.64rem)] flex-col gap-[0.72rem] !bg-[var(--bg)] p-[0.82rem] shadow-[0_18px_44px_color-mix(in_srgb,#000_14%,transparent)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out max-[760px]:max-h-[min(34rem,calc(100dvh-1.64rem))] max-[760px]:overflow-y-auto`,
+    `${dashboardBorder} ${dashboardSurface} z-50 flex w-[min(35rem,calc(100vw-1.64rem))] max-w-[calc(100vw-1.64rem)] flex-col gap-[0.72rem] !bg-[var(--bg)] p-[0.82rem] shadow-[0_14px_32px_color-mix(in_srgb,#000_12%,transparent)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out max-[760px]:max-h-[min(34rem,calc(100dvh-1.64rem))] max-[760px]:overflow-y-auto`,
   workoutFilterGrid:
     "grid grid-cols-1 gap-[0.62rem] min-[620px]:grid-cols-2 min-[1080px]:grid-cols-4",
   workoutFilterField:
@@ -262,7 +262,7 @@ export const styles = {
   avatarModalOverlay:
     `dashboard-theme-scope fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-[color-mix(in_srgb,var(--bg)_12%,transparent)] px-[0.78rem] py-[calc(0.78rem+env(safe-area-inset-bottom))] backdrop-blur-[8px] animate-[dashboard-modal-backdrop_180ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-backdrop-exit_160ms_cubic-bezier(0.4,0,1,1)_both] min-[720px]:p-[1rem] ${dashboardBorder}`,
   avatarModal:
-    "my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-[46rem] flex-col gap-[1rem] overflow-y-auto rounded-[0.72rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[1.1rem] shadow-[0_18px_44px_color-mix(in_srgb,var(--text)_12%,transparent)] animate-[dashboard-modal-panel_220ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-panel-exit_160ms_cubic-bezier(0.4,0,1,1)_both] max-[520px]:p-[0.82rem]",
+    "my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-[46rem] flex-col gap-[1rem] overflow-y-auto rounded-[0.56rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[1.1rem] shadow-[0_14px_32px_color-mix(in_srgb,var(--text)_10%,transparent)] animate-[dashboard-modal-panel_220ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-panel-exit_160ms_cubic-bezier(0.4,0,1,1)_both] max-[520px]:p-[0.82rem]",
   avatarModalHead:
     "flex items-center justify-between gap-[0.75rem]",
   avatarModalTitle:

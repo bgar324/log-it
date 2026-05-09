@@ -24,16 +24,16 @@ type EmptyStateProps = {
 
 export function StatCard({ label, value, detail, className }: StatCardProps) {
   return (
-    <SurfaceCard className={cn("min-h-40", className)}>
-      <div className="flex h-full flex-col gap-4 px-5 py-5">
-        <p className="text-xs font-semibold text-[var(--app-text-subtle)]">
+    <SurfaceCard className={cn("min-h-[4.95rem]", className)}>
+      <div className="flex h-full flex-col gap-[0.28rem] px-[0.7rem] py-[0.62rem]">
+        <p className="text-[0.72rem] text-[var(--muted)]">
           {label}
         </p>
-        <p className="font-[var(--font-heading)] text-4xl leading-none tracking-[-0.03em] text-[var(--app-text)]">
+        <p className="font-[var(--font-heading)] text-[clamp(1.4rem,4.6vw,2rem)] leading-none tracking-[-0.03em] text-[var(--text)] font-[520]">
           {value}
         </p>
         {detail ? (
-          <p className="mt-auto text-sm leading-6 text-[var(--app-text-muted)]">
+          <p className="mt-auto text-[0.72rem] leading-[1.35] text-[var(--muted)]">
             {detail}
           </p>
         ) : null}
@@ -46,14 +46,14 @@ export function MetaPill({ label, value, className }: MetaPillProps) {
   return (
     <div
       className={cn(
-        "rounded-[22px] border border-[var(--app-border)] bg-[var(--app-accent-soft)] px-4 py-3",
+        "rounded-[0.5rem] border border-[var(--field-line)] bg-transparent px-[0.58rem] py-[0.52rem]",
         className,
       )}
     >
-      <p className="text-[11px] font-semibold text-[var(--app-text-subtle)]">
+      <p className="text-[0.67rem] text-[var(--muted)]">
         {label}
       </p>
-      <p className="mt-1 text-sm font-medium text-[var(--app-text)]">{value}</p>
+      <p className="mt-[0.1rem] text-[0.9rem] leading-[1.25] text-[color:color-mix(in_srgb,var(--text)_92%,var(--muted))]">{value}</p>
     </div>
   );
 }
@@ -67,19 +67,19 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "rounded-[28px] border border-dashed border-[var(--app-border-strong)] bg-[var(--app-surface-soft)] px-6 py-8 text-center",
+        "rounded-[0.54rem] border border-dashed border-[color:color-mix(in_srgb,var(--text)_18%,transparent)] bg-transparent px-[1rem] py-[0.9rem] text-center",
         className,
       )}
     >
-      <p className="font-[var(--font-heading)] text-2xl tracking-[-0.03em] text-[var(--app-text)]">
+      <p className="font-[var(--font-heading)] text-[1rem] leading-[1.15] tracking-[-0.03em] text-[var(--text)] font-[560]">
         {title}
       </p>
       {description ? (
-        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--app-text-muted)]">
+        <p className="mx-auto mt-[0.3rem] max-w-xl text-[0.84rem] leading-[1.45] text-[var(--muted)]">
           {description}
         </p>
       ) : null}
-      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
+      {action ? <div className="mt-[0.7rem] flex justify-center">{action}</div> : null}
     </div>
   );
 }

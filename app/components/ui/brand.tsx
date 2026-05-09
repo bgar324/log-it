@@ -17,7 +17,7 @@ export function AppBrand({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-[0.42rem] text-[var(--app-text,var(--text))]",
+        "inline-flex items-center gap-[0.42rem] text-[var(--text)]",
         className,
       )}
     >

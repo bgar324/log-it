@@ -16,7 +16,7 @@ Typography should make training data easy to scan. Logit uses a quiet, direct, o
 
 - Do not use uppercase styling or all-caps labels for hierarchy.
 - Do not introduce alternate tracking values; use `-0.03em` for new/touched text.
-- Do not add eyebrow text as a reusable design pattern.
+- Muted title metadata is allowed for concrete context such as dates, workout types, last-hit status, or preview status. Keep it natural-case, untracked, and visually secondary; do not use uppercase eyebrow styling as a reusable hierarchy pattern.
 - Use size, weight, spacing, placement, muted color, and borders for hierarchy.
 - Keep display text sized to its container; compact panels and controls should not use hero-scale type.
 - Use natural casing: sentence case, title case, or user-entered casing as appropriate.
@@ -54,5 +54,4 @@ Use these as practical ranges, not a rigid token scale.
 
 ## Known Drift
 
-- Some existing classes and prop names still use `eyebrow` or `tracking-*`. Treat these as legacy drift when touching that surface.
 - Tailwind active-state overrides sometimes need `!` modifiers when base and state classes set the same property.
