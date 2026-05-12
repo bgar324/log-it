@@ -68,4 +68,4 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 ## Unknown
 
 - UI entry point for duplicate workout behavior needs verification; the API and service exist, but no current UI trigger was found during this audit.
-- The research pages document methodology, but there is no explicit product requirement that they remain public forever.
+- The research pages document methodology, including Ben split assistant behavior, but there is no explicit product requirement that they remain public forever.

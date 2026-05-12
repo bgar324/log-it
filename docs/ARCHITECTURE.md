@@ -17,7 +17,7 @@ Public or auth-aware pages:
 
 - `/`: redirects signed-in users to `/dashboard`; otherwise shows sign-in/register links.
 - `/auth`: sign-in/register UI backed by `/auth/signin`, `/auth/register`, and `/auth/signout`.
-- `/legal`, `/research`, `/research/*`: public legal/research content.
+- `/legal`, `/research`, `/research/*`: public legal/research content, including the Ben split assistant research page at `/research/ben`.
 - `/u/[username]`: public profile route; availability depends on the user's `publicProfileEnabled` setting.
 
 Protected product pages use `requireSessionUser()`:

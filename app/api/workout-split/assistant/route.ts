@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionUser } from "../../../../lib/auth";
 import {
+  buildSplitAssistantChatMessages,
   buildSplitAssistantTranscript,
   parseSplitAssistantDraftResponse,
   sanitizeSplitAssistantMessages,
@@ -209,9 +210,12 @@ async function* readGeminiSseText(response: Response) {
   }
 }
 
-async function streamAssistantReply(messages: SplitAssistantChatMessage[]) {
+async function streamAssistantReply(
+  messages: SplitAssistantChatMessage[],
+  draft?: RawWorkoutSplitPayload | null,
+) {
   if (getSplitAssistantProvider() === "anthropic") {
-    return streamAnthropicAssistantReply(messages);
+    return streamAnthropicAssistantReply(messages, draft);
   }
 
   const apiKey = getGeminiApiKey();
@@ -233,7 +237,7 @@ async function streamAssistantReply(messages: SplitAssistantChatMessage[]) {
         systemInstruction: {
           parts: [{ text: SPLIT_ASSISTANT_CHAT_SYSTEM_PROMPT }],
         },
-        contents: toGeminiContents(messages),
+        contents: toGeminiContents(buildSplitAssistantChatMessages(messages, draft)),
         generationConfig: {
           temperature: 0.65,
           maxOutputTokens: 420,
@@ -341,7 +345,10 @@ function toAnthropicMessages(messages: SplitAssistantChatMessage[]) {
   }));
 }
 
-async function* streamAnthropicAssistantReply(messages: SplitAssistantChatMessage[]) {
+async function* streamAnthropicAssistantReply(
+  messages: SplitAssistantChatMessage[],
+  draft?: RawWorkoutSplitPayload | null,
+) {
   const apiKey = getAnthropicApiKey();
 
   if (!apiKey) {
@@ -361,7 +368,7 @@ async function* streamAnthropicAssistantReply(messages: SplitAssistantChatMessag
       max_tokens: 420,
       temperature: 0.65,
       system: SPLIT_ASSISTANT_CHAT_SYSTEM_PROMPT,
-      messages: toAnthropicMessages(messages),
+      messages: toAnthropicMessages(buildSplitAssistantChatMessages(messages, draft)),
     }),
   });
 
@@ -510,7 +517,7 @@ export async function POST(request: NextRequest) {
       let assistantReply = "";
 
       try {
-        for await (const chunk of await streamAssistantReply(messages)) {
+        for await (const chunk of await streamAssistantReply(messages, body.draft ?? null)) {
           assistantReply += chunk;
           send("message_delta", { content: chunk });
         }

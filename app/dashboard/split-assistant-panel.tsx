@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Send, Sparkles } from "lucide-react";
+import { Bot, Calendar, Clock, Dumbbell, House, Send } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
 import { getSplitWeekdayLabel } from "@/lib/workout-splits/shared";
@@ -27,7 +27,33 @@ type AssistantEvent =
   | { event: "error"; data: { message?: unknown } };
 
 const assistantLandingPrompt =
-  "Tell me what getting started looks like right now.\nSchedule, gym access, and what you want to improve are enough to begin.";
+  "Tell Ben about your schedule, gym access, and what you want to improve.\nI'll handle the rest.";
+const assistantQuickIdeas = [
+  {
+    label: "Build me a 4-day beginner split",
+    prompt:
+      "I can train 4 days per week. Build me a beginner-friendly split for overall strength and muscle.",
+    Icon: Calendar,
+  },
+  {
+    label: "I only have 45 minutes",
+    prompt:
+      "I only have about 45 minutes per session. Build me a beginner split that fits that time.",
+    Icon: Clock,
+  },
+  {
+    label: "Upper body focus",
+    prompt:
+      "Build me a beginner split with extra upper body focus while still training legs enough.",
+    Icon: Dumbbell,
+  },
+  {
+    label: "Home gym only",
+    prompt:
+      "Build me a beginner weekly split for a home gym. Keep the exercise choices simple.",
+    Icon: House,
+  },
+];
 
 function createMessageId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -131,6 +157,7 @@ export function SplitAssistantPanel({
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRevisingDraft, setIsRevisingDraft] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
   const assistantMessageIdRef = useRef<string | null>(null);
@@ -219,6 +246,7 @@ export function SplitAssistantPanel({
       { id: assistantMessageId, role: "assistant", content: "" },
     ]);
     setInput("");
+    setIsRevisingDraft(false);
     setIsSending(true);
     let receivedAssistantContent = false;
     let receivedTerminalEvent = false;
@@ -317,21 +345,49 @@ export function SplitAssistantPanel({
     try {
       await onSaveGeneratedSplit(draft);
       onDraftChange(null);
+      setIsRevisingDraft(false);
       onBack();
     } finally {
       setIsSaving(false);
     }
   }
 
+  function handleReviseDraft() {
+    if (isRevisingDraft) {
+      setIsRevisingDraft(false);
+      return;
+    }
+
+    setIsRevisingDraft(true);
+    window.requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
+  function handleQuickIdea(prompt: string) {
+    setInput(prompt);
+    setIsRevisingDraft(false);
+    window.requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
   const composer = (
-    <form className={splitStyles.assistantComposer} onSubmit={handleSubmit}>
+    <form
+      className={`${splitStyles.assistantComposer} ${
+        isRevisingDraft ? splitStyles.assistantComposerRevising : ""
+      }`}
+      onSubmit={handleSubmit}
+    >
       <input
         ref={inputRef}
-        className={splitStyles.assistantInput}
+        className={`${splitStyles.assistantInput} ${
+          isRevisingDraft ? splitStyles.assistantInputRevising : ""
+        }`}
         value={input}
         onChange={(event) => setInput(event.target.value)}
-        placeholder="Tell Ben your schedule, goal, equipment, or what to change..."
-        aria-label="Message Ben"
+        placeholder={
+          isRevisingDraft
+            ? "Tell Ben what to change in this preview..."
+            : "Tell Ben your schedule, goal, equipment, or what to change..."
+        }
+        aria-label={isRevisingDraft ? "Message Ben with changes to the preview" : "Message Ben"}
       />
       <button
         type="submit"
@@ -346,7 +402,7 @@ export function SplitAssistantPanel({
   );
 
   return (
-    <section className={splitStyles.assistantPanel} aria-label="Ben split assistant">
+    <section className={splitStyles.assistantPanel} aria-label="split assistant">
       <div className={splitStyles.assistantHeader}>
         <div className={splitStyles.assistantTitleWrap}>
           <span className={splitStyles.assistantIconWrap} aria-hidden="true">
@@ -358,7 +414,27 @@ export function SplitAssistantPanel({
 
       {!hasStartedChat && !draft ? (
         <div className={splitStyles.assistantLanding}>
-          <p className={splitStyles.assistantLandingPrompt}>{assistantLandingPrompt}</p>
+          <div className={splitStyles.assistantLandingCopy}>
+            <h3 className={splitStyles.assistantLandingTitle}>Let&apos;s build your best weekly split.</h3>
+            <p className={splitStyles.assistantLandingPrompt}>{assistantLandingPrompt}</p>
+          </div>
+          <div className={splitStyles.assistantQuickIdeas} aria-label="Quick split ideas">
+            <div className={splitStyles.assistantQuickIdeaGrid}>
+              {assistantQuickIdeas.map(({ label, prompt, Icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  className={splitStyles.assistantQuickIdeaButton}
+                  onClick={() => handleQuickIdea(prompt)}
+                >
+                  <span className={splitStyles.assistantQuickIdeaIcon} aria-hidden="true">
+                    <Icon className={splitStyles.inlineIcon} strokeWidth={1.9} />
+                  </span>
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
           <div className={splitStyles.assistantLandingComposer}>{composer}</div>
         </div>
       ) : (
@@ -392,14 +468,12 @@ export function SplitAssistantPanel({
               <aside className={splitStyles.assistantDraft} aria-label="Generated split preview">
                 <div className={splitStyles.assistantDraftHeader}>
                   <div>
-                    <p className={splitStyles.assistantDraftLabel}>Preview</p>
                     <h3 className={splitStyles.assistantDraftTitle}>{draft.name}</h3>
                     <p className={splitStyles.assistantDraftMeta}>
                       {totalTrainingDays} days ·{" "}
                       {draft.days.reduce((sum, day) => sum + day.exercises.length, 0)} exercises
                     </p>
                   </div>
-                  <Sparkles className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
                 </div>
                 <div className={splitStyles.assistantDraftDays}>
                   {draft.days.map((day) => (
@@ -427,7 +501,7 @@ export function SplitAssistantPanel({
                 <div className={splitStyles.assistantDraftActions}>
                   <button
                     type="button"
-                    className={splitStyles.primaryButton}
+                    className={splitStyles.assistantDraftCreateButton}
                     onClick={handleCreateSplit}
                     disabled={isSaving}
                   >
@@ -435,10 +509,12 @@ export function SplitAssistantPanel({
                   </button>
                   <button
                     type="button"
-                    className={splitStyles.inlineButton}
-                    onClick={() => inputRef.current?.focus()}
+                    className={splitStyles.assistantDraftReviseButton}
+                    onClick={handleReviseDraft}
+                    aria-pressed={isRevisingDraft}
+                    data-active={isRevisingDraft}
                   >
-                    Revise
+                    {isRevisingDraft ? "Don't ask for changes" : "Ask for changes"}
                   </button>
                 </div>
               </aside>

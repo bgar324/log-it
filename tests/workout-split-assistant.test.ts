@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildSplitAssistantChatMessages,
   parseSplitAssistantDraftResponse,
   sanitizeSplitAssistantMessages,
 } from "../lib/workout-splits/assistant";
@@ -17,6 +18,28 @@ test("sanitizeSplitAssistantMessages keeps recent valid user and assistant messa
     { role: "user", content: "I have three days per week." },
     { role: "assistant", content: "Great. Any equipment?" },
   ]);
+});
+
+test("buildSplitAssistantChatMessages includes current draft context for revisions", () => {
+  const messages = buildSplitAssistantChatMessages(
+    [{ role: "user", content: "Make the upper day more arms focused." }],
+    {
+      name: "Current Split",
+      days: [
+        {
+          weekday: "MONDAY",
+          workoutType: "Upper",
+          exercises: [{ exerciseDisplayName: "Bench Press", sets: 3 }],
+        },
+      ],
+    },
+  );
+
+  assert.equal(messages.length, 2);
+  assert.equal(messages[0]?.role, "user");
+  assert.match(messages[0]?.content ?? "", /Current unsaved draft JSON/);
+  assert.match(messages[0]?.content ?? "", /Bench Press/);
+  assert.equal(messages[1]?.content, "Make the upper day more arms focused.");
 });
 
 test("parseSplitAssistantDraftResponse rejects malformed Gemini JSON", () => {

@@ -125,9 +125,21 @@ export const splitStyles = {
   assistantBodyWithDraft:
     "grid-cols-[minmax(0,1fr)_minmax(16rem,0.5fr)] max-[980px]:grid-cols-1",
   assistantLanding:
-    "flex min-h-0 flex-1 flex-col items-center justify-center gap-[1.6rem] px-[1rem] pb-[7vh]",
+    "flex min-h-0 flex-1 flex-col items-center justify-center gap-[1.35rem] px-[1rem] pb-[7vh]",
+  assistantLandingCopy:
+    "flex max-w-[46rem] flex-col items-center gap-[0.58rem] text-center",
+  assistantLandingTitle:
+    "m-0 text-[clamp(1.65rem,4.2vw,2.4rem)] leading-[1.05] tracking-[-0.03em] font-[620] text-[var(--text)]",
   assistantLandingPrompt:
-    "m-0 max-w-[42rem] text-center text-[1.26rem] leading-[1.35] tracking-[-0.03em] font-[520] text-[var(--text)] max-[700px]:text-[1.05rem] whitespace-pre-line",
+    "m-0 max-w-[42rem] text-center text-[1rem] leading-[1.4] tracking-[-0.01em] font-[430] text-[var(--muted)] max-[700px]:text-[0.92rem] whitespace-pre-line",
+  assistantQuickIdeas:
+    "flex w-full max-w-[54rem] flex-col items-center",
+  assistantQuickIdeaGrid:
+    "grid w-full grid-cols-4 gap-[0.58rem] max-[980px]:grid-cols-2 max-[520px]:grid-cols-1",
+  assistantQuickIdeaButton:
+    `inline-flex min-h-[3.7rem] cursor-pointer items-center justify-start gap-[0.62rem] rounded-[0.62rem] border border-[var(--split-border)] bg-transparent px-[0.72rem] py-[0.62rem] text-left text-[0.88rem] leading-[1.18] font-[520] text-[var(--text)] hover:border-[var(--split-border-strong)] max-[520px]:min-h-[3.2rem] ${buttonMotion} ${buttonFocusRing}`,
+  assistantQuickIdeaIcon:
+    "inline-flex h-[2.15rem] w-[2.15rem] shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--text)_6%,transparent)] text-[var(--text)]",
   assistantLandingComposer:
     "w-full max-w-[54rem]",
   assistantConversation:
@@ -162,10 +174,18 @@ export const splitStyles = {
     "grid grid-cols-[minmax(0,1fr)_3.4rem] items-baseline gap-[0.5rem] text-[0.72rem] leading-[1.25] [&_span]:min-w-0 [&_span]:truncate [&_span]:text-[var(--text)] [&_em]:text-right [&_em]:not-italic [&_em]:text-[var(--muted)]",
   assistantDraftActions:
     "mt-auto flex flex-wrap gap-[0.45rem]",
+  assistantDraftCreateButton:
+    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[#050505] bg-[#050505] px-[0.92rem] text-[0.84rem] text-white hover:border-[#050505] hover:bg-[#1f1f1f] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
+  assistantDraftReviseButton:
+    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--split-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--split-border-strong)] data-[active=true]:border-[var(--split-border-strong)] data-[active=true]:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] ${buttonMotion} ${buttonFocusRing}`,
   assistantComposer:
-    "relative flex items-center",
+    "relative flex items-center transition-[filter] duration-150",
+  assistantComposerRevising:
+    "",
   assistantInput:
-    "min-h-[2.95rem] min-w-0 flex-1 rounded-[0.54rem] border border-[var(--split-border)] bg-[var(--bg)] px-[0.9rem] pr-[3.1rem] text-[0.84rem] text-[var(--text)] shadow-none outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "min-h-[2.95rem] min-w-0 flex-1 rounded-[0.54rem] border border-[var(--split-border)] bg-[var(--bg)] px-[0.9rem] pr-[3.1rem] text-[0.84rem] text-[var(--text)] shadow-none outline-none transition-[border-color,background-color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+  assistantInputRevising:
+    "border-[#050505] bg-[color-mix(in_srgb,var(--text)_5%,var(--bg))] shadow-[inset_0_0_0_1px_color-mix(in_srgb,#050505_72%,transparent),0_0_0_3px_color-mix(in_srgb,var(--text)_6%,transparent)] placeholder:text-[color-mix(in_srgb,var(--text)_58%,transparent)]",
   assistantSendButton:
-    `absolute right-[0.36rem] top-1/2 inline-flex h-[2.18rem] w-[2.18rem] shrink-0 -translate-y-1/2 cursor-pointer items-center justify-center rounded-[0.56rem] border border-[var(--split-border)] bg-transparent text-[var(--text)] hover:border-[var(--split-border-strong)] disabled:cursor-not-allowed disabled:opacity-45 ${buttonMotion} ${buttonFocusRing}`,
+    `absolute bottom-[0.385rem] right-[0.36rem] inline-flex h-[2.18rem] w-[2.18rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.56rem] border border-[#050505] bg-[#050505] text-white transition-[border-color,background-color,color,box-shadow] duration-150 hover:border-[#050505] hover:bg-[#1f1f1f] disabled:cursor-not-allowed disabled:opacity-45 ${buttonFocusRing}`,
 } as const;

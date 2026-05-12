@@ -9,6 +9,22 @@ type DashboardWorkoutListProps = {
   weightUnit: WeightUnit;
 };
 
+const MOBILE_WORKOUT_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
+  month: "short",
+  day: "numeric",
+});
+
+function formatMobileWorkoutDate(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return dateKey;
+  }
+
+  return MOBILE_WORKOUT_DATE_FORMATTER.format(new Date(Date.UTC(year, month - 1, day)));
+}
+
 export function DashboardWorkoutList({
   rows,
   weightUnit,
@@ -26,7 +42,10 @@ export function DashboardWorkoutList({
           className={`${styles.metricRow} ${styles.workoutHistoryRow} ${styles.clickableMetricRow}`}
         >
           <span className={styles.metricMobileLabel} data-label="Date">
-            {workout.performedAtLabel}
+            <span className="max-[760px]:hidden">{workout.performedAtLabel}</span>
+            <span className="min-[761px]:hidden">
+              {formatMobileWorkoutDate(workout.performedAtDate)}
+            </span>
           </span>
           <div>
             <p className={styles.workoutSummaryLine}>

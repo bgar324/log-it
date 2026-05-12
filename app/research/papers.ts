@@ -1,4 +1,10 @@
 import {
+  BEN_SPLIT_ASSISTANT_CATEGORY,
+  BEN_SPLIT_ASSISTANT_SUMMARY,
+  BEN_SPLIT_ASSISTANT_TITLE,
+  BEN_SPLIT_ASSISTANT_UPDATED_AT,
+} from "./ben-split-assistant-paper";
+import {
   DASHBOARD_METRIC_DEFINITIONS_CATEGORY,
   DASHBOARD_METRIC_DEFINITIONS_SUMMARY,
   DASHBOARD_METRIC_DEFINITIONS_TITLE,
@@ -29,6 +35,13 @@ import {
 } from "./training-radar-paper";
 
 export const RESEARCH_PAPERS = [
+  {
+    href: "/research/ben",
+    category: BEN_SPLIT_ASSISTANT_CATEGORY,
+    title: BEN_SPLIT_ASSISTANT_TITLE,
+    updatedAt: BEN_SPLIT_ASSISTANT_UPDATED_AT,
+    summary: BEN_SPLIT_ASSISTANT_SUMMARY,
+  },
   {
     href: "/research/shp",
     category: "prediction model",

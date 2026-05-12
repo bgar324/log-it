@@ -140,6 +140,16 @@ export const styles = {
   calendarDayEmpty: "aspect-square rounded-[0.42rem] border border-transparent",
   searchInput:
     "h-[2.18rem] w-[clamp(9rem,34vw,14rem)] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.74rem] text-[0.84rem] text-[var(--text)] placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:h-[2.5rem] max-[760px]:w-full",
+  exerciseToolbar:
+    "flex min-w-0 items-center justify-end gap-[0.46rem] max-[760px]:w-full max-[760px]:flex-wrap max-[760px]:justify-start",
+  exerciseSortControls:
+    "relative inline-grid min-h-[2.18rem] shrink-0 grid-cols-2 overflow-hidden rounded-[0.74rem] border border-[var(--dashboard-border)] bg-transparent p-[0.08rem] max-[760px]:min-h-[2.5rem]",
+  exerciseSortIndicator:
+    "pointer-events-none absolute top-[0.08rem] bottom-[0.08rem] left-[0.08rem] z-0 w-[calc(50%-0.08rem)] rounded-[0.62rem] border border-[var(--dashboard-border)] bg-[var(--bg)] transition-transform duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] [[data-active-sort=sessions]_&]:translate-x-full",
+  exerciseSortButton:
+    `relative z-10 inline-flex min-w-[5.5rem] cursor-pointer items-center justify-center gap-[0.34rem] rounded-[0.62rem] border border-transparent bg-transparent px-[0.78rem] text-[0.86rem] text-[color-mix(in_srgb,var(--muted)_74%,transparent)] hover:text-[var(--text)] data-[active=true]:text-[var(--text)] max-[760px]:min-w-[calc(50vw-2.1rem)] max-[760px]:px-[0.64rem] ${buttonMotion} ${buttonFocusRing}`,
+  exerciseSortIcon:
+    "h-[0.92rem] w-[0.92rem] shrink-0",
   metricList:
     "mt-[0.66rem] flex flex-col gap-[0.36rem] overflow-x-visible min-[761px]:overflow-x-auto min-[761px]:[scrollbar-width:thin]",
   paginationRow:

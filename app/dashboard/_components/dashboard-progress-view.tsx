@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { daysAgoLabel } from "../dashboard-client.shared";
@@ -40,6 +41,9 @@ export function DashboardProgressView({
       maximumFractionDigits: 0,
     });
   }
+
+  const isRecentSort = state.exerciseSortMode.startsWith("recent");
+  const isSessionSort = state.exerciseSortMode.startsWith("sessions");
 
   if (error) {
     return (
@@ -86,14 +90,61 @@ export function DashboardProgressView({
       <section className={styles.panel}>
         <div className={styles.panelHead}>
           <h2 className={styles.panelTitle}>Exercises</h2>
-          <input
-            type="search"
-            value={state.exerciseSearch}
-            onChange={(event) => state.handleExerciseSearchChange(event.target.value)}
-            placeholder="Search exercise"
-            className={styles.searchInput}
-            aria-label="Search exercises"
-          />
+          <div className={styles.exerciseToolbar}>
+            <div
+              className={styles.exerciseSortControls}
+              data-active-sort={isSessionSort ? "sessions" : "recent"}
+              aria-label="Sort exercises"
+            >
+              <span className={styles.exerciseSortIndicator} aria-hidden="true" />
+              <button
+                type="button"
+                className={styles.exerciseSortButton}
+                data-active={isRecentSort}
+                onClick={state.toggleRecentSort}
+                aria-pressed={isRecentSort}
+                aria-label={
+                  state.exerciseSortMode === "recent-desc"
+                    ? "Sort exercises oldest first"
+                    : "Sort exercises newest first"
+                }
+              >
+                Recent
+                {state.exerciseSortMode === "recent-asc" ? (
+                  <ChevronUp className={styles.exerciseSortIcon} aria-hidden="true" strokeWidth={2} />
+                ) : (
+                  <ChevronDown className={styles.exerciseSortIcon} aria-hidden="true" strokeWidth={2} />
+                )}
+              </button>
+              <button
+                type="button"
+                className={styles.exerciseSortButton}
+                data-active={isSessionSort}
+                onClick={state.toggleSessionSort}
+                aria-pressed={isSessionSort}
+                aria-label={
+                  state.exerciseSortMode === "sessions-desc"
+                    ? "Sort exercises by fewest sessions"
+                    : "Sort exercises by most sessions"
+                }
+              >
+                Sessions
+                {state.exerciseSortMode === "sessions-asc" ? (
+                  <ChevronUp className={styles.exerciseSortIcon} aria-hidden="true" strokeWidth={2} />
+                ) : (
+                  <ChevronDown className={styles.exerciseSortIcon} aria-hidden="true" strokeWidth={2} />
+                )}
+              </button>
+            </div>
+            <input
+              type="search"
+              value={state.exerciseSearch}
+              onChange={(event) => state.handleExerciseSearchChange(event.target.value)}
+              placeholder="Search exercise"
+              className={styles.searchInput}
+              aria-label="Search exercises"
+            />
+          </div>
         </div>
         {state.filteredExercises.length > 0 ? (
           <>
@@ -111,7 +162,7 @@ export function DashboardProgressView({
                   <div>
                     <p className={styles.metricMain}>{exercise.name}</p>
                     <p className={styles.metricSubtle}>
-                      Last {exercise.lastPerformedAtLabel} · {daysAgoLabel(exercise.daysSinceLastHit)}
+                      {exercise.lastPerformedAtLabel} · {daysAgoLabel(exercise.daysSinceLastHit)}
                     </p>
                   </div>
                   <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Sessions">
