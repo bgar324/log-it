@@ -469,6 +469,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.95rem;
+  text-transform: lowercase;
 }
 
 .changelog-date {

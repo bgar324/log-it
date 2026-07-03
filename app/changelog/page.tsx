@@ -15,7 +15,6 @@ export default function ChangelogPage() {
           </div>
 
           <h1 className="title legal-title">changelog</h1>
-          <p className="legal-meta">What&apos;s new in logit</p>
 
           <article className="changelog-entry">
             <h2 className="changelog-date">July 3, 2026</h2>
