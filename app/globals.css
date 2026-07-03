@@ -452,6 +452,47 @@ a {
   line-height: 1.45;
 }
 
+.landing-footer {
+  margin-top: 0.28rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.landing-footer .tos {
+  margin: 0;
+}
+
+.changelog-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.changelog-date {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  color: var(--muted);
+}
+
+.changelog-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.changelog-group-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
 .legal-inline-link {
   color: var(--text);
   text-decoration: underline;

@@ -30,15 +30,22 @@ export default async function Home() {
             </Link>
           </div>
 
-          <p className="tos">
-            <Link href="/legal" className="legal-inline-link">
-              Terms of Conditions
-            </Link>
-            {" · "}
-            <Link href="/research" className="legal-inline-link">
-              Research
-            </Link>
-          </p>
+          <div className="landing-footer">
+            <p className="tos">
+              <Link href="/legal" className="legal-inline-link">
+                Terms of Conditions
+              </Link>
+              {" · "}
+              <Link href="/research" className="legal-inline-link">
+                Research
+              </Link>
+            </p>
+            <p className="tos">
+              <Link href="/changelog" className="legal-inline-link">
+                Changelog
+              </Link>
+            </p>
+          </div>
         </div>
       </section>
     </main>
