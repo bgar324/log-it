@@ -132,15 +132,17 @@ export const styles = {
     `min-h-[1.9rem] cursor-pointer rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent px-[0.58rem] text-[0.65rem] text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-[0.38] hover:enabled:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
   calendarWeekdayRow: "mt-[0.2rem] grid grid-cols-7 gap-[0.32rem]",
   calendarWeekday: "text-center text-[0.65rem] text-[var(--muted)]",
-  calendarGrid: "grid grid-cols-7 gap-[0.32rem]",
+  calendarGrid:
+    "grid grid-cols-7 gap-[0.32rem] min-[900px]:min-h-0 min-[900px]:flex-1 min-[900px]:[grid-auto-rows:minmax(2.1rem,1fr)]",
   calendarDay:
-    "relative flex aspect-square items-center justify-center rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--surface)] text-[color-mix(in_srgb,var(--text)_88%,var(--muted))]",
+    "relative flex aspect-square items-center justify-center rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--surface)] text-[color-mix(in_srgb,var(--text)_88%,var(--muted))] min-[900px]:aspect-auto min-[900px]:h-full",
   calendarDayActive:
     "!border-[var(--calendar-active-border)] !bg-[var(--calendar-active-bg)] text-[var(--text)]",
   calendarDayClickable:
     `cursor-pointer text-inherit no-underline hover:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
   calendarDayNumber: "text-[0.84rem] leading-none",
-  calendarDayEmpty: "aspect-square rounded-[0.42rem] border border-transparent",
+  calendarDayEmpty:
+    "aspect-square rounded-[0.42rem] border border-transparent min-[900px]:aspect-auto min-[900px]:h-full",
   searchInput:
     "h-[2.18rem] w-[clamp(9rem,34vw,14rem)] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.74rem] text-[0.84rem] text-[var(--text)] placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:h-[2.5rem] max-[760px]:w-full",
   exerciseToolbar:

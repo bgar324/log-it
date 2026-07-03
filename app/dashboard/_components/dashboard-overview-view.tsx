@@ -143,7 +143,7 @@ export function DashboardOverviewView({
           )}
         </section>
 
-        <section className={styles.panel}>
+        <section className={`${styles.panel} min-[900px]:flex min-[900px]:flex-col`}>
           <div className={styles.calendarHead}>
             <h2 className={styles.panelTitle}>Workout calendar</h2>
             <div className={styles.calendarNav}>
