@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../dashboard.styles";
 import type { DashboardProfileFormState } from "../_hooks/use-dashboard-profile-form";
+import { DashboardAccountSettings } from "./dashboard-account-settings";
 import { DashboardProfileAvatarEditor } from "./dashboard-profile-avatar-editor";
 
 type DashboardProfileViewProps = {
@@ -140,6 +141,7 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
         </div>
       </div>
 
+      <DashboardAccountSettings currentEmail={state.profile.email} />
     </section>
   );
 }

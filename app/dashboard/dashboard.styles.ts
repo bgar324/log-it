@@ -300,6 +300,22 @@ export const styles = {
     `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion} ${buttonFocusRing}`,
   profileSignOutButton:
     `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
+  accountBody:
+    "mt-[1.08rem] flex flex-col gap-[0.72rem] border-t border-[var(--dashboard-border)] pt-[1.08rem]",
+  accountSection: `${dashboardSurface} flex flex-col gap-[0.72rem] p-[1rem] max-[760px]:p-[0.82rem]`,
+  accountSectionTitle: "m-0 text-[0.94rem] tracking-[-0.03em] font-[560]",
+  accountSectionHint: "m-[0.16rem_0_0] text-[0.72rem] text-[var(--muted)]",
+  accountForm:
+    "grid min-w-0 grid-cols-1 gap-x-[1rem] gap-y-[0.72rem] min-[900px]:grid-cols-2",
+  accountActions: "flex justify-end max-[520px]:justify-stretch",
+  accountActionButton:
+    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[1rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[520px]:w-full ${buttonMotion} ${buttonFocusRing}`,
+  dangerSection:
+    `flex flex-col gap-[0.72rem] rounded-[0.54rem] border border-[color-mix(in_srgb,#b13d48_38%,transparent)] bg-[color-mix(in_srgb,#b13d48_5%,var(--bg))] p-[1rem] max-[760px]:p-[0.82rem]`,
+  dangerTitle:
+    "m-0 text-[0.94rem] tracking-[-0.03em] font-[560] text-[color-mix(in_srgb,#b13d48_82%,var(--text))]",
+  dangerButton:
+    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[color-mix(in_srgb,#b13d48_46%,transparent)] bg-transparent px-[1rem] text-[0.84rem] text-[color-mix(in_srgb,#b13d48_88%,var(--text))] hover:bg-[color-mix(in_srgb,#b13d48_12%,var(--bg))] disabled:cursor-not-allowed disabled:opacity-50 max-[520px]:w-full ${buttonMotion} ${buttonFocusRing}`,
   primaryButton:
     `inline-flex min-h-[2.34rem] cursor-pointer items-center justify-center gap-[0.38rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[760px]:min-h-[2.52rem] ${buttonMotion} ${buttonFocusRing}`,
   secondaryButton:
