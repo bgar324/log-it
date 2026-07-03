@@ -3,7 +3,7 @@
 import {
   ArrowUpDown,
   Clock,
-  Dumbbell,
+  Ellipsis,
   Loader2,
   Pause,
   Play,
@@ -216,7 +216,7 @@ export function WorkoutLoggerMobileActions({
             {formatRestClock(timer.remaining ?? 0)}
           </span>
         ) : (
-          <Dumbbell className={styles.mobileFabMainIcon} aria-hidden="true" strokeWidth={1.9} />
+          <Ellipsis className={styles.mobileFabMainIcon} aria-hidden="true" strokeWidth={1.9} />
         )}
       </button>
     </div>,
