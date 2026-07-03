@@ -56,7 +56,7 @@ export const styles = {
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
   restTimer: cn(
-    "flex flex-wrap items-center gap-[0.5rem] rounded-[0.54rem] border bg-transparent px-[0.7rem] py-[0.56rem]",
+    "flex flex-wrap items-center gap-[0.5rem] rounded-[0.54rem] border bg-transparent px-[0.7rem] py-[0.56rem] max-[619px]:hidden",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
     "data-[running=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)]",
   ),
@@ -326,6 +326,13 @@ export const styles = {
     "disabled:cursor-not-allowed disabled:opacity-[0.42]",
     "data-[active=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)] data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_8%,transparent)]",
   ),
+  mobileFabTimerBar: cn(
+    "absolute bottom-0 left-[calc(100%+0.62rem)] flex flex-row items-center gap-[0.48rem]",
+    "pointer-events-none opacity-0",
+    "transition-[opacity,transform] duration-200 ease-out",
+    "-translate-x-[0.48rem] data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:translate-x-0",
+  ),
+  mobileFabCountdown: "text-[0.84rem] font-[560] tabular-nums leading-none stroke-current",
   mobileFabIcon: "h-[1rem] w-[1rem] shrink-0 stroke-current",
   mobileFabIconSpin:
     "h-[1rem] w-[1rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
