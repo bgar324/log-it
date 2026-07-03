@@ -153,26 +153,28 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
               onChange={(event) => setCurrentPassword(event.target.value)}
             />
           </label>
-          <label className={styles.profileField}>
-            <span>New password</span>
-            <input
-              className={styles.profileInput}
-              type="password"
-              autoComplete="new-password"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-            />
-          </label>
-          <label className={styles.profileField}>
-            <span>Confirm new password</span>
-            <input
-              className={styles.profileInput}
-              type="password"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-            />
-          </label>
+          <div className={styles.accountFieldRow}>
+            <label className={styles.profileField}>
+              <span>New password</span>
+              <input
+                className={styles.profileInput}
+                type="password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+              />
+            </label>
+            <label className={styles.profileField}>
+              <span>Confirm new password</span>
+              <input
+                className={styles.profileInput}
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+              />
+            </label>
+          </div>
         </form>
         <div className={styles.accountActions}>
           <button

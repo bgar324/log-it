@@ -310,6 +310,8 @@ export const styles = {
   accountSectionTitle: "m-0 text-[0.94rem] tracking-[-0.03em] font-[560]",
   accountSectionHint: "m-[0.16rem_0_0] text-[0.72rem] text-[var(--muted)]",
   accountForm: "flex min-w-0 flex-col gap-[0.72rem]",
+  accountFieldRow:
+    "grid min-w-0 grid-cols-1 gap-x-[1rem] gap-y-[0.72rem] min-[900px]:grid-cols-2",
   accountActions: "flex justify-end max-[520px]:justify-stretch",
   accountActionButton:
     `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[1rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[520px]:w-full ${buttonMotion} ${buttonFocusRing}`,
