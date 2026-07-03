@@ -303,7 +303,7 @@ export const styles = {
   mobileFabRoot:
     "fixed bottom-[calc(0.95rem+env(safe-area-inset-bottom))] left-[0.95rem] z-[70] min-[620px]:hidden",
   mobileFabStack: cn(
-    "absolute bottom-[calc(100%+0.62rem)] left-0 flex flex-col-reverse gap-[0.48rem]",
+    "absolute bottom-[calc(100%+0.62rem)] left-0 flex w-[3.15rem] flex-col-reverse items-center gap-[0.48rem]",
     "pointer-events-none opacity-0",
     "transition-[opacity,transform] duration-200 ease-out",
     "translate-y-[0.48rem] data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:translate-y-0",
@@ -327,7 +327,7 @@ export const styles = {
     "data-[active=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)] data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_8%,transparent)]",
   ),
   mobileFabTimerBar: cn(
-    "absolute bottom-0 left-[calc(100%+0.62rem)] flex flex-row items-center gap-[0.48rem]",
+    "absolute inset-y-0 left-[calc(100%+0.62rem)] flex flex-row items-center gap-[0.48rem]",
     "pointer-events-none opacity-0",
     "transition-[opacity,transform] duration-200 ease-out",
     "-translate-x-[0.48rem] data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:translate-x-0",
