@@ -5,6 +5,7 @@ import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../dashboard.styles";
 import type { DashboardProfileFormState } from "../_hooks/use-dashboard-profile-form";
 import { DashboardAccountSettings } from "./dashboard-account-settings";
+import { DashboardDeleteAccount } from "./dashboard-delete-account";
 import { DashboardProfileAvatarEditor } from "./dashboard-profile-avatar-editor";
 
 type DashboardProfileViewProps = {
@@ -137,6 +138,8 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
                 </button>
               </form>
             </div>
+
+            <DashboardDeleteAccount username={state.profile.username} />
           </div>
         </div>
       </div>

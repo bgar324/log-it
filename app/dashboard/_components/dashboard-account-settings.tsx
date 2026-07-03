@@ -29,10 +29,6 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordPending, setPasswordPending] = useState(false);
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deletePending, setDeletePending] = useState(false);
-
   async function handleEmailSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (emailPending) return;
@@ -97,34 +93,6 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
     }
   }
 
-  async function handleDeleteSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    if (deletePending) return;
-
-    setDeletePending(true);
-    const toastId = toast.loading("Deleting account...");
-
-    try {
-      const response = await fetch("/api/profile/account", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword: deletePassword }),
-      });
-      const { ok, payload } = await readResponse(response);
-
-      if (!ok) {
-        throw new Error(payload?.error ?? "Unable to delete account.");
-      }
-
-      toast.success("Account deleted.", { id: toastId });
-      router.replace("/");
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to delete account.", { id: toastId });
-      setDeletePending(false);
-    }
-  }
-
   return (
     <div className={styles.accountBody}>
       <section className={styles.accountSection} aria-label="Change email">
@@ -185,7 +153,6 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
               onChange={(event) => setCurrentPassword(event.target.value)}
             />
           </label>
-          <span aria-hidden="true" className="hidden min-[900px]:block" />
           <label className={styles.profileField}>
             <span>New password</span>
             <input
@@ -218,61 +185,6 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
             Update password
           </button>
         </div>
-      </section>
-
-      <section className={styles.dangerSection} aria-label="Delete account">
-        <div>
-          <h3 className={styles.dangerTitle}>Delete account</h3>
-          <p className={styles.accountSectionHint}>
-            Permanently removes your account and all workouts, splits, and nutrition
-            data. This cannot be undone.
-          </p>
-        </div>
-
-        {deleteOpen ? (
-          <form className={styles.accountForm} onSubmit={handleDeleteSubmit}>
-            <label className={styles.profileField}>
-              <span>Confirm password</span>
-              <input
-                className={styles.profileInput}
-                type="password"
-                autoComplete="current-password"
-                value={deletePassword}
-                onChange={(event) => setDeletePassword(event.target.value)}
-              />
-            </label>
-            <div className={`${styles.accountActions} min-[900px]:col-span-2`}>
-              <button
-                type="button"
-                className={styles.accountActionButton}
-                onClick={() => {
-                  setDeleteOpen(false);
-                  setDeletePassword("");
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className={styles.dangerButton}
-                disabled={deletePending || deletePassword.length === 0}
-                aria-busy={deletePending}
-              >
-                Permanently delete
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className={styles.accountActions}>
-            <button
-              type="button"
-              className={styles.dangerButton}
-              onClick={() => setDeleteOpen(true)}
-            >
-              Delete account
-            </button>
-          </div>
-        )}
       </section>
     </div>
   );

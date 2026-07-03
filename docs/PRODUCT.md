@@ -6,7 +6,7 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 
 - Users register and sign in with username/password credentials.
 - First name, last name, email, username, preferred weight unit, public profile setting, and avatar are profile-level user data.
-- From the profile view users can change their email, change their password, and delete their account. All three require confirming the current password; deletion is permanent and removes all workouts, splits, and nutrition data. Username is not editable.
+- From the profile view users can change their email, change their password, and delete their account. Email and password changes require the current password; account deletion is confirmed in a modal by typing the account username. Deletion is permanent and removes all workouts, splits, and nutrition data. Username is not editable.
 - Signed-in users land on `/dashboard`.
 - The dashboard has five views: overview, workouts, progress, split, and profile.
 - Dashboard view switching updates the query string and lazily loads missing view data.

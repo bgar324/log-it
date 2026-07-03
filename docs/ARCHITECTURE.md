@@ -40,7 +40,7 @@ API routes:
 - `app/api/dashboard/today-plan/route.ts`: current split/day plan.
 - `app/api/nutrition/route.ts`: daily calorie/protein, BMR target, and body-weight tracker reads/writes.
 - `app/api/profile/route.ts` and `app/api/profile/avatar/route.ts`: profile settings and avatar.
-- `app/api/profile/password/route.ts`, `app/api/profile/email/route.ts`, `app/api/profile/account/route.ts`: account management. Each requires the current password. Password and email changes re-issue the session cookie; account deletion cascades all user data and clears the session.
+- `app/api/profile/password/route.ts`, `app/api/profile/email/route.ts`, `app/api/profile/account/route.ts`: account management. Password and email changes require the current password and re-issue the session cookie; account deletion requires typing the account username to confirm, cascades all user data, and clears the session.
 - `app/api/users/[username]/avatar/route.ts`: public avatar serving.
 
 ## Auth And Request Security

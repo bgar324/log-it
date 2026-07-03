@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { clearSessionCookie, getSessionUser, verifyPassword } from "@/lib/auth";
+import { clearSessionCookie, getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   getInvalidRequestOriginError,
@@ -29,26 +29,26 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Invalid request body." }, { status: 400 });
     }
 
-    const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
+    const confirmation = typeof body.username === "string" ? body.username.trim() : "";
 
-    if (!currentPassword) {
+    if (!confirmation) {
       return NextResponse.json(
-        { ok: false, error: "Enter your password to delete your account." },
+        { ok: false, error: "Type your username to delete your account." },
         { status: 400 },
       );
     }
 
     const account = await prisma.user.findUnique({
       where: { id: sessionUser.id },
-      select: { id: true, passwordHash: true },
+      select: { id: true, username: true },
     });
 
     if (!account) {
       return NextResponse.json({ ok: false, error: "Sign in required." }, { status: 401 });
     }
 
-    if (!(await verifyPassword(currentPassword, account.passwordHash))) {
-      return NextResponse.json({ ok: false, error: "Password is incorrect." }, { status: 400 });
+    if (confirmation.toLowerCase() !== account.username.toLowerCase()) {
+      return NextResponse.json({ ok: false, error: "Username does not match." }, { status: 400 });
     }
 
     // Cascades remove workouts, exercises, summaries, splits, nutrition, and
