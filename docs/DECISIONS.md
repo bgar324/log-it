@@ -4,7 +4,7 @@ This file records durable decisions visible in the codebase. Do not add speculat
 
 ## Persist Workout Weights In Pounds
 
-All workout set weights and workout totals are persisted as pounds (`weightLb`, `totalWeightLb`). User input/output respects `User.preferredWeightUnit`, but conversion happens at the boundaries through `lib/weight-unit*`.
+All workout set weights, workout totals, and body-weight tracker entries are persisted as pounds (`weightLb`, `totalWeightLb`). User input/output respects `User.preferredWeightUnit`, but conversion happens at the boundaries through `lib/weight-unit*`.
 
 ## Use Date-Only Workout Dates
 
@@ -45,3 +45,7 @@ The dashboard shell uses `?view=` for overview/workouts/progress/split/profile. 
 ## Keep UI Monochrome And Operational
 
 The product UI uses Geist, global `-0.03em` tracking, black/white theme variables, transparent panels, thin borders, compact controls, and natural-case text. See `docs/DESIGN_SYSTEM.md` and `docs/TYPOGRAPHY.md`.
+
+## Track Nutrition By Date
+
+Nutrition tracking uses one `NutritionEntry` per user and date for calorie/protein totals plus one optional `BodyWeightEntry` per user and date. BMR is a user-level calorie target used for daily and rolled-up chart comparisons.

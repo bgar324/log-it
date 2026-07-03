@@ -160,6 +160,7 @@ export async function duplicateWorkout(workoutId: string, userId: string) {
               select: {
                 reps: true,
                 weightLb: true,
+                durationSeconds: true,
               },
             },
           },
@@ -187,6 +188,7 @@ export async function duplicateWorkout(workoutId: string, userId: string) {
         sets: exercise.sets.map((set) => ({
           reps: set.reps,
           weightLb: toWeightLbString(set.weightLb),
+          durationSeconds: set.durationSeconds,
         })),
       })),
     };

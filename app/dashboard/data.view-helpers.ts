@@ -6,6 +6,7 @@ const DASHBOARD_VIEWS: DashboardView[] = [
   "dashboard",
   "workouts",
   "progress",
+  "nutrition",
   "split",
   "profile",
 ];
@@ -17,6 +18,10 @@ export function normalizeDashboardView(value: string | undefined): DashboardView
 
   if (value === "exercises" || value === "exercise") {
     return "progress";
+  }
+
+  if (value === "health") {
+    return "nutrition";
   }
 
   return DASHBOARD_VIEWS.includes(value as DashboardView)

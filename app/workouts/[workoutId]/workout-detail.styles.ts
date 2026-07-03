@@ -84,7 +84,7 @@ export const styles = {
     "border-t border-[color:color-mix(in_srgb,var(--text)_10%,transparent)] px-[0.2rem] py-[0.5rem] text-[0.81rem]",
   mobileSetList: "mt-[0.58rem] hidden flex-col gap-[0.42rem] max-[759px]:flex",
   mobileSetCard:
-    "grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-[0.52rem] rounded-[0.52rem] border border-[color:color-mix(in_srgb,var(--text)_10%,transparent)] px-[0.58rem] py-[0.52rem]",
+    "grid grid-cols-[3rem_minmax(0,1fr)_auto_auto] items-center gap-[0.52rem] rounded-[0.52rem] border border-[color:color-mix(in_srgb,var(--text)_10%,transparent)] px-[0.58rem] py-[0.52rem]",
   mobileSetCell: "flex min-w-0 flex-col gap-[0.14rem]",
   mobileSetNumber: "text-[0.84rem] font-[560] text-[var(--text)]",
   mobileSetMeta: "hidden text-[0.72rem] text-[var(--muted)]",

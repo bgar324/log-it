@@ -67,6 +67,7 @@ export default async function EditWorkoutPage({
               select: {
                 reps: true,
                 weightLb: true,
+                durationSeconds: true,
               },
             },
           },
@@ -92,6 +93,8 @@ export default async function EditWorkoutPage({
           toWeightNumber(setItem.weightLb),
           user.preferredWeightUnit,
         ),
+        usesBodyweight: setItem.weightLb === null,
+        durationSeconds: setItem.durationSeconds ? `${setItem.durationSeconds}` : "",
       })),
     })),
   };

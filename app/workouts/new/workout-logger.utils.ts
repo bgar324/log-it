@@ -6,6 +6,7 @@ export {
   hydrateExercisesFromSnapshot,
   parseStoredWorkoutDraft,
   persistWorkoutDraft,
+  sanitizeDurationInput,
   sanitizeRepsInput,
   sanitizeWeightInput,
   toSafeString,

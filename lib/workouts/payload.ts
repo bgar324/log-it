@@ -15,6 +15,8 @@ type RawWorkoutSet = {
   reps?: unknown;
   weight?: unknown;
   weightLb?: unknown;
+  duration?: unknown;
+  durationSeconds?: unknown;
 };
 
 type RawWorkoutExercise = {
@@ -34,6 +36,7 @@ export type RawWorkoutPayload = {
 export type ParsedSet = {
   reps: number;
   weightLb: string | null;
+  durationSeconds: number | null;
 };
 
 export type ParsedExercise = {
@@ -73,6 +76,26 @@ export function parsePositiveInt(value: unknown): number | null {
     const parsed = Number.parseInt(value.trim(), 10);
 
     if (Number.isInteger(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function parseNonNegativeInt(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number.parseInt(value.trim(), 10);
+
+    if (Number.isInteger(parsed) && parsed >= 0) {
       return parsed;
     }
   }
@@ -139,9 +162,12 @@ export function normalizeWorkoutPayload(raw: RawWorkoutPayload) {
     const sets: ParsedSet[] = [];
 
     for (const rawSet of item.sets as RawWorkoutSet[]) {
-      const reps = parsePositiveInt(rawSet?.reps);
+      const reps = parseNonNegativeInt(rawSet?.reps) ?? 0;
+      const durationSeconds = parsePositiveInt(
+        rawSet?.durationSeconds ?? rawSet?.duration,
+      );
 
-      if (!reps) {
+      if (reps <= 0 && !durationSeconds) {
         continue;
       }
 
@@ -152,13 +178,14 @@ export function normalizeWorkoutPayload(raw: RawWorkoutPayload) {
       sets.push({
         reps,
         weightLb: rawWeight === null ? null : toWeightLbString(rawWeight, weightUnit),
+        durationSeconds,
       });
     }
 
     if (sets.length === 0) {
       return {
         error:
-          `Exercise "${name}" needs at least one valid set with reps.` as const,
+          `Exercise "${name}" needs at least one valid set with reps or time.` as const,
       };
     }
 

@@ -14,15 +14,17 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 - Users can inspect workouts and exercise-specific history.
 - Users can save multiple weekly splits and choose one active split to seed the workout logger.
 - Users can ask Ben for beginner split advice from the split view. The assistant gathers schedule, experience, equipment, session length, goals, focus areas, and avoidances before drafting a previewable split.
+- Users can track today's calories, protein, BMR target, and body weight from the Nutrition dashboard view, with recent-day history and day/week/month calorie charts.
 - Public profiles exist at `/u/[username]` when enabled.
 
 ## Workout Logging
 
-- Workout payloads require at least one exercise with a name and at least one valid set with reps.
+- Workout payloads require at least one exercise with a name and at least one valid set with reps or time.
 - Empty workout titles become `Untitled workout`.
 - Exercise names and workout types are normalized before persistence.
-- Set reps must be positive integers.
+- Set reps must be positive integers unless the set has positive time in seconds.
 - Weights are optional per set; provided weights must be non-negative decimals.
+- Blank workout weight is treated as bodyweight; the logger exposes an explicit bodyweight control for bodyweight movements.
 - The logger accepts the user's preferred unit, but the database stores weights in pounds.
 - New workout drafts are autosaved client-side in create mode.
 - Duplicate workout creates a new workout dated to the current Pacific date and the API returns the new workout id.
@@ -48,6 +50,7 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 ## Progress And History
 
 - The app tracks total workout counts, weekly activity, recent sessions, workout calendar summaries, personal best style summaries, exercise summary rows, and progress series.
+- The Nutrition view stores per-day calorie/protein totals, compares daily calories against the user's BMR target, keeps daily body-weight entries, and offers day/week/month calorie chart ranges.
 - Exercise detail pages resolve route keys back to normalized exercise names and fall back to scanning workout exercises when needed.
 - Exercise summaries and calendar day counts are maintained as read models, with source-table fallback paths in some loaders.
 
@@ -60,6 +63,7 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 ## Durable Constraints
 
 - Persist all workout weights in pounds.
+- Persist body-weight tracker entries in pounds.
 - Treat workout dates as date-only values.
 - Use Pacific time for current-day workout behavior.
 - Keep product UI dense and operational.

@@ -74,9 +74,9 @@ export function WorkoutLoggerMetaCard({
 
   return (
     <>
-      <section className={styles.card}>
+      <section className={`${styles.card} ${!showEditFields ? styles.mobileHiddenCard : ""}`}>
         <div className={showEditFields ? styles.metaGrid : styles.singleMetaField}>
-          <div className={styles.field}>
+          <div className={`${styles.field} ${styles.workoutTitleField}`}>
             <label className={styles.label} htmlFor="workout-title">
               Workout title
             </label>

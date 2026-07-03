@@ -8,6 +8,7 @@ import { styles } from "./dashboard.styles";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
 import { normalizeDashboardView } from "./data.view-helpers";
 import { DashboardOverviewView } from "./_components/dashboard-overview-view";
+import { DashboardNutritionPanel } from "./_components/dashboard-nutrition-panel";
 import { DashboardProfileView } from "./_components/dashboard-profile-view";
 import { DashboardProgressView } from "./_components/dashboard-progress-view";
 import { DashboardShell } from "./_components/dashboard-shell";
@@ -58,6 +59,12 @@ function getDashboardViewData(view: DashboardView, data: DashboardClientData): D
     return {
       exercises: data.exercises,
       progress: data.progress,
+    };
+  }
+
+  if (view === "nutrition") {
+    return {
+      nutrition: data.nutrition,
     };
   }
 
@@ -290,6 +297,17 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     });
   }
 
+  function handleNutritionChange(nutrition: DashboardClientData["nutrition"]) {
+    setDashboardData((current) => {
+      const nextData = {
+        ...current,
+        nutrition,
+      };
+      dashboardViewDataCache.set("nutrition", getDashboardViewData("nutrition", nextData));
+      return nextData;
+    });
+  }
+
   return (
     <DashboardShell
       activeView={activeView}
@@ -367,6 +385,31 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
             error={activeViewError}
             onRetry={() => void loadViewData("progress", { showError: true, showLoading: true })}
           />
+        </div>
+      ) : null}
+
+      {activeView === "nutrition" ? (
+        <div key="nutrition" className="view-transition-shell">
+          {activeViewError ? (
+            <div className={styles.panel} role="alert">
+              <p className={styles.empty}>{activeViewError}</p>
+              <button
+                type="button"
+                className={styles.workoutFilterReset}
+                onClick={() => void loadViewData("nutrition", { showError: true, showLoading: true })}
+              >
+                Retry
+              </button>
+            </div>
+          ) : activeViewIsLoading && !loadedViews.has("nutrition") ? (
+            <DashboardViewSkeleton kind="nutrition" />
+          ) : (
+            <DashboardNutritionPanel
+              nutrition={dashboardData.nutrition}
+              weightUnit={displayWeightUnit}
+              onNutritionChange={handleNutritionChange}
+            />
+          )}
         </div>
       ) : null}
 

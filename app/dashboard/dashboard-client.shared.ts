@@ -3,6 +3,7 @@ import {
   ChartLine,
   Dumbbell,
   LayoutDashboard,
+  Utensils,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
@@ -23,6 +24,7 @@ export const NAV_ITEMS: Array<{
   { view: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { view: "workouts", label: "Workouts", icon: Dumbbell },
   { view: "progress", label: "Progress", icon: ChartLine },
+  { view: "nutrition", label: "Nutrition", icon: Utensils },
   { view: "split", label: "Split", icon: Blocks },
 ];
 
@@ -30,6 +32,7 @@ export const VIEW_TITLES: Record<DashboardView, string> = {
   dashboard: "Dashboard",
   workouts: "Workouts",
   progress: "Progress",
+  nutrition: "Nutrition",
   split: "Split",
   profile: "Profile",
 };

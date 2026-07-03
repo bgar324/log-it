@@ -2,6 +2,13 @@
 
 Logit uses a restrained monochrome product UI. The working surfaces are dense, direct, and built for repeated scanning of workout data.
 
+## Platform And Feel
+
+- Logit is a mobile-first product that should feel like a native app, not a responsive website. A dedicated native app costs money we are not spending yet, so the web build stands in for it and must carry the app feel.
+- Design phone-first, then add desktop density on top. The primary viewport is a phone; desktop is the enhancement.
+- Favor app-like affordances: full-width primary actions on small screens, comfortable touch targets, `[touch-action:manipulation]`, correct `inputMode` on inputs, and short, subtle motion. Avoid web-page tells like tiny tap targets, hover-only affordances, and desktop-only layouts.
+- When phone feel and desktop polish conflict, favor the phone.
+
 ## Foundations
 
 - Global CSS lives in `app/globals.css`.

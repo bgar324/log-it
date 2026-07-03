@@ -55,10 +55,12 @@ export const styles = {
     "flex flex-col gap-[0.6rem] rounded-[0.54rem] border bg-transparent p-[0.78rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
+  mobileHiddenCard: "max-[619px]:hidden",
   metaGrid:
     "grid gap-[0.55rem] min-[620px]:grid-cols-2 min-[860px]:grid-cols-3",
   singleMetaField: "grid gap-[0.55rem]",
   field: "flex flex-col gap-[0.22rem]",
+  workoutTitleField: "max-[619px]:hidden",
   fieldInputRow: "flex items-stretch gap-[0.55rem]",
   fieldActionButton: cn(
     iconButtonBase,
@@ -82,7 +84,7 @@ export const styles = {
   confirmBody:
     "m-0 text-[0.84rem] leading-[1.45] text-[color:color-mix(in_srgb,var(--text)_92%,var(--muted))]",
   confirmActions:
-    "flex flex-col gap-[0.5rem] pt-[0.1rem] min-[620px]:flex-row min-[620px]:justify-end",
+    "grid grid-cols-2 gap-[0.5rem] pt-[0.1rem]",
   confirmSecondaryButton: cn(
     "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center rounded-[0.56rem] border bg-[var(--bg)] px-[0.9rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
@@ -91,7 +93,7 @@ export const styles = {
     "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
     "disabled:cursor-not-allowed disabled:opacity-[0.45]",
-    "min-[620px]:min-w-[9.5rem]",
+    "w-full",
   ),
   confirmPrimaryButton: cn(
     "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center rounded-[0.56rem] border px-[0.9rem]",
@@ -103,7 +105,7 @@ export const styles = {
     "hover:border-[color:color-mix(in_srgb,#b13d48_46%,transparent)]",
     "hover:bg-[color:color-mix(in_srgb,#b13d48_14%,var(--bg))]",
     "disabled:cursor-not-allowed disabled:opacity-[0.45]",
-    "min-[620px]:min-w-[9.5rem]",
+    "w-full",
   ),
   label: "text-[0.68rem] text-[var(--muted)]",
   input: inputBase,
@@ -150,22 +152,13 @@ export const styles = {
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
     "transition-[border-color,background-color,transform,box-shadow]",
   ),
-  exerciseCardDragging: cn(
-    "border-[color:color-mix(in_srgb,var(--text)_18%,transparent)]",
-    "bg-[var(--bg)] [box-shadow:0_10px_22px_color-mix(in_srgb,#000_10%,transparent)]",
-    "scale-[0.99]",
-  ),
-  exerciseCardDropTarget: cn(
-    "border-[color:color-mix(in_srgb,var(--text)_28%,transparent)]",
-    "bg-[var(--bg)]",
-  ),
   exerciseHead: "flex items-center justify-between gap-[0.55rem]",
   exerciseHeading: "flex min-w-0 flex-1 items-center gap-[0.48rem]",
+  exerciseHeadActions: "flex shrink-0 items-center gap-[0.34rem]",
   exerciseNameInput: "min-h-[2.05rem] h-[2.05rem] min-w-0 flex-1 rounded-[0.45rem] px-[0.74rem]",
   exerciseTitle: "",
   exerciseMeta: "mt-[0.12rem] text-[0.72rem] text-[var(--muted)]",
   iconButton: iconButtonBase,
-  dragHandle: "shrink-0 cursor-grab active:cursor-grabbing",
   icon: "h-4 w-4 shrink-0 stroke-current",
   inlineRow: "block",
   searchResults: cn(
@@ -234,15 +227,14 @@ export const styles = {
   spinningIcon: "h-[0.85rem] w-[0.85rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
   setsStack: "flex flex-col gap-[0.58rem] overflow-x-visible py-[6px]",
   setRow: cn(
-    "grid grid-cols-2 items-start gap-[0.6rem] rounded-[0.54rem] border bg-transparent p-[0.72rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
-    "min-[620px]:grid-cols-[auto_minmax(4.8rem,0.95fr)_minmax(4.8rem,0.85fr)_auto]",
+    "grid grid-cols-[1.72rem_minmax(5.4rem,1fr)_minmax(4.25rem,0.72fr)_minmax(4.05rem,0.7fr)_2.35rem] items-center gap-[0.34rem] bg-transparent",
+    "max-[380px]:grid-cols-[1.55rem_minmax(4.85rem,1fr)_minmax(3.7rem,0.7fr)_minmax(3.55rem,0.66fr)_2.25rem] max-[380px]:gap-[0.26rem]",
+    "min-[620px]:grid-cols-[auto_minmax(5.8rem,0.95fr)_minmax(4.8rem,0.72fr)_minmax(4.8rem,0.72fr)_auto]",
     "min-[620px]:items-center min-[620px]:gap-[0.5rem]",
-    "min-[620px]:rounded-none min-[620px]:border-none min-[620px]:bg-transparent min-[620px]:p-0",
   ),
   setRowHeader: cn(
     "hidden",
-    "min-[620px]:grid min-[620px]:grid-cols-[auto_minmax(4.8rem,0.95fr)_minmax(4.8rem,0.85fr)_auto]",
+    "min-[620px]:grid min-[620px]:grid-cols-[auto_minmax(5.8rem,0.95fr)_minmax(4.8rem,0.72fr)_minmax(4.8rem,0.72fr)_auto]",
     "min-[620px]:items-center min-[620px]:gap-[0.5rem]",
     "min-[620px]:bg-transparent min-[620px]:px-[0.1rem] min-[620px]:pb-0 min-[620px]:pt-0",
     "min-[620px]:mb-[2px]",
@@ -250,18 +242,34 @@ export const styles = {
   setHeadLabel:
     "whitespace-nowrap text-[0.64rem] text-[var(--muted)]",
   setNumber: cn(
-    "order-1 m-0 text-[0.78rem] font-[560] text-[var(--muted)]",
+    "order-1 m-0 text-center text-[0.72rem] font-[560] text-[var(--muted)]",
     "min-[620px]:min-w-[1.4rem] min-[620px]:text-center",
     "min-[620px]:text-[0.72rem] min-[620px]:font-normal",
   ),
   setField: "min-w-0 flex flex-col gap-[0.3rem] min-[620px]:gap-0",
-  setFieldWeight: "order-3 min-[620px]:order-2",
-  setFieldReps: "order-4 min-[620px]:order-3",
+  setFieldWeight: "order-2",
+  setFieldReps: "order-3",
+  setFieldDuration: "order-4",
   setFieldLabel:
-    "text-[0.64rem] text-[var(--muted)] min-[620px]:hidden",
+    "sr-only min-[620px]:not-sr-only min-[620px]:text-[0.64rem] min-[620px]:text-[var(--muted)]",
+  setInput:
+    "min-h-[2.22rem] rounded-[0.44rem] px-[0.5rem] py-[0.44rem] text-[0.82rem] disabled:opacity-100 max-[380px]:px-[0.42rem] max-[380px]:text-[0.78rem]",
+  setWeightControl: "relative block min-w-0",
+  setWeightInput: "pr-[2.55rem] max-[380px]:pr-[2.18rem]",
+  bodyweightButton: cn(
+    "absolute bottom-[0.24rem] right-[0.24rem] top-[0.24rem] inline-flex w-[2.04rem] cursor-pointer items-center justify-center rounded-[0.34rem] border bg-transparent",
+    "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
+    "text-[0.64rem] font-[560] text-[var(--muted)] [touch-action:manipulation]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
+    "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)] hover:text-[var(--text)]",
+    "data-[active=true]:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)] data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)]",
+    "max-[380px]:w-[1.76rem] max-[380px]:text-[0.58rem]",
+  ),
   setRemoveButton:
-    "order-2 !h-[2.55rem] !w-[2.55rem] self-start justify-self-end !rounded-[0.52rem] min-[620px]:order-4",
+    "order-5 !h-[2.22rem] !w-[2.22rem] self-center justify-self-end !rounded-[0.44rem] max-[380px]:!h-[2.14rem] max-[380px]:!w-[2.14rem]",
   setActions: "flex w-full min-[620px]:justify-end [&>button]:w-full",
+  desktopOnlyAction: "max-[619px]:hidden",
   secondaryButton: cn(
     "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center gap-[0.44rem] rounded-[0.56rem] border bg-[var(--bg)] px-[0.85rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
@@ -272,4 +280,63 @@ export const styles = {
   ),
   saveButton:
     "inline-flex min-h-[2.95rem] w-full cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.58rem] border-0 bg-[var(--button-bg)] px-[0.95rem] text-[0.92rem] text-[var(--button-text)] [touch-action:manipulation] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 transition-[transform,filter,box-shadow] duration-150 hover:brightness-[0.98] active:translate-y-[1px] disabled:cursor-progress disabled:opacity-70",
+  mobileFabRoot:
+    "fixed bottom-[calc(0.95rem+env(safe-area-inset-bottom))] left-[0.95rem] z-[70] min-[620px]:hidden",
+  mobileFabStack: cn(
+    "absolute bottom-[calc(100%+0.62rem)] left-0 flex flex-col-reverse gap-[0.48rem]",
+    "pointer-events-none opacity-0",
+    "transition-[opacity,transform] duration-200 ease-out",
+    "translate-y-[0.48rem] data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:translate-y-0",
+  ),
+  mobileFabButton: cn(
+    "inline-flex h-[3.15rem] w-[3.15rem] cursor-pointer items-center justify-center rounded-full border",
+    "border-[color:color-mix(in_srgb,var(--button-text)_18%,transparent)]",
+    "bg-[var(--button-bg)] text-[var(--button-text)] [touch-action:manipulation]",
+    "shadow-[0_12px_26px_color-mix(in_srgb,#000_22%,transparent)]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,filter,box-shadow] duration-200 active:translate-y-[1px]",
+  ),
+  mobileFabAction: cn(
+    "inline-flex h-[2.78rem] w-[2.78rem] cursor-pointer items-center justify-center rounded-full border",
+    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)] text-[var(--text)] [touch-action:manipulation]",
+    "shadow-[0_10px_22px_color-mix(in_srgb,#000_16%,transparent)]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
+    "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
+    "disabled:cursor-not-allowed disabled:opacity-[0.42]",
+    "data-[active=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)] data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_8%,transparent)]",
+  ),
+  mobileFabIcon: "h-[1rem] w-[1rem] shrink-0 stroke-current",
+  mobileFabIconSpin:
+    "h-[1rem] w-[1rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
+  mobileFabMainIcon: "h-[1.08rem] w-[1.08rem] shrink-0 stroke-current",
+  reorderOverlay:
+    "fixed inset-0 z-[90] flex items-end justify-center p-[0.78rem] pb-[calc(0.78rem+env(safe-area-inset-bottom))] min-[620px]:items-center min-[620px]:p-[1rem]",
+  reorderBackdrop:
+    "absolute inset-0 cursor-default border-0 bg-[color:color-mix(in_srgb,#000_28%,transparent)] p-0 backdrop-blur-[8px]",
+  reorderDialog: cn(
+    "relative z-[1] flex w-full max-w-[28rem] flex-col gap-[0.68rem] rounded-[0.68rem] border bg-[var(--bg)] p-[0.82rem]",
+    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
+    "shadow-[0_18px_42px_color-mix(in_srgb,#000_20%,transparent)]",
+  ),
+  reorderHeader: "flex items-start justify-between gap-[0.7rem]",
+  reorderList:
+    "flex max-h-[min(58dvh,28rem)] flex-col gap-[0.45rem] overflow-y-auto py-[0.1rem]",
+  reorderItem: cn(
+    "flex min-h-[3.2rem] items-center justify-between gap-[0.65rem] rounded-[0.56rem] border bg-[var(--field-bg)] px-[0.66rem] py-[0.52rem]",
+    "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
+    "transition-[transform,border-color,background-color,box-shadow] duration-150",
+    "data-[dragging=true]:scale-[0.99] data-[dragging=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)] data-[dragging=true]:bg-[var(--bg)] data-[dragging=true]:shadow-[0_12px_24px_color-mix(in_srgb,#000_14%,transparent)]",
+  ),
+  reorderItemText: "min-w-0 flex-1",
+  reorderItemTitle:
+    "m-0 truncate text-[0.9rem] font-[520] leading-[1.2] text-[var(--text)]",
+  reorderItemMeta: "m-0 mt-[0.14rem] text-[0.72rem] text-[var(--muted)]",
+  reorderDragHandle: cn(
+    "inline-flex h-[2.35rem] w-[2.35rem] shrink-0 cursor-grab items-center justify-center rounded-[0.5rem] border bg-[var(--bg)] text-[var(--muted)] [touch-action:none]",
+    "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "active:cursor-grabbing",
+  ),
+  reorderActions: "grid grid-cols-2 gap-[0.5rem]",
 } as const;

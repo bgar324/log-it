@@ -145,6 +145,8 @@ export function buildWorkoutLoggerInitialDataFromSplit(
       sets: Array.from({ length: exercise.sets }, () => ({
         reps: "",
         weightLb: "",
+        usesBodyweight: false,
+        durationSeconds: "",
       })),
     })),
   };

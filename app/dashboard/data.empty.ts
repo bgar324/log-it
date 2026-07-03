@@ -12,7 +12,7 @@ import {
   startOfDatabaseWeek,
 } from "@/lib/workout-utils";
 import type { DashboardClientData } from "./dashboard-types";
-import { monthKey, monthLabel, WEEKDAY_SHORT_FORMATTER } from "./data.formatters";
+import { dateKey, monthKey, monthLabel, WEEKDAY_SHORT_FORMATTER } from "./data.formatters";
 
 export function createDefaultSplit(): WorkoutSplitTemplate {
   return {
@@ -26,6 +26,26 @@ export function createDefaultSplit(): WorkoutSplitTemplate {
       workoutTypeSlug: normalizeWorkoutTypeSlug(REST_DAY_WORKOUT_TYPE),
       exercises: [],
     })),
+  };
+}
+
+function createEmptyNutrition(now: Date): DashboardClientData["nutrition"] {
+  return {
+    bmrCalories: null,
+    today: {
+      dateKey: dateKey(now),
+      label: "Today",
+      calories: 0,
+      proteinGrams: 0,
+      bodyWeight: null,
+      calorieDeltaFromBmr: null,
+    },
+    history: [],
+    chart: {
+      day: [],
+      week: [],
+      month: [],
+    },
   };
 }
 
@@ -73,6 +93,7 @@ export function createEmptyDashboardData(
         latestMonthKey: emptyMonthKey,
       },
     },
+    nutrition: createEmptyNutrition(now),
     workouts: [],
     workoutMonths: [],
     exercises: [],
@@ -145,5 +166,6 @@ export function createEmptyOverview(user: DashboardClientData["user"]) {
       },
     },
     workouts: [],
+    nutrition: createEmptyNutrition(now),
   };
 }

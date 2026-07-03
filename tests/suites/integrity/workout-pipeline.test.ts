@@ -95,5 +95,7 @@ test("workout parsing strips corrupt rows but preserves a valid workout core", (
   assert.equal(parsed.title, "Untitled workout");
   assert.equal(parsed.weightUnit, "LB");
   assert.equal(parsed.exercises.length, 1);
-  assert.deepEqual(parsed.exercises[0]?.sets, [{ reps: 5, weightLb: "135" }]);
+  assert.deepEqual(parsed.exercises[0]?.sets, [
+    { reps: 5, weightLb: "135", durationSeconds: null },
+  ]);
 });

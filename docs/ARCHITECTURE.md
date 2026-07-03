@@ -38,6 +38,7 @@ API routes:
 - `app/api/workout-split/assistant/route.ts`: bounded split assistant. Requires a signed-in user and trusted mutation origin, accepts recent browser-held chat messages plus an optional unsaved draft, streams app-level SSE events (`message_delta`, `message_done`, `split_draft`, `limit_reached`, `error`), and can return a normalized unsaved split draft. Gemini is the default provider with `GEMINI_API_KEY` and `gemini-2.5-flash-lite`; `SPLIT_ASSISTANT_PROVIDER=anthropic` switches to Anthropic with `ANTHROPIC_API_KEY` and `claude-haiku-4-5-20251001`; `SPLIT_ASSISTANT_MODEL` overrides the provider default.
 - `app/api/dashboard/view-data/route.ts`: lazy dashboard view data.
 - `app/api/dashboard/today-plan/route.ts`: current split/day plan.
+- `app/api/nutrition/route.ts`: daily calorie/protein, BMR target, and body-weight tracker reads/writes.
 - `app/api/profile/route.ts` and `app/api/profile/avatar/route.ts`: profile settings and avatar.
 - `app/api/users/[username]/avatar/route.ts`: public avatar serving.
 
@@ -56,14 +57,16 @@ Source of truth is `prisma/schema.prisma`.
 - `User`: account, profile, public profile setting, avatar bytes/mime/update timestamp, preferred weight unit, and relations.
 - `WorkoutLog`: workout header, date-only `performedAt`, optional workout type/slug, status, total stored volume in pounds, and exercises.
 - `WorkoutExercise`: ordered exercise rows inside a workout; can link to canonical `Exercise`.
-- `WorkoutSet`: ordered sets with reps and nullable `weightLb`.
+- `WorkoutSet`: ordered sets with reps, nullable `weightLb`, and optional `durationSeconds` for timed work.
+- `NutritionEntry`: per-user, per-date calorie and protein totals.
+- `BodyWeightEntry`: per-user, per-date body-weight logs stored in pounds and converted at input/output boundaries.
 - `Exercise`: per-user canonical exercise names keyed by normalized name.
 - `ExerciseSummary`: per-user read model for exercise history.
 - `WorkoutCalendarDay`: per-user read model for workout counts by date.
 - `WorkoutSplit`, `WorkoutSplitDay`, `WorkoutSplitExercise`: saved weekly split templates, one row per weekday inside each saved split, ordered exercises per split day. Multiple splits can belong to a user; `WorkoutSplit.isActive` marks the split used by logger/dashboard behavior. The schema indexes `[userId, isActive]` and `[userId, updatedAt]`.
 - `SplitAssistantUsage`: per-user, per-Pacific-date counter for generated split drafts. It enforces the daily assistant draft cap without storing chat transcripts.
 
-Cascade behavior is part of the model: deleting a user deletes workouts, exercises, summaries, calendar days, and split data; deleting workout logs deletes nested exercises and sets.
+Cascade behavior is part of the model: deleting a user deletes workouts, exercises, summaries, calendar days, split data, nutrition entries, and body-weight entries; deleting workout logs deletes nested exercises and sets.
 
 ## Workout Write Flow
 
@@ -81,6 +84,7 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 - `syncWorkoutReadModels()` incrementally syncs affected exercise names and performed dates.
 - `ensureWorkoutReadModels()` / `rebuildWorkoutReadModelsForUser()` are available for rebuild paths.
 - Dashboard and split data use `unstable_cache` with user-scoped cache tags from `lib/cache-tags.ts`.
+- Nutrition view data uses a user-scoped cache tag and is invalidated after nutrition writes.
 - The split dashboard payload includes the active split as `split` and the saved split library as `splits`.
 - The split assistant keeps chat state client-side for v1. Generated drafts are advisory and unsaved until the user explicitly creates a split through the normal split save API. Draft parsing lives in `lib/workout-splits/assistant.ts`, normalizes incomplete weeks to rest days, clamps generated set counts, accepts simple generated weekday labels such as `Day 1`, and rejects duplicate weekdays.
 - `app/dashboard/split-assistant-panel.tsx` owns the split assistant UI. It renders assistant markdown for basic emphasis/bullets, shows generated day/exercise previews, and clears accepted drafts after `saveGeneratedWorkoutSplit()` creates a real split through `PUT /api/workout-split`.
@@ -92,7 +96,7 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 
 - Workout dates are date-only database dates (`@db.Date`), handled by `lib/workout-date-utils.ts`.
 - Current-date behavior uses Pacific time through `getCurrentPacificDate()`.
-- Persisted workout weights and totals are stored in pounds. Profile display can be `LB` or `KG`.
+- Persisted workout weights, workout totals, and body-weight tracker entries are stored in pounds. Profile display can be `LB` or `KG`.
 - Unit conversion and formatting live in `lib/weight-unit*`.
 
 ## Tests

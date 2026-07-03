@@ -15,6 +15,7 @@ import {
 type WorkoutDraftStoragePayload = WorkoutDraftSnapshot & {
   weightUnit: WeightUnit;
 };
+type WorkoutDraftSnapshotExercise = WorkoutDraftSnapshot["exercises"][number];
 
 const INITIAL_EXERCISE_ID = "exercise-1";
 const INITIAL_SET_ID = "set-1";
@@ -24,6 +25,8 @@ export function createSetDraft(id: string): ExerciseSetDraft {
     id,
     reps: "",
     weightLb: "",
+    usesBodyweight: false,
+    durationSeconds: "",
   };
 }
 
@@ -72,6 +75,10 @@ export function sanitizeRepsInput(value: string) {
   return value.replace(/\D/g, "");
 }
 
+export function sanitizeDurationInput(value: string) {
+  return value.replace(/\D/g, "");
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -93,8 +100,10 @@ export function createWorkoutDraftSnapshot(
           ? exercise.sets.map((setItem) => ({
               reps: sanitizeRepsInput(toSafeString(setItem.reps)),
               weightLb: sanitizeWeightInput(toSafeString(setItem.weightLb)),
+              usesBodyweight: setItem.usesBodyweight,
+              durationSeconds: sanitizeDurationInput(toSafeString(setItem.durationSeconds)),
             }))
-          : [{ reps: "", weightLb: "" }],
+          : [{ reps: "", weightLb: "", usesBodyweight: false, durationSeconds: "" }],
     })),
   };
 }
@@ -154,7 +163,7 @@ export function parseStoredWorkoutDraft(
 
     const rawExercises = Array.isArray(parsed.exercises) ? parsed.exercises : [];
     const exercises = rawExercises
-      .map((rawExercise) => {
+      .map((rawExercise): WorkoutDraftSnapshotExercise | null => {
         if (!isRecord(rawExercise)) {
           return null;
         }
@@ -170,31 +179,31 @@ export function parseStoredWorkoutDraft(
             return {
               reps: sanitizeRepsInput(toSafeString(rawSet.reps)),
               weightLb: sanitizeWeightInput(toSafeString(rawSet.weightLb)),
+              usesBodyweight: rawSet.usesBodyweight === true,
+              durationSeconds: sanitizeDurationInput(toSafeString(rawSet.durationSeconds)),
             };
           })
           .filter(
             (
               setItem,
-            ): setItem is { reps: string; weightLb: string } =>
+            ): setItem is { reps: string; weightLb: string; usesBodyweight: boolean; durationSeconds: string } =>
               setItem !== null,
           );
 
         return {
           name,
-          sets: sets.length > 0 ? sets : [{ reps: "", weightLb: "" }],
+          sets: sets.length > 0 ? sets : [{ reps: "", weightLb: "", usesBodyweight: false, durationSeconds: "" }],
         };
       })
       .filter(
-        (
-          exercise,
-        ): exercise is WorkoutDraftSnapshot["exercises"][number] =>
+        (exercise): exercise is WorkoutDraftSnapshotExercise =>
           exercise !== null,
       );
 
     if (exercises.length === 0) {
       exercises.push({
         name: "",
-        sets: [{ reps: "", weightLb: "" }],
+        sets: [{ reps: "", weightLb: "", usesBodyweight: false, durationSeconds: "" }],
       });
     }
 
@@ -222,6 +231,8 @@ export function hydrateExercisesFromSnapshot(
         id: `set-${setCounter}`,
         reps: setItem.reps,
         weightLb: setItem.weightLb,
+        usesBodyweight: setItem.usesBodyweight === true,
+        durationSeconds: setItem.durationSeconds,
       };
     }),
   }));

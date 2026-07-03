@@ -89,6 +89,28 @@ test("normalizeWorkoutPayload rejects exercises without valid sets", () => {
   });
 
   assert.deepEqual(parsed, {
-    error: 'Exercise "Row" needs at least one valid set with reps.',
+    error: 'Exercise "Row" needs at least one valid set with reps or time.',
   });
+});
+
+test("normalizeWorkoutPayload accepts time-only sets", () => {
+  const value = expectParsedWorkout(
+    normalizeWorkoutPayload({
+      title: "Core",
+      workoutType: "Core",
+      performedAt: "2026-03-08",
+      weightUnit: "LB",
+      exercises: [
+        {
+          name: "Plank",
+          sets: [{ reps: "", durationSeconds: "60" }],
+        },
+      ],
+    }),
+  );
+
+  assert.deepEqual(value.exercises[0]?.sets, [
+    { reps: 0, weightLb: null, durationSeconds: 60 },
+  ]);
+  assert.equal(computeWorkoutTotalWeightLb(value).toString(), "0");
 });

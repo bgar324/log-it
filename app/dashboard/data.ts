@@ -8,6 +8,7 @@ export {
 } from "./data.shared";
 export {
   loadDashboardViewData,
+  loadNutritionPageData,
   loadOverviewPageData,
   loadProgressPageData,
   loadSplitPageData,

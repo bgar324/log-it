@@ -44,7 +44,14 @@ test("createWorkout writes a nested workout payload and returns read-model sync 
         name: string;
         normalizedName: string;
         order: number;
-        sets: { create: Array<{ order: number; reps: number; weightLb: string | null }> };
+        sets: {
+          create: Array<{
+            order: number;
+            reps: number;
+            weightLb: string | null;
+            durationSeconds: number | null;
+          }>;
+        };
       }>;
     };
   };
@@ -60,8 +67,8 @@ test("createWorkout writes a nested workout payload and returns read-model sync 
       order: 1,
       sets: {
         create: [
-          { order: 1, reps: 6, weightLb: "160" },
-          { order: 2, reps: 7, weightLb: "135" },
+          { order: 1, reps: 6, weightLb: "160", durationSeconds: null },
+          { order: 2, reps: 7, weightLb: "135", durationSeconds: null },
         ],
       },
     },
@@ -70,7 +77,7 @@ test("createWorkout writes a nested workout payload and returns read-model sync 
       normalizedName: "pull up",
       order: 2,
       sets: {
-        create: [{ order: 1, reps: 10, weightLb: null }],
+        create: [{ order: 1, reps: 10, weightLb: null, durationSeconds: null }],
       },
     },
   ]);

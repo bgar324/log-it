@@ -2,6 +2,8 @@ export type ExerciseSetDraft = {
   id: string;
   reps: string;
   weightLb: string;
+  usesBodyweight: boolean;
+  durationSeconds: string;
 };
 
 export type ExerciseDraft = {
@@ -64,6 +66,8 @@ export type WorkoutDraftSnapshot = {
     sets: Array<{
       reps: string;
       weightLb: string;
+      usesBodyweight?: boolean;
+      durationSeconds: string;
     }>;
   }>;
 };

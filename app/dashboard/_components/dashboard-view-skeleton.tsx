@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { splitStyles } from "../split-system.styles";
 
 type DashboardViewSkeletonProps = {
-  kind: "dashboard" | "workouts" | "progress" | "split";
+  kind: "dashboard" | "workouts" | "progress" | "nutrition" | "split";
 };
 
 function SkeletonLine({
@@ -178,6 +178,77 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
           <div className={styles.skeletonMetricList}>
             {Array.from({ length: 5 }, (_, index) => (
               <ExerciseRowSkeleton key={index} />
+            ))}
+          </div>
+        </section>
+      </>
+    );
+  }
+
+  if (kind === "nutrition") {
+    return (
+      <>
+        <p className="sr-only" role="status">
+          Loading nutrition
+        </p>
+        <section className={`${styles.kpiGrid} ${styles.progressKpiGrid}`} aria-hidden="true">
+          {Array.from({ length: 4 }, (_, index) => (
+            <article key={index} className={styles.skeletonKpiCard}>
+              <SkeletonLine className="h-[0.72rem] w-[5.4rem]" />
+              <SkeletonLine className="h-[1.7rem] w-[5.8rem]" />
+              {index === 2 ? <SkeletonLine className="h-[0.68rem] w-[4.6rem]" /> : null}
+            </article>
+          ))}
+        </section>
+
+        <section className={styles.skeletonPanel} aria-hidden="true">
+          <div>
+            <SkeletonLine className="h-[1rem] w-[3.2rem]" />
+            <SkeletonLine className="mt-[0.28rem] h-[0.72rem] w-[12rem]" />
+          </div>
+          <div className={styles.nutritionForm}>
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className={styles.nutritionField}>
+                <SkeletonLine className="h-[0.7rem] w-[4.8rem]" />
+                <SkeletonLine className="h-[2.6rem] w-full rounded-[0.42rem] max-[760px]:h-[2.75rem]" />
+              </div>
+            ))}
+          </div>
+          <div className={styles.nutritionFormActions}>
+            <SkeletonLine className="h-[2.6rem] w-[7rem] rounded-[0.48rem] max-[520px]:w-full max-[760px]:h-[2.75rem]" />
+          </div>
+        </section>
+
+        <section className={styles.chartPanel} aria-hidden="true">
+          <div className={styles.nutritionChartHead}>
+            <SkeletonLine className="h-[1rem] w-[8rem]" />
+            <SkeletonLine className="h-[2.12rem] w-[12.6rem] rounded-[0.68rem] max-[520px]:w-full" />
+          </div>
+          <div className={styles.nutritionChartFrame}>
+            <SkeletonLine className="h-full w-full" />
+          </div>
+        </section>
+
+        <section className={styles.skeletonPanel} aria-hidden="true">
+          <SkeletonLine className="h-[1rem] w-[4.8rem]" />
+          <div className={styles.skeletonMetricList}>
+            <div className={`${styles.metricHeader} ${styles.nutritionRow}`}>
+              {Array.from({ length: 5 }, (_, index) => (
+                <SkeletonLine key={index} className="h-[0.62rem] w-[4rem]" />
+              ))}
+            </div>
+            {Array.from({ length: 6 }, (_, index) => (
+              <div key={index} className={`${styles.metricRow} ${styles.nutritionRow}`}>
+                <SkeletonLine className="h-[0.82rem] w-[3.6rem]" />
+                <SkeletonLine className={`${styles.nutritionDesktopStat} h-[0.82rem] w-[3.4rem]`} />
+                <SkeletonLine className={`${styles.nutritionDesktopStat} h-[0.82rem] w-[2.6rem]`} />
+                <SkeletonLine className={`${styles.nutritionDesktopStat} h-[0.82rem] w-[3.8rem]`} />
+                <SkeletonLine className={`${styles.nutritionDesktopStat} h-[0.82rem] w-[3rem]`} />
+                <span className={styles.nutritionMobileStats} aria-hidden="true">
+                  <SkeletonLine className="h-[0.82rem] w-[7rem]" />
+                  <SkeletonLine className="h-[0.72rem] w-[5.6rem]" />
+                </span>
+              </div>
             ))}
           </div>
         </section>

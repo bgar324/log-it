@@ -2,7 +2,7 @@
 
 import { Loader2, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import { BackButton } from "@/app/components/back-button";
 import { ThemeToggle } from "@/app/components/theme-toggle";
@@ -11,6 +11,8 @@ import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
 import { getWeightUnitLabel, type WeightUnit } from "@/lib/weight-unit";
 import { WorkoutLoggerExerciseCard } from "./_components/workout-logger-exercise-card";
 import { WorkoutLoggerMetaCard } from "./_components/workout-logger-meta-card";
+import { WorkoutLoggerMobileActions } from "./_components/workout-logger-mobile-actions";
+import { WorkoutLoggerReorderDialog } from "./_components/workout-logger-reorder-dialog";
 import { useWorkoutLoggerDraft } from "./_hooks/use-workout-logger-draft";
 import { useWorkoutLoggerInsights } from "./_hooks/use-workout-logger-insights";
 import { styles } from "./workout-logger.styles";
@@ -51,6 +53,8 @@ export function WorkoutLogger({
   const weightUnitLabel = getWeightUnitLabel(weightUnit);
   const weightUnitName = weightUnit === "KG" ? "kilograms" : "pounds";
   const [isSaving, setIsSaving] = useState(false);
+  const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
+  const formId = useId();
   const {
     clearAll,
     clearPendingLookup: clearPendingSuggestionLookup,
@@ -236,7 +240,7 @@ export function WorkoutLogger({
           </div>
         </header>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form id={formId} className={styles.form} onSubmit={handleSubmit}>
           <WorkoutLoggerMetaCard
             title={draft.title}
             performedAt={draft.performedAt}
@@ -257,11 +261,6 @@ export function WorkoutLogger({
                 key={exercise.id}
                 exercise={exercise}
                 exerciseIndex={exerciseIndex}
-                isDragging={draft.draggingExerciseIndex === exerciseIndex}
-                isDropTarget={
-                  draft.dropTargetExerciseIndex === exerciseIndex &&
-                  draft.draggingExerciseIndex !== exerciseIndex
-                }
                 canRemoveExercise={draft.exercises.length > 1}
                 searchResults={exerciseSearchResultsById[exercise.id] ?? []}
                 insightState={exerciseInsightById[exercise.id]}
@@ -282,12 +281,6 @@ export function WorkoutLogger({
                 onExerciseNameFocus={(value) =>
                   handleExerciseNameFocus(exercise.id, value)
                 }
-                onExerciseDragStart={() =>
-                  draft.startDraggingExercise(exerciseIndex)
-                }
-                onExerciseDragOver={() => draft.dragOverExercise(exerciseIndex)}
-                onExerciseDrop={() => draft.dropExerciseAt(exerciseIndex)}
-                onExerciseDragEnd={draft.endExerciseDrag}
                 onRemoveExercise={() => handleRemoveExercise(exercise.id)}
                 onRemoveSet={(setId) => draft.removeSet(exercise.id, setId)}
                 onUpdateSet={(setId, field, value) =>
@@ -298,7 +291,7 @@ export function WorkoutLogger({
 
             <button
               type="button"
-              className={styles.secondaryButton}
+              className={`${styles.secondaryButton} ${styles.desktopOnlyAction}`}
               onClick={draft.addExercise}
             >
               <Plus
@@ -312,7 +305,7 @@ export function WorkoutLogger({
 
           <button
             type="submit"
-            className={styles.saveButton}
+            className={`${styles.saveButton} ${styles.desktopOnlyAction}`}
             disabled={isSaving}
           >
             {isSaving ? (
@@ -335,6 +328,26 @@ export function WorkoutLogger({
               </>
             )}
           </button>
+
+          <WorkoutLoggerMobileActions
+            addExerciseLabel="Add another exercise"
+            formId={formId}
+            isSaving={isSaving}
+            reorderDisabled={draft.exercises.length < 2}
+            submitLabel={submitLabel}
+            onAddExercise={draft.addExercise}
+            onOpenReorder={() => setIsReorderDialogOpen(true)}
+          />
+
+          <WorkoutLoggerReorderDialog
+            exercises={draft.exercises}
+            isOpen={isReorderDialogOpen}
+            onCancel={() => setIsReorderDialogOpen(false)}
+            onSave={(orderedExerciseIds) => {
+              draft.reorderExercisesById(orderedExerciseIds);
+              setIsReorderDialogOpen(false);
+            }}
+          />
         </form>
       </section>
     </main>

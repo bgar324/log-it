@@ -9,7 +9,7 @@ const dashboardSurface =
 const headerActionBase = cn(
   "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] rounded-full border px-[0.72rem]",
   "border-[var(--dashboard-border)] bg-transparent text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
-  "max-[760px]:w-[2.3rem] max-[760px]:min-w-[2.3rem] max-[760px]:px-0",
+  "max-[760px]:h-[2.3rem] max-[760px]:min-h-[2.3rem] max-[760px]:w-[2.3rem] max-[760px]:min-w-[2.3rem] max-[760px]:px-0",
   "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
 );
@@ -220,6 +220,38 @@ export const styles = {
     "grid grid-cols-1 gap-[0.56rem] min-[900px]:grid-cols-2",
   chartPanel: `${dashboardSurface} p-[0.82rem]`,
   chartFrame: "mt-[0.52rem] h-[15rem] w-full",
+  nutritionSummaryMeta:
+    "m-[0.14rem_0_0] truncate text-[0.68rem] text-[var(--muted)]",
+  nutritionForm:
+    "grid grid-cols-2 gap-[0.52rem] min-[760px]:grid-cols-4 max-[420px]:grid-cols-1",
+  nutritionField:
+    "flex min-w-0 flex-col gap-[0.28rem] text-[0.7rem] text-[var(--muted)]",
+  nutritionInput:
+    "min-h-[2.6rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.9rem] text-[var(--text)] outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.75rem]",
+  nutritionFormActions:
+    "mt-[0.72rem] flex justify-end max-[520px]:mt-[0.62rem]",
+  nutritionSaveButton:
+    `inline-flex min-h-[2.6rem] cursor-pointer items-center justify-center gap-[0.4rem] rounded-[0.48rem] border border-[var(--dashboard-border)] bg-transparent px-[1.1rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-progress disabled:opacity-50 max-[520px]:w-full max-[760px]:min-h-[2.75rem] ${buttonMotion} ${buttonFocusRing}`,
+  nutritionButtonIcon:
+    "h-[0.86rem] w-[0.86rem] shrink-0 stroke-current",
+  nutritionChartHead:
+    "flex flex-wrap items-center justify-between gap-[0.55rem] max-[520px]:items-stretch",
+  nutritionSegments:
+    "relative inline-grid min-h-[2.12rem] grid-cols-3 overflow-hidden rounded-[0.68rem] border border-[var(--dashboard-border)] bg-transparent p-[0.08rem] max-[520px]:w-full",
+  nutritionSegmentButton:
+    `inline-flex min-w-[4.1rem] cursor-pointer items-center justify-center rounded-[0.56rem] border border-transparent bg-transparent px-[0.58rem] text-[0.76rem] text-[var(--muted)] hover:text-[var(--text)] data-[active=true]:border-[var(--dashboard-border)] data-[active=true]:text-[var(--text)] max-[520px]:min-w-0 ${buttonMotion} ${buttonFocusRing}`,
+  nutritionChartFrame:
+    "mt-[0.52rem] h-[14rem] w-full",
+  nutritionRow:
+    "grid-cols-[minmax(0,1fr)_repeat(4,minmax(0,0.9fr))] min-[761px]:w-[max(100%,40rem)] max-[760px]:grid-cols-[minmax(0,1fr)_auto] max-[760px]:items-center max-[760px]:gap-x-[0.62rem]",
+  nutritionDesktopStat:
+    "min-w-0 max-[760px]:hidden",
+  nutritionMobileStats:
+    "hidden min-w-0 text-right max-[760px]:flex max-[760px]:flex-col max-[760px]:gap-[0.12rem] max-[760px]:whitespace-nowrap",
+  nutritionMobileStatPrimary:
+    "text-[0.84rem] text-[var(--text)]",
+  nutritionMobileStatSecondary:
+    "text-[0.72rem] text-[var(--muted)]",
   profilePanel:
     "w-full",
   profileBody:

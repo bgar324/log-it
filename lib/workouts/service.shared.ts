@@ -50,6 +50,7 @@ export function createNestedWorkoutExercisePayload(payload: ParsedWorkout) {
         order: setIndex + 1,
         reps: setInput.reps,
         weightLb: setInput.weightLb,
+        durationSeconds: setInput.durationSeconds,
       })),
     },
   }));

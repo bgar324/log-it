@@ -27,7 +27,7 @@ test("updateWorkout replaces exercises through a nested update and includes old 
       {
         name: "Incline Press",
         normalizedName: "incline press",
-        sets: [{ reps: 8, weightLb: "95" }],
+        sets: [{ reps: 8, weightLb: "95", durationSeconds: null }],
       },
     ],
   };
@@ -84,7 +84,7 @@ test("updateWorkout replaces exercises through a nested update and includes old 
       normalizedName: "incline press",
       order: 1,
       sets: {
-        create: [{ order: 1, reps: 8, weightLb: "95" }],
+        create: [{ order: 1, reps: 8, weightLb: "95", durationSeconds: null }],
       },
     },
   ]);

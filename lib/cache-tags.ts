@@ -5,3 +5,7 @@ export function getWorkoutDataTag(userId: string) {
 export function getSplitDataTag(userId: string) {
   return `split-data:${userId}`;
 }
+
+export function getNutritionDataTag(userId: string) {
+  return `nutrition-data:${userId}`;
+}

@@ -27,7 +27,7 @@ test("duplicateWorkout clones the source workout into a nested create payload", 
         {
           name: "Bench Press",
           normalizedName: "",
-          sets: [{ reps: 5, weightLb: 225 }],
+          sets: [{ reps: 5, weightLb: 225, durationSeconds: 45 }],
         },
       ],
     };
@@ -50,7 +50,7 @@ test("duplicateWorkout clones the source workout into a nested create payload", 
     exercises: {
       create: Array<{
         normalizedName: string;
-        sets: { create: Array<{ weightLb: string | null }> };
+        sets: { create: Array<{ weightLb: string | null; durationSeconds: number | null }> };
       }>;
     };
   };
@@ -64,6 +64,6 @@ test("duplicateWorkout clones the source workout into a nested create payload", 
   );
   assert.equal(createdWorkout.exercises.create[0]?.normalizedName, "bench press");
   assert.deepEqual(createdWorkout.exercises.create[0]?.sets.create, [
-    { order: 1, reps: 5, weightLb: "225" },
+    { order: 1, reps: 5, weightLb: "225", durationSeconds: 45 },
   ]);
 });

@@ -12,6 +12,7 @@ type WorkoutLoggerPayload = {
     sets: Array<{
       reps: number;
       weightLb: string | null;
+      durationSeconds: number | null;
     }>;
   }>;
 };
@@ -33,22 +34,35 @@ export function buildWorkoutLoggerPayload(options: {
     .map((exercise) => {
       const name = normalizeExerciseDisplayName(toSafeString(exercise.name));
       const parsedSets = exercise.sets
-        .filter((setItem) => toSafeString(setItem.reps).trim() !== "")
         .map((setItem) => {
-          const reps = Number.parseInt(toSafeString(setItem.reps).trim(), 10);
+          const repsInput = toSafeString(setItem.reps).trim();
+          const durationInput = toSafeString(setItem.durationSeconds).trim();
+          const reps = repsInput === "" ? 0 : Number.parseInt(repsInput, 10);
+          const durationSeconds =
+            durationInput === "" ? null : Number.parseInt(durationInput, 10);
           const rawWeight = toSafeString(setItem.weightLb).trim();
-          const weightLb = rawWeight
-            ? rawWeight.startsWith(".")
-              ? `0${rawWeight}`
-              : rawWeight
-            : null;
+          const weightLb = setItem.usesBodyweight
+            ? null
+            : rawWeight
+              ? rawWeight.startsWith(".")
+                ? `0${rawWeight}`
+                : rawWeight
+              : null;
 
           return {
             reps,
             weightLb,
+            durationSeconds,
           };
         })
-        .filter((setItem) => Number.isInteger(setItem.reps) && setItem.reps > 0);
+        .filter(
+          (setItem) =>
+            Number.isInteger(setItem.reps) &&
+            setItem.reps >= 0 &&
+            (setItem.reps > 0 ||
+              (Number.isInteger(setItem.durationSeconds) &&
+                (setItem.durationSeconds ?? 0) > 0)),
+        );
 
       return {
         name,
@@ -64,7 +78,7 @@ export function buildWorkoutLoggerPayload(options: {
   for (const exercise of normalizedExercises) {
     if (exercise.sets.length === 0) {
       return {
-        error: `Add at least one set with reps for ${exercise.name}.`,
+        error: `Add at least one set with reps or time for ${exercise.name}.`,
       };
     }
   }

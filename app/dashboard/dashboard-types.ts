@@ -5,8 +5,52 @@ export type DashboardView =
   | "dashboard"
   | "workouts"
   | "progress"
+  | "nutrition"
   | "split"
   | "profile";
+
+export type DashboardNutritionData = {
+  bmrCalories: number | null;
+  today: {
+    dateKey: string;
+    label: string;
+    calories: number;
+    proteinGrams: number;
+    bodyWeight: number | null;
+    calorieDeltaFromBmr: number | null;
+  };
+  history: Array<{
+    dateKey: string;
+    label: string;
+    calories: number;
+    proteinGrams: number;
+    bodyWeight: number | null;
+    calorieDeltaFromBmr: number | null;
+  }>;
+  chart: {
+    day: Array<{
+      key: string;
+      label: string;
+      calories: number;
+      proteinGrams: number;
+      calorieTarget: number | null;
+    }>;
+    week: Array<{
+      key: string;
+      label: string;
+      calories: number;
+      proteinGrams: number;
+      calorieTarget: number | null;
+    }>;
+    month: Array<{
+      key: string;
+      label: string;
+      calories: number;
+      proteinGrams: number;
+      calorieTarget: number | null;
+    }>;
+  };
+};
 
 export type DashboardClientData = {
   user: {
@@ -63,6 +107,7 @@ export type DashboardClientData = {
       latestMonthKey: string | null;
     };
   };
+  nutrition: DashboardNutritionData;
   workouts: Array<{
     id: string;
     title: string;

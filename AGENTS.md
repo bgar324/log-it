@@ -9,6 +9,7 @@ Logit is a Next.js App Router workout journal backed by Prisma and PostgreSQL. R
 
 Implementation defaults:
 
+- Treat Logit as a mobile-first native app that happens to ship on the web. Design and build every surface phone-first, then scale up to desktop density. Prefer app-like affordances (full-width primary actions, generous touch targets, `[touch-action:manipulation]`, native input modes, subtle motion) over web-page conventions. When a layout choice trades desktop polish against phone feel, favor the phone.
 - Keep persisted workout weights in pounds; convert only at input/output boundaries.
 - Use `requireSessionUser()` for protected pages and `getSessionUser()` for API/auth branching.
 - Put workout write behavior in `lib/workouts/*`, split behavior in `lib/workout-splits/*`, and dashboard loading behavior in `app/dashboard/data*`.

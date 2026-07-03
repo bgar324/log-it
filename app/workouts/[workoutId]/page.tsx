@@ -58,6 +58,7 @@ export default async function WorkoutDetailPage({
               order: true,
               reps: true,
               weightLb: true,
+              durationSeconds: true,
             },
           },
         },
@@ -88,10 +89,11 @@ export default async function WorkoutDetailPage({
     weightUnit: unit,
     exercises: workout.exercises.map((exercise) => ({
       name: exercise.name,
-      sets: exercise.sets.map((set) => ({
-        reps: set.reps,
-        weightLb: set.weightLb,
-      })),
+        sets: exercise.sets.map((set) => ({
+          reps: set.reps,
+          weightLb: set.weightLb,
+          durationSeconds: set.durationSeconds,
+        })),
     })),
   });
 
@@ -166,6 +168,7 @@ export default async function WorkoutDetailPage({
                         <th className={styles.tableHeadCell}>Set</th>
                         <th className={styles.tableHeadCell}>Weight</th>
                         <th className={styles.tableHeadCell}>Reps</th>
+                        <th className={styles.tableHeadCell}>Time</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -182,6 +185,9 @@ export default async function WorkoutDetailPage({
                               : "--"}
                           </td>
                           <td className={styles.tableBodyCell}>{set.reps}</td>
+                          <td className={styles.tableBodyCell}>
+                            {set.durationSeconds ? `${set.durationSeconds}s` : "--"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -208,6 +214,12 @@ export default async function WorkoutDetailPage({
                       <div className={styles.mobileSetCell}>
                         <span className={styles.mobileSetMeta}>Reps</span>
                         <span className={styles.mobileSetValue}>{set.reps} reps</span>
+                      </div>
+                      <div className={styles.mobileSetCell}>
+                        <span className={styles.mobileSetMeta}>Time</span>
+                        <span className={styles.mobileSetValue}>
+                          {set.durationSeconds ? `${set.durationSeconds}s` : "--"}
+                        </span>
                       </div>
                     </div>
                   ))}

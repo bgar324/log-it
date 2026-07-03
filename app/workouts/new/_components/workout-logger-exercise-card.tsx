@@ -1,6 +1,7 @@
 "use client";
 
-import { GripVertical, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { useId, useState } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../workout-logger.styles";
 import type {
@@ -10,12 +11,11 @@ import type {
 } from "../workout-logger.utils";
 import { WorkoutLoggerInsightPanel } from "./workout-logger-insight-panel";
 import { WorkoutLoggerSetsEditor } from "./workout-logger-sets-editor";
+import { WorkoutLoggerConfirmDialog } from "./workout-logger-confirm-dialog";
 
 type WorkoutLoggerExerciseCardProps = {
   exercise: ExerciseDraft;
   exerciseIndex: number;
-  isDragging: boolean;
-  isDropTarget: boolean;
   canRemoveExercise: boolean;
   searchResults: string[];
   insightState?: ExerciseInsightState;
@@ -27,24 +27,18 @@ type WorkoutLoggerExerciseCardProps = {
   onExerciseNameBlur: (value: string) => Promise<void> | void;
   onExerciseNameChange: (value: string) => void;
   onExerciseNameFocus: (value: string) => void;
-  onExerciseDragEnd: () => void;
-  onExerciseDragOver: () => void;
-  onExerciseDragStart: () => void;
-  onExerciseDrop: () => void;
   onRemoveExercise: () => void;
   onRemoveSet: (setId: string) => void;
-  onUpdateSet: (
+  onUpdateSet: <K extends keyof ExerciseSetDraft>(
     setId: string,
-    field: keyof ExerciseSetDraft,
-    value: string,
+    field: K,
+    value: ExerciseSetDraft[K],
   ) => void;
 };
 
 export function WorkoutLoggerExerciseCard({
   exercise,
   exerciseIndex,
-  isDragging,
-  isDropTarget,
   canRemoveExercise,
   searchResults,
   insightState,
@@ -56,128 +50,118 @@ export function WorkoutLoggerExerciseCard({
   onExerciseNameBlur,
   onExerciseNameChange,
   onExerciseNameFocus,
-  onExerciseDragEnd,
-  onExerciseDragOver,
-  onExerciseDragStart,
-  onExerciseDrop,
   onRemoveExercise,
   onRemoveSet,
   onUpdateSet,
 }: WorkoutLoggerExerciseCardProps) {
+  const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
+  const dialogTitleId = useId();
+  const dialogDescriptionId = useId();
+
+  function handleConfirmRemoveExercise() {
+    onRemoveExercise();
+    setIsRemoveConfirmOpen(false);
+  }
+
   return (
-    <article
-      className={`${styles.exerciseCard} ${
-        isDragging ? styles.exerciseCardDragging : ""
-      } ${isDropTarget && !isDragging ? styles.exerciseCardDropTarget : ""}`}
-      onDragOver={(event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-        onExerciseDragOver();
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        onExerciseDrop();
-      }}
-    >
-      <div className={styles.exerciseHead}>
-        <div className={styles.exerciseHeading}>
-          <button
-            type="button"
-            draggable={true}
-            className={`${styles.iconButton} ${styles.dragHandle}`}
-            onDragStart={(event) => {
-              event.dataTransfer.effectAllowed = "move";
-              event.dataTransfer.setData("text/plain", exercise.name);
-              onExerciseDragStart();
-            }}
-            onDragEnd={onExerciseDragEnd}
-            aria-label={`Drag to reorder exercise ${exerciseIndex + 1}`}
-            title="Drag to reorder"
-          >
-            <GripVertical
-              className={styles.icon}
-              aria-hidden="true"
-              strokeWidth={1.9}
-            />
-          </button>
-          <div>
-            <h2 className={styles.exerciseTitle}>Exercise {exerciseIndex + 1}</h2>
+    <>
+      <article className={styles.exerciseCard}>
+        <div className={styles.exerciseHead}>
+          <div className={styles.exerciseHeading}>
+            <div>
+              <h2 className={styles.exerciseTitle}>Exercise {exerciseIndex + 1}</h2>
+            </div>
+          </div>
+          <div className={styles.exerciseHeadActions}>
+            <button
+              type="button"
+              className={styles.iconButton}
+              onClick={() => setIsRemoveConfirmOpen(true)}
+              disabled={!canRemoveExercise}
+              aria-label={`Remove exercise ${exerciseIndex + 1}`}
+            >
+              <Trash2
+                className={styles.icon}
+                aria-hidden="true"
+                strokeWidth={1.9}
+              />
+            </button>
           </div>
         </div>
-        <button
-          type="button"
-          className={styles.iconButton}
-          onClick={onRemoveExercise}
-          disabled={!canRemoveExercise}
-          aria-label={`Remove exercise ${exerciseIndex + 1}`}
-        >
-          <Trash2
-            className={styles.icon}
-            aria-hidden="true"
-            strokeWidth={1.9}
-          />
-        </button>
-      </div>
 
-      <div className={styles.field}>
-        <div className={styles.inlineRow}>
-          <input
-            id={`exercise-name-${exercise.id}`}
-            className={styles.input}
-            value={exercise.name}
-            aria-label={`Exercise name for exercise ${exerciseIndex + 1}`}
-            onChange={(event) => onExerciseNameChange(event.target.value)}
-            onFocus={(event) => onExerciseNameFocus(event.target.value)}
-            onBlur={(event) => {
-              void onExerciseNameBlur(event.target.value);
-            }}
-            autoComplete="off"
-            spellCheck={true}
-            autoCapitalize="words"
-            autoCorrect="on"
-            placeholder="Barbell bench press"
-          />
-          {searchResults.length > 0 ? (
-            <div
-              className={styles.searchResults}
-              aria-label={`Exercise matches for exercise ${exerciseIndex + 1}`}
-            >
-              <p className={styles.searchResultsLabel}>Matches</p>
-              <div className={styles.searchResultsList}>
-                {searchResults.map((result) => (
-                  <button
-                    key={`${exercise.id}-${result}`}
-                    type="button"
-                    className={styles.searchResultButton}
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                    }}
-                    onClick={() => onApplySearchResult(result)}
-                  >
-                    {result}
-                  </button>
-                ))}
+        <div className={styles.field}>
+          <div className={styles.inlineRow}>
+            <input
+              id={`exercise-name-${exercise.id}`}
+              className={styles.input}
+              value={exercise.name}
+              aria-label={`Exercise name for exercise ${exerciseIndex + 1}`}
+              onChange={(event) => onExerciseNameChange(event.target.value)}
+              onFocus={(event) => onExerciseNameFocus(event.target.value)}
+              onBlur={(event) => {
+                void onExerciseNameBlur(event.target.value);
+              }}
+              autoComplete="off"
+              spellCheck={true}
+              autoCapitalize="words"
+              autoCorrect="on"
+              placeholder="Barbell bench press"
+            />
+            {searchResults.length > 0 ? (
+              <div
+                className={styles.searchResults}
+                aria-label={`Exercise matches for exercise ${exerciseIndex + 1}`}
+              >
+                <p className={styles.searchResultsLabel}>Matches</p>
+                <div className={styles.searchResultsList}>
+                  {searchResults.map((result) => (
+                    <button
+                      key={`${exercise.id}-${result}`}
+                      type="button"
+                      className={styles.searchResultButton}
+                      onPointerDown={(event) => {
+                        event.preventDefault();
+                      }}
+                      onClick={() => onApplySearchResult(result)}
+                    >
+                      {result}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
-      </div>
 
-      <WorkoutLoggerInsightPanel
-        exercise={exercise}
-        insightState={insightState}
-        weightUnit={weightUnit}
-        weightUnitLabel={weightUnitLabel}
-      />
+        <WorkoutLoggerInsightPanel
+          exercise={exercise}
+          insightState={insightState}
+          weightUnit={weightUnit}
+          weightUnitLabel={weightUnitLabel}
+        />
 
-      <WorkoutLoggerSetsEditor
-        exercise={exercise}
-        weightUnitLabel={weightUnitLabel}
-        weightUnitName={weightUnitName}
-        onAddSet={onAddSet}
-        onRemoveSet={onRemoveSet}
-        onUpdateSet={onUpdateSet}
-      />
-    </article>
+        <WorkoutLoggerSetsEditor
+          exercise={exercise}
+          weightUnitLabel={weightUnitLabel}
+          weightUnitName={weightUnitName}
+          onAddSet={onAddSet}
+          onRemoveSet={onRemoveSet}
+          onUpdateSet={onUpdateSet}
+        />
+      </article>
+
+      {isRemoveConfirmOpen ? (
+        <WorkoutLoggerConfirmDialog
+          titleId={dialogTitleId}
+          descriptionId={dialogDescriptionId}
+          title={`Delete exercise ${exerciseIndex + 1}?`}
+          description="This removes the exercise and every set entered under it."
+          cancelLabel="Keep exercise"
+          confirmLabel="Delete exercise"
+          onCancel={() => setIsRemoveConfirmOpen(false)}
+          onConfirm={handleConfirmRemoveExercise}
+        />
+      ) : null}
+    </>
   );
 }

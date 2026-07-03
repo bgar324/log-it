@@ -32,14 +32,14 @@ export const BASE_WORKOUT: ParsedWorkout = {
       name: "Lat Pulldown",
       normalizedName: "lat pulldown",
       sets: [
-        { reps: 6, weightLb: "160" },
-        { reps: 7, weightLb: "135" },
+        { reps: 6, weightLb: "160", durationSeconds: null },
+        { reps: 7, weightLb: "135", durationSeconds: null },
       ],
     },
     {
       name: "Pull Up",
       normalizedName: "pull up",
-      sets: [{ reps: 10, weightLb: null }],
+      sets: [{ reps: 10, weightLb: null, durationSeconds: null }],
     },
   ],
 };

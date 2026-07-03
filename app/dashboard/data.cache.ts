@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { requireSessionUser } from "@/lib/auth";
-import { getSplitDataTag, getWorkoutDataTag } from "@/lib/cache-tags";
+import { getNutritionDataTag, getSplitDataTag, getWorkoutDataTag } from "@/lib/cache-tags";
 import { getUserWorkoutSplit, getUserWorkoutSplits } from "@/lib/workout-splits/service";
 import { getCurrentPacificDate, startOfDatabaseWeek } from "@/lib/workout-utils";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
@@ -8,6 +8,7 @@ import { dateKey } from "./data.formatters";
 import { createDefaultSplit } from "./data.empty";
 import {
   loadDashboardOverviewSection,
+  loadNutritionSection,
   loadProgressSection,
   loadWorkoutHistorySection,
 } from "./data.sections";
@@ -26,6 +27,23 @@ function loadCachedDashboardOverviewSection(
     {
       revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
       tags: [getWorkoutDataTag(userId), getSplitDataTag(userId)],
+    },
+  )();
+}
+
+function loadCachedNutritionSection(
+  userId: string,
+  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  now: Date,
+) {
+  const nowKey = dateKey(now);
+
+  return unstable_cache(
+    async () => loadNutritionSection(userId, weightUnit, now),
+    ["nutrition-view", userId, weightUnit, nowKey],
+    {
+      revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
+      tags: [getNutritionDataTag(userId)],
     },
   )();
 }
@@ -96,6 +114,13 @@ export async function loadProgressPageData(
   return loadCachedProgressSection(userId, weightUnit, getCurrentPacificDate());
 }
 
+export async function loadNutritionPageData(
+  userId: string,
+  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+) {
+  return loadCachedNutritionSection(userId, weightUnit, getCurrentPacificDate());
+}
+
 export async function loadSplitPageData(userId: string) {
   const result = await loadCachedSplitSection(userId);
 
@@ -121,6 +146,10 @@ export async function loadDashboardViewData(
 
   if (view === "progress") {
     return loadCachedProgressSection(userId, weightUnit, now);
+  }
+
+  if (view === "nutrition") {
+    return loadCachedNutritionSection(userId, weightUnit, now);
   }
 
   if (view === "split") {

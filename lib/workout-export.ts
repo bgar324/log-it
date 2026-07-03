@@ -16,6 +16,7 @@ type StoredWeightValue = number | string | { toNumber: () => number } | null;
 type WorkoutClipboardSet = {
   reps: number;
   weightLb: StoredWeightValue;
+  durationSeconds?: number | null;
 };
 
 type WorkoutClipboardExercise = {
@@ -69,18 +70,19 @@ function formatWorkoutSetForClipboard(
   weightUnit: WeightUnit,
 ) {
   const reps = Math.max(0, Math.trunc(set.reps));
+  const duration = set.durationSeconds ? ` ${set.durationSeconds}s` : "";
   const displayWeight = convertStoredWeightToDisplay(
     normalizeStoredWeightValue(set.weightLb),
     weightUnit,
   );
 
   if (displayWeight === null) {
-    return `BWx${reps}`;
+    return `BWx${reps}${duration}`;
   }
 
   return `${formatWeightValue(displayWeight, {
     maximumFractionDigits: 1,
-  })}x${reps}`;
+  })}x${reps}${duration}`;
 }
 
 export function formatWorkoutForClipboard(workout: WorkoutClipboardPayload) {

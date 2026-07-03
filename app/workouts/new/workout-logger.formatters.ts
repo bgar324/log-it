@@ -39,13 +39,17 @@ export function summarizeDraftSets(exercise: ExerciseDraft) {
 
   for (const setItem of exercise.sets) {
     const reps = Number.parseInt(setItem.reps.trim(), 10);
+    const durationSeconds = Number.parseInt(setItem.durationSeconds.trim(), 10);
 
-    if (!Number.isInteger(reps) || reps <= 0) {
+    if (
+      (!Number.isInteger(reps) || reps <= 0) &&
+      (!Number.isInteger(durationSeconds) || durationSeconds <= 0)
+    ) {
       continue;
     }
 
     setCount += 1;
-    totalReps += reps;
+    totalReps += Number.isInteger(reps) && reps > 0 ? reps : 0;
 
     const weight = toOptionalPositiveNumber(setItem.weightLb);
 
@@ -88,16 +92,18 @@ export function formatDelta(value: number, suffix: string) {
 }
 
 export function formatLoggedSetSnapshot(
-  set: { reps: number; weightLb: number | null },
+  set: { reps: number; weightLb: number | null; durationSeconds?: number | null },
   weightUnit: WeightUnit,
 ) {
+  const durationLabel = set.durationSeconds ? ` · ${set.durationSeconds}s` : "";
+
   if (set.weightLb === null) {
-    return `Bodyweight x ${set.reps}`;
+    return `Bodyweight x ${set.reps}${durationLabel}`;
   }
 
   const displayWeight =
     convertStoredWeightToDisplay(set.weightLb, weightUnit) ?? 0;
-  return `${formatWeightWithUnit(displayWeight, weightUnit)} x ${set.reps}`;
+  return `${formatWeightWithUnit(displayWeight, weightUnit)} x ${set.reps}${durationLabel}`;
 }
 
 function formatPredictedWeight(weightLb: number, weightUnit: WeightUnit) {

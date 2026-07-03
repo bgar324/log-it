@@ -22,7 +22,6 @@ import {
   type WorkoutDraftSnapshot,
   type WorkoutLoggerInitialData,
 } from "../workout-logger.utils";
-import { useWorkoutLoggerDrag } from "./use-workout-logger-drag";
 
 type UseWorkoutLoggerDraftOptions = {
   initialData?: WorkoutLoggerInitialData;
@@ -86,22 +85,6 @@ export function useWorkoutLoggerDraft({
       exercises: state.exercises,
     }),
   );
-  const {
-    draggingExerciseIndex,
-    dropTargetExerciseIndex,
-    dragOverExercise,
-    dropExerciseAt,
-    endExerciseDrag,
-    startDraggingExercise,
-  } = useWorkoutLoggerDrag({
-    onReorder: (updater) => {
-      dispatch({
-        type: "update_exercises",
-        updater,
-      });
-    },
-  });
-
   useEffect(() => {
     dispatch({
       type: "replace",
@@ -263,6 +246,26 @@ export function useWorkoutLoggerDraft({
     });
   }
 
+  function reorderExercisesById(orderedExerciseIds: string[]) {
+    dispatch({
+      type: "update_exercises",
+      updater: (current) => {
+        const exercisesById = new Map(
+          current.map((exercise) => [exercise.id, exercise]),
+        );
+        const reordered = orderedExerciseIds
+          .map((exerciseId) => exercisesById.get(exerciseId))
+          .filter((exercise): exercise is ExerciseDraft => Boolean(exercise));
+
+        if (reordered.length !== current.length) {
+          return current;
+        }
+
+        return reordered;
+      },
+    });
+  }
+
   function addSet(exerciseId: string) {
     updateExercise(exerciseId, (exercise) => ({
       ...exercise,
@@ -283,11 +286,11 @@ export function useWorkoutLoggerDraft({
     });
   }
 
-  function updateSet(
+  function updateSet<K extends keyof ExerciseSetDraft>(
     exerciseId: string,
     setId: string,
-    field: keyof ExerciseSetDraft,
-    value: string,
+    field: K,
+    value: ExerciseSetDraft[K],
   ) {
     updateExercise(exerciseId, (exercise) => ({
       ...exercise,
@@ -311,13 +314,9 @@ export function useWorkoutLoggerDraft({
   return {
     addExercise,
     addSet,
-    draggingExerciseIndex,
-    dragOverExercise,
-    dropExerciseAt,
-    endExerciseDrag,
-    dropTargetExerciseIndex,
     exercises: draftState.exercises,
     performedAt: draftState.performedAt,
+    reorderExercisesById,
     removeExercise,
     removeSet,
     resetExercisesFromSnapshot,
@@ -328,7 +327,6 @@ export function useWorkoutLoggerDraft({
     setTitle: (value: string) => {
       dispatch({ type: "set_title", value });
     },
-    startDraggingExercise,
     setWorkoutType: (value: string) => {
       dispatch({ type: "set_workout_type", value });
     },
