@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-export const REST_PRESETS_SECONDS = [60, 90, 120, 180];
+export const REST_PRESETS_SECONDS = [30, 60, 90, 120, 180];
 
 export type RestTimer = {
   remaining: number | null;
