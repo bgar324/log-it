@@ -49,6 +49,62 @@ function sumWorkoutCounts(
   }, 0);
 }
 
+function computeWeeklyStreak(
+  dayCounts: DashboardClientData["overview"]["workoutCalendar"]["dayCounts"],
+  now: Date,
+) {
+  const weekKeys = new Set<string>();
+
+  for (const row of dayCounts) {
+    if (row.count <= 0) {
+      continue;
+    }
+
+    const [year, month, day] = row.dateKey.split("-").map(Number);
+    weekKeys.add(dateKey(startOfDatabaseWeek(createDatabaseDate(year, month, day))));
+  }
+
+  if (weekKeys.size === 0) {
+    return { currentWeeks: 0, bestWeeks: 0 };
+  }
+
+  // Current streak: consecutive weeks back from this week. The streak survives a
+  // still-empty current week as long as last week had a workout.
+  let cursor = startOfDatabaseWeek(now);
+
+  if (!weekKeys.has(dateKey(cursor))) {
+    cursor = addDaysToDatabaseDate(cursor, -7);
+  }
+
+  let currentWeeks = 0;
+
+  while (weekKeys.has(dateKey(cursor))) {
+    currentWeeks += 1;
+    cursor = addDaysToDatabaseDate(cursor, -7);
+  }
+
+  // Best streak: longest run of consecutive weeks in the full history.
+  const sortedWeeks = Array.from(weekKeys)
+    .sort()
+    .map((key) => {
+      const [year, month, day] = key.split("-").map(Number);
+      return createDatabaseDate(year, month, day);
+    });
+
+  let bestWeeks = 1;
+  let run = 1;
+
+  for (let index = 1; index < sortedWeeks.length; index += 1) {
+    const gapDays = Math.round(
+      (sortedWeeks[index].getTime() - sortedWeeks[index - 1].getTime()) / 86_400_000,
+    );
+    run = gapDays === 7 ? run + 1 : 1;
+    bestWeeks = Math.max(bestWeeks, run);
+  }
+
+  return { currentWeeks, bestWeeks: Math.max(bestWeeks, currentWeeks) };
+}
+
 function buildWorkoutCalendarOverview(
   dayCounts: DashboardClientData["overview"]["workoutCalendar"]["dayCounts"],
   workouts: Awaited<ReturnType<typeof loadWorkoutCalendarWorkouts>>,
@@ -192,13 +248,13 @@ export async function loadDashboardOverviewSection(
   }));
 
   const personalBests: DashboardClientData["overview"]["personalBests"] = exerciseSummaries
-    .filter((item) => item.bestWeightLb > 0)
-    .sort((left, right) => right.bestWeightLb - left.bestWeightLb)
+    .filter((item) => item.bestE1rmLb > 0)
+    .sort((left, right) => right.bestE1rmLb - left.bestE1rmLb)
     .slice(0, 5)
     .map((item) => ({
       id: item.normalizedName,
       lift: item.name,
-      weight: convertStoredWeightToDisplay(item.bestWeightLb, weightUnit) ?? 0,
+      weight: convertStoredWeightToDisplay(item.bestE1rmLb, weightUnit) ?? 0,
       dateLabel: item.lastPerformedAt ? monthDateLabel(item.lastPerformedAt) : "--",
     }));
   const todayKey = dateKey(now);
@@ -223,6 +279,7 @@ export async function loadDashboardOverviewSection(
         isLoggedToday,
       },
       monthChange,
+      streak: computeWeeklyStreak(workoutCalendarDayCounts, now),
       weeklyBars,
       personalBests,
       workoutCalendar: buildWorkoutCalendarOverview(

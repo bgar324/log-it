@@ -32,6 +32,7 @@ test("createWorkout writes a nested workout payload and returns read-model sync 
       normalizedExerciseNames: ["lat pulldown", "pull up"],
       performedAtDates: ["2026-03-12"],
     },
+    personalRecords: [],
   });
 
   const createdData = calls.workoutLogCreate[0]?.data as {

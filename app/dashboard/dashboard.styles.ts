@@ -111,6 +111,9 @@ export const styles = {
   kpiLabel: "m-0 text-[0.72rem] text-[var(--muted)]",
   kpiValue:
     "m-0 break-words text-[clamp(1.4rem,4.6vw,2rem)] leading-none tracking-[-0.03em] font-[520]",
+  kpiMeta: "m-[0.16rem_0_0] text-[0.7rem] text-[var(--muted)]",
+  kpiDeltaUp: "text-[color-mix(in_srgb,#21834d_82%,var(--text))]",
+  kpiDeltaDown: "text-[color-mix(in_srgb,#b13d48_82%,var(--text))]",
   inlineBars: "mt-[0.28rem] flex min-h-[0.9rem] items-end gap-[0.2rem]",
   inlineBar:
     "flex-1 rounded-[0.18rem] bg-[color-mix(in_srgb,var(--text)_24%,transparent)]",

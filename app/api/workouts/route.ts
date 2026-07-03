@@ -109,7 +109,10 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ id: created.id }, { status: 201 });
+    return NextResponse.json(
+      { id: created.id, personalRecords: created.personalRecords ?? [] },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("workout create failure:", error);
     return toWorkoutWriteErrorResponse(error, "Unable to save workout.");

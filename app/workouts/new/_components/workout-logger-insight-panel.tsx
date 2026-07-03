@@ -19,6 +19,7 @@ type WorkoutLoggerInsightPanelProps = {
   insightState?: ExerciseInsightState;
   weightUnit: WeightUnit;
   weightUnitLabel: string;
+  bodyWeightDisplay: number | null;
 };
 
 export function WorkoutLoggerInsightPanel({
@@ -26,6 +27,7 @@ export function WorkoutLoggerInsightPanel({
   insightState,
   weightUnit,
   weightUnitLabel,
+  bodyWeightDisplay,
 }: WorkoutLoggerInsightPanelProps) {
   if (!insightState || insightState.status === "idle") {
     return null;
@@ -58,7 +60,7 @@ export function WorkoutLoggerInsightPanel({
   }
 
   const lastSession = insight.lastSession;
-  const draftSummary = summarizeDraftSets(exercise);
+  const draftSummary = summarizeDraftSets(exercise, bodyWeightDisplay);
   const lastVolume =
     convertStoredWeightToDisplay(lastSession.totalVolume, weightUnit) ?? 0;
   const allTimeBestWeight =

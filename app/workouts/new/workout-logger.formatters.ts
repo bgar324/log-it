@@ -31,7 +31,10 @@ function toOptionalPositiveNumber(value: string) {
   return parsed;
 }
 
-export function summarizeDraftSets(exercise: ExerciseDraft) {
+export function summarizeDraftSets(
+  exercise: ExerciseDraft,
+  bodyWeightDisplay: number | null = null,
+) {
   let setCount = 0;
   let totalReps = 0;
   let totalVolume = 0;
@@ -49,16 +52,23 @@ export function summarizeDraftSets(exercise: ExerciseDraft) {
     }
 
     setCount += 1;
-    totalReps += Number.isInteger(reps) && reps > 0 ? reps : 0;
+    const countableReps = Number.isInteger(reps) && reps > 0 ? reps : 0;
+    totalReps += countableReps;
 
-    const weight = toOptionalPositiveNumber(setItem.weightLb);
+    // A bodyweight set carries no typed weight; credit the tracked body weight
+    // so the live preview matches the volume that gets saved.
+    const effectiveWeight =
+      setItem.usesBodyweight && bodyWeightDisplay !== null
+        ? bodyWeightDisplay
+        : toOptionalPositiveNumber(setItem.weightLb);
 
-    if (weight === null) {
+    if (effectiveWeight === null) {
       continue;
     }
 
-    totalVolume += weight * reps;
-    bestWeight = bestWeight === null ? weight : Math.max(bestWeight, weight);
+    totalVolume += effectiveWeight * countableReps;
+    bestWeight =
+      bestWeight === null ? effectiveWeight : Math.max(bestWeight, effectiveWeight);
   }
 
   return {

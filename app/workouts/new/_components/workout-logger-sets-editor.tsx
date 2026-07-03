@@ -16,7 +16,7 @@ type WorkoutLoggerSetsEditorProps = {
   exercise: ExerciseDraft;
   weightUnitLabel: string;
   weightUnitName: string;
-  bodyWeightLabel: string | null;
+  bodyWeightDisplay: number | null;
   onAddSet: () => void;
   onRemoveSet: (setId: string) => void;
   onUpdateSet: <K extends keyof ExerciseSetDraft>(
@@ -30,11 +30,13 @@ export function WorkoutLoggerSetsEditor({
   exercise,
   weightUnitLabel,
   weightUnitName,
-  bodyWeightLabel,
+  bodyWeightDisplay,
   onAddSet,
   onRemoveSet,
   onUpdateSet,
 }: WorkoutLoggerSetsEditorProps) {
+  const bodyWeightLabel =
+    bodyWeightDisplay === null ? null : `${Number(bodyWeightDisplay.toFixed(1))}`;
   const [pendingRemoval, setPendingRemoval] = useState<{
     id: string;
     index: number;

@@ -197,6 +197,7 @@ model ExerciseSummary {
   setCount       Int       @default(0)
   totalReps      Int       @default(0)
   bestWeightLb   Decimal   @default(0) @db.Decimal
+  bestE1rmLb     Decimal   @default(0) @db.Decimal
   lastPerformedAt DateTime? @db.Date
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

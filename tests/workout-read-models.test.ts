@@ -70,6 +70,7 @@ test("buildExerciseSummaryRecords groups sessions and keeps the latest display n
       setCount: 3,
       totalReps: 18,
       bestWeightLb: 225,
+      bestE1rmLb: 262.5,
       lastPerformedAt: createDatabaseDate(2026, 3, 20),
     },
     {
@@ -79,9 +80,30 @@ test("buildExerciseSummaryRecords groups sessions and keeps the latest display n
       setCount: 1,
       totalReps: 10,
       bestWeightLb: 0,
+      bestE1rmLb: 0,
       lastPerformedAt: createDatabaseDate(2026, 3, 18),
     },
   ]);
+});
+
+test("buildExerciseSummaryRecords credits body weight toward bodyweight e1RM", () => {
+  const summaries = buildExerciseSummaryRecords([
+    {
+      normalizedName: "pull up",
+      name: "Pull Up",
+      createdAt: new Date("2026-03-20T00:00:00.000Z"),
+      workoutLog: {
+        id: "workout-1",
+        performedAt: createDatabaseDate(2026, 3, 20),
+        bodyWeightLb: 180,
+      },
+      sets: [{ reps: 10, weightLb: null }],
+    },
+  ]);
+
+  // External load stays 0; e1RM = 180 * (1 + 10/30) = 240.
+  assert.equal(summaries[0]?.bestWeightLb, 0);
+  assert.equal(summaries[0]?.bestE1rmLb, 240);
 });
 
 test("buildWorkoutCalendarDayCounts rolls logs up by date", () => {

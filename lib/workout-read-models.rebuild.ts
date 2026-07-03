@@ -26,6 +26,7 @@ async function replaceWorkoutReadModels(
     setCount: summary.setCount,
     totalReps: summary.totalReps,
     bestWeightLb: summary.bestWeightLb,
+    bestE1rmLb: summary.bestE1rmLb,
     lastPerformedAt: summary.lastPerformedAt,
   }));
 
@@ -93,6 +94,7 @@ export async function rebuildWorkoutReadModelsForUser(userId: string) {
             select: {
               id: true,
               performedAt: true,
+              bodyWeightLb: true,
             },
           },
           sets: {

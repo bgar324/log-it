@@ -76,6 +76,10 @@ export type DashboardClientData = {
       isLoggedToday: boolean;
     };
     monthChange: number;
+    streak: {
+      currentWeeks: number;
+      bestWeeks: number;
+    };
     weeklyBars: Array<{
       label: string;
       count: number;

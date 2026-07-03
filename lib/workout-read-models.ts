@@ -2,6 +2,7 @@ export {
   buildExerciseSummaryRecords,
   buildWorkoutCalendarDayCounts,
   createWorkoutReadModelSyncInput,
+  estimateSetE1rmLb,
   toExerciseKey,
   toOrderedUniqueValues,
   type ExerciseSummaryRecord,

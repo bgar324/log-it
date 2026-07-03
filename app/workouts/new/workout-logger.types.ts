@@ -79,9 +79,15 @@ export type ExerciseSuggestionsPayload = {
   error?: string;
 };
 
+export type WorkoutPersonalRecord = {
+  name: string;
+  e1rmLb: number;
+};
+
 export type WorkoutSubmitResponse = {
   id?: string;
   error?: string;
+  personalRecords?: WorkoutPersonalRecord[];
 };
 
 export const WORKOUT_DRAFT_STORAGE_KEY = "logit-workout-draft-v2";

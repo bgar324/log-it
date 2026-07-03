@@ -73,6 +73,7 @@ export function createEmptyDashboardData(
       totalSets: 0,
       todayPlan: NO_SPLIT_TODAY_PLAN,
       monthChange: 0,
+      streak: { currentWeeks: 0, bestWeeks: 0 },
       weeklyBars: Array.from({ length: 7 }, (_, index) => ({
         label: WEEKDAY_SHORT_FORMATTER.format(
           addDaysToDatabaseDate(startOfDatabaseWeek(now), index),
@@ -145,6 +146,7 @@ export function createEmptyOverview(user: DashboardClientData["user"]) {
       totalSets: 0,
       todayPlan: NO_SPLIT_TODAY_PLAN,
       monthChange: 0,
+      streak: { currentWeeks: 0, bestWeeks: 0 },
       weeklyBars: Array.from({ length: 7 }, (_, index) => ({
         label: WEEKDAY_SHORT_FORMATTER.format(
           addDaysToDatabaseDate(startOfDatabaseWeek(now), index),

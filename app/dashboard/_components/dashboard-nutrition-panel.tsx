@@ -8,6 +8,7 @@ import {
   BarChart,
   CartesianGrid,
   Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -98,6 +99,10 @@ export function DashboardNutritionPanel({
   const historyRows = nutrition.history.filter(
     (row) => row.calories > 0 || row.proteinGrams > 0 || row.bodyWeight !== null,
   );
+  const bodyWeightSeries = [...nutrition.history]
+    .reverse()
+    .filter((row) => row.bodyWeight !== null)
+    .map((row) => ({ label: row.label, weight: row.bodyWeight }));
 
   function formatHistoryWeight(value: number | null) {
     return value === null
@@ -316,6 +321,56 @@ export function DashboardNutritionPanel({
           </ResponsiveContainer>
         </div>
       </section>
+
+      {bodyWeightSeries.length >= 2 ? (
+        <section className={styles.chartPanel} aria-label="Body weight trend">
+          <div className={styles.nutritionChartHead}>
+            <h2 className={styles.panelTitle}>Body weight</h2>
+          </div>
+          <div className={styles.nutritionChartFrame}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={bodyWeightSeries}
+                margin={{ top: 8, right: 8, left: -8, bottom: 4 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
+                />
+                <YAxis
+                  domain={["dataMin - 2", "dataMax + 2"]}
+                  tickLine={false}
+                  axisLine={false}
+                  width={42}
+                  tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
+                />
+                <Tooltip
+                  cursor={TOOLTIP_CURSOR}
+                  contentStyle={TOOLTIP_CONTENT_STYLE}
+                  labelStyle={TOOLTIP_LABEL_STYLE}
+                  formatter={(value) => [
+                    formatWeightWithUnit(Number(value), weightUnit, {
+                      maximumFractionDigits: 1,
+                    }),
+                    "Body weight",
+                  ]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="weight"
+                  stroke="var(--text)"
+                  strokeWidth={1.6}
+                  dot={{ r: 2, fill: "var(--text)" }}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      ) : null}
 
       <section className={styles.panel} aria-label="Nutrition history">
         <div className={styles.panelHead}>

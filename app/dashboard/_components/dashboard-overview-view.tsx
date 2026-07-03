@@ -33,6 +33,16 @@ export function DashboardOverviewView({
         <article className={styles.kpiCard}>
           <p className={styles.kpiLabel}>Total workouts</p>
           <p className={styles.kpiValue}>{overview.totalWorkouts}</p>
+          {overview.monthChange !== 0 ? (
+            <p
+              className={`${styles.kpiMeta} ${
+                overview.monthChange > 0 ? styles.kpiDeltaUp : styles.kpiDeltaDown
+              }`}
+            >
+              {overview.monthChange > 0 ? "+" : ""}
+              {Math.round(overview.monthChange)}% vs last month
+            </p>
+          ) : null}
         </article>
 
         <article className={styles.kpiCard}>
@@ -47,6 +57,12 @@ export function DashboardOverviewView({
               />
             ))}
           </div>
+          <p className={styles.kpiMeta}>
+            {overview.streak.currentWeeks > 0
+              ? `${overview.streak.currentWeeks}-week streak`
+              : "No active streak"}
+            {overview.streak.bestWeeks > 1 ? ` · best ${overview.streak.bestWeeks}` : ""}
+          </p>
         </article>
 
         <article className={styles.kpiCard}>
@@ -100,12 +116,12 @@ export function DashboardOverviewView({
 
       <section className={styles.dashboardInsightGrid}>
         <section className={styles.panel}>
-          <h2 className={styles.panelTitle}>Personal bests</h2>
+          <h2 className={styles.panelTitle}>Personal records</h2>
 
           {overview.personalBests.length > 0 ? (
             <div className={styles.metricList}>
               <DashboardMetricHeader
-                columns={["Date", "Exercise", "Best weight"]}
+                columns={["Date", "Exercise", "Est. 1RM"]}
                 rowClassName={styles.personalBestRow}
               />
               {overview.personalBests.map((row) => (
@@ -114,14 +130,14 @@ export function DashboardOverviewView({
                     {row.dateLabel}
                   </span>
                   <span className={styles.metricMain}>{row.lift}</span>
-                  <span className={styles.metricMobileLabel} data-label="Best weight">
+                  <span className={styles.metricMobileLabel} data-label="Est. 1RM">
                     {formatWeight(row.weight)}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className={styles.empty}>No weighted sets yet.</p>
+            <p className={styles.empty}>No lifts logged yet.</p>
           )}
         </section>
 

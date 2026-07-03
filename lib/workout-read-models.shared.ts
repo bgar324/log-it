@@ -5,6 +5,8 @@ import {
   toDatabaseDateFromInput,
 } from "./workout-utils";
 
+type DecimalLike = { toNumber: () => number } | number | null;
+
 type ExerciseHistoryRow = {
   normalizedName: string;
   name: string;
@@ -12,12 +14,23 @@ type ExerciseHistoryRow = {
   workoutLog: {
     id: string;
     performedAt: Date;
+    bodyWeightLb?: DecimalLike;
   };
   sets: Array<{
     reps: number;
-    weightLb: { toNumber: () => number } | number | null;
+    weightLb: DecimalLike;
   }>;
 };
+
+// Epley estimated one-rep max. Bodyweight sets are credited with the workout's
+// tracked body weight so bodyweight movements count toward strength records.
+export function estimateSetE1rmLb(effectiveWeightLb: number, reps: number) {
+  if (effectiveWeightLb <= 0 || reps <= 0) {
+    return 0;
+  }
+
+  return effectiveWeightLb * (1 + reps / 30);
+}
 
 type WorkoutCalendarLogRow = {
   performedAt: Date;
@@ -36,6 +49,7 @@ export type ExerciseSummaryRecord = {
   setCount: number;
   totalReps: number;
   bestWeightLb: number;
+  bestE1rmLb: number;
   lastPerformedAt: Date | null;
 };
 
@@ -105,6 +119,7 @@ export function buildExerciseSummaryRecords(rows: ExerciseHistoryRow[]) {
         setCount: 0,
         totalReps: 0,
         bestWeightLb: 0,
+        bestE1rmLb: 0,
         lastPerformedAt: row.workoutLog.performedAt,
         workoutIds: new Set<string>(),
       } satisfies ExerciseSummaryRecord & { workoutIds: Set<string> });
@@ -116,10 +131,21 @@ export function buildExerciseSummaryRecords(rows: ExerciseHistoryRow[]) {
 
     summary.workoutIds.add(row.workoutLog.id);
 
+    const bodyWeightLb = toWeightNumber(row.workoutLog.bodyWeightLb ?? null) ?? 0;
+
     for (const set of row.sets) {
       summary.setCount += 1;
       summary.totalReps += set.reps;
-      summary.bestWeightLb = Math.max(summary.bestWeightLb, toWeightNumber(set.weightLb) ?? 0);
+
+      const externalWeight = toWeightNumber(set.weightLb) ?? 0;
+      summary.bestWeightLb = Math.max(summary.bestWeightLb, externalWeight);
+
+      // Bodyweight sets carry no external load; credit the tracked body weight.
+      const effectiveWeight = externalWeight > 0 ? externalWeight : bodyWeightLb;
+      summary.bestE1rmLb = Math.max(
+        summary.bestE1rmLb,
+        estimateSetE1rmLb(effectiveWeight, set.reps),
+      );
     }
 
     summaries.set(normalizedName, summary);
@@ -132,6 +158,7 @@ export function buildExerciseSummaryRecords(rows: ExerciseHistoryRow[]) {
     setCount: summary.setCount,
     totalReps: summary.totalReps,
     bestWeightLb: summary.bestWeightLb,
+    bestE1rmLb: summary.bestE1rmLb,
     lastPerformedAt: summary.lastPerformedAt,
   }));
 }

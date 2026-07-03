@@ -89,6 +89,7 @@ export async function loadExerciseSummaryRows(userId: string) {
         setCount: true,
         totalReps: true,
         bestWeightLb: true,
+        bestE1rmLb: true,
         lastPerformedAt: true,
       },
     });
@@ -101,6 +102,7 @@ export async function loadExerciseSummaryRows(userId: string) {
         setCount: row.setCount,
         totalReps: row.totalReps,
         bestWeightLb: toWeightNumber(row.bestWeightLb) ?? 0,
+        bestE1rmLb: toWeightNumber(row.bestE1rmLb) ?? 0,
         lastPerformedAt: row.lastPerformedAt,
       }));
     }
@@ -129,6 +131,7 @@ export async function loadExerciseSummaryRows(userId: string) {
         select: {
           id: true,
           performedAt: true,
+          bodyWeightLb: true,
         },
       },
       sets: {

@@ -8,7 +8,12 @@ import { BackButton } from "@/app/components/back-button";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
 import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
-import { getWeightUnitLabel, type WeightUnit } from "@/lib/weight-unit";
+import {
+  convertStoredWeightToDisplay,
+  formatWeightWithUnit,
+  getWeightUnitLabel,
+  type WeightUnit,
+} from "@/lib/weight-unit";
 import { WorkoutLoggerExerciseCard } from "./_components/workout-logger-exercise-card";
 import { WorkoutLoggerMetaCard } from "./_components/workout-logger-meta-card";
 import { WorkoutLoggerMobileActions } from "./_components/workout-logger-mobile-actions";
@@ -54,10 +59,6 @@ export function WorkoutLogger({
   const router = useRouter();
   const weightUnitLabel = getWeightUnitLabel(weightUnit);
   const weightUnitName = weightUnit === "KG" ? "kilograms" : "pounds";
-  const bodyWeightLabel =
-    bodyWeightDisplay === null
-      ? null
-      : `${Number(bodyWeightDisplay.toFixed(1))}`;
   const [isSaving, setIsSaving] = useState(false);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
   const formId = useId();
@@ -197,6 +198,15 @@ export function WorkoutLogger({
         id: toastId,
       });
 
+      for (const record of (data.personalRecords ?? []).slice(0, 3)) {
+        const e1rmDisplay = convertStoredWeightToDisplay(record.e1rmLb, weightUnit) ?? 0;
+        toast.success(`New PR — ${record.name}`, {
+          description: `${formatWeightWithUnit(e1rmDisplay, weightUnit, {
+            maximumFractionDigits: 0,
+          })} estimated 1RM`,
+        });
+      }
+
       if (isEditMode && resolvedWorkoutId) {
         router.replace(`/workouts/${resolvedWorkoutId}`);
       } else {
@@ -273,7 +283,7 @@ export function WorkoutLogger({
                 weightUnit={weightUnit}
                 weightUnitLabel={weightUnitLabel}
                 weightUnitName={weightUnitName}
-                bodyWeightLabel={bodyWeightLabel}
+                bodyWeightDisplay={bodyWeightDisplay}
                 onAddSet={() => draft.addSet(exercise.id)}
                 onApplySearchResult={(suggestion) => {
                   clearPendingSuggestionLookup(exercise.id);

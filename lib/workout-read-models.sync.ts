@@ -108,6 +108,7 @@ async function syncExerciseSummaries(userId: string, normalizedNames: string[]) 
         select: {
           id: true,
           performedAt: true,
+          bodyWeightLb: true,
         },
       },
       sets: {
@@ -159,6 +160,7 @@ async function syncExerciseSummaries(userId: string, normalizedNames: string[]) 
           setCount: summary.setCount,
           totalReps: summary.totalReps,
           bestWeightLb: summary.bestWeightLb,
+          bestE1rmLb: summary.bestE1rmLb,
           lastPerformedAt: summary.lastPerformedAt,
         },
         create: {
@@ -169,6 +171,7 @@ async function syncExerciseSummaries(userId: string, normalizedNames: string[]) 
           setCount: summary.setCount,
           totalReps: summary.totalReps,
           bestWeightLb: summary.bestWeightLb,
+          bestE1rmLb: summary.bestE1rmLb,
           lastPerformedAt: summary.lastPerformedAt,
         },
       }),
