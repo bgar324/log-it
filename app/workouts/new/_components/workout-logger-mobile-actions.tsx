@@ -3,14 +3,12 @@
 import {
   ArrowUpDown,
   Clock,
-  Ellipsis,
   Loader2,
   Pause,
   Play,
   Plus,
   Save,
   SkipForward,
-  X,
 } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
@@ -209,14 +207,18 @@ export function WorkoutLoggerMobileActions({
         aria-expanded={isStackShowing}
         aria-label={isStackShowing ? "Close workout actions" : "Open workout actions"}
       >
-        {isStackShowing ? (
-          <X className={styles.mobileFabMainIcon} aria-hidden="true" strokeWidth={2.1} />
-        ) : timer.isRunning ? (
+        {timer.isRunning && !isStackShowing ? (
           <span className={styles.mobileFabCountdown}>
             {formatRestClock(timer.remaining ?? 0)}
           </span>
         ) : (
-          <Ellipsis className={styles.mobileFabMainIcon} aria-hidden="true" strokeWidth={1.9} />
+          <Plus
+            className={`${styles.mobileFabMainIcon} transition-transform duration-200 ${
+              isStackShowing ? "rotate-45" : "rotate-0"
+            }`}
+            aria-hidden="true"
+            strokeWidth={2}
+          />
         )}
       </button>
     </div>,
