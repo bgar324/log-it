@@ -25,6 +25,7 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 - Set reps must be positive integers unless the set has positive time in seconds.
 - Weights are optional per set; provided weights must be non-negative decimals.
 - Blank workout weight is treated as bodyweight; the logger exposes an explicit bodyweight control for bodyweight movements.
+- Bodyweight sets count toward workout volume: each workout snapshots the user's tracked body weight for its date, and bodyweight sets are credited as body weight times reps. Movements still display as "Bodyweight"; per-exercise best weight stays external-load only.
 - The logger accepts the user's preferred unit, but the database stores weights in pounds.
 - New workout drafts are autosaved client-side in create mode.
 - Duplicate workout creates a new workout dated to the current Pacific date and the API returns the new workout id.

@@ -3,7 +3,12 @@ import { WorkoutLogger } from "@/app/workouts/new/workout-logger";
 import type { WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger.utils";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatWeightInputValueFromPounds, toWeightNumber } from "@/lib/weight-unit";
+import { resolveBodyWeightLbForDate } from "@/lib/body-weight";
+import {
+  convertStoredWeightToDisplay,
+  formatWeightInputValueFromPounds,
+  toWeightNumber,
+} from "@/lib/weight-unit";
 import { getUserWorkoutSplit } from "@/lib/workout-splits/service";
 import { REST_DAY_WORKOUT_TYPE } from "@/lib/workout-splits/shared";
 import { formatDatabaseDateValue, normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
@@ -81,6 +86,16 @@ export default async function EditWorkoutPage({
     notFound();
   }
 
+  const bodyWeightLb = await resolveBodyWeightLbForDate(
+    prisma,
+    user.id,
+    workout.performedAt,
+  );
+  const bodyWeightDisplay = convertStoredWeightToDisplay(
+    bodyWeightLb,
+    user.preferredWeightUnit,
+  );
+
   const initialData: WorkoutLoggerInitialData = {
     title: workout.title,
     workoutType: workout.workoutType ?? "",
@@ -106,6 +121,7 @@ export default async function EditWorkoutPage({
       initialData={initialData}
       workoutTypeOptions={createWorkoutTypeOptions(split, workout.workoutType)}
       weightUnit={user.preferredWeightUnit}
+      bodyWeightDisplay={bodyWeightDisplay}
     />
   );
 }

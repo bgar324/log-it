@@ -212,16 +212,28 @@ export function normalizeWorkoutPayload(raw: RawWorkoutPayload) {
   };
 }
 
-export function computeWorkoutTotalWeightLb(payload: ParsedWorkout) {
+export function computeWorkoutTotalWeightLb(
+  payload: ParsedWorkout,
+  bodyWeightLb: Prisma.Decimal | string | number | null = null,
+) {
   let total = new Prisma.Decimal(0);
+  const bodyWeight =
+    bodyWeightLb === null ? null : new Prisma.Decimal(bodyWeightLb);
 
   for (const exercise of payload.exercises) {
     for (const setInput of exercise.sets) {
-      if (!setInput.weightLb) {
+      if (setInput.weightLb) {
+        total = total.plus(
+          new Prisma.Decimal(setInput.weightLb).mul(setInput.reps),
+        );
         continue;
       }
 
-      total = total.plus(new Prisma.Decimal(setInput.weightLb).mul(setInput.reps));
+      // Bodyweight set (no external load): credit the tracked body weight for
+      // the workout date when available and the set has reps.
+      if (bodyWeight && setInput.reps > 0) {
+        total = total.plus(bodyWeight.mul(setInput.reps));
+      }
     }
   }
 

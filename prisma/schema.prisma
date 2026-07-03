@@ -76,6 +76,7 @@ model WorkoutLog {
   workoutTypeSlug String?
   status          WorkoutLogStatus  @default(COMPLETED)
   totalWeightLb   Decimal           @default(0) @db.Decimal
+  bodyWeightLb    Decimal?          @db.Decimal(8, 2)
   performedAt     DateTime          @default(now()) @db.Date
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt

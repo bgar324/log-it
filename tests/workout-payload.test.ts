@@ -114,3 +114,41 @@ test("normalizeWorkoutPayload accepts time-only sets", () => {
   ]);
   assert.equal(computeWorkoutTotalWeightLb(value).toString(), "0");
 });
+
+test("computeWorkoutTotalWeightLb credits bodyweight sets with the tracked body weight", () => {
+  const value = expectParsedWorkout(
+    normalizeWorkoutPayload({
+      title: "Pull Day",
+      performedAt: "2026-07-02",
+      weightUnit: "LB",
+      exercises: [
+        {
+          name: "Pull Up",
+          sets: [
+            { reps: "10" },
+            { reps: "8", weightLb: "25" },
+          ],
+        },
+      ],
+    }),
+  );
+
+  // 10 reps at 180 lb bodyweight + 8 reps at 25 lb = 1800 + 200
+  assert.equal(computeWorkoutTotalWeightLb(value, "180").toString(), "2000");
+
+  // Without a tracked body weight, bodyweight sets contribute nothing.
+  assert.equal(computeWorkoutTotalWeightLb(value).toString(), "200");
+});
+
+test("computeWorkoutTotalWeightLb ignores body weight for time-only sets", () => {
+  const value = expectParsedWorkout(
+    normalizeWorkoutPayload({
+      title: "Core",
+      performedAt: "2026-07-02",
+      weightUnit: "LB",
+      exercises: [{ name: "Plank", sets: [{ reps: "", durationSeconds: "60" }] }],
+    }),
+  );
+
+  assert.equal(computeWorkoutTotalWeightLb(value, "180").toString(), "0");
+});

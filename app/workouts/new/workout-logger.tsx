@@ -38,6 +38,7 @@ type WorkoutLoggerProps = {
   splitTemplateData?: WorkoutLoggerInitialData;
   workoutTypeOptions?: string[];
   weightUnit: WeightUnit;
+  bodyWeightDisplay?: number | null;
 };
 
 export function WorkoutLogger({
@@ -47,11 +48,16 @@ export function WorkoutLogger({
   splitTemplateData,
   workoutTypeOptions = [],
   weightUnit,
+  bodyWeightDisplay = null,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const router = useRouter();
   const weightUnitLabel = getWeightUnitLabel(weightUnit);
   const weightUnitName = weightUnit === "KG" ? "kilograms" : "pounds";
+  const bodyWeightLabel =
+    bodyWeightDisplay === null
+      ? null
+      : `${Number(bodyWeightDisplay.toFixed(1))}`;
   const [isSaving, setIsSaving] = useState(false);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
   const formId = useId();
@@ -267,6 +273,7 @@ export function WorkoutLogger({
                 weightUnit={weightUnit}
                 weightUnitLabel={weightUnitLabel}
                 weightUnitName={weightUnitName}
+                bodyWeightLabel={bodyWeightLabel}
                 onAddSet={() => draft.addSet(exercise.id)}
                 onApplySearchResult={(suggestion) => {
                   clearPendingSuggestionLookup(exercise.id);

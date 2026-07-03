@@ -10,6 +10,9 @@ export type TransactionMock = {
     update: (args: unknown) => Promise<unknown>;
     delete: (args: unknown) => Promise<unknown>;
   };
+  bodyWeightEntry: {
+    findFirst: (args: unknown) => Promise<unknown>;
+  };
 };
 
 const prismaMutable = prisma as unknown as {
@@ -50,9 +53,16 @@ export function createDefaultTransactionMock() {
     workoutLogFindFirst: [] as Array<Record<string, unknown>>,
     workoutLogUpdate: [] as Array<Record<string, unknown>>,
     workoutLogDelete: [] as Array<Record<string, unknown>>,
+    bodyWeightEntryFindFirst: [] as Array<Record<string, unknown>>,
   };
 
   const tx: TransactionMock = {
+    bodyWeightEntry: {
+      async findFirst(args) {
+        calls.bodyWeightEntryFindFirst.push(args as Record<string, unknown>);
+        return null;
+      },
+    },
     workoutLog: {
       async create(args) {
         calls.workoutLogCreate.push(args as Record<string, unknown>);

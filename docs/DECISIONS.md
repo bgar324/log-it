@@ -49,3 +49,9 @@ The product UI uses Geist, global `-0.03em` tracking, black/white theme variable
 ## Track Nutrition By Date
 
 Nutrition tracking uses one `NutritionEntry` per user and date for calorie/protein totals plus one optional `BodyWeightEntry` per user and date. BMR is a user-level calorie target used for daily and rolled-up chart comparisons.
+
+## Bodyweight Sets Credit Tracked Body Weight
+
+The workout logger and the body-weight tracker are wired together through a per-workout snapshot. On create/update/duplicate, `resolveBodyWeightLbForDate()` (`lib/body-weight.ts`) resolves the user's tracked body weight for the workout's `performedAt` — the entry on or before that date, then the nearest later entry, then null — and stores it on `WorkoutLog.bodyWeightLb`. `computeWorkoutTotalWeightLb()` credits bodyweight sets (`weightLb` null with reps) as `bodyWeightLb * reps`, so total workout volume reflects bodyweight training.
+
+Individual bodyweight sets keep `weightLb = null`, so every set display still renders "BW"/"Bodyweight" and per-exercise best-weight remains external-load only. The snapshot is resolved at write time (not derived at read), so it fits the precomputed `totalWeightLb`/read-model architecture and stays stable if a later weigh-in is edited. The resolver returns null instead of throwing when the nutrition tables are absent, so workout logging never depends on the tracker.

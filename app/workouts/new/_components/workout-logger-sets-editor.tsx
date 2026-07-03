@@ -16,6 +16,7 @@ type WorkoutLoggerSetsEditorProps = {
   exercise: ExerciseDraft;
   weightUnitLabel: string;
   weightUnitName: string;
+  bodyWeightLabel: string | null;
   onAddSet: () => void;
   onRemoveSet: (setId: string) => void;
   onUpdateSet: <K extends keyof ExerciseSetDraft>(
@@ -29,6 +30,7 @@ export function WorkoutLoggerSetsEditor({
   exercise,
   weightUnitLabel,
   weightUnitName,
+  bodyWeightLabel,
   onAddSet,
   onRemoveSet,
   onUpdateSet,
@@ -53,6 +55,9 @@ export function WorkoutLoggerSetsEditor({
     <div className={styles.setsStack}>
       {exercise.sets.map((setItem, setIndex) => {
         const isBodyweight = setItem.usesBodyweight;
+        const bodyweightPlaceholder = bodyWeightLabel
+          ? `BW (${bodyWeightLabel})`
+          : "BW";
 
         return (
           <div key={setItem.id} className={styles.setRow}>
@@ -75,12 +80,14 @@ export function WorkoutLoggerSetsEditor({
                   spellCheck={false}
                   enterKeyHint="next"
                   className={`${styles.input} ${styles.setInput} ${styles.setWeightInput}`}
-                  placeholder={isBodyweight ? "BW" : weightUnitLabel}
+                  placeholder={isBodyweight ? bodyweightPlaceholder : weightUnitLabel}
                   value={setItem.weightLb}
                   disabled={isBodyweight}
                   aria-label={
                     isBodyweight
-                      ? `Bodyweight selected for set ${setIndex + 1}`
+                      ? bodyWeightLabel
+                        ? `Bodyweight ${bodyWeightLabel} ${weightUnitName} selected for set ${setIndex + 1}`
+                        : `Bodyweight selected for set ${setIndex + 1}`
                       : `Weight in ${weightUnitName} for set ${setIndex + 1}`
                   }
                   onChange={(event) => {

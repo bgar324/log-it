@@ -41,6 +41,7 @@ export default async function WorkoutDetailPage({
       workoutType: true,
       performedAt: true,
       totalWeightLb: true,
+      bodyWeightLb: true,
       exercises: {
         orderBy: {
           order: "asc",
@@ -73,6 +74,12 @@ export default async function WorkoutDetailPage({
   const unit = user.preferredWeightUnit;
   const totalSets = workout.exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
   const totalWeight = convertStoredWeightToDisplay(workout.totalWeightLb, unit) ?? 0;
+  const bodyWeight = convertStoredWeightToDisplay(workout.bodyWeightLb, unit);
+  const hasBodyweightVolume =
+    bodyWeight !== null &&
+    workout.exercises.some((exercise) =>
+      exercise.sets.some((set) => set.weightLb === null && set.reps > 0),
+    );
   const summaryItems = [
     { label: "Date", value: formatDate(workout.performedAt) },
     { label: "Exercises", value: `${workout.exercises.length}` },
@@ -81,6 +88,16 @@ export default async function WorkoutDetailPage({
       label: "Total volume",
       value: formatWeightWithUnit(totalWeight, unit, { maximumFractionDigits: 0 }),
     },
+    ...(hasBodyweightVolume
+      ? [
+          {
+            label: "Bodyweight",
+            value: formatWeightWithUnit(bodyWeight ?? 0, unit, {
+              maximumFractionDigits: 1,
+            }),
+          },
+        ]
+      : []),
   ];
   const workoutExport = formatWorkoutForClipboard({
     performedAt: workout.performedAt,
@@ -140,6 +157,11 @@ export default async function WorkoutDetailPage({
               const weight = convertStoredWeightToDisplay(set.weightLb, unit);
 
               if (weight === null) {
+                // Bodyweight set: credit the workout's tracked body weight.
+                if (bodyWeight !== null && set.reps > 0) {
+                  return sum + bodyWeight * set.reps;
+                }
+
                 return sum;
               }
 

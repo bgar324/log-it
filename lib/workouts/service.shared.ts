@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
+import { resolveBodyWeightLbForDate } from "../body-weight";
 import {
   createWorkoutReadModelSyncInput,
   type WorkoutReadModelSyncInput,
@@ -69,7 +70,12 @@ export async function createWorkoutRecord(
   userId: string,
   payload: ParsedWorkout,
 ) {
-  const totalWeightLb = computeWorkoutTotalWeightLb(payload);
+  const bodyWeightLb = await resolveBodyWeightLbForDate(
+    db,
+    userId,
+    payload.performedAt,
+  );
+  const totalWeightLb = computeWorkoutTotalWeightLb(payload, bodyWeightLb);
   const workoutLog = await db.workoutLog.create({
     data: {
       userId,
@@ -77,6 +83,7 @@ export async function createWorkoutRecord(
       workoutType: payload.workoutType,
       workoutTypeSlug: payload.workoutTypeSlug,
       totalWeightLb,
+      bodyWeightLb,
       performedAt: payload.performedAt,
       status: "COMPLETED",
       exercises: {

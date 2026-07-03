@@ -55,7 +55,7 @@ API routes:
 Source of truth is `prisma/schema.prisma`.
 
 - `User`: account, profile, public profile setting, avatar bytes/mime/update timestamp, preferred weight unit, and relations.
-- `WorkoutLog`: workout header, date-only `performedAt`, optional workout type/slug, status, total stored volume in pounds, and exercises.
+- `WorkoutLog`: workout header, date-only `performedAt`, optional workout type/slug, status, total stored volume in pounds, an optional `bodyWeightLb` snapshot of the user's tracked body weight for that date, and exercises.
 - `WorkoutExercise`: ordered exercise rows inside a workout; can link to canonical `Exercise`.
 - `WorkoutSet`: ordered sets with reps, nullable `weightLb`, and optional `durationSeconds` for timed work.
 - `NutritionEntry`: per-user, per-date calorie and protein totals.
@@ -73,8 +73,9 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 1. Route handlers parse JSON and validate session/request origin.
 2. `lib/workouts/payload.ts` normalizes title, workout type, date, unit, exercise names, reps, and weights.
 3. Weights are converted to pounds before persistence.
-4. `lib/workouts/service.ts` creates, updates, deletes, or duplicates workouts inside Prisma transactions.
-5. Mutation routes schedule `syncWorkoutReadModels()` with `after()` and revalidate `getWorkoutDataTag(user.id)`.
+4. `resolveBodyWeightLbForDate()` (`lib/body-weight.ts`) snapshots the user's tracked body weight for `performedAt` onto `WorkoutLog.bodyWeightLb`, and `computeWorkoutTotalWeightLb()` credits bodyweight sets (`weightLb` null) as `bodyWeightLb * reps`.
+5. `lib/workouts/service.ts` creates, updates, deletes, or duplicates workouts inside Prisma transactions.
+6. Mutation routes schedule `syncWorkoutReadModels()` with `after()` and revalidate `getWorkoutDataTag(user.id)`.
 
 `createWorkout()` blocks logging on a split rest day when the user has an active split and the selected date maps to `workoutTypeSlug === "rest"`.
 

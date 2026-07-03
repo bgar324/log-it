@@ -1,5 +1,6 @@
 import { prisma } from "../prisma";
 import { getCurrentPacificDate, normalizeWorkoutTypeSlug } from "../workout-utils";
+import { resolveBodyWeightLbForDate } from "../body-weight";
 import { computeWorkoutTotalWeightLb, type ParsedWorkout } from "./payload";
 import {
   createSyncInput,
@@ -61,6 +62,12 @@ export async function updateWorkout(
       affectedExerciseKeys.add(exercise.normalizedName);
     }
 
+    const bodyWeightLb = await resolveBodyWeightLbForDate(
+      tx,
+      userId,
+      payload.performedAt,
+    );
+
     await tx.workoutLog.update({
       where: {
         id: existingWorkout.id,
@@ -69,7 +76,8 @@ export async function updateWorkout(
         title: payload.title,
         workoutType: payload.workoutType,
         workoutTypeSlug: payload.workoutTypeSlug,
-        totalWeightLb: computeWorkoutTotalWeightLb(payload),
+        totalWeightLb: computeWorkoutTotalWeightLb(payload, bodyWeightLb),
+        bodyWeightLb,
         performedAt: payload.performedAt,
         status: "COMPLETED",
         exercises: {
