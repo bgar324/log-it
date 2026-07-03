@@ -250,7 +250,7 @@ export async function loadDashboardOverviewSection(
   const personalBests: DashboardClientData["overview"]["personalBests"] = exerciseSummaries
     .filter((item) => item.bestE1rmLb > 0)
     .sort((left, right) => right.bestE1rmLb - left.bestE1rmLb)
-    .slice(0, 5)
+    .slice(0, 50)
     .map((item) => ({
       id: item.normalizedName,
       lift: item.name,

@@ -124,17 +124,19 @@ export function DashboardOverviewView({
                 columns={["Date", "Exercise", "Est. 1RM"]}
                 rowClassName={styles.personalBestRow}
               />
-              {overview.personalBests.map((row) => (
-                <div key={row.id} className={`${styles.metricRow} ${styles.personalBestRow}`}>
-                  <span className={styles.metricMobileLabel} data-label="Date">
-                    {row.dateLabel}
-                  </span>
-                  <span className={styles.metricMain}>{row.lift}</span>
-                  <span className={styles.metricMobileLabel} data-label="Est. 1RM">
-                    {formatWeight(row.weight)}
-                  </span>
-                </div>
-              ))}
+              <div className={styles.personalRecordsScroll}>
+                {overview.personalBests.map((row) => (
+                  <div key={row.id} className={`${styles.metricRow} ${styles.personalBestRow}`}>
+                    <span className={styles.metricMobileLabel} data-label="Date">
+                      {row.dateLabel}
+                    </span>
+                    <span className={styles.metricMain}>{row.lift}</span>
+                    <span className={styles.metricMobileLabel} data-label="Est. 1RM">
+                      {formatWeight(row.weight)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <p className={styles.empty}>No lifts logged yet.</p>

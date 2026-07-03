@@ -174,6 +174,8 @@ export const styles = {
     `cursor-pointer text-inherit no-underline hover:translate-y-0 ${buttonFocusRing} ${buttonMotion}`,
   metricMobileLabel:
     "min-w-0",
+  personalRecordsScroll:
+    "flex max-h-[20rem] flex-col gap-[0.36rem] overflow-y-auto pr-[0.18rem] [scrollbar-width:thin]",
   personalBestRow:
     "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,1fr)] min-[761px]:w-[max(100%,24rem)] max-[760px]:grid-cols-[4.8rem_minmax(0,1fr)_auto] max-[760px]:[&>*:nth-child(3)]:justify-self-end",
   workoutSummaryLine:
