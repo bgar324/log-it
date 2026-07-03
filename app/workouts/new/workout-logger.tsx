@@ -18,6 +18,7 @@ import { WorkoutLoggerExerciseCard } from "./_components/workout-logger-exercise
 import { WorkoutLoggerMetaCard } from "./_components/workout-logger-meta-card";
 import { WorkoutLoggerMobileActions } from "./_components/workout-logger-mobile-actions";
 import { WorkoutLoggerReorderDialog } from "./_components/workout-logger-reorder-dialog";
+import { WorkoutLoggerRestTimer } from "./_components/workout-logger-rest-timer";
 import { useWorkoutLoggerDraft } from "./_hooks/use-workout-logger-draft";
 import { useWorkoutLoggerInsights } from "./_hooks/use-workout-logger-insights";
 import { styles } from "./workout-logger.styles";
@@ -255,6 +256,8 @@ export function WorkoutLogger({
             <h1 className={styles.title}>{pageTitle}</h1>
           </div>
         </header>
+
+        <WorkoutLoggerRestTimer />
 
         <form id={formId} className={styles.form} onSubmit={handleSubmit}>
           <WorkoutLoggerMetaCard

@@ -55,6 +55,26 @@ export const styles = {
     "flex flex-col gap-[0.6rem] rounded-[0.54rem] border bg-transparent p-[0.78rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
+  restTimer: cn(
+    "flex flex-wrap items-center gap-[0.5rem] rounded-[0.54rem] border bg-transparent px-[0.7rem] py-[0.56rem]",
+    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
+    "data-[running=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)]",
+  ),
+  restTimerLabel: "text-[0.72rem] text-[var(--muted)]",
+  restTimerTime: cn(
+    "font-[var(--font-mono)] text-[1.05rem] tabular-nums leading-none text-[var(--text)]",
+    "min-w-[3.4rem]",
+  ),
+  restTimerPresets: "flex flex-wrap items-center gap-[0.34rem]",
+  restTimerButton: cn(
+    "inline-flex min-h-[2rem] cursor-pointer items-center justify-center rounded-[0.45rem] border px-[0.62rem]",
+    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
+    "bg-[var(--bg)] text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
+    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
+    "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
+  ),
+  restTimerSpacer: "ml-auto flex items-center gap-[0.34rem]",
   mobileHiddenCard: "max-[619px]:hidden",
   metaGrid:
     "grid gap-[0.55rem] min-[620px]:grid-cols-2 min-[860px]:grid-cols-3",
