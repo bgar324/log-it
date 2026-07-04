@@ -101,6 +101,13 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 - Persisted workout weights, workout totals, and body-weight tracker entries are stored in pounds. Profile display can be `LB` or `KG`.
 - Unit conversion and formatting live in `lib/weight-unit*`.
 
+## PWA And App Feel
+
+- `app/manifest.ts` is the installable web app manifest (standalone display, `/dashboard` start URL, icons in `public/icons/`).
+- `app/layout.tsx` exports `viewport` (`viewportFit: "cover"`, `themeColor`) and `metadata.appleWebApp`; the inline theme script and `app/components/pwa-client.tsx` keep the `theme-color` meta in sync with the manually chosen theme and register the service worker (production only).
+- `public/sw.js` is a conservative service worker: it never touches `/api`, serves navigations network-first with a `public/offline.html` fallback, and stale-while-revalidates static assets.
+- Route transitions use the root `app/template.tsx` (`page-enter` animation); `app/globals.css` also holds view/segment transitions, a `prefers-reduced-motion` guard, and app-like touch defaults (no overscroll bounce, no tap highlight).
+
 ## Tests
 
 `npm test` runs `scripts/run-tests.mjs`, which compiles tests with `tsconfig.test.json` and executes Node's built-in test runner.

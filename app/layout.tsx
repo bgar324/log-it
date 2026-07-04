@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Toaster } from "./components/ui/toaster";
+import { PwaClient } from "./components/pwa-client";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
@@ -16,6 +17,8 @@ const themeInitScript = `(() => {
           : "light";
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.colorScheme = theme;
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", theme === "dark" ? "#000000" : "#ffffff");
   } catch {
     document.documentElement.dataset.theme = "light";
     document.documentElement.dataset.colorScheme = "light";
@@ -23,8 +26,14 @@ const themeInitScript = `(() => {
 })();`;
 
 export const metadata: Metadata = {
+  applicationName: "logit",
   title: "logit",
   description: "A simple workout tracker.",
+  appleWebApp: {
+    capable: true,
+    title: "logit",
+    statusBarStyle: "default",
+  },
   icons: {
     icon: [
       {
@@ -37,8 +46,16 @@ export const metadata: Metadata = {
       },
     ],
     shortcut: "/icon-light.png",
-    apple: "/apple-icon.png",
+    apple: "/icons/apple-touch-icon.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  colorScheme: "light dark",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -58,6 +75,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {children}
         <Toaster />
+        <PwaClient />
       </body>
     </html>
   );
