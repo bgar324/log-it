@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { styles } from "./workout-detail.styles";
 
 type WorkoutDetailActionsProps = {
@@ -122,13 +123,14 @@ export function WorkoutDetailActions({
   return (
     <>
       <div className={styles.detailActionsGroup}>
-        <Link href={editHref} className={styles.actionLink} aria-label="Edit workout">
+        <Link href={editHref} className={`relative ${styles.actionLink}`} aria-label="Edit workout">
           <SquarePen
             className={styles.actionButtonIcon}
             aria-hidden="true"
             strokeWidth={1.9}
           />
           <span className={styles.actionButtonLabel}>Edit workout</span>
+          <LinkPendingOverlay />
         </Link>
         <button
           type="button"
@@ -167,7 +169,7 @@ export function WorkoutDetailActions({
           <div className={styles.mobileActionDropdown} role="menu">
             <Link
               href={editHref}
-              className={styles.mobileActionMenuItem}
+              className={`relative ${styles.mobileActionMenuItem}`}
               role="menuitem"
               onClick={() => setIsMenuOpen(false)}
             >
@@ -177,6 +179,7 @@ export function WorkoutDetailActions({
                 strokeWidth={1.9}
               />
               <span>Edit workout</span>
+              <LinkPendingOverlay />
             </Link>
             <button
               type="button"

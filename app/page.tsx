@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppBrand } from "./components/ui";
 import { ThemeToggle } from "./components/theme-toggle";
+import { LinkPendingOverlay } from "./components/link-pending";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function Home() {
@@ -22,11 +23,13 @@ export default async function Home() {
             <ThemeToggle />
           </div>
           <div className="action-row">
-            <Link className="btn btn-primary" href="/auth?mode=signin">
+            <Link className="btn btn-primary relative" href="/auth?mode=signin">
               Sign in
+              <LinkPendingOverlay />
             </Link>
-            <Link className="btn btn-outline" href="/auth?mode=register">
+            <Link className="btn btn-outline relative" href="/auth?mode=register">
               Register
+              <LinkPendingOverlay />
             </Link>
           </div>
 

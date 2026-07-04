@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { styles } from "./exercise-detail.styles";
 
 const PAGE_SIZE = 5;
@@ -47,7 +48,7 @@ export function SessionBreakdownTable({
             <Link
               key={session.workoutId}
               href={`/workouts/${session.workoutId}`}
-              className={`${styles.sessionRow} ${styles.sessionLinkRow}`}
+              className={`relative ${styles.sessionRow} ${styles.sessionLinkRow}`}
             >
               <span className={styles.sessionMobileLabel} data-label="Date">
                 {session.performedAtLabel}
@@ -83,6 +84,7 @@ export function SessionBreakdownTable({
               <span className={`${styles.sessionMobileLabel} ${styles.sessionDesktopValue}`} data-label="Volume">
                 {session.totalLoadLabel}
               </span>
+              <LinkPendingOverlay />
             </Link>
           ))}
         </div>

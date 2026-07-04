@@ -2,6 +2,7 @@ import dynamic from "next/dynamic";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
+import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { daysAgoLabel } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
 import type { DashboardClientData } from "../dashboard-types";
@@ -157,7 +158,7 @@ export function DashboardProgressView({
                 <Link
                   key={exercise.key}
                   href={`/exercises/${encodeURIComponent(exercise.routeKey)}`}
-                  className={`${styles.metricRow} ${styles.exerciseRow} ${styles.clickableMetricRow}`}
+                  className={`relative ${styles.metricRow} ${styles.exerciseRow} ${styles.clickableMetricRow}`}
                 >
                   <div>
                     <p className={styles.metricMain}>{exercise.name}</p>
@@ -185,6 +186,7 @@ export function DashboardProgressView({
                       {exercise.totalReps} reps · {formatWeight(exercise.bestWeight)}
                     </span>
                   </span>
+                  <LinkPendingOverlay />
                 </Link>
               ))}
             </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
+import { LinkPendingOverlay } from "@/app/components/link-pending";
 import type { WorkoutTableRow } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
 import { DashboardMetricHeader } from "./dashboard-metric-header";
@@ -39,7 +40,7 @@ export function DashboardWorkoutList({
         <Link
           key={workout.id}
           href={`/workouts/${workout.id}`}
-          className={`${styles.metricRow} ${styles.workoutHistoryRow} ${styles.clickableMetricRow}`}
+          className={`relative ${styles.metricRow} ${styles.workoutHistoryRow} ${styles.clickableMetricRow}`}
         >
           <span className={styles.metricMobileLabel} data-label="Date">
             <span className="max-[760px]:hidden">{workout.performedAtLabel}</span>
@@ -73,6 +74,7 @@ export function DashboardWorkoutList({
               maximumFractionDigits: 0,
             })}
           </span>
+          <LinkPendingOverlay />
         </Link>
       ))}
     </div>

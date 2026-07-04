@@ -1,6 +1,7 @@
 import { Check, Moon, Plus } from "lucide-react";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
+import { LinkPendingOverlay } from "@/app/components/link-pending";
 import type { DashboardClientData } from "../dashboard-types";
 import { WEEKDAY_CHIPS } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
@@ -93,11 +94,12 @@ export function DashboardOverviewView({
         ) : (
           <Link
             href="/workouts/new"
-            className={`${styles.kpiCard} ${styles.kpiActionCard}`}
+            className={`relative ${styles.kpiCard} ${styles.kpiActionCard}`}
             aria-label="Log workout"
           >
             <Plus className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
             <span className={styles.kpiActionText}>Log workout</span>
+            <LinkPendingOverlay />
           </Link>
         )}
       </section>
@@ -197,6 +199,7 @@ export function DashboardOverviewView({
                     } logged`}
                   >
                     <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
+                    <LinkPendingOverlay />
                   </Link>
                 ) : (
                   <div

@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 import type { DashboardView } from "../dashboard-types";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { AppBrand } from "@/app/components/ui";
+import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { NAV_ITEMS } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
 
@@ -175,7 +176,7 @@ export function DashboardShell({
           ) : canLogWorkout ? (
             <Link
               href="/workouts/new"
-              className={`${styles.sidebarAction} ${
+              className={`relative ${styles.sidebarAction} ${
                 sidebarCollapsed ? styles.sidebarActionCollapsed : ""
               }`}
               title={sidebarCollapsed ? "Log workout" : undefined}
@@ -183,6 +184,7 @@ export function DashboardShell({
             >
               <Plus className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
               <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Log workout</span>
+              <LinkPendingOverlay />
             </Link>
           ) : (
             <div
