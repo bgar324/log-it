@@ -326,6 +326,12 @@ export const styles = {
     "disabled:cursor-not-allowed disabled:opacity-[0.42]",
     "data-[active=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)] data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_8%,transparent)]",
   ),
+  mobileFabActionDanger: cn(
+    "border-[color:color-mix(in_srgb,#b13d48_38%,transparent)]",
+    "bg-[color:color-mix(in_srgb,#b13d48_10%,var(--bg))] text-[#b13d48]",
+    "hover:border-[color:color-mix(in_srgb,#b13d48_52%,transparent)]",
+    "hover:bg-[color:color-mix(in_srgb,#b13d48_16%,var(--bg))]",
+  ),
   mobileFabTimerBar: cn(
     "absolute inset-y-0 left-[calc(100%+0.62rem)] flex flex-row items-center gap-[0.48rem]",
     "pointer-events-none opacity-0",

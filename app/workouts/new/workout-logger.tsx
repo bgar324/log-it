@@ -355,8 +355,11 @@ export function WorkoutLogger({
             isSaving={isSaving}
             reorderDisabled={draft.exercises.length < 2}
             submitLabel={submitLabel}
+            canResetFromSplit={hasSplitReset}
+            resetDisabled={isSaving}
             onAddExercise={draft.addExercise}
             onOpenReorder={() => setIsReorderDialogOpen(true)}
+            onResetFromSplit={handleResetFromSplit}
           />
 
           <WorkoutLoggerReorderDialog

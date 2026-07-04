@@ -7,6 +7,7 @@ import {
   Pause,
   Play,
   Plus,
+  RotateCcw,
   Save,
   SkipForward,
 } from "lucide-react";
@@ -26,8 +27,11 @@ type WorkoutLoggerMobileActionsProps = {
   isSaving: boolean;
   reorderDisabled: boolean;
   submitLabel: string;
+  canResetFromSplit?: boolean;
+  resetDisabled?: boolean;
   onAddExercise: () => void;
   onOpenReorder: () => void;
+  onResetFromSplit?: () => void;
 };
 
 export function WorkoutLoggerMobileActions({
@@ -36,11 +40,15 @@ export function WorkoutLoggerMobileActions({
   isSaving,
   reorderDisabled,
   submitLabel,
+  canResetFromSplit = false,
+  resetDisabled = false,
   onAddExercise,
   onOpenReorder,
+  onResetFromSplit,
 }: WorkoutLoggerMobileActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isPresetsOpen, setIsPresetsOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const isMounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -61,6 +69,20 @@ export function WorkoutLoggerMobileActions({
   function handleOpenPresets() {
     setIsPresetsOpen(true);
     setIsOpen(false);
+  }
+
+  function handleOpenResetConfirm() {
+    if (resetDisabled) {
+      return;
+    }
+
+    setIsResetConfirmOpen(true);
+    setIsOpen(false);
+  }
+
+  function handleConfirmReset() {
+    onResetFromSplit?.();
+    setIsResetConfirmOpen(false);
   }
 
   function handleStart(seconds: number) {
@@ -84,6 +106,7 @@ export function WorkoutLoggerMobileActions({
   const isStackShowing = isOpen || isPresetsOpen;
 
   return createPortal(
+    <>
     <div className={styles.mobileFabRoot}>
       <div
         className={styles.mobileFabStack}
@@ -137,6 +160,19 @@ export function WorkoutLoggerMobileActions({
         >
           <Clock className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
         </button>
+        {canResetFromSplit && onResetFromSplit ? (
+          <button
+            type="button"
+            className={`${styles.mobileFabAction} ${styles.mobileFabActionDanger}`}
+            disabled={resetDisabled}
+            onClick={handleOpenResetConfirm}
+            tabIndex={isOpen ? 0 : -1}
+            aria-label="Reset exercises from your split"
+            title="Reset exercises from your split"
+          >
+            <RotateCcw className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
+          </button>
+        ) : null}
       </div>
 
       <div
@@ -221,7 +257,45 @@ export function WorkoutLoggerMobileActions({
           />
         )}
       </button>
-    </div>,
+    </div>
+
+    {isResetConfirmOpen ? (
+      <div
+        className={styles.confirmOverlay}
+        onClick={() => setIsResetConfirmOpen(false)}
+      >
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          className={styles.confirmDialog}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <h2 className={styles.confirmTitle}>Replace the current exercises?</h2>
+          <p className={styles.confirmBody}>
+            This will replace every current exercise and set in this logger with the
+            exercises and set counts from your split for today.
+          </p>
+          <div className={styles.confirmActions}>
+            <button
+              type="button"
+              className={styles.confirmSecondaryButton}
+              onClick={() => setIsResetConfirmOpen(false)}
+            >
+              Keep current log
+            </button>
+            <button
+              type="button"
+              className={styles.confirmPrimaryButton}
+              onClick={handleConfirmReset}
+              disabled={resetDisabled}
+            >
+              Reset to split
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : null}
+    </>,
     document.body,
   );
 }
