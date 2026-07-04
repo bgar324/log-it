@@ -16,13 +16,6 @@ export default async function Home() {
     <main className="app-shell">
       <section className="phone-stage" aria-label="logit landing">
         <div className="content-stack">
-          <div className="top-row">
-            <h1 className="title">
-              <AppBrand textClassName="text-[inherit] leading-[inherit] font-[inherit]" />
-            </h1>
-            <ThemeToggle />
-          </div>
-
           <Link href="/changelog#install" className="landing-banner">
             <span className="landing-banner-emoji" aria-hidden="true">
               🎉
@@ -30,6 +23,12 @@ export default async function Home() {
             <span>logit is now an installable app</span>
           </Link>
 
+          <div className="top-row">
+            <h1 className="title">
+              <AppBrand textClassName="text-[inherit] leading-[inherit] font-[inherit]" />
+            </h1>
+            <ThemeToggle />
+          </div>
           <div className="action-row">
             <Link className="btn btn-primary relative" href="/auth?mode=signin">
               Sign in
