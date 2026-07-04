@@ -50,6 +50,16 @@ export default function ChangelogPage() {
                   your password, or delete your account from the profile page.
                 </li>
                 <li>
+                  <strong>Install as an app.</strong> logit is now a PWA — add it
+                  to your home screen for a fullscreen, app-like experience with
+                  its own icon, and a friendly screen when you&apos;re offline.
+                </li>
+                <li>
+                  <strong>Instant tap feedback.</strong> Opening a workout,
+                  exercise, or action shows a spinner right on the thing you
+                  tapped while it loads, so nothing feels frozen.
+                </li>
+                <li>
                   <strong>This changelog.</strong>
                 </li>
               </ul>
@@ -74,6 +84,10 @@ export default function ChangelogPage() {
                 <li>
                   Cleaner mobile action button (a rotating +) and a tidier
                   profile account layout.
+                </li>
+                <li>
+                  Smoother page transitions throughout, plus a more app-like
+                  feel on touch (no rubber-band scroll or tap flash).
                 </li>
               </ul>
             </div>
