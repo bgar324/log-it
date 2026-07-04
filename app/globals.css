@@ -550,29 +550,6 @@ a {
 
 .legal-list li {
   scroll-margin-top: 1.4rem;
-  border-radius: 0.4rem;
-}
-
-.legal-list li:target {
-  animation: changelog-highlight 3.8s ease both;
-}
-
-@keyframes changelog-highlight {
-  0% {
-    background-color: transparent;
-    box-shadow: 0 0 0 0 transparent;
-  }
-  6%,
-  72% {
-    background-color: color-mix(in srgb, #facc15 26%, transparent);
-    box-shadow:
-      0 0 0 0.5rem color-mix(in srgb, #facc15 26%, transparent),
-      0 0 0 0.62rem color-mix(in srgb, #facc15 62%, transparent);
-  }
-  100% {
-    background-color: transparent;
-    box-shadow: 0 0 0 0 transparent;
-  }
 }
 
 .legal-inline-link {
