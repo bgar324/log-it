@@ -49,7 +49,7 @@ export default function ChangelogPage() {
                   <strong>Account management.</strong> Change your email, change
                   your password, or delete your account from the profile page.
                 </li>
-                <li>
+                <li id="install">
                   <strong>Install as an app.</strong> logit is now a PWA — add it
                   to your home screen for a fullscreen, app-like experience with
                   its own icon, and a friendly screen when you&apos;re offline.

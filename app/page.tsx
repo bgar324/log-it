@@ -22,6 +22,14 @@ export default async function Home() {
             </h1>
             <ThemeToggle />
           </div>
+
+          <Link href="/changelog#install" className="landing-banner">
+            <span className="landing-banner-emoji" aria-hidden="true">
+              🎉
+            </span>
+            <span>logit is now an installable app</span>
+          </Link>
+
           <div className="action-row">
             <Link className="btn btn-primary relative" href="/auth?mode=signin">
               Sign in

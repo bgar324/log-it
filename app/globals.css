@@ -487,6 +487,38 @@ a {
   margin: 0;
 }
 
+.landing-banner {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--field-line);
+  border-radius: 0.62rem;
+  background: var(--field-bg);
+  color: var(--text);
+  font-size: 0.78rem;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    transform 140ms ease,
+    background-color 160ms ease;
+}
+
+.landing-banner:hover {
+  border-color: color-mix(in srgb, var(--text) 28%, transparent);
+}
+
+.landing-banner:active {
+  transform: translateY(1px);
+}
+
+.landing-banner-emoji {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 .changelog-entry {
   display: flex;
   flex-direction: column;
@@ -514,6 +546,27 @@ a {
   font-weight: 560;
   letter-spacing: -0.03em;
   color: var(--text);
+}
+
+.legal-list li {
+  scroll-margin-top: 1.4rem;
+  border-radius: 0.4rem;
+}
+
+.legal-list li:target {
+  animation: changelog-highlight 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes changelog-highlight {
+  0%,
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  14% {
+    background-color: color-mix(in srgb, var(--text) 12%, transparent);
+    box-shadow: 0 0 0 0.45rem color-mix(in srgb, var(--text) 12%, transparent);
+  }
 }
 
 .legal-inline-link {
