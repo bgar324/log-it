@@ -304,12 +304,12 @@ export const styles = {
     "fixed bottom-[calc(0.95rem+env(safe-area-inset-bottom))] left-[0.95rem] z-[70] min-[620px]:hidden",
   mobileFabStack: cn(
     "absolute bottom-[calc(100%+0.62rem)] left-0 flex w-[3.15rem] flex-col-reverse items-center gap-[0.48rem]",
-    "pointer-events-none data-[open=true]:pointer-events-auto",
+    "data-[state=closed]:pointer-events-none",
   ),
-  mobileFabStackItem: cn(
-    "inline-flex opacity-0 translate-y-[0.55rem] scale-[0.8]",
-    "transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
-    "data-[open=true]:opacity-100 data-[open=true]:translate-y-0 data-[open=true]:scale-100",
+  mobileFabPop: cn(
+    "inline-flex",
+    "data-[state=open]:animate-[logit-fab-item-in_200ms_cubic-bezier(0.2,0.8,0.2,1)_both]",
+    "data-[state=closed]:animate-[logit-fab-item-out_150ms_cubic-bezier(0.4,0,1,1)_both]",
   ),
   mobileFabButton: cn(
     "inline-flex h-[3.15rem] w-[3.15rem] cursor-pointer items-center justify-center rounded-full border",
@@ -337,9 +337,7 @@ export const styles = {
   ),
   mobileFabTimerBar: cn(
     "absolute inset-y-0 left-[calc(100%+0.62rem)] flex flex-row items-center gap-[0.48rem]",
-    "pointer-events-none opacity-0",
-    "transition-[opacity,transform] duration-200 ease-out",
-    "-translate-x-[0.48rem] data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:translate-x-0",
+    "data-[state=closed]:pointer-events-none",
   ),
   mobileFabCountdown: "text-[0.84rem] font-[560] tabular-nums leading-none stroke-current",
   mobileFabIcon: "h-[1rem] w-[1rem] shrink-0 stroke-current",

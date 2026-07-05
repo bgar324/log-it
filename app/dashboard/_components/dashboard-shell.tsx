@@ -6,10 +6,22 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import type { DashboardView } from "../dashboard-types";
 import { useThemeToggle } from "@/app/components/theme-toggle";
+import { usePresence } from "@/app/hooks/use-presence";
 import { AppBrand } from "@/app/components/ui";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { NAV_ITEMS } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
+
+const MENU_EXIT_MS = 280;
+const MENU_ITEM_COUNT = NAV_ITEMS.length + 2;
+
+function menuItemDelay(index: number, open: boolean) {
+  return {
+    animationDelay: open
+      ? `${index * 35}ms`
+      : `${(MENU_ITEM_COUNT - 1 - index) * 22}ms`,
+  };
+}
 
 type DashboardShellProps = {
   activeView: DashboardView;
@@ -43,6 +55,8 @@ export function DashboardShell({
   children,
 }: DashboardShellProps) {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const menuMounted = usePresence(mobileMenuOpen, MENU_EXIT_MS);
+  const menuState = mobileMenuOpen ? "open" : "closed";
   const { theme, toggleTheme } = useThemeToggle();
   const nextIsDark = theme === "light";
   const ThemeIcon = nextIsDark ? Moon : Sun;
@@ -272,10 +286,11 @@ export function DashboardShell({
                   />
                 </span>
               </button>
-              {mobileMenuOpen ? (
+              {menuMounted ? (
                 <div
                   id="dashboard-mobile-menu"
                   className={styles.mobileMenuPanel}
+                  data-state={menuState}
                   aria-label="Dashboard mobile navigation"
                 >
                   <nav className={styles.mobileMenuNav} aria-label="Dashboard sections">
@@ -288,7 +303,8 @@ export function DashboardShell({
                           key={item.view}
                           type="button"
                           className={styles.mobileMenuItem}
-                          style={{ animationDelay: `${index * 35}ms` }}
+                          data-state={menuState}
+                          style={menuItemDelay(index, mobileMenuOpen)}
                           data-active={isActive}
                           onClick={() => onNavigate(item.view)}
                         >
@@ -304,7 +320,8 @@ export function DashboardShell({
                     <button
                       type="button"
                       className={styles.mobileMenuItem}
-                      style={{ animationDelay: `${NAV_ITEMS.length * 35}ms` }}
+                      data-state={menuState}
+                      style={menuItemDelay(NAV_ITEMS.length, mobileMenuOpen)}
                       data-active={activeView === "profile"}
                       onClick={() => onNavigate("profile")}
                     >
@@ -318,7 +335,8 @@ export function DashboardShell({
                     <button
                       type="button"
                       className={styles.mobileMenuItem}
-                      style={{ animationDelay: `${(NAV_ITEMS.length + 1) * 35}ms` }}
+                      data-state={menuState}
+                      style={menuItemDelay(NAV_ITEMS.length + 1, mobileMenuOpen)}
                       onClick={toggleTheme}
                       aria-label={themeLabel}
                     >
