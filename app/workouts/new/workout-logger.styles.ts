@@ -87,10 +87,10 @@ export const styles = {
     "!h-auto !w-auto shrink-0 self-stretch aspect-square rounded-[0.52rem]",
   ),
   confirmOverlay: cn(
-    "fixed inset-0 z-[80] flex items-end justify-center",
-    "bg-[color:color-mix(in_srgb,#000_36%,transparent)] px-[0.78rem] pt-[0.78rem]",
+    "fixed inset-0 z-[80] flex items-center justify-center",
+    "bg-[color:color-mix(in_srgb,#000_36%,transparent)] px-[0.78rem] py-[0.78rem]",
     "pb-[calc(0.78rem+env(safe-area-inset-bottom))]",
-    "min-[620px]:items-center min-[620px]:p-[1rem]",
+    "min-[620px]:p-[1rem]",
   ),
   confirmDialog: cn(
     "flex w-full max-w-[26rem] flex-col gap-[0.62rem] rounded-[0.56rem] border bg-[var(--bg)] p-[0.82rem]",

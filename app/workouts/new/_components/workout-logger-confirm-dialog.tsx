@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { styles } from "../workout-logger.styles";
 
 type WorkoutLoggerConfirmDialogProps = {
@@ -45,7 +46,11 @@ export function WorkoutLoggerConfirmDialog({
     };
   }, [onCancel]);
 
-  return (
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
     <div className={styles.confirmOverlay} onClick={onCancel}>
       <div
         role="alertdialog"
@@ -79,6 +84,7 @@ export function WorkoutLoggerConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
