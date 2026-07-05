@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Info } from "lucide-react";
 import { notFound } from "next/navigation";
-import { ThemeToggle } from "@/app/components/theme-toggle";
 import { AppBrand } from "@/app/components/ui";
 import {
   loadPublicProfile,
@@ -97,7 +96,6 @@ export default async function PublicProfilePage({
               textClassName="text-[2rem] leading-none font-[520]"
             />
           </Link>
-          <ThemeToggle />
         </div>
 
         <section className={styles.hero}>

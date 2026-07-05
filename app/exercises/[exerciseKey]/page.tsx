@@ -1,5 +1,4 @@
 import { BackButton } from "@/app/components/back-button";
-import { ThemeToggle } from "@/app/components/theme-toggle";
 import { ExerciseDetailChart } from "./exercise-detail-chart";
 import { loadExerciseDetailPageData } from "./exercise-detail.data";
 import { SessionBreakdownTable } from "./session-breakdown-table";
@@ -25,7 +24,6 @@ export default async function ExerciseDetailPage({
             className={styles.backLink}
             iconClassName={styles.backButtonIcon}
           />
-          <ThemeToggle />
         </header>
 
         <section className={styles.summaryCard}>

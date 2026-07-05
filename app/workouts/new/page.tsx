@@ -1,6 +1,5 @@
 import { WorkoutLogger } from "./workout-logger";
 import Link from "next/link";
-import { ThemeToggle } from "@/app/components/theme-toggle";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { resolveBodyWeightLbForDate } from "@/lib/body-weight";
@@ -47,7 +46,6 @@ export default async function NewWorkoutPage({
             <Link href="/dashboard" className={styles.backLink}>
               Back to dashboard
             </Link>
-            <ThemeToggle />
           </div>
 
           <section className={styles.card}>

@@ -1,5 +1,4 @@
 import { BackButton } from "@/app/components/back-button";
-import { ThemeToggle } from "@/app/components/theme-toggle";
 import { styles } from "./workout-detail.styles";
 
 function SkeletonBlock({
@@ -84,7 +83,6 @@ export default function WorkoutDetailLoading() {
             <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
             <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
             <SkeletonBlock className="hidden h-[2.3rem] w-[2.3rem] rounded-full max-[759px]:block" />
-            <ThemeToggle />
           </div>
         </header>
 

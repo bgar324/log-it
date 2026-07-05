@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { BackButton } from "@/app/components/back-button";
-import { ThemeToggle } from "@/app/components/theme-toggle";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
 import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
 import {
@@ -247,7 +246,6 @@ export function WorkoutLogger({
             className={styles.backLink}
             iconClassName={styles.backButtonIcon}
           />
-          <ThemeToggle />
         </div>
 
         <header className={styles.header}>

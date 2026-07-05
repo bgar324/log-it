@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { BackButton } from "../components/back-button";
-import { ThemeToggle } from "../components/theme-toggle";
 import { styles } from "./page.styles";
 import { RESEARCH_PAPERS } from "./papers";
 
@@ -28,7 +27,6 @@ export default function ResearchPage() {
               iconClassName="back-icon"
               showLabel={false}
             />
-            <ThemeToggle />
           </div>
 
           <h1 className="title legal-title">research</h1>

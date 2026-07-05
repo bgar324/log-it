@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { ThemeToggle } from "../components/theme-toggle";
 
 export default function ChangelogPage() {
   return (
@@ -11,7 +10,6 @@ export default function ChangelogPage() {
             <Link href="/" className="back-link" aria-label="Back">
               <ArrowLeft className="back-icon" aria-hidden="true" strokeWidth={1.9} />
             </Link>
-            <ThemeToggle />
           </div>
 
           <h1 className="title legal-title">changelog</h1>

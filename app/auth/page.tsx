@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 import type { HTMLInputTypeAttribute } from "react";
-import { ThemeToggle } from "../components/theme-toggle";
 import { PasswordField } from "../components/password-field";
 import { getSessionUser } from "@/lib/auth";
 
@@ -53,7 +52,6 @@ export default async function AuthPage({
                 strokeWidth={1.9}
               />
             </Link>
-            <ThemeToggle />
           </div>
 
           <h1 className="title auth-title">

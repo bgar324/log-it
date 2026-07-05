@@ -1,5 +1,4 @@
 import { BackButton } from "@/app/components/back-button";
-import { ThemeToggle } from "@/app/components/theme-toggle";
 import { styles } from "./exercise-detail.styles";
 
 function SkeletonBlock({
@@ -42,7 +41,6 @@ export default function ExerciseDetailLoading() {
             className={styles.backLink}
             iconClassName={styles.backButtonIcon}
           />
-          <ThemeToggle />
         </header>
 
         <section className={styles.summaryCard} aria-hidden="true">

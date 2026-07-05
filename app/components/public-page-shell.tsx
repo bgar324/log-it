@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
 import { AppBrand, SurfaceCard, cn } from "./ui";
-import { ThemeToggle } from "./theme-toggle";
 
 type PublicPageShellProps = {
   title: ReactNode;
@@ -43,7 +42,6 @@ export function PublicPageShell({
                 <AppBrand />
               </div>
             )}
-            <ThemeToggle />
           </div>
 
           <div className="rounded-[0.54rem] border border-[var(--field-line)] bg-transparent px-[0.95rem] py-[0.84rem] min-[760px]:p-[0.95rem]">

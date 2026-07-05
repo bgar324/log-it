@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { BackButton } from "@/app/components/back-button";
-import { ThemeToggle } from "@/app/components/theme-toggle";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatWorkoutForClipboard } from "@/lib/workout-export";
@@ -132,7 +131,6 @@ export default async function WorkoutDetailPage({
               workoutId={workout.id}
               workoutExport={workoutExport}
             />
-            <ThemeToggle />
           </div>
         </header>
 
