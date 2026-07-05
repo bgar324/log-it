@@ -1,11 +1,11 @@
 "use client";
 
-import { Check, Menu, Moon, PanelLeft, Plus, User2, X } from "lucide-react";
+import { Check, Menu, Moon, PanelLeft, Plus, Sun, User2, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import type { DashboardView } from "../dashboard-types";
-import { ThemeToggle } from "@/app/components/theme-toggle";
+import { useThemeToggle } from "@/app/components/theme-toggle";
 import { AppBrand } from "@/app/components/ui";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { NAV_ITEMS } from "../dashboard-client.shared";
@@ -43,6 +43,10 @@ export function DashboardShell({
   children,
 }: DashboardShellProps) {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const { theme, toggleTheme } = useThemeToggle();
+  const nextIsDark = theme === "light";
+  const ThemeIcon = nextIsDark ? Moon : Sun;
+  const themeLabel = nextIsDark ? "Dark mode" : "Light mode";
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -214,6 +218,20 @@ export function DashboardShell({
               {profileLabel}
             </span>
           </button>
+          <button
+            type="button"
+            className={`${styles.sidebarSecondaryAction} ${
+              sidebarCollapsed ? styles.sidebarActionCollapsed : ""
+            }`}
+            onClick={toggleTheme}
+            title={sidebarCollapsed ? themeLabel : undefined}
+            aria-label={themeLabel}
+          >
+            <ThemeIcon className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
+            <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
+              {themeLabel}
+            </span>
+          </button>
         </div>
       </aside>
 
@@ -225,12 +243,10 @@ export function DashboardShell({
 
           <div className={styles.headerActions}>
             {renderHeaderAccessory?.()}
-            <ThemeToggle />
           </div>
 
           <div className={styles.mobileHeaderActions}>
             {renderHeaderAccessory?.()}
-            <ThemeToggle />
             <div className={styles.mobileMenu} ref={mobileMenuRef}>
               <button
                 type="button"
@@ -295,6 +311,19 @@ export function DashboardShell({
                         strokeWidth={1.9}
                       />
                       <span>{profileLabel}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.mobileMenuItem}
+                      onClick={toggleTheme}
+                      aria-label={themeLabel}
+                    >
+                      <ThemeIcon
+                        className={styles.mobileMenuItemIcon}
+                        aria-hidden={true}
+                        strokeWidth={1.9}
+                      />
+                      <span>{themeLabel}</span>
                     </button>
                   </nav>
                 </div>

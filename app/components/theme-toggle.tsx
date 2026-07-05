@@ -1,9 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
 const THEME_CHANGE_EVENT = "logit-theme-change";
 const THEME_TRANSITION_ATTRIBUTE = "data-theme-transition";
 const COLOR_SCHEME_ATTRIBUTE = "data-color-scheme";
@@ -91,7 +91,7 @@ function applyTheme(theme: Theme) {
   });
 }
 
-export function ThemeToggle() {
+export function useThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
 
   useLayoutEffect(() => {
@@ -118,18 +118,24 @@ export function ThemeToggle() {
     };
   }, []);
 
-  function handleToggle() {
+  const toggleTheme = useCallback(() => {
     const current = readCurrentTheme();
     const nextTheme = current === "dark" ? "light" : "dark";
     applyTheme(nextTheme);
     setTheme(nextTheme);
-  }
+  }, []);
+
+  return { theme, toggleTheme };
+}
+
+export function ThemeToggle() {
+  const { theme, toggleTheme } = useThemeToggle();
 
   return (
     <button
       type="button"
       className="theme-icon-toggle"
-      onClick={handleToggle}
+      onClick={toggleTheme}
       aria-label="Toggle color theme"
       aria-pressed={theme === "dark"}
     >

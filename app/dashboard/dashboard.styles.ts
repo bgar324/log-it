@@ -295,15 +295,17 @@ export const styles = {
     "min-h-[2.78rem] rounded-[0.38rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.78rem] text-[0.84rem] text-[var(--text)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.62rem]",
   profileFileInput: "sr-only",
   profileFooter:
-    "flex flex-wrap items-center justify-between gap-[0.7rem] border-t border-[var(--dashboard-border)] pt-[1rem]",
+    "flex flex-wrap items-center gap-[0.55rem] border-t border-[var(--dashboard-border)] pt-[1rem] max-[520px]:gap-[0.42rem]",
   profileActions:
     "inline-flex flex-wrap items-center gap-[0.55rem]",
   profileActionForm: "m-0",
   buttonInlineIcon: "h-[0.88rem] w-[0.88rem] shrink-0",
   profileSaveButton:
-    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion} ${buttonFocusRing}`,
+    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[520px]:px-[0.72rem] ${buttonMotion} ${buttonFocusRing}`,
   profileSignOutButton:
-    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
+    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] max-[520px]:px-[0.72rem] ${buttonMotion} ${buttonFocusRing}`,
+  profileDeleteButton:
+    `ml-auto inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[color-mix(in_srgb,#b13d48_46%,transparent)] bg-transparent px-[0.9rem] text-[0.84rem] text-[color-mix(in_srgb,#b13d48_88%,var(--text))] hover:bg-[color-mix(in_srgb,#b13d48_12%,var(--bg))] disabled:cursor-not-allowed disabled:opacity-50 max-[520px]:px-[0.72rem] ${buttonMotion} ${buttonFocusRing}`,
   accountBody:
     "mt-[1.08rem] grid grid-cols-1 gap-[0.72rem] border-t border-[var(--dashboard-border)] pt-[1.08rem] min-[900px]:grid-cols-2 min-[900px]:items-start",
   accountSection: `${dashboardSurface} flex flex-col gap-[0.72rem] p-[1rem] max-[760px]:p-[0.82rem]`,

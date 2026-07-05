@@ -9,9 +9,13 @@ import { styles } from "../dashboard.styles";
 
 type DashboardDeleteAccountProps = {
   username: string;
+  className?: string;
 };
 
-export function DashboardDeleteAccount({ username }: DashboardDeleteAccountProps) {
+export function DashboardDeleteAccount({
+  username,
+  className,
+}: DashboardDeleteAccountProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [confirmValue, setConfirmValue] = useState("");
@@ -137,7 +141,7 @@ export function DashboardDeleteAccount({ username }: DashboardDeleteAccountProps
     <>
       <button
         type="button"
-        className={styles.dangerButton}
+        className={className ?? styles.dangerButton}
         onClick={() => setIsOpen(true)}
       >
         Delete account

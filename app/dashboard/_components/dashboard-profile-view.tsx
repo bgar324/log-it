@@ -121,25 +121,26 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
           </form>
 
           <div className={styles.profileFooter}>
-            <div className={styles.profileActions}>
-              <button
-                type="submit"
-                form="profileSettingsForm"
-                className={styles.profileSaveButton}
-                disabled={isSaving}
-                aria-busy={isSaving}
-              >
-                Save profile
+            <button
+              type="submit"
+              form="profileSettingsForm"
+              className={styles.profileSaveButton}
+              disabled={isSaving}
+              aria-busy={isSaving}
+            >
+              Save profile
+            </button>
+
+            <form method="post" action="/auth/signout" className={styles.profileActionForm}>
+              <button type="submit" className={styles.profileSignOutButton}>
+                Sign out
               </button>
+            </form>
 
-              <form method="post" action="/auth/signout" className={styles.profileActionForm}>
-                <button type="submit" className={styles.profileSignOutButton}>
-                  Sign out
-                </button>
-              </form>
-            </div>
-
-            <DashboardDeleteAccount username={state.profile.username} />
+            <DashboardDeleteAccount
+              username={state.profile.username}
+              className={styles.profileDeleteButton}
+            />
           </div>
         </div>
       </div>
