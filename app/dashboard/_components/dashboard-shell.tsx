@@ -232,6 +232,20 @@ export function DashboardShell({
               {profileLabel}
             </span>
           </button>
+          <button
+            type="button"
+            className={`${styles.sidebarSecondaryAction} ${
+              sidebarCollapsed ? styles.sidebarActionCollapsed : ""
+            }`}
+            onClick={toggleTheme}
+            title={sidebarCollapsed ? themeLabel : undefined}
+            aria-label={themeLabel}
+          >
+            <ThemeIcon className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
+            <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
+              {themeLabel}
+            </span>
+          </button>
         </div>
       </aside>
 
