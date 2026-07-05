@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Menu, Moon, PanelLeft, Plus, Sun, User2, X } from "lucide-react";
+import { Check, Moon, PanelLeft, Plus, Sun, User2 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
@@ -257,19 +257,20 @@ export function DashboardShell({
                 aria-haspopup="menu"
                 onClick={onToggleMobileMenu}
               >
-                {mobileMenuOpen ? (
-                  <X
-                    className={styles.mobileMenuToggleIcon}
-                    aria-hidden="true"
-                    strokeWidth={1.9}
+                <span className={styles.mobileMenuToggleBars} aria-hidden="true">
+                  <span
+                    className={`${styles.mobileMenuToggleBar} ${styles.mobileMenuToggleBarTop}`}
+                    data-open={mobileMenuOpen}
                   />
-                ) : (
-                  <Menu
-                    className={styles.mobileMenuToggleIcon}
-                    aria-hidden="true"
-                    strokeWidth={1.9}
+                  <span
+                    className={`${styles.mobileMenuToggleBar} ${styles.mobileMenuToggleBarMiddle}`}
+                    data-open={mobileMenuOpen}
                   />
-                )}
+                  <span
+                    className={`${styles.mobileMenuToggleBar} ${styles.mobileMenuToggleBarBottom}`}
+                    data-open={mobileMenuOpen}
+                  />
+                </span>
               </button>
               {mobileMenuOpen ? (
                 <div
@@ -278,7 +279,7 @@ export function DashboardShell({
                   aria-label="Dashboard mobile navigation"
                 >
                   <nav className={styles.mobileMenuNav} aria-label="Dashboard sections">
-                    {NAV_ITEMS.map((item) => {
+                    {NAV_ITEMS.map((item, index) => {
                       const Icon = item.icon;
                       const isActive = activeView === item.view;
 
@@ -287,6 +288,7 @@ export function DashboardShell({
                           key={item.view}
                           type="button"
                           className={styles.mobileMenuItem}
+                          style={{ animationDelay: `${index * 35}ms` }}
                           data-active={isActive}
                           onClick={() => onNavigate(item.view)}
                         >
@@ -302,6 +304,7 @@ export function DashboardShell({
                     <button
                       type="button"
                       className={styles.mobileMenuItem}
+                      style={{ animationDelay: `${NAV_ITEMS.length * 35}ms` }}
                       data-active={activeView === "profile"}
                       onClick={() => onNavigate("profile")}
                     >
@@ -315,6 +318,7 @@ export function DashboardShell({
                     <button
                       type="button"
                       className={styles.mobileMenuItem}
+                      style={{ animationDelay: `${(NAV_ITEMS.length + 1) * 35}ms` }}
                       onClick={toggleTheme}
                       aria-label={themeLabel}
                     >

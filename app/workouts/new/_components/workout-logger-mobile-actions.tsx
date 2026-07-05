@@ -104,6 +104,13 @@ export function WorkoutLoggerMobileActions({
   }
 
   const isStackShowing = isOpen || isPresetsOpen;
+  const showResetAction = Boolean(canResetFromSplit && onResetFromSplit);
+  const stackCount = showResetAction ? 5 : 4;
+  const stackItemStyle = (index: number) => ({
+    transitionDelay: isOpen
+      ? `${index * 45}ms`
+      : `${(stackCount - 1 - index) * 30}ms`,
+  });
 
   return createPortal(
     <>
@@ -113,65 +120,95 @@ export function WorkoutLoggerMobileActions({
         data-open={isOpen}
         aria-hidden={!isOpen}
       >
-        <button
-          type="submit"
-          form={formId}
-          className={styles.mobileFabAction}
-          disabled={isSaving}
-          tabIndex={isOpen ? 0 : -1}
-          aria-label={submitLabel}
-          title={submitLabel}
+        <span
+          className={styles.mobileFabStackItem}
+          data-open={isOpen}
+          style={stackItemStyle(0)}
         >
-          {isSaving ? (
-            <Loader2 className={styles.mobileFabIconSpin} aria-hidden="true" strokeWidth={1.9} />
-          ) : (
-            <Save className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
-          )}
-        </button>
-        <button
-          type="button"
-          className={styles.mobileFabAction}
-          onClick={handleAddExercise}
-          tabIndex={isOpen ? 0 : -1}
-          aria-label={addExerciseLabel}
-          title={addExerciseLabel}
+          <button
+            type="submit"
+            form={formId}
+            className={styles.mobileFabAction}
+            disabled={isSaving}
+            tabIndex={isOpen ? 0 : -1}
+            aria-label={submitLabel}
+            title={submitLabel}
+          >
+            {isSaving ? (
+              <Loader2 className={styles.mobileFabIconSpin} aria-hidden="true" strokeWidth={1.9} />
+            ) : (
+              <Save className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
+            )}
+          </button>
+        </span>
+        <span
+          className={styles.mobileFabStackItem}
+          data-open={isOpen}
+          style={stackItemStyle(1)}
         >
-          <Plus className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
-        </button>
-        <button
-          type="button"
-          className={styles.mobileFabAction}
-          disabled={reorderDisabled}
-          onClick={handleOpenReorder}
-          tabIndex={isOpen ? 0 : -1}
-          aria-label="Reorder workout"
-          title="Reorder workout"
-        >
-          <ArrowUpDown className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
-        </button>
-        <button
-          type="button"
-          className={styles.mobileFabAction}
-          data-active={timer.isRunning}
-          onClick={handleOpenPresets}
-          tabIndex={isOpen ? 0 : -1}
-          aria-label="Rest timer"
-          title="Rest timer"
-        >
-          <Clock className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
-        </button>
-        {canResetFromSplit && onResetFromSplit ? (
           <button
             type="button"
-            className={`${styles.mobileFabAction} ${styles.mobileFabActionDanger}`}
-            disabled={resetDisabled}
-            onClick={handleOpenResetConfirm}
+            className={styles.mobileFabAction}
+            onClick={handleAddExercise}
             tabIndex={isOpen ? 0 : -1}
-            aria-label="Reset exercises from your split"
-            title="Reset exercises from your split"
+            aria-label={addExerciseLabel}
+            title={addExerciseLabel}
           >
-            <RotateCcw className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
+            <Plus className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
           </button>
+        </span>
+        <span
+          className={styles.mobileFabStackItem}
+          data-open={isOpen}
+          style={stackItemStyle(2)}
+        >
+          <button
+            type="button"
+            className={styles.mobileFabAction}
+            disabled={reorderDisabled}
+            onClick={handleOpenReorder}
+            tabIndex={isOpen ? 0 : -1}
+            aria-label="Reorder workout"
+            title="Reorder workout"
+          >
+            <ArrowUpDown className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
+          </button>
+        </span>
+        <span
+          className={styles.mobileFabStackItem}
+          data-open={isOpen}
+          style={stackItemStyle(3)}
+        >
+          <button
+            type="button"
+            className={styles.mobileFabAction}
+            data-active={timer.isRunning}
+            onClick={handleOpenPresets}
+            tabIndex={isOpen ? 0 : -1}
+            aria-label="Rest timer"
+            title="Rest timer"
+          >
+            <Clock className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
+          </button>
+        </span>
+        {showResetAction ? (
+          <span
+            className={styles.mobileFabStackItem}
+            data-open={isOpen}
+            style={stackItemStyle(4)}
+          >
+            <button
+              type="button"
+              className={`${styles.mobileFabAction} ${styles.mobileFabActionDanger}`}
+              disabled={resetDisabled}
+              onClick={handleOpenResetConfirm}
+              tabIndex={isOpen ? 0 : -1}
+              aria-label="Reset exercises from your split"
+              title="Reset exercises from your split"
+            >
+              <RotateCcw className={styles.mobileFabIcon} aria-hidden="true" strokeWidth={1.9} />
+            </button>
+          </span>
         ) : null}
       </div>
 

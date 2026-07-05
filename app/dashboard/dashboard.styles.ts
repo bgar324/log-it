@@ -84,11 +84,25 @@ export const styles = {
   mobileMenu: "relative hidden max-[760px]:inline-flex",
   mobileMenuToggle: headerActionBase,
   mobileMenuToggleIcon: "h-[1rem] w-[1rem]",
-  mobileMenuPanel:
+  mobileMenuToggleBars: "relative block h-[1rem] w-[1.1rem]",
+  mobileMenuToggleBar: cn(
+    "absolute left-0 top-1/2 mt-[-0.85px] h-[1.7px] w-full rounded-full bg-current",
+    "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
+  ),
+  mobileMenuToggleBarTop:
+    "-translate-y-[0.32rem] data-[open=true]:translate-y-0 data-[open=true]:rotate-45",
+  mobileMenuToggleBarMiddle:
+    "data-[open=true]:scale-x-0 data-[open=true]:opacity-0",
+  mobileMenuToggleBarBottom:
+    "translate-y-[0.32rem] data-[open=true]:translate-y-0 data-[open=true]:-rotate-45",
+  mobileMenuPanel: cn(
     "absolute right-0 top-[calc(100%+0.36rem)] z-20 flex w-[12rem] flex-col gap-[0.22rem] rounded-[0.56rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[0.28rem] min-[900px]:hidden",
+    "origin-top-right animate-[logit-menu-panel-in_180ms_cubic-bezier(0.2,0.8,0.2,1)_both]",
+  ),
   mobileMenuNav: "flex flex-col gap-[0.34rem]",
   mobileMenuItem: cn(
     mobileMenuItemBase,
+    "animate-[logit-menu-item-in_240ms_cubic-bezier(0.2,0.8,0.2,1)_both]",
     "data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)]",
   ),
   mobileMenuItemIcon: "h-[0.92rem] w-[0.92rem]",
