@@ -15,6 +15,54 @@ export default function ChangelogPage() {
           <h1 className="title legal-title">changelog</h1>
 
           <article className="changelog-entry">
+            <h2 className="changelog-date">July 5, 2026</h2>
+
+            <div className="changelog-group">
+              <h3 className="changelog-group-title">Improved</h3>
+              <ul className="legal-list">
+                <li>
+                  <strong>Theme switch moved into the navigation.</strong> Instead
+                  of riding along in the header on every page, it now lives in the
+                  sidebar on desktop and in the menu on mobile.
+                </li>
+                <li>
+                  <strong>Livelier action button.</strong> The mobile action
+                  circles now pop in and out one after another as you open and
+                  close the menu, including the rest-timer buttons.
+                </li>
+                <li>
+                  <strong>Smoother mobile menu.</strong> The menu button morphs
+                  cleanly between a hamburger and an X, its items animate in and
+                  out, and the button itself is smaller and tidier.
+                </li>
+                <li>
+                  On mobile, the Delete account button now shares a row with Save
+                  profile and Sign out.
+                </li>
+              </ul>
+            </div>
+
+            <div className="changelog-group">
+              <h3 className="changelog-group-title">Fixed</h3>
+              <ul className="legal-list">
+                <li>
+                  Focusing a field no longer zooms the page on mobile.
+                </li>
+                <li>
+                  The delete workout / set confirmation is now centered and always
+                  visible on mobile, instead of hiding behind the browser&apos;s
+                  bottom bar.
+                </li>
+                <li>
+                  The reset-from-split button is back on the mobile logger — it now
+                  lives in the action button menu and clears the current workout to
+                  reload it from your split.
+                </li>
+              </ul>
+            </div>
+          </article>
+
+          <article className="changelog-entry">
             <h2 className="changelog-date">July 3, 2026</h2>
 
             <div className="changelog-group">
