@@ -45,6 +45,16 @@ function toSplitWriteErrorResponse(error: unknown, fallbackMessage: string) {
     );
   }
 
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  ) {
+    return NextResponse.json(
+      { error: "Your split library changed. Refresh and try again." },
+      { status: 409 },
+    );
+  }
+
   if (error instanceof Prisma.PrismaClientInitializationError) {
     return NextResponse.json(
       { error: "Service temporarily unavailable." },
@@ -180,7 +190,10 @@ export async function DELETE(request: NextRequest) {
   try {
     const deleted = await deleteUserWorkoutSplit(user.id, splitId);
     revalidateTag(getSplitDataTag(user.id), { expire: 0 });
-    return NextResponse.json({ ok: true, id: deleted.id }, { status: 200 });
+    return NextResponse.json(
+      { ok: true, id: deleted.id, activeSplitId: deleted.activeSplitId },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("workout split delete failure:", error);
     return toSplitWriteErrorResponse(error, "Unable to delete split.");

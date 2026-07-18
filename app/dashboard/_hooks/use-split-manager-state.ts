@@ -4,17 +4,19 @@ import { useEffect, useMemo, useState, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
-import type { SplitWeekdayValue, WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
+import {
+  createUnsavedWorkoutSplitDraft,
+  type SplitWeekdayValue,
+  type WorkoutSplitTemplate,
+} from "@/lib/workout-splits/shared";
 import {
   activateWorkoutSplit,
   createWorkoutSplit,
   deleteWorkoutSplit,
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
   getInitialSelectedWeekday,
-  saveGeneratedWorkoutSplit,
   type SplitManagerSaveState,
 } from "../split-manager.shared";
-import { useSplitManagerDayDrag } from "./use-split-manager-day-drag";
 import { useSplitManagerExerciseActions } from "./use-split-manager-exercise-actions";
 import { useSplitManagerPersistence } from "./use-split-manager-persistence";
 
@@ -25,22 +27,13 @@ export type SplitManagerState = {
   selectedDay: WorkoutSplitTemplate["days"][number] | null;
   selectedWeekday: SplitWeekdayValue;
   saveState: SplitManagerSaveState;
-  draggingIndex: number | null;
-  dropTargetIndex: number | null;
-  draggingExerciseIndex: number | null;
-  exerciseDropTargetIndex: number | null;
   selectedDayExerciseSearchResults: Record<string, string[]>;
   setSplitName: (value: string) => void;
   selectSplit: (splitId: string | null) => void;
   createSplit: () => Promise<void>;
   deleteSplit: (splitId: string) => Promise<void>;
   activateSplit: (splitId: string) => Promise<void>;
-  saveGeneratedSplit: (split: WorkoutSplitTemplate) => Promise<void>;
   selectWeekday: (weekday: SplitWeekdayValue) => void;
-  startDraggingDay: (index: number) => void;
-  dragOverDay: (index: number) => void;
-  dropDayAt: (index: number) => void;
-  endDayDrag: () => void;
   setWorkoutType: (value: string) => void;
   handleExerciseNameChange: (exerciseIndex: number, value: string) => void;
   handleExerciseNameFocus: (exerciseIndex: number, value: string) => void;
@@ -49,10 +42,7 @@ export type SplitManagerState = {
   setExerciseSets: (exerciseIndex: number, value: number) => void;
   addExercise: () => void;
   removeExercise: (exerciseIndex: number) => void;
-  startDraggingExercise: (exerciseIndex: number) => void;
-  dragOverExercise: (exerciseIndex: number) => void;
-  dropExerciseAt: (exerciseIndex: number) => void;
-  endExerciseDrag: () => void;
+  reorderExercises: (orderedExerciseOrders: number[]) => void;
   handleSave: () => Promise<void>;
   handleCopySplit: () => Promise<void>;
 };
@@ -62,6 +52,9 @@ export function useSplitManagerState(
   initialSplits: WorkoutSplitTemplate[],
 ): SplitManagerState {
   const router = useRouter();
+  const [mutationState, setMutationState] = useState<SplitManagerSaveState>({
+    kind: "idle",
+  });
   const initialLibrary = useMemo(
     () => (initialSplits.length > 0 ? initialSplits : [initialSplit]),
     [initialSplit, initialSplits],
@@ -117,12 +110,6 @@ export function useSplitManagerState(
     clearExerciseSearchResults,
     queueExerciseSuggestionLookup,
   });
-  const dragState = useSplitManagerDayDrag({
-    selectedWeekday,
-    setSelectedWeekday,
-    setSplit,
-    clearAllExerciseSuggestions,
-  });
   const persistence = useSplitManagerPersistence({
     split,
     setSplit,
@@ -135,13 +122,17 @@ export function useSplitManagerState(
   }, [clearAllExerciseSuggestions, selectedWeekday]);
 
   function selectSplit(splitId: string | null) {
-    exerciseActions.endExerciseDrag();
     clearAllExerciseSuggestions();
     setSelectedSplitId(splitId);
   }
 
   async function createSplit() {
+    if (mutationState.kind === "saving" || persistence.saveState.kind === "saving") {
+      return;
+    }
+
     const toastId = toast.loading("Creating split...");
+    setMutationState({ kind: "saving" });
 
     try {
       const created = await createWorkoutSplit();
@@ -153,36 +144,35 @@ export function useSplitManagerState(
       toast.error(error instanceof Error ? error.message : "Unable to create split.", {
         id: toastId,
       });
+    } finally {
+      setMutationState({ kind: "idle" });
     }
   }
 
   async function deleteSplit(splitId: string) {
-    const toastId = toast.loading("Deleting split...");
-    const deletedWasActive = splits.some(
-      (item) => item.id === splitId && item.isActive,
-    );
+    if (mutationState.kind === "saving" || persistence.saveState.kind === "saving") {
+      return;
+    }
 
+    const toastId = toast.loading("Deleting split...");
+    setMutationState({ kind: "saving" });
     try {
-      await deleteWorkoutSplit(splitId);
+      const deleted = await deleteWorkoutSplit(splitId);
       setSplits((current) => {
         const rawRemaining = current.filter((item) => item.id !== splitId);
-        const fallbackActiveId =
-          deletedWasActive && rawRemaining.length > 0
-            ? rawRemaining[0]?.id ?? null
-            : null;
-        const remaining = fallbackActiveId
-          ? rawRemaining.map((item) => ({
-              ...item,
-              isActive: item.id === fallbackActiveId,
-            }))
-          : rawRemaining;
+        const remaining = rawRemaining.map((item) => ({
+          ...item,
+          isActive: item.id === deleted.activeSplitId,
+        }));
         const nextSelected =
           selectedSplitId === splitId
             ? remaining.find((item) => item.isActive)?.id ?? remaining[0]?.id ?? null
             : selectedSplitId;
 
         setSelectedSplitId(nextSelected);
-        return remaining.length > 0 ? remaining : [initialSplit];
+        return remaining.length > 0
+          ? remaining
+          : [createUnsavedWorkoutSplitDraft(initialSplit)];
       });
       toast.success("Split deleted.", { id: toastId });
       router.refresh();
@@ -190,11 +180,18 @@ export function useSplitManagerState(
       toast.error(error instanceof Error ? error.message : "Unable to delete split.", {
         id: toastId,
       });
+    } finally {
+      setMutationState({ kind: "idle" });
     }
   }
 
   async function activateSplit(splitId: string) {
+    if (mutationState.kind === "saving" || persistence.saveState.kind === "saving") {
+      return;
+    }
+
     const toastId = toast.loading("Setting active split...");
+    setMutationState({ kind: "saving" });
 
     try {
       const activated = await activateWorkoutSplit(splitId);
@@ -218,27 +215,12 @@ export function useSplitManagerState(
       toast.error(error instanceof Error ? error.message : "Unable to activate split.", {
         id: toastId,
       });
-    }
-  }
-
-  async function saveGeneratedSplit(generatedSplit: WorkoutSplitTemplate) {
-    const toastId = toast.loading("Creating split...");
-
-    try {
-      const saved = await saveGeneratedWorkoutSplit(generatedSplit);
-      setSplits((current) => [saved, ...current]);
-      setSelectedSplitId(saved.id);
-      toast.success("Split created.", { id: toastId });
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to create split.", {
-        id: toastId,
-      });
+    } finally {
+      setMutationState({ kind: "idle" });
     }
   }
 
   function selectWeekday(weekday: SplitWeekdayValue) {
-    exerciseActions.endExerciseDrag();
     setSelectedWeekday(weekday);
   }
 
@@ -248,23 +230,15 @@ export function useSplitManagerState(
     selectedSplitId,
     selectedDay: exerciseActions.selectedDay,
     selectedWeekday,
-    saveState: persistence.saveState,
-    draggingIndex: dragState.draggingIndex,
-    dropTargetIndex: dragState.dropTargetIndex,
-    draggingExerciseIndex: exerciseActions.draggingExerciseIndex,
-    exerciseDropTargetIndex: exerciseActions.exerciseDropTargetIndex,
+    saveState:
+      mutationState.kind === "saving" ? mutationState : persistence.saveState,
     selectedDayExerciseSearchResults: exerciseActions.selectedDayExerciseSearchResults,
     setSplitName: exerciseActions.setSplitName,
     selectSplit,
     createSplit,
     deleteSplit,
     activateSplit,
-    saveGeneratedSplit,
     selectWeekday,
-    startDraggingDay: dragState.startDraggingDay,
-    dragOverDay: dragState.dragOverDay,
-    dropDayAt: dragState.dropDayAt,
-    endDayDrag: dragState.endDayDrag,
     setWorkoutType: exerciseActions.setWorkoutType,
     handleExerciseNameChange: exerciseActions.handleExerciseNameChange,
     handleExerciseNameFocus: exerciseActions.handleExerciseNameFocus,
@@ -273,10 +247,7 @@ export function useSplitManagerState(
     setExerciseSets: exerciseActions.setExerciseSets,
     addExercise: exerciseActions.addExercise,
     removeExercise: exerciseActions.removeExercise,
-    startDraggingExercise: exerciseActions.startDraggingExercise,
-    dragOverExercise: exerciseActions.dragOverExercise,
-    dropExerciseAt: exerciseActions.dropExerciseAt,
-    endExerciseDrag: exerciseActions.endExerciseDrag,
+    reorderExercises: exerciseActions.reorderExercises,
     handleSave: persistence.handleSave,
     handleCopySplit: persistence.handleCopySplit,
   };

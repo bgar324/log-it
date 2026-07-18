@@ -93,6 +93,23 @@ test("normalizeWorkoutPayload rejects exercises without valid sets", () => {
   });
 });
 
+test("normalizeWorkoutPayload rejects malformed and future workout dates", () => {
+  const basePayload = {
+    title: "Push Day",
+    weightUnit: "LB",
+    exercises: [{ name: "Bench Press", sets: [{ reps: "5", weightLb: "135" }] }],
+  };
+
+  assert.deepEqual(
+    normalizeWorkoutPayload({ ...basePayload, performedAt: "2026-02-30" }),
+    { error: "Choose a valid workout date." },
+  );
+  assert.deepEqual(
+    normalizeWorkoutPayload({ ...basePayload, performedAt: "2999-01-01" }),
+    { error: "Workouts cannot be logged in the future." },
+  );
+});
+
 test("normalizeWorkoutPayload accepts time-only sets", () => {
   const value = expectParsedWorkout(
     normalizeWorkoutPayload({

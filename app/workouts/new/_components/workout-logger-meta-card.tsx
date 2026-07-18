@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
+import { formatDatabaseDateValue, getCurrentPacificDate } from "@/lib/workout-utils";
 import { styles } from "../workout-logger.styles";
 
 type WorkoutLoggerMetaCardProps = {
@@ -31,6 +32,7 @@ export function WorkoutLoggerMetaCard({
   resetDisabled = false,
   showEditFields = false,
 }: WorkoutLoggerMetaCardProps) {
+  const latestAllowedDate = formatDatabaseDateValue(getCurrentPacificDate());
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const dialogTitleId = useId();
   const dialogDescriptionId = useId();
@@ -150,6 +152,7 @@ export function WorkoutLoggerMetaCard({
                 className={`${styles.input} ${styles.dateInput}`}
                 type="date"
                 value={performedAt ?? ""}
+                max={latestAllowedDate}
                 onChange={(event) => onPerformedAtChange?.(event.target.value)}
                 required
               />

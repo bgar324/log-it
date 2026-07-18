@@ -3,6 +3,7 @@ import test from "node:test";
 import { getWorkoutTypeColor } from "../lib/workout-splits/colors";
 import { normalizeWorkoutSplitPayload } from "../lib/workout-splits/payload";
 import {
+  createUnsavedWorkoutSplitDraft,
   getWeekdayForDate,
   parseDateKey,
   reorderSplitDays,
@@ -13,6 +14,36 @@ import { normalizeExerciseSlug } from "../lib/workout-utils";
 test("normalizeExerciseSlug creates a canonical kebab-case slug", () => {
   assert.equal(normalizeExerciseSlug(" BenchPress "), "bench-press");
   assert.equal(normalizeExerciseSlug("Cable   Fly"), "cable-fly");
+});
+
+test("an unsaved replacement split does not retain deleted database ids", () => {
+  const draft = createUnsavedWorkoutSplitDraft({
+    id: "split-1",
+    name: "Weekly Split",
+    isActive: true,
+    days: [
+      {
+        id: "day-1",
+        weekday: "MONDAY",
+        workoutType: "Push",
+        workoutTypeSlug: "push",
+        exercises: [
+          {
+            id: "exercise-1",
+            order: 1,
+            exerciseDisplayName: "Bench Press",
+            exerciseSlug: "bench-press",
+            sets: 3,
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(draft.id, null);
+  assert.equal(draft.isActive, false);
+  assert.equal(draft.days[0]?.id, null);
+  assert.equal(draft.days[0]?.exercises[0]?.id, null);
 });
 
 test("normalizeWorkoutSplitPayload fills missing days with rest days", () => {

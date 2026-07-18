@@ -48,7 +48,6 @@ model User {
   exerciseSummaries   ExerciseSummary[]
   workoutCalendarDays WorkoutCalendarDay[]
   workoutSplits       WorkoutSplit[]
-  splitAssistantUsages SplitAssistantUsage[]
   nutritionEntries    NutritionEntry[]
   bodyWeightEntries   BodyWeightEntry[]
 }
@@ -217,16 +216,4 @@ model WorkoutCalendarDay {
 
   @@id([userId, date])
   @@index([userId, date])
-}
-
-model SplitAssistantUsage {
-  userId         String
-  date           DateTime @db.Date
-  generatedCount Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([userId, date])
-  @@index([date])
 }

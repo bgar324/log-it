@@ -109,6 +109,7 @@ export type DashboardClientData = {
         count: number;
       }>;
       latestMonthKey: string | null;
+      loadedMonthKey: string;
     };
   };
   nutrition: DashboardNutritionData;

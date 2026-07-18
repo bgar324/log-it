@@ -9,12 +9,12 @@ const dashboardSurface =
 const headerActionBase = cn(
   "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] rounded-full border px-[0.72rem]",
   "border-[var(--dashboard-border)] bg-transparent text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
-  "max-[760px]:h-[2.05rem] max-[760px]:min-h-[2.05rem] max-[760px]:w-[2.05rem] max-[760px]:min-w-[2.05rem] max-[760px]:px-0",
+  "max-[760px]:h-[2.75rem] max-[760px]:min-h-[2.75rem] max-[760px]:w-[2.75rem] max-[760px]:min-w-[2.75rem] max-[760px]:px-0",
   "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
 );
 const mobileMenuItemBase = cn(
-  "inline-flex min-h-[2.2rem] w-full cursor-pointer items-center gap-[0.42rem] rounded-[0.42rem] border border-transparent bg-transparent px-[0.58rem]",
+  "inline-flex min-h-[2.75rem] w-full cursor-pointer items-center gap-[0.42rem] rounded-[0.42rem] border border-transparent bg-transparent px-[0.58rem]",
   "text-left text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
   "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
@@ -146,7 +146,7 @@ export const styles = {
     "flex flex-wrap items-center justify-between gap-[0.5rem]",
   calendarNav: "inline-flex items-center gap-[0.35rem]",
   calendarNavButton:
-    `min-h-[1.9rem] cursor-pointer rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent px-[0.58rem] text-[0.65rem] text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-[0.38] hover:enabled:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
+    `min-h-[1.9rem] cursor-pointer rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent px-[0.58rem] text-[0.65rem] text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-[0.38] hover:enabled:border-[var(--dashboard-border-strong)] max-[760px]:min-h-[2.75rem] ${buttonMotion} ${buttonFocusRing}`,
   calendarWeekdayRow: "mt-[0.2rem] grid grid-cols-7 gap-[0.32rem]",
   calendarWeekday: "text-center text-[0.65rem] text-[var(--muted)]",
   calendarGrid:
@@ -156,10 +156,16 @@ export const styles = {
   calendarDayActive:
     "!border-[var(--calendar-active-border)] !bg-[var(--calendar-active-bg)] text-[var(--text)]",
   calendarDayClickable:
-    `cursor-pointer text-inherit no-underline hover:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
+    `cursor-pointer text-inherit hover:border-[var(--dashboard-border-strong)] [touch-action:manipulation] ${buttonMotion} ${buttonFocusRing}`,
   calendarDayNumber: "text-[0.84rem] leading-none",
   calendarDayEmpty:
     "aspect-square rounded-[0.42rem] border border-transparent min-[900px]:aspect-auto min-[900px]:h-full",
+  calendarDayDetails:
+    "mt-[0.7rem] rounded-[0.44rem] border border-[var(--dashboard-border)] bg-[var(--surface)] p-[0.58rem]",
+  calendarDayDetailsTitle: "m-0 text-[0.72rem] text-[var(--muted)]",
+  calendarDayDetailsLinks: "mt-[0.38rem] flex flex-wrap gap-[0.35rem]",
+  calendarDayDetailsLink:
+    `relative inline-flex min-h-[2.3rem] items-center rounded-[0.42rem] border border-[var(--dashboard-border)] px-[0.58rem] text-[0.76rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] max-[760px]:min-h-[2.75rem] ${buttonMotion} ${buttonFocusRing}`,
   searchInput:
     "h-[2.18rem] w-[clamp(9rem,34vw,14rem)] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.74rem] text-[0.84rem] text-[var(--text)] placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:h-[2.5rem] max-[760px]:w-full",
   exerciseToolbar:
@@ -220,7 +226,7 @@ export const styles = {
   metricMain: "m-0 text-[0.84rem] leading-[1.3] font-[520] text-[var(--text)]",
   metricSubtle: "m-[0.18rem_0_0] text-[0.72rem] text-[var(--muted)]",
   workoutFilterToggle:
-    `relative inline-flex h-[1.95rem] w-[1.95rem] cursor-pointer items-center justify-center rounded-full border border-[var(--dashboard-border)] bg-[var(--toggle-bg)] text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:bg-[var(--toggle-active-bg)] data-[active=true]:text-[var(--toggle-active-icon)] ${buttonMotion} ${buttonFocusRing}`,
+    `relative inline-flex h-[1.95rem] w-[1.95rem] cursor-pointer items-center justify-center rounded-full border border-[var(--dashboard-border)] bg-[var(--toggle-bg)] text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:bg-[var(--toggle-active-bg)] data-[active=true]:text-[var(--toggle-active-icon)] max-[760px]:h-[2.75rem] max-[760px]:w-[2.75rem] ${buttonMotion} ${buttonFocusRing}`,
   workoutFilterToggleIcon: "h-[0.92rem] w-[0.92rem]",
   workoutFilterPopover:
     `${dashboardBorder} ${dashboardSurface} z-50 flex w-[min(35rem,calc(100vw-1.64rem))] max-w-[calc(100vw-1.64rem)] flex-col gap-[0.72rem] !bg-[var(--bg)] p-[0.82rem] shadow-[0_14px_32px_color-mix(in_srgb,#000_12%,transparent)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out max-[760px]:max-h-[min(34rem,calc(100dvh-1.64rem))] max-[760px]:overflow-y-auto`,

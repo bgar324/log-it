@@ -15,6 +15,21 @@ export default function ChangelogPage() {
           <h1 className="title legal-title">changelog</h1>
 
           <article className="changelog-entry">
+            <h2 className="changelog-date">July 18, 2026</h2>
+
+            <div className="changelog-group">
+              <h3 className="changelog-group-title">Removed</h3>
+              <ul className="legal-list">
+                <li>
+                  <strong>Split assistant.</strong> We retired the AI split
+                  assistant. The split planner remains available for creating,
+                  editing, and activating your own weekly templates.
+                </li>
+              </ul>
+            </div>
+          </article>
+
+          <article className="changelog-entry">
             <h2 className="changelog-date">July 5, 2026</h2>
 
             <div className="changelog-group">

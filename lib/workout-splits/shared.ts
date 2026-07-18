@@ -164,6 +164,22 @@ export function reorderSplitExercises<T extends { order: number }>(
   })) as T[];
 }
 
+export function createUnsavedWorkoutSplitDraft(split: WorkoutSplitTemplate) {
+  return {
+    ...split,
+    id: null,
+    isActive: false,
+    days: split.days.map((day) => ({
+      ...day,
+      id: null,
+      exercises: day.exercises.map((exercise) => ({
+        ...exercise,
+        id: null,
+      })),
+    })),
+  } satisfies WorkoutSplitTemplate;
+}
+
 export function dateKeyFromDate(date: Date) {
   return formatDatabaseDateValue(date);
 }

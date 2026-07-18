@@ -44,6 +44,7 @@ type WorkoutLoggerProps = {
   workoutTypeOptions?: string[];
   weightUnit: WeightUnit;
   bodyWeightDisplay?: number | null;
+  isRestDay?: boolean;
 };
 
 export function WorkoutLogger({
@@ -54,6 +55,7 @@ export function WorkoutLogger({
   workoutTypeOptions = [],
   weightUnit,
   bodyWeightDisplay = null,
+  isRestDay = false,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const router = useRouter();
@@ -93,6 +95,29 @@ export function WorkoutLogger({
     Boolean(splitTemplateData) &&
     (splitTemplateData?.workoutType.trim() !== "" ||
       splitTemplateData?.exercises.length !== 0);
+
+  if (isRestDay && !draft.hasRecoveredDraft) {
+    return (
+      <main className={styles.loggerShell}>
+        <section className={styles.loggerStage} aria-label="Rest day notice">
+          <div className={styles.topRow}>
+            <BackButton
+              fallbackHref="/dashboard"
+              label="Back"
+              className={styles.backLink}
+              iconClassName={styles.backButtonIcon}
+            />
+          </div>
+          <section className={styles.card}>
+            <h1 className={styles.title}>Rest day</h1>
+            <p className={styles.compareHint}>
+              Your split marks this day as rest, so logging a new workout is disabled.
+            </p>
+          </section>
+        </section>
+      </main>
+    );
+  }
 
   function handleRemoveExercise(exerciseId: string) {
     draft.removeExercise(exerciseId);

@@ -92,6 +92,7 @@ export function createEmptyDashboardData(
           },
         ],
         latestMonthKey: emptyMonthKey,
+        loadedMonthKey: emptyMonthKey,
       },
     },
     nutrition: createEmptyNutrition(now),

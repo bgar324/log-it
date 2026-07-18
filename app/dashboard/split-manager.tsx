@@ -1,11 +1,10 @@
 "use client";
 
-import { Bot, CheckCircle2, Circle, Copy, Plus, Save, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, Circle, Copy, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
-import { SplitAssistantPanel } from "./split-assistant-panel";
 import { SplitEditor } from "./split-editor";
+import { SplitActionMenu } from "./split-action-menu";
 import { splitStyles } from "./split-system.styles";
 import { SplitDayCard } from "./split-day-card";
 import { useSplitManagerState } from "./_hooks/use-split-manager-state";
@@ -17,8 +16,6 @@ type SplitManagerProps = {
 
 export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps) {
   const state = useSplitManagerState(initialSplit, initialSplits);
-  const [assistantOpen, setAssistantOpen] = useState(false);
-  const [assistantDraft, setAssistantDraft] = useState<WorkoutSplitTemplate | null>(null);
 
   if (!state.selectedDay) {
     return null;
@@ -78,7 +75,6 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
                 }`}
                 onClick={() => {
                   state.selectSplit(split.id);
-                  setAssistantOpen(false);
                 }}
               >
                 <span className={splitStyles.splitSidebarItemTitleRow}>
@@ -101,20 +97,6 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
 
         <button
           type="button"
-          className={`${splitStyles.splitSidebarAssistantButton} ${
-            assistantOpen ? splitStyles.splitSidebarAssistantButtonActive : ""
-          }`}
-          onClick={() => setAssistantOpen(true)}
-        >
-          <span className={splitStyles.splitSidebarItemTitleRow}>
-            <Bot className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
-            <span className={splitStyles.splitSidebarItemTitle}>Ask Ben</span>
-          </span>
-          <span className={splitStyles.splitSidebarItemMeta}>Build a beginner split</span>
-        </button>
-
-        <button
-          type="button"
           className={splitStyles.splitSidebarCreateButton}
           onClick={() => void state.createSplit()}
           aria-label="Create split"
@@ -125,18 +107,10 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
         </button>
       </aside>
 
-      {assistantOpen ? (
-        <SplitAssistantPanel
-          draft={assistantDraft}
-          onDraftChange={setAssistantDraft}
-          onBack={() => setAssistantOpen(false)}
-          onSaveGeneratedSplit={state.saveGeneratedSplit}
-        />
-      ) : (
-        <div className={splitStyles.splitLayout}>
-          <section className={splitStyles.splitSummary}>
-            <div className={splitStyles.splitSummaryHead}>
-              <label className={splitStyles.editorField}>
+      <div className={splitStyles.splitLayout}>
+        <section className={splitStyles.splitSummary}>
+          <div className={splitStyles.splitSummaryHead}>
+            <label className={`${splitStyles.editorField} min-w-0 flex-1`}>
                 <input
                   className={splitStyles.editorInput}
                   value={state.split.name}
@@ -144,82 +118,99 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
                   placeholder="Split name"
                   aria-label="Split name"
                 />
-              </label>
-
-            <div className={splitStyles.splitSummaryActions}>
-              <button
-                type="button"
-                className={splitStyles.iconActionButton}
-                onClick={() => void state.activateSplit(state.split.id ?? "")}
-                disabled={
-                  state.saveState.kind === "saving" ||
-                  !canPersistSelectedSplit ||
-                  state.split.id === activeSplitId
-                }
-                title={
-                  state.split.id === activeSplitId
-                    ? "Active split"
-                    : canPersistSelectedSplit
-                      ? "Set active for the logger"
-                    : "Save this split before activating it"
-                }
-                aria-label={state.split.id === activeSplitId ? "Active split" : "Set active split"}
-              >
-                {state.split.id === activeSplitId ? (
-                  <CheckCircle2 className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
-                ) : (
-                  <Circle className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
-                )}
-              </button>
-              <button
-                type="button"
-                className={splitStyles.iconActionButton}
-                onClick={() => void state.handleCopySplit()}
-                disabled={state.saveState.kind === "saving"}
-                title="Copy split"
-                aria-label="Copy split"
-              >
-                <Copy className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
-              </button>
-              <button
-                type="button"
-                className={splitStyles.iconActionButton}
-                onClick={() => void state.handleSave()}
-                disabled={state.saveState.kind === "saving"}
-                aria-busy={state.saveState.kind === "saving"}
-                title="Save split"
-                aria-label="Save split"
-              >
-                <Save className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
-              </button>
-              {state.split.id ? (
-                <button
-                  type="button"
-                  className={splitStyles.dangerIconButton}
-                  onClick={handleDeleteSplit}
-                  disabled={state.saveState.kind === "saving"}
-                  title="Delete split"
-                  aria-label="Delete split"
-                >
-                  <Trash2 className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
-                </button>
-              ) : null}
-            </div>
+            </label>
+            <SplitActionMenu label="Split tools">
+              {(close) => (
+                <>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={splitStyles.actionMenuItem}
+                    onClick={() => {
+                      void state.activateSplit(state.split.id ?? "");
+                      close();
+                    }}
+                    disabled={
+                      state.saveState.kind === "saving" ||
+                      !canPersistSelectedSplit ||
+                      state.split.id === activeSplitId
+                    }
+                  >
+                    {state.split.id === activeSplitId ? (
+                      <CheckCircle2
+                        className={splitStyles.inlineIcon}
+                        aria-hidden="true"
+                        strokeWidth={1.9}
+                      />
+                    ) : (
+                      <Circle
+                        className={splitStyles.inlineIcon}
+                        aria-hidden="true"
+                        strokeWidth={1.9}
+                      />
+                    )}
+                    {state.split.id === activeSplitId ? "Active split" : "Set active"}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={splitStyles.actionMenuItem}
+                    onClick={() => {
+                      void state.handleCopySplit();
+                      close();
+                    }}
+                    disabled={state.saveState.kind === "saving"}
+                  >
+                    <Copy className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
+                    Copy split
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={splitStyles.actionMenuItem}
+                    onClick={() => {
+                      void state.handleSave();
+                      close();
+                    }}
+                    disabled={state.saveState.kind === "saving"}
+                  >
+                    <Save className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
+                    Save split
+                  </button>
+                  {state.split.id ? (
+                    <>
+                      <div className={splitStyles.actionMenuDivider} role="separator" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={`${splitStyles.actionMenuItem} ${splitStyles.actionMenuDangerItem}`}
+                        onClick={() => {
+                          handleDeleteSplit();
+                          close();
+                        }}
+                        disabled={state.saveState.kind === "saving"}
+                      >
+                        <Trash2
+                          className={splitStyles.inlineIcon}
+                          aria-hidden="true"
+                          strokeWidth={1.9}
+                        />
+                        Delete split
+                      </button>
+                    </>
+                  ) : null}
+                </>
+              )}
+            </SplitActionMenu>
           </div>
 
           <div className={splitStyles.splitGrid}>
-            {state.split.days.map((day, index) => (
+            {state.split.days.map((day) => (
               <SplitDayCard
                 key={day.weekday}
                 day={day}
                 isSelected={day.weekday === state.selectedWeekday}
-                isDragging={state.draggingIndex === index}
-                isDropTarget={state.dropTargetIndex === index && state.draggingIndex !== index}
                 onSelect={() => state.selectWeekday(day.weekday)}
-                onDragStart={() => state.startDraggingDay(index)}
-                onDragOver={() => state.dragOverDay(index)}
-                onDrop={() => state.dropDayAt(index)}
-                onDragEnd={state.endDayDrag}
               />
             ))}
           </div>
@@ -228,8 +219,6 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
         <SplitEditor
           day={state.selectedDay}
           exerciseSearchResults={state.selectedDayExerciseSearchResults}
-          draggingExerciseIndex={state.draggingExerciseIndex}
-          exerciseDropTargetIndex={state.exerciseDropTargetIndex}
           onWorkoutTypeChange={state.setWorkoutType}
           onExerciseNameChange={state.handleExerciseNameChange}
           onExerciseNameFocus={state.handleExerciseNameFocus}
@@ -238,13 +227,9 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
           onExerciseSetsChange={state.setExerciseSets}
           onAddExercise={state.addExercise}
           onRemoveExercise={state.removeExercise}
-          onExerciseDragStart={state.startDraggingExercise}
-          onExerciseDragOver={state.dragOverExercise}
-          onExerciseDrop={state.dropExerciseAt}
-          onExerciseDragEnd={state.endExerciseDrag}
+          onReorderExercises={state.reorderExercises}
         />
-        </div>
-      )}
+      </div>
     </div>
   );
 }

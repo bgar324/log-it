@@ -127,6 +127,22 @@ export function useDashboardProfileForm(
 
       let profileImageUpdatedAt = payload.user.profileImageUpdatedAt;
 
+      // Profile fields and avatar bytes are separate requests. Reflect the
+      // completed profile write immediately so a later image failure never
+      // makes the screen pretend the whole save was rolled back.
+      setProfile((current) => ({
+        ...current,
+        firstName: payload.user.firstName,
+        lastName: payload.user.lastName,
+        preferredWeightUnit: payload.user.preferredWeightUnit,
+        publicProfileEnabled: payload.user.publicProfileEnabled,
+        profileImageUpdatedAt,
+      }));
+      setFirstNameInput(payload.user.firstName ?? "");
+      setLastNameInput(payload.user.lastName ?? "");
+      setPreferredWeightUnitInput(payload.user.preferredWeightUnit);
+      setPublicProfileEnabledInput(payload.user.publicProfileEnabled);
+
       if (avatarFileInput) {
         const formData = new FormData();
         formData.set("image", avatarFileInput);
@@ -143,9 +159,11 @@ export function useDashboardProfileForm(
           !("ok" in avatarPayload && avatarPayload.ok)
         ) {
           throw new Error(
-            avatarPayload && "error" in avatarPayload
-              ? avatarPayload.error
-              : "Unable to upload profile picture.",
+            `Profile settings saved, but the picture was not uploaded: ${
+              avatarPayload && "error" in avatarPayload
+                ? avatarPayload.error
+                : "Unable to upload profile picture."
+            }`,
           );
         }
 
@@ -162,9 +180,11 @@ export function useDashboardProfileForm(
           !("ok" in avatarPayload && avatarPayload.ok)
         ) {
           throw new Error(
-            avatarPayload && "error" in avatarPayload
-              ? avatarPayload.error
-              : "Unable to remove profile picture.",
+            `Profile settings saved, but the picture was not removed: ${
+              avatarPayload && "error" in avatarPayload
+                ? avatarPayload.error
+                : "Unable to remove profile picture."
+            }`,
           );
         }
 
@@ -173,16 +193,8 @@ export function useDashboardProfileForm(
 
       setProfile((current) => ({
         ...current,
-        firstName: payload.user.firstName,
-        lastName: payload.user.lastName,
-        preferredWeightUnit: payload.user.preferredWeightUnit,
-        publicProfileEnabled: payload.user.publicProfileEnabled,
         profileImageUpdatedAt,
       }));
-      setFirstNameInput(payload.user.firstName ?? "");
-      setLastNameInput(payload.user.lastName ?? "");
-      setPreferredWeightUnitInput(payload.user.preferredWeightUnit);
-      setPublicProfileEnabledInput(payload.user.publicProfileEnabled);
       setAvatarFileInput(null);
       setAvatarRemovalPending(false);
       toast.success("Profile updated.", {

@@ -56,8 +56,7 @@ export async function loadProgressSection(
       lastPerformedAtLabel: item.lastPerformedAt ? shortDate(item.lastPerformedAt) : "--",
       daysSinceLastHit: item.lastPerformedAt ? daysBetweenDatabaseDates(now, item.lastPerformedAt) : 0,
     }))
-    .sort((left, right) => right.sessionCount - left.sessionCount)
-    .slice(0, 80);
+    .sort((left, right) => right.sessionCount - left.sessionCount);
 
   const progressWeeks = Array.from({ length: 12 }, (_, index) =>
     addDaysToDatabaseDate(progressStart, index * 7),
@@ -75,7 +74,7 @@ export async function loadProgressSection(
 
   const weeklySeries = progressWeeks.map((weekStartDate) => {
     const current = progressCounts.get(dateKey(weekStartDate));
-    const weekEndDate = addDaysToDatabaseDate(weekStartDate, 7);
+    const weekEndDate = addDaysToDatabaseDate(weekStartDate, 6);
 
     return {
       label: shortDate(weekStartDate),

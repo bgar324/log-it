@@ -98,22 +98,6 @@ export async function saveWorkoutSplit(split: WorkoutSplitTemplate) {
   return payload.split;
 }
 
-export async function saveGeneratedWorkoutSplit(split: WorkoutSplitTemplate) {
-  return saveWorkoutSplit({
-    ...split,
-    id: null,
-    isActive: false,
-    days: split.days.map((day) => ({
-      ...day,
-      id: null,
-      exercises: day.exercises.map((exercise) => ({
-        ...exercise,
-        id: null,
-      })),
-    })),
-  });
-}
-
 export async function createWorkoutSplit() {
   const response = await fetch("/api/workout-split", {
     method: "POST",
@@ -151,13 +135,21 @@ export async function deleteWorkoutSplit(splitId: string) {
   const response = await fetch(`/api/workout-split?id=${encodeURIComponent(splitId)}`, {
     method: "DELETE",
   });
-  const payload = (await response.json()) as { ok?: boolean; id?: string; error?: string };
+  const payload = (await response.json()) as {
+    ok?: boolean;
+    id?: string;
+    activeSplitId?: string | null;
+    error?: string;
+  };
 
   if (!response.ok || !payload?.ok) {
     throw new Error(payload?.error ?? "Unable to delete split.");
   }
 
-  return payload.id ?? splitId;
+  return {
+    id: payload.id ?? splitId,
+    activeSplitId: payload.activeSplitId ?? null,
+  };
 }
 
 export async function copyWorkoutSplit(split: WorkoutSplitTemplate) {

@@ -21,7 +21,7 @@ Logit uses a restrained monochrome product UI. The working surfaces are dense, d
 
 - Public/auth shell: `app/globals.css`, `app/page.tsx`, `app/auth/page.tsx`, `app/components/ui/*`. Public primitives use the same `--bg`, `--text`, `--muted`, `--field-*`, and `--focus-ring` tokens as product surfaces.
 - Product dashboard shell: `app/dashboard/dashboard.styles.ts` and dashboard components/hooks. Desktop sidebar supports an icon-only collapsed state; mobile navigation remains a separate menu.
-- Split planner: `app/dashboard/split-system.styles.ts`, `app/dashboard/split-manager.tsx`, `app/dashboard/split-assistant-panel.tsx`, and related hooks. The split view uses a split-library sidebar plus the weekday grid/editor work area. The dotted `Ask Ben` sidebar item replaces the main work area with the assistant panel. Split summary actions are icon-only with accessible labels; active state is communicated by icon and sidebar metadata.
+- Split planner: `app/dashboard/split-system.styles.ts`, `app/dashboard/split-manager.tsx`, and related hooks. The split view uses a split-library sidebar plus the weekday grid/editor work area. Split summary actions are icon-only with accessible labels; active state is communicated by icon and sidebar metadata.
 - Workout logger: `app/workouts/new/workout-logger.styles.ts` and logger components/hooks.
 - Workout detail: `app/workouts/[workoutId]/workout-detail.styles.ts`.
 - Exercise detail: `app/exercises/[exerciseKey]/exercise-detail.styles.ts`.
@@ -48,7 +48,6 @@ Logit uses a restrained monochrome product UI. The working surfaces are dense, d
 - Prefer existing helper `cn()` implementations for class composition in the local folder.
 - Avoid nested card patterns in product surfaces; use sections, rows, lists, borders, and spacing.
 - Keep filters, split editing, profile editing, and logger controls feature-complete rather than decorative.
-- Assistant-generated split previews should remain scannable: show weekday, workout type, and generated exercise/set rows directly in the preview instead of hiding the useful structure behind decorative cards.
 - Muted title metadata such as workout type, selected date, last-hit status, or preview status is allowed when it helps scanning. Keep it natural-case and untracked; do not use uppercase eyebrow styling for hierarchy.
 
 ## State And Feedback

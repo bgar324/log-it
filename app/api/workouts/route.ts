@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { after } from "next/server";
 import { revalidateTag } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
 import { getWorkoutDataTag } from "@/lib/cache-tags";
@@ -100,14 +99,11 @@ export async function POST(request: NextRequest) {
     }
 
     const created = await createWorkout(user.id, parsed.value);
-    after(async () => {
-      try {
-        await syncWorkoutReadModels(created.syncInput);
-        revalidateTag(getWorkoutDataTag(user.id), { expire: 0 });
-      } catch (syncError) {
-        console.error("workout create read-model sync failure:", syncError);
-      }
-    });
+    // Do not acknowledge a completed workout until the dashboard read models
+    // and their cache are coherent. Deferred sync made a successful save look
+    // missing (and could leave it stale forever when the task failed).
+    await syncWorkoutReadModels(created.syncInput);
+    revalidateTag(getWorkoutDataTag(user.id), { expire: 0 });
 
     return NextResponse.json(
       { id: created.id, personalRecords: created.personalRecords ?? [] },
@@ -151,14 +147,8 @@ export async function PUT(request: NextRequest) {
     }
 
     const updated = await updateWorkout(workoutId, user.id, parsed.value);
-    after(async () => {
-      try {
-        await syncWorkoutReadModels(updated.syncInput);
-        revalidateTag(getWorkoutDataTag(user.id), { expire: 0 });
-      } catch (syncError) {
-        console.error("workout update read-model sync failure:", syncError);
-      }
-    });
+    await syncWorkoutReadModels(updated.syncInput);
+    revalidateTag(getWorkoutDataTag(user.id), { expire: 0 });
 
     return NextResponse.json({ id: updated.id }, { status: 200 });
   } catch (error) {

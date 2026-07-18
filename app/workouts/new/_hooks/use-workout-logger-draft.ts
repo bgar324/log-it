@@ -7,6 +7,7 @@ import {
   useRef,
 } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
+import { recoverWorkoutDraft } from "@/lib/workouts/draft-recovery";
 import {
   WORKOUT_AUTOSAVE_DELAY_MS,
   WORKOUT_DRAFT_STORAGE_KEY,
@@ -34,6 +35,7 @@ type DraftState = {
   workoutType: string;
   performedAt: string;
   exercises: ExerciseDraft[];
+  isRecoveredDraft: boolean;
 };
 
 type DraftAction =
@@ -83,6 +85,7 @@ export function useWorkoutLoggerDraft({
       workoutType: state.workoutType,
       performedAt: state.performedAt,
       exercises: state.exercises,
+      isRecoveredDraft: false,
     }),
   );
   useEffect(() => {
@@ -93,6 +96,7 @@ export function useWorkoutLoggerDraft({
         workoutType: initialState.workoutType,
         performedAt: initialState.performedAt,
         exercises: initialState.exercises,
+        isRecoveredDraft: false,
       },
     });
     idCounterRef.current = initialState.counters;
@@ -108,17 +112,21 @@ export function useWorkoutLoggerDraft({
     const storedDraft = parseStoredWorkoutDraft(rawDraft, weightUnit);
 
     if (storedDraft) {
-      const hydrated = hydrateExercisesFromSnapshot(storedDraft.exercises);
+      const recoveredState = recoverWorkoutDraft(
+        storedDraft,
+        hydrateExercisesFromSnapshot(storedDraft.exercises),
+      );
       dispatch({
         type: "replace",
         value: {
-          title: storedDraft.title,
-          workoutType: initialState.workoutType,
-          performedAt: initialState.performedAt,
-          exercises: hydrated.exercises,
+          title: recoveredState.title,
+          workoutType: recoveredState.workoutType,
+          performedAt: recoveredState.performedAt,
+          exercises: recoveredState.exercises,
+          isRecoveredDraft: true,
         },
       });
-      idCounterRef.current = hydrated.counters;
+      idCounterRef.current = recoveredState.counters;
     } else if (rawDraft) {
       window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
     }
@@ -315,6 +323,7 @@ export function useWorkoutLoggerDraft({
     addExercise,
     addSet,
     exercises: draftState.exercises,
+    hasRecoveredDraft: draftState.isRecoveredDraft,
     performedAt: draftState.performedAt,
     reorderExercisesById,
     removeExercise,

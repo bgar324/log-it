@@ -287,21 +287,14 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
                 <div className="flex min-w-0 flex-1 flex-col gap-[0.36rem]">
                   <SkeletonLine className="h-[2.75rem] w-[14rem] max-[700px]:w-full" />
                 </div>
-                <div className={splitStyles.splitSummaryActions}>
-                  {Array.from({ length: 4 }, (_, index) => (
-                    <SkeletonLine key={index} className="h-[2.5rem] w-[2.5rem] rounded-[0.52rem]" />
-                  ))}
-                </div>
+                <SkeletonLine className="h-[2.75rem] w-[2.75rem] shrink-0 rounded-[0.52rem]" />
               </div>
 
               <div className={splitStyles.splitGrid}>
                 {Array.from({ length: 7 }, (_, index) => (
                   <div key={index} className={splitStyles.splitDayCard}>
                     <div className={splitStyles.splitDayHeader}>
-                      <div className={splitStyles.splitDayLead}>
-                        <SkeletonLine className="h-[1.65rem] w-[1.65rem] rounded-[0.38rem]" />
-                        <SkeletonLine className="h-[0.72rem] w-[4.8rem]" />
-                      </div>
+                      <SkeletonLine className="h-[0.72rem] w-[4.8rem]" />
                       <SkeletonLine className="h-[0.72rem] w-[4.4rem]" />
                     </div>
                     <SkeletonLine className="h-[1rem] w-[5.6rem]" />
@@ -320,7 +313,6 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
               </div>
               <div className={splitStyles.editorSectionHead}>
                 <SkeletonLine className="h-[1rem] w-[5.2rem]" />
-                <SkeletonLine className="h-[2.5rem] w-[8rem] rounded-[0.52rem]" />
               </div>
               <div className={splitStyles.editorExerciseList}>
                 {Array.from({ length: 6 }, (_, index) => (

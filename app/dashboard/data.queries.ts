@@ -7,7 +7,11 @@ import {
 } from "@/lib/workout-read-models";
 import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import { toWeightNumber } from "@/lib/weight-unit";
-import { formatDatabaseDateValue } from "@/lib/workout-utils";
+import {
+  addMonthsToDatabaseDate,
+  formatDatabaseDateValue,
+  toDatabaseDateFromInput,
+} from "@/lib/workout-utils";
 
 export async function loadRecentLogs(userId: string, take: number) {
   try {
@@ -58,6 +62,71 @@ export async function loadRecentLogs(userId: string, take: number) {
               select: {
                 sets: true,
               },
+            },
+          },
+        },
+      },
+    });
+
+    return logs.map((log) => ({
+      workoutType: null,
+      id: log.id,
+      title: log.title,
+      totalWeightLb: log.totalWeightLb,
+      performedAt: log.performedAt,
+      exerciseCount: log.exercises.length,
+      setCount: log.exercises.reduce((sum, exercise) => sum + exercise._count.sets, 0),
+    }));
+  }
+}
+
+// History is a user-owned record, not a feed. Do not silently discard older
+// workouts merely because a user has trained consistently for a long time.
+export async function loadAllLogs(userId: string) {
+  try {
+    return await prisma.$queryRaw<
+      Array<{
+        id: string;
+        title: string;
+        workoutType: string | null;
+        totalWeightLb: Prisma.Decimal | number | null;
+        performedAt: Date;
+        exerciseCount: number;
+        setCount: number;
+      }>
+    >`
+      SELECT
+        wl.id,
+        wl.title,
+        wl."workoutType",
+        wl."totalWeightLb",
+        wl."performedAt",
+        COUNT(DISTINCT we.id)::int AS "exerciseCount",
+        COUNT(ws.id)::int AS "setCount"
+      FROM "WorkoutLog" wl
+      LEFT JOIN "WorkoutExercise" we ON we."workoutLogId" = wl.id
+      LEFT JOIN "WorkoutSet" ws ON ws."workoutExerciseId" = we.id
+      WHERE wl."userId" = ${userId}
+      GROUP BY wl.id, wl.title, wl."workoutType", wl."totalWeightLb", wl."performedAt"
+      ORDER BY wl."performedAt" DESC
+    `;
+  } catch (error) {
+    if (!isPrismaSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    const logs = await prisma.workoutLog.findMany({
+      where: { userId },
+      orderBy: { performedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        totalWeightLb: true,
+        performedAt: true,
+        exercises: {
+          select: {
+            _count: {
+              select: { sets: true },
             },
           },
         },
@@ -188,12 +257,23 @@ export async function loadWorkoutCalendarSummary(userId: string) {
   }));
 }
 
-export async function loadWorkoutCalendarWorkouts(userId: string) {
+export async function loadWorkoutCalendarWorkouts(userId: string, monthKey?: string) {
+  const monthStart = monthKey ? toDatabaseDateFromInput(`${monthKey}-01`) : null;
+  const where = {
+    userId,
+    ...(monthStart
+      ? {
+          performedAt: {
+            gte: monthStart,
+            lt: addMonthsToDatabaseDate(monthStart, 1),
+          },
+        }
+      : {}),
+  };
+
   try {
     const rows = await prisma.workoutLog.findMany({
-      where: {
-        userId,
-      },
+      where,
       orderBy: {
         performedAt: "asc",
       },
@@ -217,9 +297,7 @@ export async function loadWorkoutCalendarWorkouts(userId: string) {
     }
 
     const rows = await prisma.workoutLog.findMany({
-      where: {
-        userId,
-      },
+      where,
       orderBy: {
         performedAt: "asc",
       },

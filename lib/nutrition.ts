@@ -395,7 +395,29 @@ export function normalizeNutritionMutationBody(
     return { error: "Invalid request body." as const };
   }
 
-  const date = toDatabaseDateFromInput(String(rawBody.date ?? ""));
+  const rawDate = typeof rawBody.date === "string" ? rawBody.date.trim() : "";
+  const date = toDatabaseDateFromInput(rawDate);
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(rawDate) ||
+    formatDatabaseDateValue(date) !== rawDate
+  ) {
+    return { error: "Choose a valid nutrition date." as const };
+  }
+
+  const optionalNumberFields = [
+    ["calories", rawBody.calories],
+    ["protein", rawBody.proteinGrams],
+    ["BMR", rawBody.bmrCalories],
+    ["body weight", rawBody.bodyWeight],
+  ] as const;
+
+  for (const [label, value] of optionalNumberFields) {
+    if (value !== null && value !== undefined && String(value).trim() && toOptionalNumber(value) === null) {
+      return { error: `Enter a valid ${label} value.` as const };
+    }
+  }
+
   const calories = normalizeCalories(rawBody.calories);
   const proteinGrams = normalizeProteinGrams(rawBody.proteinGrams);
   const bmrCalories = normalizeBmrCalories(rawBody.bmrCalories);

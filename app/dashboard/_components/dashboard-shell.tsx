@@ -74,8 +74,16 @@ export function DashboardShell({
     }
 
     document.addEventListener("mousedown", handlePointerDown);
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onCloseMobileMenu();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [mobileMenuOpen, onCloseMobileMenu]);
 

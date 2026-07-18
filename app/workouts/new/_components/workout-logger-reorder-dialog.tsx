@@ -20,30 +20,38 @@ export function WorkoutLoggerReorderDialog({
   onCancel,
   onSave,
 }: WorkoutLoggerReorderDialogProps) {
-  const [isMounted, setIsMounted] = useState(false);
-  const [orderedIds, setOrderedIds] = useState<string[]>([]);
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <WorkoutLoggerReorderDialogContent
+      key={exercises.map((exercise) => exercise.id).join("-")}
+      exercises={exercises}
+      onCancel={onCancel}
+      onSave={onSave}
+    />
+  );
+}
+
+type WorkoutLoggerReorderDialogContentProps = Omit<
+  WorkoutLoggerReorderDialogProps,
+  "isOpen"
+>;
+
+function WorkoutLoggerReorderDialogContent({
+  exercises,
+  onCancel,
+  onSave,
+}: WorkoutLoggerReorderDialogContentProps) {
+  const [orderedIds, setOrderedIds] = useState(() =>
+    exercises.map((exercise) => exercise.id),
+  );
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const titleId = useId();
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    setOrderedIds(exercises.map((exercise) => exercise.id));
-    setDraggingId(null);
-  }, [exercises, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -59,7 +67,7 @@ export function WorkoutLoggerReorderDialog({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, onCancel]);
+  }, [onCancel]);
 
   const exerciseById = useMemo(
     () => new Map(exercises.map((exercise) => [exercise.id, exercise])),
@@ -99,7 +107,7 @@ export function WorkoutLoggerReorderDialog({
     });
   }
 
-  if (!isMounted || !isOpen) {
+  if (typeof document === "undefined") {
     return null;
   }
 

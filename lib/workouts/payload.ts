@@ -8,6 +8,8 @@ import {
   normalizeExerciseName,
   normalizeWorkoutTypeName,
   normalizeWorkoutTypeSlug,
+  formatDatabaseDateValue,
+  getCurrentPacificDate,
   toDatabaseDateFromInput,
 } from "../workout-utils";
 
@@ -139,8 +141,20 @@ export function normalizeWorkoutPayload(raw: RawWorkoutPayload) {
   const workoutType = workoutTypeValue
     ? normalizeWorkoutTypeName(workoutTypeValue)
     : null;
-  const performedAt = toDatabaseDateFromInput(String(raw.performedAt ?? ""));
+  const performedAtInput = String(raw.performedAt ?? "").trim();
+  const performedAt = toDatabaseDateFromInput(performedAtInput);
   const weightUnit = normalizeWeightUnit(raw.weightUnit);
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(performedAtInput) ||
+    formatDatabaseDateValue(performedAt) !== performedAtInput
+  ) {
+    return { error: "Choose a valid workout date." as const };
+  }
+
+  if (performedAt.getTime() > getCurrentPacificDate().getTime()) {
+    return { error: "Workouts cannot be logged in the future." as const };
+  }
 
   if (!Array.isArray(raw.exercises)) {
     return { error: "Add at least one exercise." as const };

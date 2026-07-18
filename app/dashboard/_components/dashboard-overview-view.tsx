@@ -188,19 +188,22 @@ export function DashboardOverviewView({
                 <span key={cell.key} className={styles.calendarDayEmpty} aria-hidden="true" />
               ) : (
                 cell.workouts[0] ? (
-                  <Link
+                  <button
                     key={cell.key}
-                    href={`/workouts/${cell.workouts[0].id}`}
+                    type="button"
                     role="gridcell"
                     className={`${styles.calendarDay} ${styles.calendarDayClickable} ${styles.calendarDayActive}`}
-                    aria-label={`View ${cell.workouts[0].title}`}
+                    onClick={() => calendar.selectDate(cell.key)}
+                    aria-expanded={calendar.selectedDateKey === cell.key}
+                    aria-label={`Show ${cell.workoutCount} workout${
+                      cell.workoutCount === 1 ? "" : "s"
+                    } logged on ${cell.key}`}
                     title={`${cell.workoutCount} workout${
                       cell.workoutCount === 1 ? "" : "s"
                     } logged`}
                   >
                     <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
-                    <LinkPendingOverlay />
-                  </Link>
+                  </button>
                 ) : (
                   <div
                     key={cell.key}
@@ -214,6 +217,35 @@ export function DashboardOverviewView({
               ),
             )}
           </div>
+
+          {calendar.selectedWorkouts.length > 0 ? (
+            <div className={styles.calendarDayDetails} role="region" aria-live="polite">
+              <p className={styles.calendarDayDetailsTitle}>
+                {calendar.selectedWorkouts.length} workout
+                {calendar.selectedWorkouts.length === 1 ? "" : "s"} on {calendar.selectedDateKey}
+              </p>
+              <div className={styles.calendarDayDetailsLinks}>
+                {calendar.selectedWorkouts.map((workout) => (
+                  <Link
+                    key={workout.id}
+                    href={`/workouts/${workout.id}`}
+                    className={styles.calendarDayDetailsLink}
+                  >
+                    {workout.title}
+                    <LinkPendingOverlay />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : calendar.selectedDateKey && calendar.isLoadingSelectedMonth ? (
+            <p className={styles.calendarDayDetails} role="status">
+              Loading workouts for {calendar.selectedDateKey}…
+            </p>
+          ) : calendar.selectedDateKey && calendar.selectedMonthError ? (
+            <p className={styles.calendarDayDetails} role="alert">
+              {calendar.selectedMonthError}
+            </p>
+          ) : null}
         </section>
       </section>
     </>

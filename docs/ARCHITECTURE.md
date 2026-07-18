@@ -17,7 +17,7 @@ Public or auth-aware pages:
 
 - `/`: redirects signed-in users to `/dashboard`; otherwise shows sign-in/register links.
 - `/auth`: sign-in/register UI backed by `/auth/signin`, `/auth/register`, and `/auth/signout`.
-- `/legal`, `/research`, `/research/*`: public legal/research content, including the Ben split assistant research page at `/research/ben`.
+- `/legal`, `/research`, `/research/*`: public legal/research content.
 - `/u/[username]`: public profile route; availability depends on the user's `publicProfileEnabled` setting.
 
 Protected product pages use `requireSessionUser()`:
@@ -35,7 +35,6 @@ API routes:
 - `app/api/workouts/exercise-suggestions/route.ts`: exercise suggestion lookup.
 - `app/api/workouts/insights/route.ts`: workout logger insight lookup.
 - `app/api/workout-split/route.ts`: split library API. `GET` returns `{ split, splits }`, where `split` is the active split and `splits` is the saved library. `POST` creates a default split, `PUT` saves a new or existing split, `PATCH` activates a split with `{ action: "activate", id }`, and `DELETE?id=` deletes a split.
-- `app/api/workout-split/assistant/route.ts`: bounded split assistant. Requires a signed-in user and trusted mutation origin, accepts recent browser-held chat messages plus an optional unsaved draft, streams app-level SSE events (`message_delta`, `message_done`, `split_draft`, `limit_reached`, `error`), and can return a normalized unsaved split draft. Gemini is the default provider with `GEMINI_API_KEY` and `gemini-2.5-flash-lite`; `SPLIT_ASSISTANT_PROVIDER=anthropic` switches to Anthropic with `ANTHROPIC_API_KEY` and `claude-haiku-4-5-20251001`; `SPLIT_ASSISTANT_MODEL` overrides the provider default.
 - `app/api/dashboard/view-data/route.ts`: lazy dashboard view data.
 - `app/api/dashboard/today-plan/route.ts`: current split/day plan.
 - `app/api/nutrition/route.ts`: daily calorie/protein, BMR target, and body-weight tracker reads/writes.
@@ -65,7 +64,6 @@ Source of truth is `prisma/schema.prisma`.
 - `ExerciseSummary`: per-user read model for exercise history.
 - `WorkoutCalendarDay`: per-user read model for workout counts by date.
 - `WorkoutSplit`, `WorkoutSplitDay`, `WorkoutSplitExercise`: saved weekly split templates, one row per weekday inside each saved split, ordered exercises per split day. Multiple splits can belong to a user; `WorkoutSplit.isActive` marks the split used by logger/dashboard behavior. The schema indexes `[userId, isActive]` and `[userId, updatedAt]`.
-- `SplitAssistantUsage`: per-user, per-Pacific-date counter for generated split drafts. It enforces the daily assistant draft cap without storing chat transcripts.
 
 Cascade behavior is part of the model: deleting a user deletes workouts, exercises, summaries, calendar days, split data, nutrition entries, and body-weight entries; deleting workout logs deletes nested exercises and sets.
 
@@ -76,7 +74,7 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 3. Weights are converted to pounds before persistence.
 4. `resolveBodyWeightLbForDate()` (`lib/body-weight.ts`) snapshots the user's tracked body weight for `performedAt` onto `WorkoutLog.bodyWeightLb`, and `computeWorkoutTotalWeightLb()` credits bodyweight sets (`weightLb` null) as `bodyWeightLb * reps`.
 5. `lib/workouts/service.ts` creates, updates, deletes, or duplicates workouts inside Prisma transactions.
-6. Mutation routes schedule `syncWorkoutReadModels()` with `after()` and revalidate `getWorkoutDataTag(user.id)`.
+6. Mutation routes synchronize `syncWorkoutReadModels()` and revalidate `getWorkoutDataTag(user.id)` before returning success.
 
 `createWorkout()` blocks logging on a split rest day when the user has an active split and the selected date maps to `workoutTypeSlug === "rest"`.
 
@@ -88,10 +86,8 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 - Dashboard and split data use `unstable_cache` with user-scoped cache tags from `lib/cache-tags.ts`.
 - Nutrition view data uses a user-scoped cache tag and is invalidated after nutrition writes.
 - The split dashboard payload includes the active split as `split` and the saved split library as `splits`.
-- The split assistant keeps chat state client-side for v1. Generated drafts are advisory and unsaved until the user explicitly creates a split through the normal split save API. Draft parsing lives in `lib/workout-splits/assistant.ts`, normalizes incomplete weeks to rest days, clamps generated set counts, accepts simple generated weekday labels such as `Day 1`, and rejects duplicate weekdays.
-- `app/dashboard/split-assistant-panel.tsx` owns the split assistant UI. It renders assistant markdown for basic emphasis/bullets, shows generated day/exercise previews, and clears accepted drafts after `saveGeneratedWorkoutSplit()` creates a real split through `PUT /api/workout-split`.
 - `todayPlan` includes `workoutTypeSlug` and `isLoggedToday`; overview loading sets `isLoggedToday` by matching today's Pacific date plus normalized workout type against existing workout logs.
-- Dashboard client-side view data is cached in memory in `app/dashboard/dashboard-client.tsx`; `/api/dashboard/view-data` loads missing views. Initial client render starts from the server-provided payload and seeds the cache afterward so cached view data does not cause hydration mismatches.
+- Dashboard client-side view data is kept only for the mounted dashboard instance in `app/dashboard/dashboard-client.tsx`; `/api/dashboard/view-data` loads missing views. Authoritative server refreshes reset that local state to prevent stale or cross-account payloads from being merged.
 - Several loaders catch Prisma schema mismatch errors and fall back to source tables for compatibility during migrations.
 
 ## Date And Unit Conventions
@@ -117,6 +113,5 @@ Useful suites:
 - `npm run test:features`: service-level workout flows.
 - `npm run test:integrity`: scheduling, split, date, and data integrity invariants.
 - `tests/*.test.ts`: focused helper and parser tests.
-- `tests/suites/features/split-assistant-route.test.ts` and `tests/workout-split-assistant.test.ts`: assistant route, usage-limit, and generated draft normalization coverage.
 
 Unknown: there is no browser-driven UI test suite or live test database integration documented in the repo.

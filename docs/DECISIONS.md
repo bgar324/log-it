@@ -16,15 +16,11 @@ Workout payload parsing lives in `lib/workouts/payload.ts`; create/update/delete
 
 ## Maintain Read Models For Dashboard Queries
 
-`ExerciseSummary` and `WorkoutCalendarDay` are durable read models. Mutations call `syncWorkoutReadModels()` after write completion and invalidate workout data cache tags. Some dashboard queries fall back to source tables when read-model schema is unavailable.
+`ExerciseSummary` and `WorkoutCalendarDay` are durable read models. Workout mutations synchronize them and invalidate workout cache tags before returning success, so the dashboard never relies on a best-effort background sync. Some dashboard queries fall back to source tables when read-model schema is unavailable.
 
 ## Multiple Saved Splits, One Active Split
 
-The data model allows multiple `WorkoutSplit` rows per user. Service code maintains one active split with `isActive`; the active split drives dashboard planning, rest-day blocking, and workout logger preload. Split saves replace nested days/exercises, normalize all weekdays, and default missing days to `Rest`.
-
-## AI Split Drafts Are Unsaved Until Accepted
-
-The split assistant uses direct provider REST calls and keeps chat transcripts in browser state for v1. The server can return normalized split drafts, but it does not persist them until the user explicitly creates a split through the existing split save path. Generated draft counts are capped per user per Pacific date through `SplitAssistantUsage`. Assistant drafts are validated through existing split normalization before the client can preview or save them.
+The data model allows multiple `WorkoutSplit` rows per user, with a PostgreSQL partial unique index enforcing zero or one active split per user. Service code maintains that invariant; the active split drives dashboard planning, rest-day blocking, and workout logger preload. Split saves replace nested days/exercises, normalize all weekdays, and default missing days to `Rest`.
 
 ## Logged Today Means Date Plus Split Type
 
@@ -40,7 +36,11 @@ Sessions are signed JWTs stored in the `logit_session` HTTP-only cookie. Product
 
 ## Use Query-String Dashboard Views
 
-The dashboard shell uses `?view=` for overview/workouts/progress/split/profile. The client caches loaded view payloads in memory and fetches missing view data from `/api/dashboard/view-data`.
+The dashboard shell uses `?view=` for overview/workouts/progress/split/profile. The client keeps loaded view payloads only for the mounted dashboard instance and discards them whenever authoritative server props refresh, preventing stale or cross-account data from being merged into a new session.
+
+## Keep Calendar Detail Month-Scoped
+
+The overview returns calendar aggregates for statistics and month navigation, but returns workout titles and ids only for the current month. The client fetches another month from `/api/dashboard/calendar` after the user navigates there, keeping long training histories out of the initial dashboard payload.
 
 ## Keep UI Monochrome And Operational
 

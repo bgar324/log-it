@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
 import { getWorkoutDataTag } from "@/lib/cache-tags";
@@ -63,14 +63,8 @@ export async function POST(request: Request, context: RouteContext) {
 
   try {
     const duplicated = await duplicateWorkout(workoutId, user.id);
-    after(async () => {
-      try {
-        await syncWorkoutReadModels(duplicated.syncInput);
-        revalidateTag(getWorkoutDataTag(user.id), { expire: 0 });
-      } catch (syncError) {
-        console.error("workout duplicate read-model sync failure:", syncError);
-      }
-    });
+    await syncWorkoutReadModels(duplicated.syncInput);
+    revalidateTag(getWorkoutDataTag(user.id), { expire: 0 });
     return NextResponse.json({ id: duplicated.id }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.message === WORKOUT_NOT_FOUND_ERROR) {

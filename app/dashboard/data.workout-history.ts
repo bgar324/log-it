@@ -1,14 +1,14 @@
 import { requireSessionUser } from "@/lib/auth";
 import type { DashboardClientData } from "./dashboard-types";
 import { monthDateLabel, monthLabel, timelineDateLabel } from "./data.formatters";
-import { loadRecentLogs, mapWorkoutSummaries } from "./data.queries";
+import { loadAllLogs, mapWorkoutSummaries } from "./data.queries";
 import { convertStoredWeightToDisplay } from "@/lib/weight-unit";
 
 export async function loadWorkoutHistorySection(
   userId: string,
   weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
 ) {
-  const recentLogSummaries = mapWorkoutSummaries(await loadRecentLogs(userId, 500), weightUnit, {
+  const recentLogSummaries = mapWorkoutSummaries(await loadAllLogs(userId), weightUnit, {
     monthLabel,
     monthDateLabel,
     timelineDateLabel,

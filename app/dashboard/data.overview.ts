@@ -132,6 +132,7 @@ function buildWorkoutCalendarOverview(
   }
 
   const sortedMonthKeys = Array.from(workoutMonthCountMap.keys()).sort();
+  const currentMonthDate = startOfDatabaseMonth(now);
   const monthCounts: DashboardClientData["overview"]["workoutCalendar"]["monthCounts"] =
     sortedMonthKeys.length > 0
       ? (() => {
@@ -139,8 +140,18 @@ function buildWorkoutCalendarOverview(
           const [lastYear, lastMonth] = sortedMonthKeys[sortedMonthKeys.length - 1]
             .split("-")
             .map(Number);
-          const firstMonthDate = createDatabaseDate(firstYear, firstMonth, 1);
-          const lastMonthDate = createDatabaseDate(lastYear, lastMonth, 1);
+          const firstMonthDate = new Date(
+            Math.min(
+              createDatabaseDate(firstYear, firstMonth, 1).getTime(),
+              currentMonthDate.getTime(),
+            ),
+          );
+          const lastMonthDate = new Date(
+            Math.max(
+              createDatabaseDate(lastYear, lastMonth, 1).getTime(),
+              currentMonthDate.getTime(),
+            ),
+          );
           const months: DashboardClientData["overview"]["workoutCalendar"]["monthCounts"] = [];
 
           for (
@@ -173,7 +184,9 @@ function buildWorkoutCalendarOverview(
       workouts: dayWorkouts,
     })),
     monthCounts,
-    latestMonthKey: monthCounts[monthCounts.length - 1]?.monthKey ?? null,
+    // Start on the present even if legacy imports contain future-dated logs.
+    latestMonthKey: monthKey(now),
+    loadedMonthKey: monthKey(now),
   };
 }
 
@@ -200,13 +213,14 @@ export async function loadDashboardOverviewSection(
     loadExerciseSummaryRows(userId),
     loadRecentLogs(userId, 5),
     loadWorkoutCalendarSummary(userId),
-    loadWorkoutCalendarWorkouts(userId),
+    loadWorkoutCalendarWorkouts(userId, monthKey(now)),
     loadTodayPlan(userId, now),
   ]);
 
   const totalWorkouts = sumWorkoutCounts(workoutCalendarDayCounts);
   const workoutsThisWeek = sumWorkoutCounts(workoutCalendarDayCounts, {
     gte: weekStart,
+    lt: addDaysToDatabaseDate(weekStart, 7),
   });
   const workoutsThisMonth = sumWorkoutCounts(workoutCalendarDayCounts, {
     gte: monthStart,

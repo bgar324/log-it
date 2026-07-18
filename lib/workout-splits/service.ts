@@ -263,6 +263,8 @@ export async function deleteUserWorkoutSplit(userId: string, splitId: string) {
       },
     });
 
+    let activeSplitId: string | null = null;
+
     if (existingSplit.isActive) {
       const fallbackSplit = await tx.workoutSplit.findFirst({
         where: {
@@ -285,65 +287,75 @@ export async function deleteUserWorkoutSplit(userId: string, splitId: string) {
             isActive: true,
           },
         });
+        activeSplitId = fallbackSplit.id;
       }
+    } else {
+      activeSplitId = (
+        await tx.workoutSplit.findFirst({
+          where: { userId, isActive: true },
+          select: { id: true },
+        })
+      )?.id ?? null;
     }
 
     return {
       id: existingSplit.id,
+      activeSplitId,
     };
   });
 }
 
 export async function createDefaultUserWorkoutSplit(userId: string) {
-  const existingSplitCount = await prisma.workoutSplit.count({
-    where: {
-      userId,
-    },
-  });
-  const split = await prisma.workoutSplit.create({
-    data: {
-      userId,
-      name:
-        existingSplitCount === 0
-          ? DEFAULT_WORKOUT_SPLIT_NAME
-          : `Weekly Split ${existingSplitCount + 1}`,
-      isActive: existingSplitCount === 0,
-      days: {
-        create: createNestedDayCreatePayload({
-          id: null,
-          name:
-            existingSplitCount === 0
-              ? DEFAULT_WORKOUT_SPLIT_NAME
-              : `Weekly Split ${existingSplitCount + 1}`,
-          isActive: existingSplitCount === 0,
-          days: [],
-        }),
+  const split = await prisma.$transaction(async (tx) => {
+    const existingSplitCount = await tx.workoutSplit.count({ where: { userId } });
+    const name =
+      existingSplitCount === 0
+        ? DEFAULT_WORKOUT_SPLIT_NAME
+        : `Weekly Split ${existingSplitCount + 1}`;
+    const hasActiveSplit = await tx.workoutSplit.findFirst({
+      where: { userId, isActive: true },
+      select: { id: true },
+    });
+
+    return tx.workoutSplit.create({
+      data: {
+        userId,
+        name,
+        isActive: hasActiveSplit === null,
+        days: {
+          create: createNestedDayCreatePayload({
+            id: null,
+            name,
+            isActive: hasActiveSplit === null,
+            days: [],
+          }),
+        },
       },
-    },
-    select: {
-      id: true,
-      name: true,
-      isActive: true,
-      days: {
-        select: {
-          id: true,
-          weekday: true,
-          workoutType: true,
-          exercises: {
-            orderBy: {
-              order: "asc",
-            },
-            select: {
-              id: true,
-              order: true,
-              exerciseDisplayName: true,
-              exerciseSlug: true,
-              sets: true,
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        days: {
+          select: {
+            id: true,
+            weekday: true,
+            workoutType: true,
+            exercises: {
+              orderBy: {
+                order: "asc",
+              },
+              select: {
+                id: true,
+                order: true,
+                exerciseDisplayName: true,
+                exerciseSlug: true,
+                sets: true,
+              },
             },
           },
         },
       },
-    },
+    });
   });
 
   return serializeWorkoutSplit(split as StoredWorkoutSplit);

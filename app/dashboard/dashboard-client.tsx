@@ -39,47 +39,6 @@ type LoadViewDataOptions = {
 
 type DashboardViewData = Partial<DashboardClientData>;
 
-const dashboardViewDataCache = new Map<DashboardView, DashboardViewData>();
-
-function getDashboardViewData(view: DashboardView, data: DashboardClientData): DashboardViewData {
-  if (view === "dashboard") {
-    return {
-      overview: data.overview,
-      workouts: data.workouts,
-    };
-  }
-
-  if (view === "workouts") {
-    return {
-      workoutMonths: data.workoutMonths,
-    };
-  }
-
-  if (view === "progress") {
-    return {
-      exercises: data.exercises,
-      progress: data.progress,
-    };
-  }
-
-  if (view === "nutrition") {
-    return {
-      nutrition: data.nutrition,
-    };
-  }
-
-  if (view === "split") {
-    return {
-      split: data.split,
-      splits: data.splits,
-    };
-  }
-
-  return {
-    user: data.user,
-  };
-}
-
 function mergeDashboardViewData(
   data: DashboardClientData,
   viewData: DashboardViewData,
@@ -90,23 +49,6 @@ function mergeDashboardViewData(
   };
 }
 
-function seedDashboardViewCache(view: DashboardView, data: DashboardClientData) {
-  dashboardViewDataCache.set("profile", getDashboardViewData("profile", data));
-  dashboardViewDataCache.set(view, getDashboardViewData(view, data));
-}
-
-function createCachedDashboardData(
-  initialView: DashboardView,
-  data: DashboardClientData,
-) {
-  seedDashboardViewCache(initialView, data);
-
-  return Array.from(dashboardViewDataCache.values()).reduce<DashboardClientData>(
-    (current, viewData) => mergeDashboardViewData(current, viewData),
-    data,
-  );
-}
-
 function createInitialLoadedDashboardViews(initialView: DashboardView) {
   return new Set<DashboardView>([initialView, "profile"]);
 }
@@ -114,10 +56,7 @@ function createInitialLoadedDashboardViews(initialView: DashboardView) {
 export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const router = useRouter();
   const [activeView, setActiveView] = useState(initialView);
-  const [dashboardData, setDashboardData] = useState(() => {
-    seedDashboardViewCache(initialView, data);
-    return data;
-  });
+  const [dashboardData, setDashboardData] = useState(data);
   const [loadedViews, setLoadedViews] = useState<ReadonlySet<DashboardView>>(
     () => createInitialLoadedDashboardViews(initialView),
   );
@@ -171,19 +110,14 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const hasWorkoutFilters = hasActiveWorkoutFilters(workoutFilters);
 
   useEffect(() => {
-    const nextData = createCachedDashboardData(initialView, data);
-
-    setDashboardData(nextData);
-    loadedViewsRef.current.add(initialView);
-    setLoadedViews((current) => {
-      const next = new Set(current);
-      for (const view of dashboardViewDataCache.keys()) {
-        next.add(view);
-      }
-      next.add(initialView);
-      next.add("profile");
-      return next;
-    });
+    // Server refreshes are authoritative. Keeping this cache instance-local and
+    // resetting it here prevents one account or old unit conversion from being
+    // merged into another account's dashboard payload.
+    loadedViewsRef.current = createInitialLoadedDashboardViews(initialView);
+    setDashboardData(data);
+    setLoadedViews(createInitialLoadedDashboardViews(initialView));
+    setLoadingViews(new Set());
+    setViewErrors({});
   }, [data, initialView]);
 
   const loadViewData = useCallback(async (
@@ -230,7 +164,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
         );
       }
 
-      dashboardViewDataCache.set(view, payload.data);
       setDashboardData((current) => mergeDashboardViewData(current, payload.data ?? {}));
       loadedViewsRef.current.add(view);
       setLoadedViews((current) => {
@@ -303,7 +236,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
         ...current,
         nutrition,
       };
-      dashboardViewDataCache.set("nutrition", getDashboardViewData("nutrition", nextData));
       return nextData;
     });
   }
