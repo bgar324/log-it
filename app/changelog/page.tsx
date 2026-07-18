@@ -18,6 +18,63 @@ export default function ChangelogPage() {
             <h2 className="changelog-date">July 18, 2026</h2>
 
             <div className="changelog-group">
+              <h3 className="changelog-group-title">Improved</h3>
+              <ul className="legal-list">
+                <li>
+                  <strong>A calmer split editor.</strong> Split and day actions
+                  now live in compact three-dot menus. Exercise rows no longer
+                  show drag handles, arrow buttons, or extra field labels.
+                </li>
+                <li>
+                  <strong>Purposeful exercise reordering.</strong> Reorder is
+                  now a focused sheet with the same touch-friendly interaction
+                  used in the workout logger, instead of controls on every row.
+                </li>
+                <li>
+                  <strong>More useful workout calendar.</strong> Tap a logged
+                  day to see every workout from that date, then open the one
+                  you want. Browsing calendar months now loads the right
+                  workouts on demand.
+                </li>
+                <li>
+                  <strong>Complete history and cleaner dashboard data.</strong>
+                  Workout history is no longer capped, and dashboard totals
+                  use complete weeks and the current calendar month.
+                </li>
+              </ul>
+            </div>
+
+            <div className="changelog-group">
+              <h3 className="changelog-group-title">Fixed</h3>
+              <ul className="legal-list">
+                <li>
+                  <strong>Recovered workout drafts keep their identity.</strong>
+                  If you save yesterday&apos;s unfinished workout today, it keeps
+                  yesterday&apos;s date and workout type instead of being filed as
+                  today&apos;s session. You can also recover a draft on a rest day.
+                </li>
+                <li>
+                  <strong>Dashboard updates are reliable after workout
+                  changes.</strong> Creating, editing, duplicating, or deleting
+                  a workout now updates the dashboard before the app confirms
+                  success.
+                </li>
+                <li>
+                  <strong>Safer split and exercise changes.</strong> There can
+                  only be one active split, deleting the last saved split
+                  creates a clean replacement, and removing an exercise now
+                  asks for confirmation.
+                </li>
+                <li>
+                  <strong>More honest saves and inputs.</strong> Profile
+                  settings remain saved if a picture upload fails, and invalid
+                  nutrition dates or values are rejected instead of being
+                  silently changed.
+                </li>
+              </ul>
+            </div>
+
+            <div className="changelog-group">
               <h3 className="changelog-group-title">Removed</h3>
               <ul className="legal-list">
                 <li>
