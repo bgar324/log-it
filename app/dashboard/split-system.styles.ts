@@ -46,6 +46,10 @@ export const splitStyles = {
     `flex min-h-[7.6rem] cursor-pointer flex-col gap-[0.45rem] rounded-[0.54rem] border border-[var(--split-border)] bg-transparent p-[0.85rem] text-left text-[var(--text)] [touch-action:manipulation] ${buttonMotion} ${buttonFocusRing}`,
   splitDayCardActive:
     "border-[var(--split-border-strong)] bg-[color-mix(in_srgb,var(--text)_7%,transparent)]",
+  splitDayCardRest:
+    "border-dashed border-[color-mix(in_srgb,var(--text)_12%,transparent)] !bg-[color-mix(in_srgb,var(--text)_8%,var(--bg))] text-[var(--muted)] hover:border-[color-mix(in_srgb,var(--text)_18%,transparent)] hover:!bg-[color-mix(in_srgb,var(--text)_10%,var(--bg))] [&_strong]:text-[color-mix(in_srgb,var(--text)_70%,var(--muted))]",
+  splitDayCardRestActive:
+    "border-[var(--split-border-strong)] !bg-[color-mix(in_srgb,var(--text)_11%,var(--bg))]",
   splitDayHeader:
     "flex items-center justify-between gap-[0.75rem]",
   splitDayWeekday: "text-[0.72rem] text-[var(--muted)]",

@@ -4,6 +4,7 @@ import { revalidateTag } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
 import { getWorkoutDataTag } from "@/lib/cache-tags";
 import { getWorkoutSplitSeedForDate } from "@/lib/workout-splits/service";
+import { isRestDayWorkoutTypeSlug } from "@/lib/workout-splits/shared";
 import { syncWorkoutReadModels } from "@/lib/workout-read-models";
 import {
   getInvalidRequestOriginError,
@@ -23,7 +24,10 @@ import {
 
 async function isRestDayForUser(userId: string, date: Date) {
   const splitSeed = await getWorkoutSplitSeedForDate(userId, date);
-  return splitSeed.split.id !== null && splitSeed.day.workoutTypeSlug === "rest";
+  return (
+    splitSeed.split.id !== null &&
+    isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug)
+  );
 }
 
 function toWorkoutWriteErrorResponse(error: unknown, fallbackMessage: string) {
@@ -91,9 +95,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    if (await isRestDayForUser(user.id, parsed.value.performedAt)) {
+    const allowsRestDayOverride = body.allowRestDayOverride === true;
+
+    if (
+      !allowsRestDayOverride &&
+      (await isRestDayForUser(user.id, parsed.value.performedAt))
+    ) {
       return NextResponse.json(
-        { error: "You cannot log a workout on a rest day." },
+        { error: "Confirm the rest-day override before logging this workout." },
         { status: 409 },
       );
     }

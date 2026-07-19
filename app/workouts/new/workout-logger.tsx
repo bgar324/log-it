@@ -14,6 +14,7 @@ import {
   type WeightUnit,
 } from "@/lib/weight-unit";
 import { WorkoutLoggerExerciseCard } from "./_components/workout-logger-exercise-card";
+import { WorkoutLoggerConfirmDialog } from "./_components/workout-logger-confirm-dialog";
 import { WorkoutLoggerMetaCard } from "./_components/workout-logger-meta-card";
 import { WorkoutLoggerMobileActions } from "./_components/workout-logger-mobile-actions";
 import { WorkoutLoggerReorderDialog } from "./_components/workout-logger-reorder-dialog";
@@ -63,7 +64,11 @@ export function WorkoutLogger({
   const weightUnitName = weightUnit === "KG" ? "kilograms" : "pounds";
   const [isSaving, setIsSaving] = useState(false);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
+  const [isRestDayOverrideDialogOpen, setIsRestDayOverrideDialogOpen] = useState(false);
+  const [hasRestDayOverride, setHasRestDayOverride] = useState(false);
   const formId = useId();
+  const restDayOverrideTitleId = useId();
+  const restDayOverrideDescriptionId = useId();
   const {
     clearAll,
     clearPendingLookup: clearPendingSuggestionLookup,
@@ -96,7 +101,7 @@ export function WorkoutLogger({
     (splitTemplateData?.workoutType.trim() !== "" ||
       splitTemplateData?.exercises.length !== 0);
 
-  if (isRestDay && !draft.hasRecoveredDraft) {
+  if (isRestDay && !draft.hasRecoveredDraft && !hasRestDayOverride) {
     return (
       <main className={styles.loggerShell}>
         <section className={styles.loggerStage} aria-label="Rest day notice">
@@ -111,10 +116,33 @@ export function WorkoutLogger({
           <section className={styles.card}>
             <h1 className={styles.title}>Rest day</h1>
             <p className={styles.compareHint}>
-              Your split marks this day as rest, so logging a new workout is disabled.
+              Your split marks this day as rest. You can keep the day clear or
+              log an unscheduled workout.
             </p>
+            <button
+              type="button"
+              className={styles.saveButton}
+              onClick={() => setIsRestDayOverrideDialogOpen(true)}
+            >
+              Log unscheduled workout
+            </button>
           </section>
         </section>
+        {isRestDayOverrideDialogOpen ? (
+          <WorkoutLoggerConfirmDialog
+            titleId={restDayOverrideTitleId}
+            descriptionId={restDayOverrideDescriptionId}
+            title="Log on a rest day?"
+            description="This workout will be saved as an unscheduled session and will not change your weekly split."
+            cancelLabel="Keep rest day"
+            confirmLabel="Log anyway"
+            onCancel={() => setIsRestDayOverrideDialogOpen(false)}
+            onConfirm={() => {
+              setHasRestDayOverride(true);
+              setIsRestDayOverrideDialogOpen(false);
+            }}
+          />
+        ) : null}
       </main>
     );
   }
@@ -196,6 +224,7 @@ export function WorkoutLogger({
 
     try {
       const { response, data } = await submitWorkoutLoggerPayload({
+        allowRestDayOverride: hasRestDayOverride,
         isEditMode,
         workoutId,
         payload: payload.value,

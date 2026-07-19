@@ -30,13 +30,13 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 - New workout drafts are autosaved client-side in create mode.
 - Workout logs cannot be dated in the future.
 - Duplicate workout creates a new workout dated to the current Pacific date and the API returns the new workout id.
-- A user with an active weekly split cannot log a workout on an active-split rest day for the selected date.
+- A user with an active weekly split sees a rest-day notice on an active-split rest day for the selected date. They can explicitly confirm an unscheduled-workout override; it does not change the split.
 - Today's dashboard logged state is type-specific: a workout counts as logged only when its normalized workout type matches the active split day assignment.
 
 ## Split Planning
 
 - Each user can save multiple splits.
-- One split can be active at a time; the active split drives dashboard planning, rest-day blocking, and workout logger preload.
+- One split can be active at a time; the active split drives dashboard planning, rest-day notices, and workout logger preload.
 - Split days cover Monday through Sunday.
 - Missing days normalize to `Rest`.
 - Duplicate weekdays are rejected by split payload normalization.

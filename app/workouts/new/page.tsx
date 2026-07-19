@@ -4,7 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { resolveBodyWeightLbForDate } from "@/lib/body-weight";
 import { convertStoredWeightToDisplay } from "@/lib/weight-unit";
 import { getWorkoutLoggerInitialDataForDate } from "@/lib/workout-splits/service";
-import { parseDateKey } from "@/lib/workout-splits/shared";
+import {
+  isRestDayWorkoutTypeSlug,
+  parseDateKey,
+} from "@/lib/workout-splits/shared";
 import { getCurrentPacificDate } from "@/lib/workout-utils";
 
 type SearchParams = Promise<{
@@ -29,10 +32,12 @@ export default async function NewWorkoutPage({
     bodyWeightLb,
     user.preferredWeightUnit,
   );
-  const isRestDay = splitSeed.split.id && splitSeed.day.workoutTypeSlug === "rest";
+  const isRestDay =
+    splitSeed.split.id && isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug);
   const initialData =
     splitSeed.split.id &&
-    (splitSeed.day.exercises.length > 0 || splitSeed.day.workoutTypeSlug !== "rest")
+    (splitSeed.day.exercises.length > 0 ||
+      !isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug))
       ? splitSeed.initialData
       : undefined;
 

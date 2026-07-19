@@ -4,6 +4,7 @@ import type { ParsedWorkoutSplit } from "./payload";
 import {
   DEFAULT_WORKOUT_SPLIT_NAME,
   REST_DAY_WORKOUT_TYPE,
+  REST_DAY_WORKOUT_TYPE_SLUG,
   SPLIT_WEEKDAYS,
   sortSplitDays,
   type SplitWeekdayValue,
@@ -40,7 +41,7 @@ export function createDefaultDay(weekday: SplitWeekdayValue): WorkoutSplitDayTem
     id: null,
     weekday,
     workoutType: REST_DAY_WORKOUT_TYPE,
-    workoutTypeSlug: normalizeWorkoutTypeSlug(REST_DAY_WORKOUT_TYPE),
+    workoutTypeSlug: REST_DAY_WORKOUT_TYPE_SLUG,
     exercises: [],
   };
 }

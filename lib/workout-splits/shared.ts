@@ -73,6 +73,15 @@ const JS_DAY_TO_WEEKDAY: Record<number, SplitWeekdayValue> = {
 
 export const DEFAULT_WORKOUT_SPLIT_NAME = "Weekly Split";
 export const REST_DAY_WORKOUT_TYPE = "Rest";
+export const REST_DAY_WORKOUT_TYPE_SLUG = "rest";
+
+/**
+ * Rest-day behavior is driven by the canonical slug stored with a split day,
+ * never by the display label a person can edit.
+ */
+export function isRestDayWorkoutTypeSlug(value: string | null | undefined) {
+  return value === REST_DAY_WORKOUT_TYPE_SLUG;
+}
 
 export function isSplitWeekday(value: unknown): value is SplitWeekdayValue {
   return (

@@ -5,6 +5,7 @@ import { normalizeWorkoutSplitPayload } from "../lib/workout-splits/payload";
 import {
   createUnsavedWorkoutSplitDraft,
   getWeekdayForDate,
+  isRestDayWorkoutTypeSlug,
   parseDateKey,
   reorderSplitDays,
 } from "../lib/workout-splits/shared";
@@ -14,6 +15,13 @@ import { normalizeExerciseSlug } from "../lib/workout-utils";
 test("normalizeExerciseSlug creates a canonical kebab-case slug", () => {
   assert.equal(normalizeExerciseSlug(" BenchPress "), "bench-press");
   assert.equal(normalizeExerciseSlug("Cable   Fly"), "cable-fly");
+});
+
+test("rest-day behavior uses the canonical split slug, not a display label", () => {
+  assert.equal(isRestDayWorkoutTypeSlug("rest"), true);
+  assert.equal(isRestDayWorkoutTypeSlug("Rest"), false);
+  assert.equal(isRestDayWorkoutTypeSlug("rest-day"), false);
+  assert.equal(isRestDayWorkoutTypeSlug(null), false);
 });
 
 test("an unsaved replacement split does not retain deleted database ids", () => {

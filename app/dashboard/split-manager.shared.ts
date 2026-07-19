@@ -2,6 +2,7 @@ import { copyTextToClipboard } from "@/lib/clipboard";
 import { formatWorkoutSplitForClipboard } from "@/lib/workout-export";
 import { getCurrentPacificDate } from "@/lib/workout-utils";
 import { normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
+import { isRestDayWorkoutTypeSlug } from "@/lib/workout-splits/shared";
 import {
   getWeekdayForDate,
   type SplitWeekdayValue,
@@ -80,7 +81,7 @@ export async function saveWorkoutSplit(split: WorkoutSplitTemplate) {
         weekday: day.weekday,
         workoutType: day.workoutType,
         exercises:
-          normalizeWorkoutTypeSlug(day.workoutType) === "rest"
+          isRestDayWorkoutTypeSlug(normalizeWorkoutTypeSlug(day.workoutType))
             ? []
             : day.exercises.map((exercise) => ({
                 exerciseDisplayName: exercise.exerciseDisplayName,

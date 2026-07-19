@@ -27,6 +27,7 @@ type RawWorkoutExercise = {
 };
 
 export type RawWorkoutPayload = {
+  allowRestDayOverride?: unknown;
   workoutId?: unknown;
   title?: unknown;
   workoutType?: unknown;

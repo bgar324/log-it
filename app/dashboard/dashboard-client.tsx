@@ -247,6 +247,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       profileLabel={profileLabel}
       canLogWorkout={!todayPlan.isRestDay}
       hasLoggedToday={todayPlan.isLoggedToday}
+      isRestDay={todayPlan.isRestDay}
       mobileMenuOpen={mobileMenuOpen}
       sidebarCollapsed={sidebarCollapsed}
       onToggleMobileMenu={() => setMobileMenuOpen((open) => !open)}

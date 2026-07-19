@@ -2,6 +2,7 @@
 
 import {
   getSplitWeekdayLabel,
+  isRestDayWorkoutTypeSlug,
   type WorkoutSplitDayTemplate,
 } from "@/lib/workout-splits/shared";
 import { splitStyles } from "./split-system.styles";
@@ -17,14 +18,19 @@ export function SplitDayCard({
   isSelected,
   onSelect,
 }: SplitDayCardProps) {
+  const isRestDay = isRestDayWorkoutTypeSlug(day.workoutTypeSlug);
   const totalSets = day.exercises.reduce((sum, exercise) => sum + exercise.sets, 0);
 
   return (
     <button
       type="button"
       className={`${splitStyles.splitDayCard} ${
-        isSelected ? splitStyles.splitDayCardActive : ""
-      }`}
+        isRestDay
+          ? splitStyles.splitDayCardRest
+          : isSelected
+            ? splitStyles.splitDayCardActive
+            : ""
+      } ${isRestDay && isSelected ? splitStyles.splitDayCardRestActive : ""}`}
       onClick={onSelect}
     >
       <div className={splitStyles.splitDayHeader}>
@@ -39,7 +45,9 @@ export function SplitDayCard({
         </span>
       </div>
       <strong className={splitStyles.splitDayTitle}>{day.workoutType}</strong>
-      <p className={splitStyles.splitDayStats}>{totalSets} planned sets</p>
+      <p className={splitStyles.splitDayStats}>
+        {isRestDay ? "Recovery day" : `${totalSets} planned sets`}
+      </p>
     </button>
   );
 }

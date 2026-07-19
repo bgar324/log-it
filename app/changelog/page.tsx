@@ -71,6 +71,12 @@ export default function ChangelogPage() {
                   nutrition dates or values are rejected instead of being
                   silently changed.
                 </li>
+                <li>
+                  <strong>Rest days are flexible without being accidental.</strong>
+                  You can now explicitly log an unscheduled workout on a rest
+                  day. It does not change your split, and the app checks the
+                  day&apos;s saved split state instead of its display name.
+                </li>
               </ul>
             </div>
 

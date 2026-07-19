@@ -3,6 +3,7 @@ import type { WeightUnit } from "@/lib/weight-unit";
 import { toSafeString, type ExerciseDraft, type WorkoutSubmitResponse } from "./workout-logger.utils";
 
 type WorkoutLoggerPayload = {
+  allowRestDayOverride?: boolean;
   title: string;
   workoutType: string;
   performedAt: string;
@@ -95,6 +96,7 @@ export function buildWorkoutLoggerPayload(options: {
 }
 
 export async function submitWorkoutLoggerPayload(options: {
+  allowRestDayOverride?: boolean;
   isEditMode: boolean;
   workoutId?: string;
   payload: WorkoutLoggerPayload;
@@ -104,7 +106,10 @@ export async function submitWorkoutLoggerPayload(options: {
         ...options.payload,
         workoutId: options.workoutId,
       }
-    : options.payload;
+    : {
+        ...options.payload,
+        ...(options.allowRestDayOverride ? { allowRestDayOverride: true } : {}),
+      };
   const response = await fetch("/api/workouts", {
     method: options.isEditMode ? "PUT" : "POST",
     headers: {

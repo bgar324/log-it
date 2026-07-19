@@ -26,9 +26,9 @@ The data model allows multiple `WorkoutSplit` rows per user, with a PostgreSQL p
 
 The dashboard `Logged!` state is based on today's Pacific date and normalized workout type matching the active split day assignment. It does not treat any workout on the same date as sufficient unless the workout type matches.
 
-## Rest Days Block Workout Creation
+## Rest Days Require An Explicit Workout Override
 
-`app/api/workouts/route.ts` checks the stored split seed for the selected date. If the user has a split and the day slug is `rest`, create returns a conflict instead of logging a workout.
+Rest-day behavior checks the stored split-day slug, not the editable display name. `app/api/workouts/route.ts` blocks creation for a split rest day unless the user has explicitly confirmed the logger&apos;s unscheduled-workout override. The override saves a normal workout and never mutates the weekly split.
 
 ## Use JWT Session Cookies
 

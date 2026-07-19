@@ -2,7 +2,10 @@
 
 import { CheckCircle2, Circle, Copy, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
+import {
+  isRestDayWorkoutTypeSlug,
+  type WorkoutSplitTemplate,
+} from "@/lib/workout-splits/shared";
 import { SplitEditor } from "./split-editor";
 import { SplitActionMenu } from "./split-action-menu";
 import { splitStyles } from "./split-system.styles";
@@ -63,7 +66,7 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
               0,
             );
             const totalTrainingDays = split.days.filter(
-              (day) => day.workoutTypeSlug !== "rest",
+              (day) => !isRestDayWorkoutTypeSlug(day.workoutTypeSlug),
             ).length;
 
             return (

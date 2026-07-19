@@ -1,4 +1,5 @@
 import { normalizeWorkoutTypeSlug } from "../workout-utils";
+import { isRestDayWorkoutTypeSlug } from "./shared";
 
 type WorkoutTypeColor = {
   border: string;
@@ -29,7 +30,7 @@ function hashString(value: string) {
 
 export function getWorkoutTypeColor(workoutType: string): WorkoutTypeColor {
   const slug = normalizeWorkoutTypeSlug(workoutType) || "workout";
-  const isRest = slug === "rest";
+  const isRest = isRestDayWorkoutTypeSlug(slug);
   const hue = PRESET_HUES[slug] ?? (hashString(slug) % 360);
   const saturation = isRest ? 10 : 72;
   const borderLightness = isRest ? 46 : 44;

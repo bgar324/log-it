@@ -3,7 +3,10 @@
 import { useMemo, type Dispatch, type SetStateAction } from "react";
 import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
 import { normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
-import { REST_DAY_WORKOUT_TYPE } from "@/lib/workout-splits/shared";
+import {
+  isRestDayWorkoutTypeSlug,
+  REST_DAY_WORKOUT_TYPE,
+} from "@/lib/workout-splits/shared";
 import type {
   SplitWeekdayValue,
   WorkoutSplitTemplate,
@@ -156,7 +159,7 @@ export function useSplitManagerExerciseActions({
       ...day,
       workoutType: value,
       workoutTypeSlug,
-      exercises: workoutTypeSlug === "rest" ? [] : day.exercises,
+      exercises: isRestDayWorkoutTypeSlug(workoutTypeSlug) ? [] : day.exercises,
     }));
   }
 
@@ -172,7 +175,7 @@ export function useSplitManagerExerciseActions({
   }
 
   function addExercise() {
-    if (!selectedDay || selectedDay.workoutTypeSlug === "rest") {
+    if (!selectedDay || isRestDayWorkoutTypeSlug(selectedDay.workoutTypeSlug)) {
       return;
     }
 

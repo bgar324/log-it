@@ -1,4 +1,5 @@
 import { getWorkoutSplitSeedForDate } from "./service";
+import { isRestDayWorkoutTypeSlug } from "./shared";
 
 export type TodayPlan = {
   workoutType: string;
@@ -31,7 +32,7 @@ export async function loadTodayPlan(userId: string, date: Date): Promise<TodayPl
     return NO_SPLIT_TODAY_PLAN;
   }
 
-  if (splitSeed.day.workoutTypeSlug === "rest") {
+  if (isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug)) {
     return {
       workoutType: splitSeed.day.workoutType,
       workoutTypeSlug: splitSeed.day.workoutTypeSlug,

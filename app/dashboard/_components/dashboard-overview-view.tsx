@@ -87,10 +87,15 @@ export function DashboardOverviewView({
             <span className={styles.kpiActionText}>Logged!</span>
           </div>
         ) : todayPlan.isRestDay ? (
-          <div className={`${styles.kpiCard} ${styles.kpiActionCard} ${styles.kpiActionCardDisabled}`}>
+          <Link
+            href="/workouts/new"
+            className={`relative ${styles.kpiCard} ${styles.kpiActionCard}`}
+            aria-label="Rest day options"
+          >
             <Moon className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
-            <span className={styles.kpiActionText}>Rest</span>
-          </div>
+            <span className={styles.kpiActionText}>Rest day</span>
+            <LinkPendingOverlay />
+          </Link>
         ) : (
           <Link
             href="/workouts/new"

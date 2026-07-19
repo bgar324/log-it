@@ -4,6 +4,7 @@ import { ListOrdered, Plus } from "lucide-react";
 import { useId, useState } from "react";
 import {
   getSplitWeekdayLabel,
+  isRestDayWorkoutTypeSlug,
   type WorkoutSplitDayTemplate,
 } from "@/lib/workout-splits/shared";
 import { ExerciseTemplateRow } from "./exercise-template-row";
@@ -43,7 +44,7 @@ export function SplitEditor({
   const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
   const removeTitleId = useId();
   const removeDescriptionId = useId();
-  const isRestDay = day.workoutTypeSlug === "rest";
+  const isRestDay = isRestDayWorkoutTypeSlug(day.workoutTypeSlug);
   const pendingExercise =
     pendingRemoveIndex === null ? null : day.exercises[pendingRemoveIndex] ?? null;
   const pendingExerciseName = pendingExercise?.exerciseDisplayName.trim() || "this exercise";

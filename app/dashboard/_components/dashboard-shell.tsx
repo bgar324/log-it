@@ -29,6 +29,7 @@ type DashboardShellProps = {
   profileLabel: string;
   canLogWorkout: boolean;
   hasLoggedToday: boolean;
+  isRestDay: boolean;
   mobileMenuOpen: boolean;
   sidebarCollapsed: boolean;
   onToggleMobileMenu: () => void;
@@ -45,6 +46,7 @@ export function DashboardShell({
   profileLabel,
   canLogWorkout,
   hasLoggedToday,
+  isRestDay,
   mobileMenuOpen,
   sidebarCollapsed,
   onToggleMobileMenu,
@@ -199,6 +201,19 @@ export function DashboardShell({
                 Logged!
               </span>
             </div>
+          ) : isRestDay ? (
+            <Link
+              href="/workouts/new"
+              className={`relative ${styles.sidebarAction} ${
+                sidebarCollapsed ? styles.sidebarActionCollapsed : ""
+              }`}
+              title={sidebarCollapsed ? "Rest day options" : undefined}
+              aria-label={sidebarCollapsed ? "Rest day options" : undefined}
+            >
+              <Moon className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
+              <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Rest day</span>
+              <LinkPendingOverlay />
+            </Link>
           ) : canLogWorkout ? (
             <Link
               href="/workouts/new"
