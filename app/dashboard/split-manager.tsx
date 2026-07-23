@@ -1,11 +1,21 @@
 "use client";
 
-import { CheckCircle2, Circle, Copy, Plus, Save, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  Copy,
+  ListOrdered,
+  Plus,
+  Save,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   isRestDayWorkoutTypeSlug,
   type WorkoutSplitTemplate,
 } from "@/lib/workout-splits/shared";
+import { SplitDayReorderDialog } from "./split-day-reorder-dialog";
 import { SplitEditor } from "./split-editor";
 import { SplitActionMenu } from "./split-action-menu";
 import { splitStyles } from "./split-system.styles";
@@ -19,6 +29,7 @@ type SplitManagerProps = {
 
 export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps) {
   const state = useSplitManagerState(initialSplit, initialSplits);
+  const [isReorderDaysOpen, setIsReorderDaysOpen] = useState(false);
 
   if (!state.selectedDay) {
     return null;
@@ -159,6 +170,23 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
                     role="menuitem"
                     className={splitStyles.actionMenuItem}
                     onClick={() => {
+                      setIsReorderDaysOpen(true);
+                      close();
+                    }}
+                    disabled={state.split.days.length < 2}
+                  >
+                    <ListOrdered
+                      className={splitStyles.inlineIcon}
+                      aria-hidden="true"
+                      strokeWidth={1.9}
+                    />
+                    Reorder days
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={splitStyles.actionMenuItem}
+                    onClick={() => {
                       void state.handleCopySplit();
                       close();
                     }}
@@ -233,6 +261,17 @@ export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps)
           onReorderExercises={state.reorderExercises}
         />
       </div>
+
+      {isReorderDaysOpen ? (
+        <SplitDayReorderDialog
+          days={state.split.days}
+          onCancel={() => setIsReorderDaysOpen(false)}
+          onSave={(orderedWeekdays) => {
+            state.reorderDays(orderedWeekdays);
+            setIsReorderDaysOpen(false);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

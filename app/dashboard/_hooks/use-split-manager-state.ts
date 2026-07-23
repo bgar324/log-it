@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
 import {
   createUnsavedWorkoutSplitDraft,
+  sortSplitDays,
+  SPLIT_WEEKDAYS,
   type SplitWeekdayValue,
   type WorkoutSplitTemplate,
 } from "@/lib/workout-splits/shared";
@@ -43,6 +45,7 @@ export type SplitManagerState = {
   addExercise: () => void;
   removeExercise: (exerciseIndex: number) => void;
   reorderExercises: (orderedExerciseOrders: number[]) => void;
+  reorderDays: (orderedWeekdays: SplitWeekdayValue[]) => void;
   handleSave: () => Promise<void>;
   handleCopySplit: () => Promise<void>;
 };
@@ -224,6 +227,32 @@ export function useSplitManagerState(
     setSelectedWeekday(weekday);
   }
 
+  function reorderDays(orderedWeekdays: SplitWeekdayValue[]) {
+    if (orderedWeekdays.length !== split.days.length) {
+      return;
+    }
+
+    const dayByWeekday = new Map(split.days.map((day) => [day.weekday, day]));
+    const orderedDays = orderedWeekdays
+      .map((weekday) => dayByWeekday.get(weekday))
+      .filter((day): day is NonNullable<typeof day> => Boolean(day));
+
+    if (orderedDays.length !== split.days.length) {
+      return;
+    }
+
+    clearAllExerciseSuggestions();
+    setSplit((current) => ({
+      ...current,
+      days: sortSplitDays(
+        orderedDays.map((day, index) => ({
+          ...day,
+          weekday: SPLIT_WEEKDAYS[index] ?? day.weekday,
+        })),
+      ),
+    }));
+  }
+
   return {
     split,
     splits,
@@ -248,6 +277,7 @@ export function useSplitManagerState(
     addExercise: exerciseActions.addExercise,
     removeExercise: exerciseActions.removeExercise,
     reorderExercises: exerciseActions.reorderExercises,
+    reorderDays,
     handleSave: persistence.handleSave,
     handleCopySplit: persistence.handleCopySplit,
   };
