@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
 import { Info } from "lucide-react";
@@ -19,6 +20,17 @@ function decodeUsername(value: string) {
   } catch {
     return value;
   }
+}
+
+// Public profiles are read-only and shared by link, so they are the most
+// cacheable page in the app. This also dedupes the generateMetadata call,
+// which would otherwise repeat the whole query on every request.
+function loadCachedPublicProfile(username: string) {
+  return unstable_cache(
+    async () => loadPublicProfile(username),
+    ["public-profile", username],
+    { revalidate: 300 },
+  )();
 }
 
 function FeatureBackoffList({
@@ -53,7 +65,7 @@ export async function generateMetadata({
   params: PublicProfileParams;
 }): Promise<Metadata> {
   const { username } = await params;
-  const profile = await loadPublicProfile(decodeUsername(username));
+  const profile = await loadCachedPublicProfile(decodeUsername(username));
 
   if (!profile) {
     return {
@@ -73,7 +85,7 @@ export default async function PublicProfilePage({
   params: PublicProfileParams;
 }) {
   const { username } = await params;
-  const profile = await loadPublicProfile(decodeUsername(username));
+  const profile = await loadCachedPublicProfile(decodeUsername(username));
 
   if (!profile) {
     notFound();

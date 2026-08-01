@@ -86,18 +86,26 @@ body {
 
 .page-transition-shell {
   min-height: 100dvh;
-  animation: page-enter 340ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: page-enter 120ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .view-transition-shell {
   display: flex;
   flex-direction: column;
   gap: 0.86rem;
-  animation: page-enter 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: page-enter 120ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .segment-transition-shell {
-  animation: page-enter 340ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: page-enter 120ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-shell,
+  .view-transition-shell,
+  .segment-transition-shell {
+    animation: none;
+  }
 }
 
 @keyframes page-enter {
