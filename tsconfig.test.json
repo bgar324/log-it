@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "module": "commonjs",
     "moduleResolution": "node",
+    "jsx": "react-jsx",
     "rootDir": ".",
     "outDir": ".tests-dist",
     "noEmit": false,
@@ -19,6 +20,10 @@
   },
   "include": [
     "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "app/dashboard/_components/dashboard-workouts-view.tsx",
+    "app/dashboard/_components/dashboard-nutrition-panel.tsx",
+    "app/dashboard/_components/nutrition-charts.tsx",
     "app/api/profile/avatar/route.ts",
     "app/api/users/[username]/avatar/route.ts",
     "app/api/workout-split/assistant/route.ts",
