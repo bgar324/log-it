@@ -28,8 +28,17 @@ export function PwaClient() {
       const onLoad = () => {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
       };
-      window.addEventListener("load", onLoad);
-      removeLoad = () => window.removeEventListener("load", onLoad);
+
+      // This effect runs after hydration, which is frequently after the load
+      // event has already fired — in which case a "load" listener never runs
+      // and the worker is never registered at all. Only wait for the event if
+      // it is still coming.
+      if (document.readyState === "complete") {
+        onLoad();
+      } else {
+        window.addEventListener("load", onLoad);
+        removeLoad = () => window.removeEventListener("load", onLoad);
+      }
     }
 
     return () => {
