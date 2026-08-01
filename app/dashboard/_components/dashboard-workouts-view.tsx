@@ -222,6 +222,13 @@ export function DashboardWorkoutFiltersControl({
   );
 }
 
+// A full history renders one row per workout, which on a phone is thousands of
+// elements to style and hydrate before the view is interactive. Mount the most
+// recent months and let the rest be revealed on demand. Filtering still runs
+// over the whole history — only the rendered slice is capped.
+const INITIAL_MONTHS = 3;
+const MONTHS_PER_REVEAL = 6;
+
 export function DashboardWorkoutsView({
   workoutMonths,
   displayWeightUnit,
@@ -233,6 +240,21 @@ export function DashboardWorkoutsView({
   const filteredWorkoutMonths = useMemo(
     () => getFilteredWorkoutMonths(workoutMonths, filters),
     [filters, workoutMonths],
+  );
+  const [visibleMonths, setVisibleMonths] = useState(INITIAL_MONTHS);
+  const [renderedFilters, setRenderedFilters] = useState(filters);
+
+  // A new filter should start from the most recent results again. Adjusting
+  // during render rather than in an effect avoids rendering the stale slice
+  // first and then immediately re-rendering.
+  if (filters !== renderedFilters) {
+    setRenderedFilters(filters);
+    setVisibleMonths(INITIAL_MONTHS);
+  }
+
+  const renderedMonths = filteredWorkoutMonths.slice(0, visibleMonths);
+  const hiddenWorkoutCount = getWorkoutCount(
+    filteredWorkoutMonths.slice(visibleMonths),
   );
 
   if (error) {
@@ -257,7 +279,7 @@ export function DashboardWorkoutsView({
       {workoutMonths.length > 0 ? (
         filteredWorkoutMonths.length > 0 ? (
           <div className={styles.timeline}>
-            {filteredWorkoutMonths.map((month) => (
+            {renderedMonths.map((month) => (
               <section key={month.month} className={styles.monthSection}>
                 <h3 className={styles.monthTitle}>{month.month}</h3>
                 <DashboardWorkoutList
@@ -266,6 +288,16 @@ export function DashboardWorkoutsView({
                 />
               </section>
             ))}
+            {hiddenWorkoutCount > 0 ? (
+              <button
+                type="button"
+                className={styles.workoutFilterReset}
+                onClick={() => setVisibleMonths((count) => count + MONTHS_PER_REVEAL)}
+              >
+                Show {hiddenWorkoutCount} older workout
+                {hiddenWorkoutCount === 1 ? "" : "s"}
+              </button>
+            ) : null}
           </div>
         ) : (
           <p className={styles.empty}>No workouts match those filters.</p>
