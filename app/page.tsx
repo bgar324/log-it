@@ -3,12 +3,15 @@ import { redirect } from "next/navigation";
 import { AppBrand } from "./components/ui";
 import { ThemeToggle } from "./components/theme-toggle";
 import { LinkPendingOverlay } from "./components/link-pending";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionClaims } from "@/lib/auth";
 
 export default async function Home() {
-  const sessionUser = await getSessionUser();
+  // Only the presence of a valid session matters here, so verify the JWT and
+  // skip the user lookup. /auth deliberately keeps the database check: it is
+  // what stops a token for a deleted account bouncing between the two pages.
+  const claims = await getSessionClaims();
 
-  if (sessionUser) {
+  if (claims?.sub) {
     redirect("/dashboard");
   }
 

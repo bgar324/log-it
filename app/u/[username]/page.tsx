@@ -12,6 +12,16 @@ import {
 import { PublicProfileRadar } from "./public-profile-radar";
 import { publicProfileStyles as styles } from "./public-profile.styles";
 
+// Public profiles read no cookies, so they can be served from the CDN as ISR
+// instead of the default `private, no-store` that dynamic routes get. An empty
+// generateStaticParams opts the segment into static generation; unknown
+// usernames are rendered on demand and then cached.
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return [];
+}
+
 type PublicProfileParams = Promise<{ username: string }>;
 
 function decodeUsername(value: string) {
