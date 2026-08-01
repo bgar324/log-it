@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Toaster } from "./components/ui/toaster";
 import { PwaClient } from "./components/pwa-client";
-import "katex/dist/katex.min.css";
 import "./globals.css";
 
 const themeInitScript = `(() => {
@@ -76,7 +74,6 @@ export default function RootLayout({
       <body>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {children}
-        <Toaster />
         <PwaClient />
       </body>
     </html>

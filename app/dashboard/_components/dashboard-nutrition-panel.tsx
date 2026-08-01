@@ -1,24 +1,22 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Loader2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import {
   formatWeightWithUnit,
   getWeightUnitLabel,
   type WeightUnit,
 } from "@/lib/weight-unit";
+
+// recharts is ~186kb gzipped; keep it out of the dashboard entry chunk.
+const NutritionCaloriesChart = dynamic(
+  () => import("./nutrition-charts").then((module) => module.NutritionCaloriesChart),
+);
+const BodyWeightChart = dynamic(
+  () => import("./nutrition-charts").then((module) => module.BodyWeightChart),
+);
 import { styles } from "../dashboard.styles";
 import type { DashboardNutritionData } from "../dashboard-types";
 import { DashboardMetricHeader } from "./dashboard-metric-header";
@@ -41,17 +39,6 @@ type DashboardNutritionPanelProps = {
   weightUnit: WeightUnit;
   onNutritionChange: (nutrition: NutritionData) => void;
 };
-
-const CHART_GRID_STROKE = "color-mix(in srgb, var(--text) 14%, transparent)";
-const TOOLTIP_CURSOR = { fill: "color-mix(in srgb, var(--text) 5%, transparent)" };
-const TOOLTIP_CONTENT_STYLE = {
-  backgroundColor: "var(--surface)",
-  border: "1px solid color-mix(in srgb, var(--text) 14%, transparent)",
-  borderRadius: "6px",
-  fontSize: "0.72rem",
-  color: "var(--text)",
-};
-const TOOLTIP_LABEL_STYLE = { color: "var(--muted)", fontSize: "0.65rem" };
 
 function formatNumber(value: number, maximumFractionDigits = 0) {
   return new Intl.NumberFormat("en-US", {
@@ -277,48 +264,7 @@ export function DashboardNutritionPanel({
           </div>
         </div>
         <div className={styles.nutritionChartFrame}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartRows}
-              margin={{ top: 8, right: 8, left: -8, bottom: 4 }}
-              barCategoryGap="28%"
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} />
-              <XAxis
-                dataKey="label"
-                tickLine={false}
-                axisLine={false}
-                tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
-              />
-              <YAxis
-                allowDecimals={false}
-                tickLine={false}
-                axisLine={false}
-                width={42}
-                tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
-              />
-              <Tooltip
-                cursor={TOOLTIP_CURSOR}
-                contentStyle={TOOLTIP_CONTENT_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                formatter={(value, name) => {
-                  const label = name === "calorieTarget" ? "BMR" : "Calories";
-                  const suffix = name === "proteinGrams" ? "g" : "";
-                  return [`${value}${suffix}`, label];
-                }}
-              />
-              <Bar dataKey="calories" fill="var(--text)" radius={[4, 4, 0, 0]} />
-              <Line
-                type="monotone"
-                dataKey="calorieTarget"
-                dot={false}
-                stroke="var(--muted)"
-                strokeDasharray="4 4"
-                strokeWidth={1.4}
-                connectNulls={false}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          <NutritionCaloriesChart chartRows={chartRows} />
         </div>
       </section>
 
@@ -328,46 +274,10 @@ export function DashboardNutritionPanel({
             <h2 className={styles.panelTitle}>Body weight</h2>
           </div>
           <div className={styles.nutritionChartFrame}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={bodyWeightSeries}
-                margin={{ top: 8, right: 8, left: -8, bottom: 4 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} />
-                <XAxis
-                  dataKey="label"
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
-                />
-                <YAxis
-                  domain={["dataMin - 2", "dataMax + 2"]}
-                  tickLine={false}
-                  axisLine={false}
-                  width={42}
-                  tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
-                />
-                <Tooltip
-                  cursor={TOOLTIP_CURSOR}
-                  contentStyle={TOOLTIP_CONTENT_STYLE}
-                  labelStyle={TOOLTIP_LABEL_STYLE}
-                  formatter={(value) => [
-                    formatWeightWithUnit(Number(value), weightUnit, {
-                      maximumFractionDigits: 1,
-                    }),
-                    "Body weight",
-                  ]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="weight"
-                  stroke="var(--text)"
-                  strokeWidth={1.6}
-                  dot={{ r: 2, fill: "var(--text)" }}
-                  connectNulls
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <BodyWeightChart
+              bodyWeightSeries={bodyWeightSeries}
+              weightUnit={weightUnit}
+            />
           </div>
         </section>
       ) : null}
