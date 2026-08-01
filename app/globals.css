@@ -110,14 +110,19 @@ body {
   }
 }
 
+/* Deliberately transform-only. These shells wrap server-rendered page content,
+   and `animation-fill-mode: both` applies the `from` frame backwards — from the
+   moment the element is styled until the animation is actually scheduled. With
+   `opacity: 0` in that frame, painted text stays invisible for as long as that
+   takes, which on a saturated connection measured ~500ms rather than the 120ms
+   the animation lasts. A slide with no fade reads almost the same and lets text
+   paint as soon as it is ready. */
 @keyframes page-enter {
   from {
-    opacity: 0;
     transform: translate3d(0, 0.5rem, 0);
   }
 
   to {
-    opacity: 1;
     transform: translate3d(0, 0, 0);
   }
 }
