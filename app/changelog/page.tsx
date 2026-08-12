@@ -15,6 +15,33 @@ export default function ChangelogPage() {
           <h1 className="title legal-title">changelog</h1>
 
           <article className="changelog-entry">
+            <h2 className="changelog-date">August 12, 2026</h2>
+
+            <div className="changelog-group">
+              <h3 className="changelog-group-title">Improved</h3>
+              <ul className="legal-list">
+                <li>
+                  <strong>Faster app navigation.</strong> Returning to a loaded
+                  dashboard view no longer repeats its data request, and the
+                  workout logger now paints an immediate app-shaped loading
+                  state during navigation.
+                </li>
+                <li>
+                  <strong>Workout history stays light at any age.</strong> The
+                  app loads and filters history in server-backed pages instead
+                  of sending every workout to the phone at once. Older workouts
+                  remain available on demand.
+                </li>
+                <li>
+                  <strong>Leaner public profiles.</strong> Profile statistics
+                  now use maintained summaries and database aggregates rather
+                  than loading every historical set into app memory.
+                </li>
+              </ul>
+            </div>
+          </article>
+
+          <article className="changelog-entry">
             <h2 className="changelog-date">July 18, 2026</h2>
 
             <div className="changelog-group">

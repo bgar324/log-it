@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getCurrentPacificDate } from "@/lib/workout-utils";
-import { loadDashboardViewData, normalizeDashboardView } from "@/app/dashboard/data";
+import {
+  loadDashboardViewData,
+  normalizeDashboardView,
+  parseWorkoutHistoryRequest,
+} from "@/app/dashboard/data";
 
 export async function GET(request: Request) {
   const user = await getSessionUser();
@@ -10,9 +14,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   }
 
+  const url = new URL(request.url);
   const view = normalizeDashboardView(
-    new URL(request.url).searchParams.get("view") ?? undefined,
+    url.searchParams.get("view") ?? undefined,
   );
+  const workoutHistoryRequest = parseWorkoutHistoryRequest(url.searchParams);
 
   try {
     const data = await loadDashboardViewData(
@@ -20,6 +26,7 @@ export async function GET(request: Request) {
       user.id,
       user.preferredWeightUnit,
       getCurrentPacificDate(),
+      workoutHistoryRequest,
     );
 
     return NextResponse.json({ data }, { status: 200 });

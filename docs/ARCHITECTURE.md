@@ -87,7 +87,9 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 - Nutrition view data uses a user-scoped cache tag and is invalidated after nutrition writes.
 - The split dashboard payload includes the active split as `split` and the saved split library as `splits`.
 - `todayPlan` includes `workoutTypeSlug` and `isLoggedToday`; overview loading sets `isLoggedToday` by matching today's Pacific date plus normalized workout type against existing workout logs.
-- Dashboard client-side view data is kept only for the mounted dashboard instance in `app/dashboard/dashboard-client.tsx`; `/api/dashboard/view-data` loads missing views. Authoritative server refreshes reset that local state to prevent stale or cross-account payloads from being merged.
+- Dashboard client-side view data is kept only for the mounted dashboard instance in `app/dashboard/dashboard-client.tsx`; `/api/dashboard/view-data` loads missing views. A loaded view is reused on later tab switches, while authoritative server refreshes reset the local data to prevent stale or cross-account payloads from being merged.
+- Workout history is loaded in 60-row server pages. Filters are applied in PostgreSQL before pagination, and the client merges older pages by month on demand rather than serializing the user's full history into the initial dashboard payload.
+- Public profiles use `ExerciseSummary`, `WorkoutCalendarDay`, scalar workout aggregates, grouped workout types, and a best-set-per-exercise query. They do not hydrate every historical workout/set into application memory.
 - Several loaders catch Prisma schema mismatch errors and fall back to source tables for compatibility during migrations.
 
 ## Date And Unit Conventions
@@ -101,7 +103,7 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 
 - `app/manifest.ts` is the installable web app manifest (standalone display, `/dashboard` start URL, icons in `public/icons/`).
 - `app/layout.tsx` exports `viewport` (`viewportFit: "cover"`, `themeColor`) and `metadata.appleWebApp`; the inline theme script and `app/components/pwa-client.tsx` keep the `theme-color` meta in sync with the manually chosen theme and register the service worker (production only).
-- `public/sw.js` is a conservative service worker: it never touches `/api`, serves navigations network-first with a `public/offline.html` fallback, and stale-while-revalidates static assets.
+- `public/sw.js` is a conservative service worker: it never touches `/api`, enables navigation preload so hard navigations do not wait for service-worker startup, keeps navigations network-authoritative with a `public/offline.html` fallback, and stale-while-revalidates static assets.
 - Route transitions use the root `app/template.tsx` (`page-enter` animation); `app/globals.css` also holds view/segment transitions, a `prefers-reduced-motion` guard, and app-like touch defaults (no overscroll bounce, no tap highlight).
 
 ## Tests

@@ -116,7 +116,6 @@ model WorkoutSet {
   workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
 
   @@unique([workoutExerciseId, order])
-  @@index([weightLb])
 }
 
 model NutritionEntry {

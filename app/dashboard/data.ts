@@ -14,3 +14,7 @@ export {
   loadSplitPageData,
   loadWorkoutHistoryPageData,
 } from "./data.cache";
+export {
+  parseWorkoutHistoryRequest,
+  type WorkoutHistoryRequest,
+} from "./data.workout-history";

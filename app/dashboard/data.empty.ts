@@ -98,6 +98,12 @@ export function createEmptyDashboardData(
     nutrition: createEmptyNutrition(now),
     workouts: [],
     workoutMonths: [],
+    workoutHistory: {
+      totalCount: 0,
+      nextOffset: 0,
+      hasMore: false,
+      workoutTypes: [],
+    },
     exercises: [],
     progress: {
       currentWeek: 0,

@@ -13,9 +13,7 @@ import {
 } from "./workout-splits/shared";
 import {
   formatDatabaseDateLabel,
-  formatDatabaseDateValue,
   getCurrentPacificDate,
-  normalizeExerciseName,
   normalizeWorkoutTypeSlug,
   startOfDatabaseWeek,
 } from "./workout-utils";
@@ -29,20 +27,31 @@ const VARIETY_CAP_EXERCISES = 60;
 const EXPERIENCE_CAP_DAYS = 730;
 const EXPERIENCE_CAP_WORKOUTS = 500;
 
-type PublicProfileSetInput = {
-  reps: number;
-  weightLb: WeightValue | number | null;
+export type PublicProfileExerciseStat = {
+  normalizedName: string;
+  name: string;
+  sessionCount: number;
+  setCount: number;
+  bestWeightLb: WeightValue | number | null;
+  bestWeightReps: number | null;
+  bestE1rmLb: WeightValue | number | null;
 };
 
-export type PublicProfileWorkoutInput = {
-  performedAt: Date;
-  workoutType: string | null;
-  totalWeightLb: WeightValue | number | null;
-  exercises: Array<{
-    name: string;
-    normalizedName?: string | null;
-    sets: PublicProfileSetInput[];
-  }>;
+export type PublicProfileWorkoutTypeStat = {
+  workoutType: string;
+  count: number;
+  lastPerformedAt: Date;
+};
+
+export type PublicProfileStats = {
+  totalWorkouts: number;
+  totalSets: number;
+  totalVolumeLb: WeightValue | number | null;
+  loggedTrainingDays: number;
+  recentWorkoutCount: number;
+  recentVolumeLb: WeightValue | number | null;
+  exercises: PublicProfileExerciseStat[];
+  workoutTypes: PublicProfileWorkoutTypeStat[];
 };
 
 export type PublicProfileSplitDay = {
@@ -71,7 +80,7 @@ export type PublicProfileBuildInput = {
     activeDayCount: number;
     days: PublicProfileSplitDay[];
   } | null;
-  workouts: PublicProfileWorkoutInput[];
+  stats: PublicProfileStats;
   now?: Date;
 };
 
@@ -167,17 +176,13 @@ function createTenureLabel(createdAt: Date, now: Date) {
   return days === 1 ? "1 day on logit" : `${formatCount(days)} days on logit`;
 }
 
-function getExerciseKey(exercise: PublicProfileWorkoutInput["exercises"][number]) {
-  return exercise.normalizedName?.trim() || normalizeExerciseName(exercise.name);
-}
-
 function estimateOneRepMaxLb(weightLb: number, reps: number) {
   return weightLb * (1 + reps / 30);
 }
 
 type StrongestLiftRanking = {
   exerciseName: string;
-  reps: number;
+  reps: number | null;
   weightLb: number;
   estimatedOneRepMaxLb: number;
 };
@@ -190,50 +195,32 @@ function formatStrongestLiftRanking(
 
   return {
     label: item.exerciseName,
-    detail: `${formatWeightWithUnit(displayWeight, weightUnit, {
-      maximumFractionDigits: 0,
-    })} x ${item.reps}`,
+    detail: item.reps
+      ? `${formatWeightWithUnit(displayWeight, weightUnit, {
+          maximumFractionDigits: 0,
+        })} x ${item.reps}`
+      : formatWeightWithUnit(displayWeight, weightUnit, {
+          maximumFractionDigits: 0,
+        }),
   };
 }
 
-function getFavoriteSplitDayRankings(workouts: PublicProfileWorkoutInput[]) {
-  const counts = new Map<
-    string,
-    {
-      workoutType: string;
-      count: number;
-      firstSeenIndex: number;
-    }
-  >();
+function getFavoriteSplitDayRankings(workoutTypes: PublicProfileWorkoutTypeStat[]) {
+  return workoutTypes
+    .filter((item) => item.count > 0 && item.workoutType.trim())
+    .sort((left, right) => {
+      const countDelta = right.count - left.count;
 
-  for (const [index, workout] of workouts.entries()) {
-    const workoutType = workout.workoutType?.trim();
+      if (countDelta !== 0) {
+        return countDelta;
+      }
 
-    if (!workoutType) {
-      continue;
-    }
-
-    const key = normalizeWorkoutTypeSlug(workoutType);
-    const current = counts.get(key) ?? {
-      workoutType,
-      count: 0,
-      firstSeenIndex: index,
-    };
-
-    current.count += 1;
-    current.workoutType = workoutType;
-    counts.set(key, current);
-  }
-
-  return Array.from(counts.values()).sort((left, right) => {
-    const countDelta = right.count - left.count;
-
-    if (countDelta !== 0) {
-      return countDelta;
-    }
-
-    return left.firstSeenIndex - right.firstSeenIndex;
-  });
+      const recencyDelta =
+        right.lastPerformedAt.getTime() - left.lastPerformedAt.getTime();
+      return recencyDelta !== 0
+        ? recencyDelta
+        : left.workoutType.localeCompare(right.workoutType);
+    });
 }
 
 function formatFavoriteSplitDayBackoff(
@@ -248,68 +235,11 @@ function formatFavoriteSplitDayBackoff(
 export function buildPublicProfileData(input: PublicProfileBuildInput): PublicProfileData {
   const now = input.now ?? getCurrentPacificDate();
   const displayName = createDisplayName(input.user);
-  const totalWorkouts = input.workouts.length;
-  let totalSets = 0;
-  let totalVolumeLb = 0;
-  const strongestByExercise = new Map<string, StrongestLiftRanking>();
-  const exerciseCounts = new Map<string, { name: string; count: number }>();
-  const distinctExercises = new Set<string>();
-  const loggedTrainingDays = new Set<string>();
-
-  for (const workout of input.workouts) {
-    totalVolumeLb += toWeightNumber(workout.totalWeightLb) ?? 0;
-    loggedTrainingDays.add(formatDatabaseDateValue(workout.performedAt));
-
-    for (const exercise of workout.exercises) {
-      const exerciseKey = getExerciseKey(exercise);
-
-      if (exerciseKey) {
-        distinctExercises.add(exerciseKey);
-        const current = exerciseCounts.get(exerciseKey) ?? {
-          name: exercise.name,
-          count: 0,
-        };
-        current.count += 1;
-        current.name = exercise.name;
-        exerciseCounts.set(exerciseKey, current);
-      }
-
-      for (const set of exercise.sets) {
-        totalSets += 1;
-        const weightLb = toWeightNumber(set.weightLb);
-
-        if (weightLb === null || weightLb <= 0) {
-          continue;
-        }
-
-        const currentStrongest = strongestByExercise.get(exerciseKey);
-
-        if (
-          !currentStrongest ||
-          weightLb > currentStrongest.weightLb ||
-          (weightLb === currentStrongest.weightLb && set.reps > currentStrongest.reps)
-        ) {
-          strongestByExercise.set(exerciseKey, {
-            exerciseName: exercise.name,
-            reps: set.reps,
-            weightLb,
-            estimatedOneRepMaxLb: estimateOneRepMaxLb(weightLb, set.reps),
-          });
-        }
-      }
-    }
-  }
-
-  const recentStart = startOfDatabaseWeek(new Date(now));
-  recentStart.setUTCDate(recentStart.getUTCDate() - (RECENT_WEEK_COUNT - 1) * 7);
-  const recentWorkouts = input.workouts.filter(
-    (workout) => workout.performedAt.getTime() >= recentStart.getTime(),
-  );
-  const recentVolumeLb = recentWorkouts.reduce(
-    (sum, workout) => sum + (toWeightNumber(workout.totalWeightLb) ?? 0),
-    0,
-  );
-  const averageRecentWorkouts = recentWorkouts.length / RECENT_WEEK_COUNT;
+  const totalWorkouts = input.stats.totalWorkouts;
+  const totalSets = input.stats.totalSets;
+  const totalVolumeLb = toWeightNumber(input.stats.totalVolumeLb) ?? 0;
+  const recentVolumeLb = toWeightNumber(input.stats.recentVolumeLb) ?? 0;
+  const averageRecentWorkouts = input.stats.recentWorkoutCount / RECENT_WEEK_COUNT;
   const averageRecentVolumeLb = recentVolumeLb / RECENT_WEEK_COUNT;
   const ageDays = Math.max(
     0,
@@ -323,39 +253,62 @@ export function buildPublicProfileData(input: PublicProfileBuildInput): PublicPr
   );
   const consistencyPercent = Math.min(
     100,
-    (loggedTrainingDays.size / expectedActiveDays) * 100,
+    (input.stats.loggedTrainingDays / expectedActiveDays) * 100,
   );
   const experienceScore = clampScore(
     (Math.min(ageDays, EXPERIENCE_CAP_DAYS) / EXPERIENCE_CAP_DAYS) * 6 +
       (Math.min(totalWorkouts, EXPERIENCE_CAP_WORKOUTS) / EXPERIENCE_CAP_WORKOUTS) * 6,
   );
-  const strongestRankings = Array.from(strongestByExercise.values()).sort(
-    (left, right) => {
+  const trainedExercises = input.stats.exercises.filter(
+    (exercise) => exercise.sessionCount > 0,
+  );
+  const strongestRankings = trainedExercises
+    .map((exercise): StrongestLiftRanking | null => {
+      const weightLb = toWeightNumber(exercise.bestWeightLb);
+
+      if (weightLb === null || weightLb <= 0) {
+        return null;
+      }
+
+      const estimatedOneRepMaxLb = exercise.bestWeightReps
+        ? estimateOneRepMaxLb(weightLb, exercise.bestWeightReps)
+        : (toWeightNumber(exercise.bestE1rmLb) ?? weightLb);
+
+      return {
+        exerciseName: exercise.name,
+        reps: exercise.bestWeightReps,
+        weightLb,
+        estimatedOneRepMaxLb,
+      };
+    })
+    .filter((item): item is StrongestLiftRanking => item !== null)
+    .sort((left, right) => {
       const weightDelta = right.weightLb - left.weightLb;
 
       if (weightDelta !== 0) {
         return weightDelta;
       }
 
-      const repDelta = right.reps - left.reps;
-
-      if (repDelta !== 0) {
-        return repDelta;
-      }
-
-      return left.exerciseName.localeCompare(right.exerciseName);
-    },
-  );
+      const repDelta = (right.reps ?? 0) - (left.reps ?? 0);
+      return repDelta !== 0
+        ? repDelta
+        : left.exerciseName.localeCompare(right.exerciseName);
+    });
   const strongest = strongestRankings[0] ?? null;
   const strongestDisplay = strongest
     ? formatStrongestLiftRanking(strongest, input.user.preferredWeightUnit)
     : null;
-  const mostTrainedExerciseRankings = Array.from(exerciseCounts.values()).sort((left, right) => {
-    const countDelta = right.count - left.count;
-    return countDelta !== 0 ? countDelta : left.name.localeCompare(right.name);
-  });
+  const mostTrainedExerciseRankings = trainedExercises
+    .map((exercise) => ({
+      name: exercise.name,
+      count: exercise.sessionCount,
+    }))
+    .sort((left, right) => {
+      const countDelta = right.count - left.count;
+      return countDelta !== 0 ? countDelta : left.name.localeCompare(right.name);
+    });
   const mostTrainedExercise = mostTrainedExerciseRankings[0];
-  const favoriteSplitRankings = getFavoriteSplitDayRankings(input.workouts);
+  const favoriteSplitRankings = getFavoriteSplitDayRankings(input.stats.workoutTypes);
   const favoriteSplitTop = favoriteSplitRankings[0];
   const favoriteSplitTopDisplay = favoriteSplitTop
     ? formatFavoriteSplitDayBackoff(favoriteSplitTop)
@@ -447,7 +400,7 @@ export function buildPublicProfileData(input: PublicProfileBuildInput): PublicPr
       {
         key: "variety",
         label: "Variety",
-        value: scoreFromCap(distinctExercises.size, VARIETY_CAP_EXERCISES),
+        value: scoreFromCap(trainedExercises.length, VARIETY_CAP_EXERCISES),
       },
       {
         key: "experience",
@@ -456,6 +409,33 @@ export function buildPublicProfileData(input: PublicProfileBuildInput): PublicPr
       },
     ],
   };
+}
+
+type BestWeightSetRow = {
+  normalizedName: string;
+  reps: number;
+};
+
+async function loadBestWeightSets(userId: string) {
+  return prisma.$queryRaw<BestWeightSetRow[]>`
+    SELECT DISTINCT ON (we."normalizedName")
+      we."normalizedName" AS "normalizedName",
+      ws.reps
+    FROM "WorkoutSet" ws
+    INNER JOIN "WorkoutExercise" we ON we.id = ws."workoutExerciseId"
+    INNER JOIN "WorkoutLog" wl ON wl.id = we."workoutLogId"
+    WHERE
+      wl."userId" = ${userId}
+      AND we."normalizedName" <> ''
+      AND ws."weightLb" IS NOT NULL
+      AND ws."weightLb" > 0
+    ORDER BY
+      we."normalizedName",
+      ws."weightLb" DESC,
+      ws.reps DESC,
+      wl."performedAt" DESC,
+      we."createdAt" DESC
+  `;
 }
 
 export async function loadPublicProfile(username: string) {
@@ -501,31 +481,104 @@ export async function loadPublicProfile(username: string) {
     return null;
   }
 
-  const activeSplit = user.workoutSplits[0] ?? null;
+  const now = getCurrentPacificDate();
+  const recentStart = startOfDatabaseWeek(new Date(now));
+  recentStart.setUTCDate(recentStart.getUTCDate() - (RECENT_WEEK_COUNT - 1) * 7);
 
-  const workouts = await prisma.workoutLog.findMany({
-    where: { userId: user.id },
-    orderBy: {
-      performedAt: "desc",
-    },
-    select: {
-      performedAt: true,
-      workoutType: true,
-      totalWeightLb: true,
-      exercises: {
-        select: {
-          name: true,
-          normalizedName: true,
-          sets: {
-            select: {
-              reps: true,
-              weightLb: true,
-            },
-          },
+  const [
+    workoutTotals,
+    recentWorkoutTotals,
+    exerciseRows,
+    loggedTrainingDays,
+    workoutTypeGroups,
+    bestWeightSets,
+  ] = await Promise.all([
+    prisma.workoutLog.aggregate({
+      where: { userId: user.id },
+      _count: { _all: true },
+      _sum: { totalWeightLb: true },
+    }),
+    prisma.workoutLog.aggregate({
+      where: {
+        userId: user.id,
+        performedAt: {
+          gte: recentStart,
         },
       },
-    },
-  });
+      _count: { _all: true },
+      _sum: { totalWeightLb: true },
+    }),
+    prisma.exerciseSummary.findMany({
+      where: { userId: user.id },
+      select: {
+        normalizedName: true,
+        name: true,
+        sessionCount: true,
+        setCount: true,
+        bestWeightLb: true,
+        bestE1rmLb: true,
+      },
+    }),
+    prisma.workoutCalendarDay.count({
+      where: {
+        userId: user.id,
+        workoutCount: {
+          gt: 0,
+        },
+      },
+    }),
+    prisma.workoutLog.groupBy({
+      by: ["workoutType", "workoutTypeSlug"],
+      where: {
+        userId: user.id,
+        workoutType: {
+          not: null,
+        },
+      },
+      _count: {
+        _all: true,
+      },
+      _max: {
+        performedAt: true,
+      },
+    }),
+    loadBestWeightSets(user.id),
+  ]);
+
+  const bestWeightSetByExercise = new Map(
+    bestWeightSets.map((row) => [row.normalizedName, row]),
+  );
+  const workoutTypeStats = new Map<string, PublicProfileWorkoutTypeStat>();
+
+  for (const group of workoutTypeGroups) {
+    const workoutType = group.workoutType?.trim();
+    const lastPerformedAt = group._max.performedAt;
+
+    if (!workoutType || !lastPerformedAt) {
+      continue;
+    }
+
+    const key =
+      group.workoutTypeSlug?.trim() || normalizeWorkoutTypeSlug(workoutType);
+    const current = workoutTypeStats.get(key);
+
+    if (!current) {
+      workoutTypeStats.set(key, {
+        workoutType,
+        count: group._count._all,
+        lastPerformedAt,
+      });
+      continue;
+    }
+
+    current.count += group._count._all;
+    if (lastPerformedAt.getTime() > current.lastPerformedAt.getTime()) {
+      current.workoutType = workoutType;
+      current.lastPerformedAt = lastPerformedAt;
+    }
+  }
+
+  const activeSplit = user.workoutSplits[0] ?? null;
   const activeDayCount =
     activeSplit?.days.filter(
       (day) =>
@@ -560,6 +613,20 @@ export async function loadPublicProfile(username: string) {
           days: sortSplitDays(splitDays),
         }
       : null,
-    workouts,
+    stats: {
+      totalWorkouts: workoutTotals._count._all,
+      totalSets: exerciseRows.reduce((sum, exercise) => sum + exercise.setCount, 0),
+      totalVolumeLb: workoutTotals._sum.totalWeightLb,
+      loggedTrainingDays,
+      recentWorkoutCount: recentWorkoutTotals._count._all,
+      recentVolumeLb: recentWorkoutTotals._sum.totalWeightLb,
+      exercises: exerciseRows.map((exercise) => ({
+        ...exercise,
+        bestWeightReps:
+          bestWeightSetByExercise.get(exercise.normalizedName)?.reps ?? null,
+      })),
+      workoutTypes: Array.from(workoutTypeStats.values()),
+    },
+    now,
   });
 }

@@ -1,11 +1,16 @@
 import { unstable_cache } from "next/cache";
-import { requireSessionUser } from "@/lib/auth";
+import type { WeightUnit } from "@/lib/weight-unit";
 import { getNutritionDataTag, getSplitDataTag, getWorkoutDataTag } from "@/lib/cache-tags";
 import { getUserWorkoutSplit, getUserWorkoutSplits } from "@/lib/workout-splits/service";
 import { getCurrentPacificDate, startOfDatabaseWeek } from "@/lib/workout-utils";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
 import { dateKey } from "./data.formatters";
 import { createDefaultSplit } from "./data.empty";
+import {
+  EMPTY_WORKOUT_HISTORY_REQUEST,
+  hasWorkoutHistoryFilters,
+  type WorkoutHistoryRequest,
+} from "./data.workout-history";
 import {
   loadDashboardOverviewSection,
   loadNutritionSection,
@@ -16,7 +21,7 @@ import { VIEW_CACHE_REVALIDATE_SECONDS } from "./data.view-helpers";
 
 function loadCachedDashboardOverviewSection(
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
   now: Date,
 ) {
   const nowKey = dateKey(now);
@@ -33,7 +38,7 @@ function loadCachedDashboardOverviewSection(
 
 function loadCachedNutritionSection(
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
   now: Date,
 ) {
   const nowKey = dateKey(now);
@@ -50,11 +55,16 @@ function loadCachedNutritionSection(
 
 function loadCachedWorkoutHistorySection(
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
+  request: WorkoutHistoryRequest,
 ) {
+  if (hasWorkoutHistoryFilters(request.filters)) {
+    return loadWorkoutHistorySection(userId, weightUnit, request);
+  }
+
   return unstable_cache(
-    async () => loadWorkoutHistorySection(userId, weightUnit),
-    ["workout-history", userId, weightUnit],
+    async () => loadWorkoutHistorySection(userId, weightUnit, request),
+    ["workout-history", userId, weightUnit, String(request.offset)],
     {
       revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
       tags: [getWorkoutDataTag(userId)],
@@ -64,7 +74,7 @@ function loadCachedWorkoutHistorySection(
 
 function loadCachedProgressSection(
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
   now: Date,
 ) {
   const weekStartKey = dateKey(startOfDatabaseWeek(now));
@@ -81,10 +91,13 @@ function loadCachedProgressSection(
 
 function loadCachedSplitSection(userId: string) {
   return unstable_cache(
-    async () => ({
-      split: await getUserWorkoutSplit(userId),
-      splits: await getUserWorkoutSplits(userId),
-    }),
+    async () => {
+      const [split, splits] = await Promise.all([
+        getUserWorkoutSplit(userId),
+        getUserWorkoutSplits(userId),
+      ]);
+      return { split, splits };
+    },
     ["split-view", userId],
     {
       revalidate: 300,
@@ -95,28 +108,29 @@ function loadCachedSplitSection(userId: string) {
 
 export async function loadOverviewPageData(
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
 ) {
   return loadCachedDashboardOverviewSection(userId, weightUnit, getCurrentPacificDate());
 }
 
 export async function loadWorkoutHistoryPageData(
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
+  request: WorkoutHistoryRequest = EMPTY_WORKOUT_HISTORY_REQUEST,
 ) {
-  return loadCachedWorkoutHistorySection(userId, weightUnit);
+  return loadCachedWorkoutHistorySection(userId, weightUnit, request);
 }
 
 export async function loadProgressPageData(
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
 ) {
   return loadCachedProgressSection(userId, weightUnit, getCurrentPacificDate());
 }
 
 export async function loadNutritionPageData(
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
 ) {
   return loadCachedNutritionSection(userId, weightUnit, getCurrentPacificDate());
 }
@@ -133,15 +147,16 @@ export async function loadSplitPageData(userId: string) {
 export async function loadDashboardViewData(
   view: DashboardView,
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
   now: Date,
+  workoutHistoryRequest: WorkoutHistoryRequest = EMPTY_WORKOUT_HISTORY_REQUEST,
 ): Promise<Partial<DashboardClientData>> {
   if (view === "dashboard") {
     return loadCachedDashboardOverviewSection(userId, weightUnit, now);
   }
 
   if (view === "workouts") {
-    return loadCachedWorkoutHistorySection(userId, weightUnit);
+    return loadCachedWorkoutHistorySection(userId, weightUnit, workoutHistoryRequest);
   }
 
   if (view === "progress") {

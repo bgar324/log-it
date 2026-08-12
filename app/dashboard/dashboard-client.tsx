@@ -5,7 +5,11 @@ import { startTransition, useCallback, useEffect, useMemo, useRef, useState } fr
 import { SplitManager } from "./split-manager";
 import { VIEW_TITLES, toViewHref } from "./dashboard-client.shared";
 import { styles } from "./dashboard.styles";
-import type { DashboardClientData, DashboardView } from "./dashboard-types";
+import type {
+  DashboardClientData,
+  DashboardView,
+  DashboardWorkoutFilters,
+} from "./dashboard-types";
 import { normalizeDashboardView } from "./data.view-helpers";
 import { DashboardOverviewView } from "./_components/dashboard-overview-view";
 import { DashboardNutritionPanel } from "./_components/dashboard-nutrition-panel";
@@ -37,6 +41,12 @@ type LoadViewDataOptions = {
   showLoading?: boolean;
 };
 
+type LoadWorkoutHistoryPageOptions = {
+  offset: number;
+  filters: DashboardWorkoutFilters;
+  append: boolean;
+};
+
 type DashboardViewData = Partial<DashboardClientData>;
 
 function mergeDashboardViewData(
@@ -51,6 +61,36 @@ function mergeDashboardViewData(
 
 function createInitialLoadedDashboardViews(initialView: DashboardView) {
   return new Set<DashboardView>([initialView, "profile"]);
+}
+
+function workoutFiltersMatch(
+  left: DashboardWorkoutFilters,
+  right: DashboardWorkoutFilters,
+) {
+  return (
+    left.dateFrom === right.dateFrom &&
+    left.dateTo === right.dateTo &&
+    left.workoutType === right.workoutType &&
+    left.titleQuery === right.titleQuery
+  );
+}
+
+function mergeWorkoutMonthPages(
+  current: DashboardClientData["workoutMonths"],
+  incoming: DashboardClientData["workoutMonths"],
+) {
+  const entriesByMonth = new Map(
+    current.map((month) => [month.month, [...month.entries]]),
+  );
+
+  for (const month of incoming) {
+    const entries = entriesByMonth.get(month.month) ?? [];
+    const existingIds = new Set(entries.map((entry) => entry.id));
+    entries.push(...month.entries.filter((entry) => !existingIds.has(entry.id)));
+    entriesByMonth.set(month.month, entries);
+  }
+
+  return Array.from(entriesByMonth, ([month, entries]) => ({ month, entries }));
 }
 
 export function DashboardClient({ initialView, data }: DashboardClientProps) {
@@ -68,9 +108,13 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     createInitialLoadedDashboardViews(initialView),
   );
   const inFlightViewsRef = useRef<Set<DashboardView>>(new Set());
+  const workoutHistoryRequestRef = useRef(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [workoutFilters, setWorkoutFilters] = useState(emptyWorkoutFilters);
+  const [appliedWorkoutFilters, setAppliedWorkoutFilters] =
+    useState(emptyWorkoutFilters);
+  const [workoutHistoryLoading, setWorkoutHistoryLoading] = useState(false);
   const recentSessions = dashboardData.workouts.slice(0, 5);
   const profileFormState = useDashboardProfileForm(dashboardData.user, () => {
     router.refresh();
@@ -96,35 +140,53 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   ]);
   const displayWeightUnit = profileFormState.profile.preferredWeightUnit;
   const workoutTypes = useMemo(
-    () => getWorkoutTypes(dashboardData.workoutMonths),
-    [dashboardData.workoutMonths],
+    () =>
+      dashboardData.workoutHistory.workoutTypes.length > 0
+        ? dashboardData.workoutHistory.workoutTypes
+        : getWorkoutTypes(dashboardData.workoutMonths),
+    [dashboardData.workoutHistory.workoutTypes, dashboardData.workoutMonths],
   );
   const filteredWorkoutMonths = useMemo(
     () => getFilteredWorkoutMonths(dashboardData.workoutMonths, workoutFilters),
     [dashboardData.workoutMonths, workoutFilters],
   );
-  const filteredWorkoutCount = useMemo(
-    () => getWorkoutCount(filteredWorkoutMonths),
-    [filteredWorkoutMonths],
+  const filtersAreApplied = workoutFiltersMatch(
+    workoutFilters,
+    appliedWorkoutFilters,
   );
+  const filteredWorkoutCount = filtersAreApplied
+    ? dashboardData.workoutHistory.totalCount
+    : getWorkoutCount(filteredWorkoutMonths);
   const hasWorkoutFilters = hasActiveWorkoutFilters(workoutFilters);
+  const remainingWorkoutCount = Math.max(
+    0,
+    dashboardData.workoutHistory.totalCount -
+      dashboardData.workoutHistory.nextOffset,
+  );
 
   useEffect(() => {
     // Server refreshes are authoritative. Keeping this cache instance-local and
     // resetting it here prevents one account or old unit conversion from being
     // merged into another account's dashboard payload.
     loadedViewsRef.current = createInitialLoadedDashboardViews(initialView);
+    workoutHistoryRequestRef.current += 1;
     setDashboardData(data);
     setLoadedViews(createInitialLoadedDashboardViews(initialView));
     setLoadingViews(new Set());
     setViewErrors({});
+    setAppliedWorkoutFilters(emptyWorkoutFilters);
+    setWorkoutHistoryLoading(false);
   }, [data, initialView]);
 
   const loadViewData = useCallback(async (
     view: DashboardView,
     options: LoadViewDataOptions = {},
   ) => {
-    if (view === "profile" || inFlightViewsRef.current.has(view)) {
+    if (
+      view === "profile" ||
+      inFlightViewsRef.current.has(view) ||
+      loadedViewsRef.current.has(view)
+    ) {
       return;
     }
 
@@ -193,6 +255,84 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     }
   }, []);
 
+  const loadWorkoutHistoryPage = useCallback(
+    async (options: LoadWorkoutHistoryPageOptions) => {
+      const requestId = workoutHistoryRequestRef.current + 1;
+      workoutHistoryRequestRef.current = requestId;
+      setWorkoutHistoryLoading(true);
+      setViewErrors((current) => {
+        const next = { ...current };
+        delete next.workouts;
+        return next;
+      });
+
+      const searchParams = new URLSearchParams({
+        view: "workouts",
+        offset: String(options.offset),
+      });
+      for (const [key, value] of Object.entries(options.filters)) {
+        if (value) {
+          searchParams.set(key, value);
+        }
+      }
+
+      try {
+        const response = await fetch(`/api/dashboard/view-data?${searchParams}`, {
+          cache: "no-store",
+        });
+        const payload = (await response.json()) as
+          | { data?: Partial<DashboardClientData> }
+          | { error?: string };
+        const pageMonths =
+          payload && "data" in payload ? payload.data?.workoutMonths : undefined;
+        const pageHistory =
+          payload && "data" in payload ? payload.data?.workoutHistory : undefined;
+
+        if (!response.ok || !pageMonths || !pageHistory) {
+          throw new Error(
+            payload && "error" in payload
+              ? payload.error
+              : "Unable to load workout history.",
+          );
+        }
+
+        if (requestId !== workoutHistoryRequestRef.current) {
+          return;
+        }
+
+        setDashboardData((current) => ({
+          ...current,
+          workoutMonths: options.append
+            ? mergeWorkoutMonthPages(current.workoutMonths, pageMonths)
+            : pageMonths,
+          workoutHistory: pageHistory,
+        }));
+        setAppliedWorkoutFilters(options.filters);
+        loadedViewsRef.current.add("workouts");
+        setLoadedViews((current) => {
+          const next = new Set(current);
+          next.add("workouts");
+          return next;
+        });
+      } catch (error) {
+        if (requestId === workoutHistoryRequestRef.current) {
+          setViewErrors((current) => ({
+            ...current,
+            workouts:
+              error instanceof Error
+                ? error.message
+                : "Unable to load workout history.",
+          }));
+        }
+      } finally {
+        if (requestId === workoutHistoryRequestRef.current) {
+          setWorkoutHistoryLoading(false);
+        }
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     const hasCachedData = loadedViewsRef.current.has(activeView);
 
@@ -201,6 +341,32 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       showLoading: !hasCachedData,
     });
   }, [activeView, loadViewData]);
+
+  useEffect(() => {
+    if (
+      !loadedViews.has("workouts") ||
+      workoutFiltersMatch(workoutFilters, appliedWorkoutFilters)
+    ) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void loadWorkoutHistoryPage({
+        offset: 0,
+        filters: workoutFilters,
+        append: false,
+      });
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    appliedWorkoutFilters,
+    loadedViews,
+    loadWorkoutHistoryPage,
+    workoutFilters,
+  ]);
 
   useEffect(() => {
     function handlePopState() {
@@ -255,7 +421,10 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       onCloseMobileMenu={() => setMobileMenuOpen(false)}
       onNavigate={navigateToView}
       renderHeaderAccessory={() =>
-        activeView === "workouts" && dashboardData.workoutMonths.length > 0 ? (
+        activeView === "workouts" &&
+        (dashboardData.workoutHistory.totalCount > 0 ||
+          workoutTypes.length > 0 ||
+          hasWorkoutFilters) ? (
           <DashboardWorkoutFiltersControl
             filters={workoutFilters}
             workoutTypes={workoutTypes}
@@ -301,8 +470,24 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
             displayWeightUnit={displayWeightUnit}
             filters={workoutFilters}
             isLoading={activeViewIsLoading && !loadedViews.has("workouts")}
+            isLoadingMore={workoutHistoryLoading}
+            hasMore={dashboardData.workoutHistory.hasMore}
+            remainingCount={remainingWorkoutCount}
             error={activeViewError}
-            onRetry={() => void loadViewData("workouts", { showError: true, showLoading: true })}
+            onLoadMore={() =>
+              void loadWorkoutHistoryPage({
+                offset: dashboardData.workoutHistory.nextOffset,
+                filters: appliedWorkoutFilters,
+                append: true,
+              })
+            }
+            onRetry={() =>
+              void loadWorkoutHistoryPage({
+                offset: 0,
+                filters: workoutFilters,
+                append: false,
+              })
+            }
           />
         </div>
       ) : null}

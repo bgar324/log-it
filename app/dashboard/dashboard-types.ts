@@ -9,6 +9,13 @@ export type DashboardView =
   | "split"
   | "profile";
 
+export type DashboardWorkoutFilters = {
+  dateFrom: string;
+  dateTo: string;
+  workoutType: string;
+  titleQuery: string;
+};
+
 export type DashboardNutritionData = {
   bmrCalories: number | null;
   today: {
@@ -136,6 +143,12 @@ export type DashboardClientData = {
       volume: number;
     }>;
   }>;
+  workoutHistory: {
+    totalCount: number;
+    nextOffset: number;
+    hasMore: boolean;
+    workoutTypes: string[];
+  };
   exercises: Array<{
     key: string;
     routeKey: string;

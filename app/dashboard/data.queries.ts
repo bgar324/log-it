@@ -12,6 +12,7 @@ import {
   formatDatabaseDateValue,
   toDatabaseDateFromInput,
 } from "@/lib/workout-utils";
+import type { DashboardWorkoutFilters } from "./dashboard-types";
 
 export async function loadRecentLogs(userId: string, take: number) {
   try {
@@ -80,69 +81,113 @@ export async function loadRecentLogs(userId: string, take: number) {
   }
 }
 
-// History is a user-owned record, not a feed. Do not silently discard older
-// workouts merely because a user has trained consistently for a long time.
-export async function loadAllLogs(userId: string) {
-  try {
-    return await prisma.$queryRaw<
-      Array<{
-        id: string;
-        title: string;
-        workoutType: string | null;
-        totalWeightLb: Prisma.Decimal | number | null;
-        performedAt: Date;
-        exerciseCount: number;
-        setCount: number;
-      }>
-    >`
-      SELECT
-        wl.id,
-        wl.title,
-        wl."workoutType",
-        wl."totalWeightLb",
-        wl."performedAt",
-        COUNT(DISTINCT we.id)::int AS "exerciseCount",
-        COUNT(ws.id)::int AS "setCount"
-      FROM "WorkoutLog" wl
-      LEFT JOIN "WorkoutExercise" we ON we."workoutLogId" = wl.id
-      LEFT JOIN "WorkoutSet" ws ON ws."workoutExerciseId" = we.id
-      WHERE wl."userId" = ${userId}
-      GROUP BY wl.id, wl.title, wl."workoutType", wl."totalWeightLb", wl."performedAt"
-      ORDER BY wl."performedAt" DESC
-    `;
-  } catch (error) {
-    if (!isPrismaSchemaMismatchError(error)) {
-      throw error;
-    }
+export type WorkoutLogPageOptions = {
+  offset: number;
+  limit: number;
+  filters: DashboardWorkoutFilters;
+};
 
-    const logs = await prisma.workoutLog.findMany({
-      where: { userId },
-      orderBy: { performedAt: "desc" },
+function createWorkoutLogWhere(
+  userId: string,
+  filters: DashboardWorkoutFilters,
+): Prisma.WorkoutLogWhereInput {
+  const titleQuery = filters.titleQuery.trim();
+
+  return {
+    userId,
+    ...(filters.dateFrom || filters.dateTo
+      ? {
+          performedAt: {
+            ...(filters.dateFrom
+              ? { gte: toDatabaseDateFromInput(filters.dateFrom) }
+              : {}),
+            ...(filters.dateTo
+              ? { lte: toDatabaseDateFromInput(filters.dateTo) }
+              : {}),
+          },
+        }
+      : {}),
+    ...(filters.workoutType
+      ? {
+          workoutType: filters.workoutType,
+        }
+      : {}),
+    ...(titleQuery
+      ? {
+          title: {
+            contains: titleQuery,
+            mode: "insensitive" as const,
+          },
+        }
+      : {}),
+  };
+}
+
+export async function loadWorkoutLogPage(
+  userId: string,
+  options: WorkoutLogPageOptions,
+) {
+  const where = createWorkoutLogWhere(userId, options.filters);
+  const [logs, totalCount, workoutTypeGroups] = await Promise.all([
+    prisma.workoutLog.findMany({
+      where,
+      orderBy: [
+        { performedAt: "desc" },
+        { createdAt: "desc" },
+        { id: "desc" },
+      ],
+      skip: options.offset,
+      take: options.limit,
       select: {
         id: true,
         title: true,
+        workoutType: true,
         totalWeightLb: true,
         performedAt: true,
         exercises: {
           select: {
             _count: {
-              select: { sets: true },
+              select: {
+                sets: true,
+              },
             },
           },
         },
       },
-    });
+    }),
+    prisma.workoutLog.count({ where }),
+    prisma.workoutLog.groupBy({
+      by: ["workoutType"],
+      where: {
+        userId,
+        workoutType: {
+          not: null,
+        },
+      },
+      orderBy: {
+        workoutType: "asc",
+      },
+    }),
+  ]);
 
-    return logs.map((log) => ({
-      workoutType: null,
+  return {
+    logs: logs.map((log) => ({
       id: log.id,
       title: log.title,
+      workoutType: log.workoutType,
       totalWeightLb: log.totalWeightLb,
       performedAt: log.performedAt,
       exerciseCount: log.exercises.length,
-      setCount: log.exercises.reduce((sum, exercise) => sum + exercise._count.sets, 0),
-    }));
-  }
+      setCount: log.exercises.reduce(
+        (sum, exercise) => sum + exercise._count.sets,
+        0,
+      ),
+    })),
+    totalCount,
+    workoutTypes: workoutTypeGroups
+      .map((row) => row.workoutType?.trim() ?? "")
+      .filter(Boolean),
+  };
 }
 
 export async function loadExerciseSummaryRows(userId: string) {

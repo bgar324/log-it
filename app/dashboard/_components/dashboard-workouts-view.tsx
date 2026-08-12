@@ -7,44 +7,45 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/app/components/ui/popover";
-import type { DashboardClientData } from "../dashboard-types";
+import type {
+  DashboardClientData,
+  DashboardWorkoutFilters,
+} from "../dashboard-types";
 import { styles } from "../dashboard.styles";
 import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
 import { DashboardWorkoutList } from "./dashboard-workout-list";
 
-export type WorkoutFiltersState = {
-  dateFrom: string;
-  dateTo: string;
-  workoutType: string;
-  titleQuery: string;
-};
 
 type WorkoutFiltersControlProps = {
-  filters: WorkoutFiltersState;
+  filters: DashboardWorkoutFilters;
   workoutTypes: string[];
   filteredCount: number;
   hasFilters: boolean;
-  onChange: (filters: WorkoutFiltersState) => void;
+  onChange: (filters: DashboardWorkoutFilters) => void;
   onClear: () => void;
 };
 
 type DashboardWorkoutsViewProps = {
   workoutMonths: DashboardClientData["workoutMonths"];
   displayWeightUnit: DashboardClientData["user"]["preferredWeightUnit"];
-  filters: WorkoutFiltersState;
+  filters: DashboardWorkoutFilters;
   isLoading?: boolean;
+  isLoadingMore?: boolean;
+  hasMore?: boolean;
+  remainingCount?: number;
   error?: string | null;
+  onLoadMore?: () => void;
   onRetry?: () => void;
 };
 
-export const emptyWorkoutFilters: WorkoutFiltersState = {
+export const emptyWorkoutFilters: DashboardWorkoutFilters = {
   dateFrom: "",
   dateTo: "",
   workoutType: "",
   titleQuery: "",
 };
 
-export function hasActiveWorkoutFilters(filters: WorkoutFiltersState) {
+export function hasActiveWorkoutFilters(filters: DashboardWorkoutFilters) {
   return Boolean(
     filters.dateFrom ||
       filters.dateTo ||
@@ -71,7 +72,7 @@ export function getWorkoutTypes(workoutMonths: DashboardClientData["workoutMonth
 
 export function getFilteredWorkoutMonths(
   workoutMonths: DashboardClientData["workoutMonths"],
-  filters: WorkoutFiltersState,
+  filters: DashboardWorkoutFilters,
 ) {
   const normalizedQuery = filters.titleQuery.trim().toLowerCase();
 
@@ -118,9 +119,9 @@ export function DashboardWorkoutFiltersControl({
 }: WorkoutFiltersControlProps) {
   const [open, setOpen] = useState(false);
 
-  function updateFilter<Key extends keyof WorkoutFiltersState>(
+  function updateFilter<Key extends keyof DashboardWorkoutFilters>(
     key: Key,
-    value: WorkoutFiltersState[Key],
+    value: DashboardWorkoutFilters[Key],
   ) {
     onChange({
       ...filters,
@@ -234,7 +235,11 @@ export function DashboardWorkoutsView({
   displayWeightUnit,
   filters,
   isLoading = false,
+  isLoadingMore = false,
+  hasMore = false,
+  remainingCount = 0,
   error = null,
+  onLoadMore,
   onRetry,
 }: DashboardWorkoutsViewProps) {
   const filteredWorkoutMonths = useMemo(
@@ -256,6 +261,7 @@ export function DashboardWorkoutsView({
   const hiddenWorkoutCount = getWorkoutCount(
     filteredWorkoutMonths.slice(visibleMonths),
   );
+  const canLoadMore = hiddenWorkoutCount > 0 || (hasMore && Boolean(onLoadMore));
 
   if (error) {
     return (
@@ -275,33 +281,45 @@ export function DashboardWorkoutsView({
   }
 
   return (
-    <section className={styles.plainSection}>
-      {workoutMonths.length > 0 ? (
-        filteredWorkoutMonths.length > 0 ? (
-          <div className={styles.timeline}>
-            {renderedMonths.map((month) => (
-              <section key={month.month} className={styles.monthSection}>
-                <h3 className={styles.monthTitle}>{month.month}</h3>
-                <DashboardWorkoutList
-                  rows={month.entries}
-                  weightUnit={displayWeightUnit}
-                />
-              </section>
-            ))}
-            {hiddenWorkoutCount > 0 ? (
-              <button
-                type="button"
-                className={styles.workoutFilterReset}
-                onClick={() => setVisibleMonths((count) => count + MONTHS_PER_REVEAL)}
-              >
-                Show {hiddenWorkoutCount} older workout
-                {hiddenWorkoutCount === 1 ? "" : "s"}
-              </button>
-            ) : null}
-          </div>
-        ) : (
-          <p className={styles.empty}>No workouts match those filters.</p>
-        )
+    <section className={styles.plainSection} aria-busy={isLoadingMore}>
+      {filteredWorkoutMonths.length > 0 ? (
+        <div className={styles.timeline}>
+          {renderedMonths.map((month) => (
+            <section key={month.month} className={styles.monthSection}>
+              <h3 className={styles.monthTitle}>{month.month}</h3>
+              <DashboardWorkoutList
+                rows={month.entries}
+                weightUnit={displayWeightUnit}
+              />
+            </section>
+          ))}
+          {canLoadMore ? (
+            <button
+              type="button"
+              className={styles.workoutFilterReset}
+              disabled={hiddenWorkoutCount === 0 && isLoadingMore}
+              onClick={() => {
+                if (hiddenWorkoutCount > 0) {
+                  setVisibleMonths((count) => count + MONTHS_PER_REVEAL);
+                } else {
+                  onLoadMore?.();
+                }
+              }}
+            >
+              {hiddenWorkoutCount > 0
+                ? `Show ${hiddenWorkoutCount} older workout${
+                    hiddenWorkoutCount === 1 ? "" : "s"
+                  }`
+                : isLoadingMore
+                  ? "Loading older workouts..."
+                  : `Load ${remainingCount} older workout${
+                      remainingCount === 1 ? "" : "s"
+                    }`}
+            </button>
+          ) : null}
+        </div>
+      ) : hasActiveWorkoutFilters(filters) ? (
+        <p className={styles.empty}>No workouts match those filters.</p>
       ) : (
         <p className={styles.empty}>No workouts logged yet.</p>
       )}

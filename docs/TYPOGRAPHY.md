@@ -4,11 +4,11 @@ Typography should make training data easy to scan. Logit uses a quiet, direct, o
 
 ## Foundations
 
-- `app/layout.tsx` imports `GeistSans` and `GeistMono` from `geist` and attaches their CSS variables to `<html>`.
+- `app/layout.tsx` imports `GeistSans` from `geist` and attaches its CSS variable to `<html>`.
 - `app/globals.css` defines `--font-body`, `--font-heading`, and `--font-mono`.
 - Body and heading fonts resolve to Geist Sans.
-- Mono text resolves to Geist Mono and should be reserved for code-like or technical identifiers.
-- Global letter spacing is `-0.03em`; `app/globals.css` currently enforces it broadly.
+- Mono text uses the system monospace stack and should be reserved for code-like or technical identifiers; it is not a globally preloaded webfont.
+- Body letter spacing defaults to `-0.03em` and inherits normally. It is not forced onto every element with `!important`, so specialized controls and numeric text can override tracking.
 - Body line height defaults to `1.45`.
 - Form controls inherit font settings through the Tailwind base layer.
 

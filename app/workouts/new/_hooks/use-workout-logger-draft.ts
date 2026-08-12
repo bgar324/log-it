@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -76,7 +77,6 @@ export function useWorkoutLoggerDraft({
   );
   const idCounterRef = useRef(initialState.counters);
   const autosaveReadyRef = useRef(false);
-  const latestDraftSnapshotRef = useRef<WorkoutDraftSnapshot | null>(null);
   const [draftState, dispatch] = useReducer(
     draftStateReducer,
     initialState,
@@ -88,6 +88,10 @@ export function useWorkoutLoggerDraft({
       isRecoveredDraft: false,
     }),
   );
+  const latestDraftStateRef = useRef(draftState);
+  useLayoutEffect(() => {
+    latestDraftStateRef.current = draftState;
+  }, [draftState]);
   useEffect(() => {
     dispatch({
       type: "replace",
@@ -134,24 +138,6 @@ export function useWorkoutLoggerDraft({
     autosaveReadyRef.current = true;
   }, [initialState.performedAt, initialState.workoutType, isEditMode, weightUnit]);
 
-  useEffect(() => {
-    if (isEditMode) {
-      return;
-    }
-
-    latestDraftSnapshotRef.current = createWorkoutDraftSnapshot(
-      draftState.title,
-      draftState.workoutType,
-      draftState.performedAt,
-      draftState.exercises,
-    );
-  }, [
-    draftState.exercises,
-    draftState.performedAt,
-    draftState.title,
-    draftState.workoutType,
-    isEditMode,
-  ]);
 
   useEffect(() => {
     if (isEditMode || !autosaveReadyRef.current) {
@@ -165,7 +151,6 @@ export function useWorkoutLoggerDraft({
         draftState.performedAt,
         draftState.exercises,
       );
-      latestDraftSnapshotRef.current = snapshot;
       persistWorkoutDraft(snapshot, weightUnit);
     }, WORKOUT_AUTOSAVE_DELAY_MS);
 
@@ -187,11 +172,20 @@ export function useWorkoutLoggerDraft({
     }
 
     function handlePageHide() {
-      if (!autosaveReadyRef.current || !latestDraftSnapshotRef.current) {
+      if (!autosaveReadyRef.current) {
         return;
       }
 
-      persistWorkoutDraft(latestDraftSnapshotRef.current, weightUnit);
+      const latestDraftState = latestDraftStateRef.current;
+      persistWorkoutDraft(
+        createWorkoutDraftSnapshot(
+          latestDraftState.title,
+          latestDraftState.workoutType,
+          latestDraftState.performedAt,
+          latestDraftState.exercises,
+        ),
+        weightUnit,
+      );
     }
 
     window.addEventListener("pagehide", handlePageHide);

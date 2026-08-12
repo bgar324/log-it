@@ -4,25 +4,31 @@ import { prisma } from "../lib/prisma";
 import {
   buildPublicProfileData,
   loadPublicProfile,
-  type PublicProfileWorkoutInput,
+  type PublicProfileStats,
 } from "../lib/public-profile";
-import { createDatabaseDate } from "../lib/workout-utils";
+import {
+  createDatabaseDate,
+  formatDatabaseDateValue,
+  normalizeExerciseName,
+  normalizeWorkoutTypeSlug,
+  startOfDatabaseWeek,
+} from "../lib/workout-utils";
 
 const prismaMutable = prisma as unknown as {
   user: {
     findUnique: (args: unknown) => Promise<unknown>;
   };
   workoutLog: {
-    findMany: (args: unknown) => Promise<PublicProfileWorkoutInput[]>;
+    aggregate: (args: unknown) => Promise<unknown>;
   };
 };
 
 const originalFindUnique = prismaMutable.user.findUnique;
-const originalFindMany = prismaMutable.workoutLog.findMany;
+const originalAggregate = prismaMutable.workoutLog.aggregate;
 
 test.afterEach(() => {
   prismaMutable.user.findUnique = originalFindUnique;
-  prismaMutable.workoutLog.findMany = originalFindMany;
+  prismaMutable.workoutLog.aggregate = originalAggregate;
 });
 
 function createUser(overrides?: Partial<Parameters<typeof buildPublicProfileData>[0]["user"]>) {
@@ -37,6 +43,16 @@ function createUser(overrides?: Partial<Parameters<typeof buildPublicProfileData
   };
 }
 
+type TestWorkout = {
+  performedAt: Date;
+  workoutType: string | null;
+  totalWeightLb: number;
+  exercises: Array<{
+    name: string;
+    sets: Array<{ reps: number; weightLb: number | null }>;
+  }>;
+};
+
 function createWorkout(
   performedAt: Date,
   options?: {
@@ -46,7 +62,7 @@ function createWorkout(
     reps?: number;
     totalWeightLb?: number;
   },
-): PublicProfileWorkoutInput {
+): TestWorkout {
   const exercise = options?.exercise ?? "Bench Press";
   const weightLb = options?.weightLb ?? 200;
   const reps = options?.reps ?? 5;
@@ -58,14 +74,107 @@ function createWorkout(
     exercises: [
       {
         name: exercise,
-        normalizedName: exercise.toLowerCase(),
         sets: [{ reps, weightLb }],
       },
     ],
   };
 }
 
-function createSplit(overrides?: Partial<NonNullable<Parameters<typeof buildPublicProfileData>[0]["split"]>>) {
+function createStats(workouts: TestWorkout[], now: Date): PublicProfileStats {
+  const recentStart = startOfDatabaseWeek(new Date(now));
+  recentStart.setUTCDate(recentStart.getUTCDate() - 7 * 7);
+  const exerciseStats = new Map<string, PublicProfileStats["exercises"][number]>();
+  const workoutTypeStats = new Map<string, PublicProfileStats["workoutTypes"][number]>();
+  const loggedTrainingDays = new Set<string>();
+  let totalSets = 0;
+  let totalVolumeLb = 0;
+  let recentWorkoutCount = 0;
+  let recentVolumeLb = 0;
+
+  for (const workout of workouts) {
+    totalVolumeLb += workout.totalWeightLb;
+    loggedTrainingDays.add(formatDatabaseDateValue(workout.performedAt));
+
+    if (workout.performedAt.getTime() >= recentStart.getTime()) {
+      recentWorkoutCount += 1;
+      recentVolumeLb += workout.totalWeightLb;
+    }
+
+    const workoutType = workout.workoutType?.trim();
+    if (workoutType) {
+      const key = normalizeWorkoutTypeSlug(workoutType);
+      const current = workoutTypeStats.get(key);
+      if (current) {
+        current.count += 1;
+        if (workout.performedAt.getTime() > current.lastPerformedAt.getTime()) {
+          current.workoutType = workoutType;
+          current.lastPerformedAt = workout.performedAt;
+        }
+      } else {
+        workoutTypeStats.set(key, {
+          workoutType,
+          count: 1,
+          lastPerformedAt: workout.performedAt,
+        });
+      }
+    }
+
+    for (const exercise of workout.exercises) {
+      const normalizedName = normalizeExerciseName(exercise.name);
+      const current = exerciseStats.get(normalizedName) ?? {
+        normalizedName,
+        name: exercise.name,
+        sessionCount: 0,
+        setCount: 0,
+        bestWeightLb: 0,
+        bestWeightReps: null,
+        bestE1rmLb: 0,
+      };
+      current.name = exercise.name;
+      current.sessionCount += 1;
+
+      for (const set of exercise.sets) {
+        totalSets += 1;
+        current.setCount += 1;
+
+        if (set.weightLb === null || set.weightLb <= 0) {
+          continue;
+        }
+
+        const bestWeight = Number(current.bestWeightLb);
+        if (
+          set.weightLb > bestWeight ||
+          (set.weightLb === bestWeight && set.reps > (current.bestWeightReps ?? 0))
+        ) {
+          current.bestWeightLb = set.weightLb;
+          current.bestWeightReps = set.reps;
+        }
+
+        current.bestE1rmLb = Math.max(
+          Number(current.bestE1rmLb),
+          set.weightLb * (1 + set.reps / 30),
+        );
+      }
+
+      exerciseStats.set(normalizedName, current);
+    }
+  }
+
+  return {
+    totalWorkouts: workouts.length,
+    totalSets,
+    totalVolumeLb,
+    loggedTrainingDays: loggedTrainingDays.size,
+    recentWorkoutCount,
+    recentVolumeLb,
+    exercises: Array.from(exerciseStats.values()),
+    workoutTypes: Array.from(workoutTypeStats.values()),
+  };
+}
+
+function createSplit(
+  overrides?: Partial<NonNullable<Parameters<typeof buildPublicProfileData>[0]["split"]>>,
+) {
   return {
     name: "Push Pull",
     activeDayCount: 4,
@@ -92,11 +201,12 @@ function createSplit(overrides?: Partial<NonNullable<Parameters<typeof buildPubl
 }
 
 test("buildPublicProfileData handles an empty public profile", () => {
+  const now = createDatabaseDate(2026, 1, 20);
   const profile = buildPublicProfileData({
     user: createUser({ firstName: null, lastName: null }),
     split: null,
-    workouts: [],
-    now: createDatabaseDate(2026, 1, 20),
+    stats: createStats([], now),
+    now,
   });
 
   assert.equal(profile.displayName, "bg");
@@ -107,7 +217,7 @@ test("buildPublicProfileData handles an empty public profile", () => {
   assert.equal(profile.radarAxes.length, 6);
 });
 
-test("loadPublicProfile returns null when the profile is not opted in", async () => {
+test("loadPublicProfile returns null before reading workout data for private profiles", async () => {
   prismaMutable.user.findUnique = async () => ({
     id: "user-1",
     username: "bg",
@@ -117,26 +227,28 @@ test("loadPublicProfile returns null when the profile is not opted in", async ()
     preferredWeightUnit: "LB",
     publicProfileEnabled: false,
     profileImageUpdatedAt: null,
-    workoutSplit: null,
+    workoutSplits: [],
   });
-  prismaMutable.workoutLog.findMany = async () => {
-    throw new Error("Workout logs should not be loaded for private profiles.");
+  prismaMutable.workoutLog.aggregate = async () => {
+    throw new Error("Workout aggregates should not be loaded for private profiles.");
   };
 
   assert.equal(await loadPublicProfile("bg"), null);
 });
 
 test("favorite split day comes from the logged split type done most often", () => {
+  const now = createDatabaseDate(2026, 4, 20);
+  const workouts = [
+    createWorkout(createDatabaseDate(2026, 4, 6), { workoutType: "Push" }),
+    createWorkout(createDatabaseDate(2026, 4, 7), { workoutType: "Pull" }),
+    createWorkout(createDatabaseDate(2026, 4, 13), { workoutType: "Pull" }),
+    createWorkout(createDatabaseDate(2026, 4, 14), { workoutType: "Upper" }),
+  ];
   const profile = buildPublicProfileData({
     user: createUser(),
     split: createSplit(),
-    workouts: [
-      createWorkout(createDatabaseDate(2026, 4, 6), { workoutType: "Push" }),
-      createWorkout(createDatabaseDate(2026, 4, 7), { workoutType: "Pull" }),
-      createWorkout(createDatabaseDate(2026, 4, 13), { workoutType: "Pull" }),
-      createWorkout(createDatabaseDate(2026, 4, 14), { workoutType: "Upper" }),
-    ],
-    now: createDatabaseDate(2026, 4, 20),
+    stats: createStats(workouts, now),
+    now,
   });
 
   assert.equal(profile.favoriteDayLabel, "Pull · 2 times");
@@ -144,6 +256,7 @@ test("favorite split day comes from the logged split type done most often", () =
 });
 
 test("radar values clamp to the 0 to 12 range", () => {
+  const now = createDatabaseDate(2026, 4, 27);
   const workouts = Array.from({ length: 260 }, (_, index) =>
     createWorkout(createDatabaseDate(2026, 4, 1 + (index % 20)), {
       exercise: `Exercise ${index}`,
@@ -155,8 +268,8 @@ test("radar values clamp to the 0 to 12 range", () => {
   const profile = buildPublicProfileData({
     user: createUser({ createdAt: createDatabaseDate(2020, 1, 1) }),
     split: null,
-    workouts,
-    now: createDatabaseDate(2026, 4, 27),
+    stats: createStats(workouts, now),
+    now,
   });
 
   assert.ok(profile.radarAxes.every((axis) => axis.value >= 0 && axis.value <= 12));
@@ -164,32 +277,34 @@ test("radar values clamp to the 0 to 12 range", () => {
 });
 
 test("strongest lift labels order by top set weight", () => {
+  const now = createDatabaseDate(2026, 4, 27);
+  const workouts = [
+    createWorkout(createDatabaseDate(2026, 4, 10), {
+      exercise: "Back Squat",
+      weightLb: 315,
+      reps: 5,
+    }),
+    createWorkout(createDatabaseDate(2026, 4, 12), {
+      exercise: "Bench Press",
+      weightLb: 305,
+      reps: 12,
+    }),
+    createWorkout(createDatabaseDate(2026, 4, 14), {
+      exercise: "Barbell Squat",
+      weightLb: 315,
+      reps: 3,
+    }),
+    createWorkout(createDatabaseDate(2026, 4, 16), {
+      exercise: "Leg Extension",
+      weightLb: 220,
+      reps: 10,
+    }),
+  ];
   const profile = buildPublicProfileData({
     user: createUser(),
     split: null,
-    workouts: [
-      createWorkout(createDatabaseDate(2026, 4, 10), {
-        exercise: "Back Squat",
-        weightLb: 315,
-        reps: 5,
-      }),
-      createWorkout(createDatabaseDate(2026, 4, 12), {
-        exercise: "Bench Press",
-        weightLb: 305,
-        reps: 12,
-      }),
-      createWorkout(createDatabaseDate(2026, 4, 14), {
-        exercise: "Barbell Squat",
-        weightLb: 315,
-        reps: 3,
-      }),
-      createWorkout(createDatabaseDate(2026, 4, 16), {
-        exercise: "Leg Extension",
-        weightLb: 220,
-        reps: 10,
-      }),
-    ],
-    now: createDatabaseDate(2026, 4, 27),
+    stats: createStats(workouts, now),
+    now,
   });
 
   assert.equal(profile.strongestLiftLabel, "Back Squat · 315 lb x 5");
@@ -198,6 +313,51 @@ test("strongest lift labels order by top set weight", () => {
 });
 
 test("profile feature rankings expose the next four entries", () => {
+  const now = createDatabaseDate(2026, 4, 27);
+  const workouts = [
+    createWorkout(createDatabaseDate(2026, 4, 1), {
+      workoutType: "Upper",
+      exercise: "Back Squat",
+      weightLb: 315,
+      reps: 5,
+    }),
+    createWorkout(createDatabaseDate(2026, 4, 2), {
+      workoutType: "Upper",
+      exercise: "Bench Press",
+      weightLb: 225,
+      reps: 8,
+    }),
+    createWorkout(createDatabaseDate(2026, 4, 3), {
+      workoutType: "Lower",
+      exercise: "Deadlift",
+      weightLb: 365,
+      reps: 3,
+    }),
+    createWorkout(createDatabaseDate(2026, 4, 4), {
+      workoutType: "Push",
+      exercise: "Overhead Press",
+      weightLb: 135,
+      reps: 8,
+    }),
+    createWorkout(createDatabaseDate(2026, 4, 5), {
+      workoutType: "Pull",
+      exercise: "Leg Press",
+      weightLb: 450,
+      reps: 10,
+    }),
+    createWorkout(createDatabaseDate(2026, 4, 6), {
+      workoutType: "Arms",
+      exercise: "Cable Row",
+      weightLb: 180,
+      reps: 10,
+    }),
+    createWorkout(createDatabaseDate(2026, 4, 7), {
+      workoutType: "Core",
+      exercise: "Bench Press",
+      weightLb: 205,
+      reps: 8,
+    }),
+  ];
   const profile = buildPublicProfileData({
     user: createUser(),
     split: createSplit({
@@ -253,51 +413,8 @@ test("profile feature rankings expose the next four entries", () => {
         },
       ],
     }),
-    workouts: [
-      createWorkout(createDatabaseDate(2026, 4, 1), {
-        workoutType: "Upper",
-        exercise: "Back Squat",
-        weightLb: 315,
-        reps: 5,
-      }),
-      createWorkout(createDatabaseDate(2026, 4, 2), {
-        workoutType: "Upper",
-        exercise: "Bench Press",
-        weightLb: 225,
-        reps: 8,
-      }),
-      createWorkout(createDatabaseDate(2026, 4, 3), {
-        workoutType: "Lower",
-        exercise: "Deadlift",
-        weightLb: 365,
-        reps: 3,
-      }),
-      createWorkout(createDatabaseDate(2026, 4, 4), {
-        workoutType: "Push",
-        exercise: "Overhead Press",
-        weightLb: 135,
-        reps: 8,
-      }),
-      createWorkout(createDatabaseDate(2026, 4, 5), {
-        workoutType: "Pull",
-        exercise: "Leg Press",
-        weightLb: 450,
-        reps: 10,
-      }),
-      createWorkout(createDatabaseDate(2026, 4, 6), {
-        workoutType: "Arms",
-        exercise: "Cable Row",
-        weightLb: 180,
-        reps: 10,
-      }),
-      createWorkout(createDatabaseDate(2026, 4, 7), {
-        workoutType: "Core",
-        exercise: "Bench Press",
-        weightLb: 205,
-        reps: 8,
-      }),
-    ],
-    now: createDatabaseDate(2026, 4, 27),
+    stats: createStats(workouts, now),
+    now,
   });
 
   assert.equal(profile.strongestLiftBackoffs.length, 4);
@@ -305,7 +422,7 @@ test("profile feature rankings expose the next four entries", () => {
   assert.equal(profile.favoriteDayLabel, "Upper · 2 times");
   assert.deepEqual(
     profile.favoriteDayBackoffs.map((item) => item.label),
-    ["Lower", "Push", "Pull", "Arms"],
+    ["Core", "Arms", "Pull", "Push"],
   );
   assert.deepEqual(
     profile.favoriteDayBackoffs.map((item) => item.detail),

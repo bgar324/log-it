@@ -59,11 +59,6 @@
   box-sizing: border-box;
 }
 
-*,
-*::before,
-*::after {
-  letter-spacing: -0.03em !important;
-}
 
 html,
 body {

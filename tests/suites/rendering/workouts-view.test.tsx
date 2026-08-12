@@ -6,8 +6,8 @@ import { render } from "./render";
 import {
   DashboardWorkoutsView,
   emptyWorkoutFilters,
-  type WorkoutFiltersState,
 } from "@/app/dashboard/_components/dashboard-workouts-view";
+import type { DashboardWorkoutFilters } from "@/app/dashboard/dashboard-types";
 
 type WorkoutMonths = Parameters<typeof DashboardWorkoutsView>[0]["workoutMonths"];
 
@@ -32,11 +32,16 @@ function buildMonths(monthCount: number, perMonth: number): WorkoutMonths {
   }));
 }
 
-function view(months: WorkoutMonths, filters: WorkoutFiltersState = emptyWorkoutFilters) {
+function view(
+  months: WorkoutMonths,
+  filters: DashboardWorkoutFilters = emptyWorkoutFilters,
+  overrides: Partial<Parameters<typeof DashboardWorkoutsView>[0]> = {},
+) {
   return createElement(DashboardWorkoutsView, {
     workoutMonths: months,
     displayWeightUnit: "LB" as const,
     filters,
+    ...overrides,
   });
 }
 
@@ -73,6 +78,26 @@ test("revealing older workouts mounts more months without losing the first", asy
   mounted.unmount();
 });
 
+test("requests the next server page after the loaded months are visible", async () => {
+  let loadCount = 0;
+  const mounted = await render(
+    view(buildMonths(1, 2), emptyWorkoutFilters, {
+      hasMore: true,
+      remainingCount: 3,
+      onLoadMore: () => {
+        loadCount += 1;
+      },
+    }),
+  );
+
+  const button = mounted.findByText("button", "Load 3 older workouts");
+  assert.ok(button, "expected a server-page load button");
+  await mounted.click(button);
+  assert.equal(loadCount, 1);
+
+  mounted.unmount();
+});
+
 test("a full history stays far below the unbounded element count", async () => {
   // Regression guard for the change that capped the rendered history: before
   // it, 15 months x 18 workouts mounted thousands of elements.
@@ -90,7 +115,10 @@ test("a full history stays far below the unbounded element count", async () => {
 test("filters search the whole history, not just the rendered slice", async () => {
   const months = buildMonths(8, 10);
   // "Ancient Leg Day" only exists in the oldest month, which is not rendered.
-  const filtered: WorkoutFiltersState = { ...emptyWorkoutFilters, titleQuery: "Ancient" };
+  const filtered: DashboardWorkoutFilters = {
+    ...emptyWorkoutFilters,
+    titleQuery: "Ancient",
+  };
   const mounted = await render(view(months, filtered));
 
   assert.match(
