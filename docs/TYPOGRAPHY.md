@@ -33,6 +33,19 @@ Use these as practical ranges, not a rigid token scale.
 | Section | `1rem` to `1.35rem` | Panel titles, exercise names, split-editor titles |
 | Display | `1.55rem` and up | Page titles, KPI numerics, public headings |
 
+## Landing Type Scale
+
+The public site (landing, research, papers, legal, changelog, auth) uses four roles. These are fixed roles, not a menu of interchangeable display styles.
+
+| Role | Desktop size / line height | Phone size / line height | Use |
+| --- | --- | --- | --- |
+| Navigation | `0.875rem / 1.25rem` | `0.8125rem / 1.125rem` | Header and footer links |
+| Action and body | `1rem / 1.5rem` | `0.9375rem / 1.40625rem` | Buttons and explanatory copy |
+| Product statement | `1.625rem / 2.03125rem` | `1.5234375rem / 1.9043rem` | The single hero heading |
+| Feature statement | `1.375rem / 1.7875rem` | `1.25rem / 1.625rem` | Section-leading product claims |
+
+Landing headings use regular weight. Scale comes from placement and negative space, not heavy weight or oversized display type. A section may contain a muted continuation within the same heading, but it does not receive a separate eyebrow label.
+
 ## Weight And Line Height
 
 - Product headings and numeric emphasis commonly use `font-[520]` to `font-[560]`.
@@ -50,7 +63,7 @@ Use these as practical ranges, not a rigid token scale.
 - `app/workouts/[workoutId]/workout-detail.styles.ts`: workout detail tables and action pills.
 - `app/exercises/[exerciseKey]/exercise-detail.styles.ts`: exercise history, charts, and session rows.
 - `app/components/ui/cards.tsx`, `display.tsx`, `link-button.tsx`: shared public primitives.
-- `app/research/page.styles.ts`: editorial research variant.
+- `app/research/index.module.css` and `app/components/public-article.module.css`: public research list and long-form article typography; content prose (`legal-*`) lives in `app/globals.css`.
 
 ## Known Drift
 

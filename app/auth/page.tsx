@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 import type { HTMLInputTypeAttribute } from "react";
 import { PasswordField } from "../components/password-field";
+import { PublicFooter, PublicHeader } from "../components/public-site";
 import { getSessionUser } from "@/lib/auth";
+import styles from "./auth.module.css";
+import landingStyles from "../landing.module.css";
 
 type Mode = "signin" | "register";
 type SearchParams = Promise<{ mode?: string; error?: string }>;
@@ -41,20 +43,12 @@ export default async function AuthPage({
   }
 
   return (
-    <main className="app-shell">
-      <section className="phone-stage auth-stage" aria-label="logit auth page">
-        <div className="content-stack">
-          <div className="auth-top-row">
-            <Link href="/" className="back-link" aria-label="Back">
-              <ArrowLeft
-                className="back-icon"
-                aria-hidden="true"
-                strokeWidth={1.9}
-              />
-            </Link>
-          </div>
+    <div className={`${styles.page} ${landingStyles.publicRoot}`}>
+      <PublicHeader />
 
-          <h1 className="title auth-title">
+      <main className={styles.main}>
+        <div className={styles.column}>
+          <h1 className={styles.title}>
             {mode === "register" ? "create account" : "sign in"}
           </h1>
 
@@ -91,8 +85,10 @@ export default async function AuthPage({
             .
           </p>
         </div>
-      </section>
-    </main>
+      </main>
+
+      <PublicFooter />
+    </div>
   );
 }
 

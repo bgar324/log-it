@@ -25,10 +25,17 @@ import { useSplitManagerState } from "./_hooks/use-split-manager-state";
 type SplitManagerProps = {
   initialSplit: WorkoutSplitTemplate;
   initialSplits: WorkoutSplitTemplate[];
+  persistChanges?: boolean;
 };
 
-export function SplitManager({ initialSplit, initialSplits }: SplitManagerProps) {
-  const state = useSplitManagerState(initialSplit, initialSplits);
+export function SplitManager({
+  initialSplit,
+  initialSplits,
+  persistChanges = true,
+}: SplitManagerProps) {
+  const state = useSplitManagerState(initialSplit, initialSplits, {
+    persistChanges,
+  });
   const [isReorderDaysOpen, setIsReorderDaysOpen] = useState(false);
 
   if (!state.selectedDay) {

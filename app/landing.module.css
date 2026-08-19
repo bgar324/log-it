@@ -1,0 +1,426 @@
+.publicRoot {
+  /* Landing system: every rule below derives from these values. */
+  --landing-bg: #14120b;
+  --landing-text: #edecec;
+  --landing-muted: #96958f;
+  --landing-border: rgba(237, 236, 236, 0.13);
+  --landing-border-subtle: rgba(237, 236, 236, 0.075);
+  --landing-control: #edecec;
+  --landing-control-text: #14120b;
+  --landing-control-secondary: #26241e;
+  --landing-container: 81.25rem;
+  --landing-gutter: 1.25rem;
+  --landing-header-height: 3.25rem;
+  --landing-radius-media: 0.25rem;
+  --landing-radius-control: 999px;
+  --landing-type-nav: 0.875rem;
+  --landing-type-body: 1rem;
+  --landing-type-statement: 1.625rem;
+  --landing-type-feature: 1.375rem;
+  --landing-control-height: 2.6875rem;
+  --landing-section-space: 7rem;
+}
+
+.landing {
+  min-height: 100dvh;
+  overflow: hidden;
+  overflow: clip;
+  background: var(--landing-bg);
+  color: var(--landing-text);
+  font-size: var(--landing-type-body);
+  letter-spacing: normal;
+}
+
+:global(:root[data-theme="light"]) .publicRoot {
+  --landing-bg: #f1f0eb;
+  --landing-text: #17150f;
+  --landing-muted: #74726b;
+  --landing-border: rgba(23, 21, 15, 0.14);
+  --landing-border-subtle: rgba(23, 21, 15, 0.075);
+  --landing-control: #17150f;
+  --landing-control-text: #f1f0eb;
+  --landing-control-secondary: #e2e0d8;
+}
+
+:global(:root[data-theme-transition="true"]) .publicRoot,
+:global(:root[data-theme-transition="true"]) .productFrame,
+:global(:root[data-theme-transition="true"]) .featureSurface {
+  transition:
+    background-color var(--theme-color-transition-duration)
+      var(--theme-color-transition-easing),
+    border-color var(--theme-color-transition-duration)
+      var(--theme-color-transition-easing),
+    color var(--theme-color-transition-duration)
+      var(--theme-color-transition-easing);
+}
+
+.siteHeader,
+.hero,
+.featureSection,
+.footer {
+  width: min(
+    calc(100% - (var(--landing-gutter) * 2)),
+    var(--landing-container)
+  );
+  margin-inline: auto;
+}
+
+.siteHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--landing-header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg);
+}
+.brandLink,
+.headerSignIn {
+  border-radius: 0.2rem;
+}
+.brandLink:focus-visible,
+.headerSignIn:focus-visible,
+.primaryAction:focus-visible,
+.headerCta:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.brandLink {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  color: var(--landing-text);
+  touch-action: manipulation;
+}
+
+.brand {
+  gap: 0.36rem;
+  color: var(--landing-text);
+}
+
+.brandText {
+  font-size: 1.12rem;
+  font-weight: 520;
+  letter-spacing: -0.03em;
+}
+
+.headerNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  color: var(--landing-text);
+  font-size: var(--landing-type-nav);
+}
+
+.headerNav a,
+.headerSignIn,
+.headerCta {
+  font-size: var(--landing-type-nav);
+  letter-spacing: normal;
+}
+
+.headerNav a {
+  min-height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.2rem;
+  color: var(--landing-muted);
+  transition: color 140ms ease;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.headerSignIn {
+  padding: 0.4rem;
+  color: var(--landing-text);
+  font-size: var(--landing-type-nav);
+  line-height: 1.25rem;
+  touch-action: manipulation;
+  transition: color 140ms ease;
+}
+
+.headerCta,
+.primaryAction {
+  border-radius: var(--landing-radius-control);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.28rem;
+  font-weight: 400;
+  touch-action: manipulation;
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.headerCta {
+  min-height: 1.75rem;
+  padding: 0.34rem 0.7rem;
+  border: 0;
+  background: var(--landing-control);
+  color: var(--landing-control-text);
+  font-size: var(--landing-type-nav);
+  line-height: 0.8125rem;
+}
+
+
+.hero {
+  padding-block: 7rem 4.2rem;
+}
+
+.heroCopy {
+  max-width: 41.125rem;
+}
+
+.heroTitle {
+  max-width: 28rem;
+  margin: 0;
+  text-wrap: balance;
+  font-size: var(--landing-type-statement);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.0125em;
+}
+
+.heroActions {
+  margin-top: 1.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.primaryAction {
+  min-height: var(--landing-control-height);
+  padding: 0.78rem 1.35rem 0.8rem;
+  font-size: var(--landing-type-body);
+  line-height: 1rem;
+  letter-spacing: normal;
+}
+
+.primaryAction {
+  border: 0;
+  background: var(--landing-control);
+  color: var(--landing-control-text);
+}
+
+
+.primaryAction svg {
+  width: 0.92rem;
+  height: 0.92rem;
+}
+
+.headerCta:active,
+.primaryAction:active {
+  transform: translateY(1px);
+}
+.productFrame {
+  position: relative;
+  height: clamp(40rem, 52vw, 46rem);
+  margin-top: 3.5rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--landing-radius-media);
+  background: #8a8175;
+}
+.productPreview,
+.featurePreview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color-scheme: light dark;
+}
+
+.productFrame:focus-within,
+.featureSurface:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.featureSection {
+  padding-block: var(--landing-section-space) 0;
+}
+
+.featureSection h2 {
+  max-width: 26rem;
+  margin: 0;
+  font-size: var(--landing-type-feature);
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.0125em;
+}
+
+.featureSection h2 span {
+  display: block;
+  color: var(--landing-muted);
+}
+
+.featureSurface {
+  height: clamp(40rem, 56vw, 47rem);
+  margin-top: 2.25rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--landing-radius-media);
+  background: #a9a49a;
+}
+
+.footer {
+  padding-block: 1.6rem 1.4rem;
+  border-top: 1px solid var(--landing-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.footerBrand {
+  color: var(--landing-text);
+}
+
+.footerBrandText {
+  font-size: 1.02rem;
+  font-weight: 520;
+  letter-spacing: -0.03em;
+}
+
+
+.footerTheme :global(.theme-toggle) {
+  border-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .headerNav a:hover {
+    color: var(--landing-text);
+  }
+
+  .headerSignIn:hover {
+    color: var(--landing-muted);
+  }
+
+  .headerCta:hover,
+  .primaryAction:hover {
+    background: color-mix(in srgb, var(--landing-control) 92%, transparent);
+  }
+}
+
+
+@media (max-width: 52rem) {
+  .publicRoot {
+    --landing-header-height: 3.5rem;
+    --landing-type-nav: 0.8125rem;
+    --landing-type-body: 0.9375rem;
+    --landing-type-statement: 1.5234375rem;
+    --landing-type-feature: 1.25rem;
+    --landing-control-height: 2.75rem;
+    --landing-section-space: 5.5rem;
+  }
+
+  .headerNav {
+    gap: 0.7rem;
+  }
+
+  .headerCta {
+    display: none;
+  }
+  .brandLink {
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+
+  .headerSignIn {
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+
+  .hero {
+    padding-block: 6.5rem 2.5rem;
+  }
+
+  .heroCopy {
+    max-width: 24rem;
+  }
+
+  .heroActions {
+    overflow: visible;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .primaryAction {
+    padding-inline: 1.35rem;
+    white-space: nowrap;
+  }
+
+  .productFrame {
+    height: 46rem;
+    margin-top: 3.2rem;
+  }
+
+  .featureSurface {
+    height: 46rem;
+    margin-top: 1.7rem;
+  }
+
+  .footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    row-gap: 0.9rem;
+  }
+
+  .footerTheme {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+@media (max-width: 28rem) {
+  .landing {
+    --landing-gutter: 1rem;
+  }
+
+  .brandText {
+    font-size: 1.04rem;
+  }
+
+  .heroTitle {
+    max-width: 22rem;
+  }
+
+  .heroActions {
+    margin-right: -4rem;
+  }
+
+  .productFrame {
+    margin-right: calc(var(--landing-gutter) * -1);
+  }
+
+  .featureSurface {
+    margin-right: calc(var(--landing-gutter) * -1);
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headerCta,
+  .primaryAction,
+  .headerNav a,
+  .headerSignIn {
+    transition: none;
+  }
+}

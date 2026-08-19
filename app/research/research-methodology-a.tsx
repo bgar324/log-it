@@ -4,7 +4,7 @@ export function ResearchMethodologyA() {
   return (
     <>
       <section className="legal-section">
-        <h3 className="legal-heading">1. Capped strength calculation</h3>
+        <h2 className="legal-heading">1. Capped strength calculation</h2>
         <p>
           Raw load and raw reps do not compare cleanly across nearby working sets. The model
           therefore converts each candidate set into a capped strength signal. This preserves
@@ -32,7 +32,7 @@ export function ResearchMethodologyA() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">2. Anchor set selection</h3>
+        <h2 className="legal-heading">2. Anchor set selection</h2>
         <p>
           Each historical session is reduced to one representative anchor working set.
           Because the product does not store explicit warmup flags, the implementation defines
@@ -57,7 +57,7 @@ export function ResearchMethodologyA() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">3. Recency weighting and baseline strength</h3>
+        <h2 className="legal-heading">3. Recency weighting and baseline strength</h2>
         <p>
           The engine looks at up to five recent anchors. More recent sessions matter more, but
           the weighting decays smoothly enough that one unusual day does not take over the
@@ -80,7 +80,7 @@ export function ResearchMethodologyA() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">4. Trend adjustment</h3>
+        <h2 className="legal-heading">4. Trend adjustment</h2>
         <p>
           The predictor includes only a mild trend term. Short-term strength behavior is
           noisy, so trend is allowed to nudge the anchor estimate rather than drive it. In the

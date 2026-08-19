@@ -6,16 +6,20 @@ import "./globals.css";
 const themeInitScript = `(() => {
   try {
     const storedTheme = window.localStorage.getItem("logit-theme");
-    const theme =
-      storedTheme === "light" || storedTheme === "dark"
+    const preference =
+      storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
         ? storedTheme
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
+        : "system";
+    const theme =
+      preference === "system"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
-          : "light";
+          : "light"
+        : preference;
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.colorScheme = theme;
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", theme === "dark" ? "#000000" : "#ffffff");
+    if (meta) meta.setAttribute("content", theme === "dark" ? "#14120b" : "#f1f0eb");
   } catch {
     document.documentElement.dataset.theme = "light";
     document.documentElement.dataset.colorScheme = "light";
@@ -48,7 +52,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#f1f0eb",
   colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,

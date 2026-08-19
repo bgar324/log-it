@@ -5,7 +5,7 @@ export function ResearchMethodologyB() {
   return (
     <>
       <section className="legal-section">
-        <h3 className="legal-heading">5. Recovery curve and the goldilocks window</h3>
+        <h2 className="legal-heading">5. Recovery curve and the goldilocks window</h2>
         <p>
           Recovery is not modeled as a linear reward for more time away from the lift. Very
           short gaps often imply residual fatigue. Very long gaps often imply some detraining
@@ -46,7 +46,7 @@ export function ResearchMethodologyB() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">6. Exercise position adjustment</h3>
+        <h2 className="legal-heading">6. Exercise position adjustment</h2>
         <p>
           The same exercise performed first is not directly comparable to the same exercise
           performed third. Position therefore enters the model as a relative adjustment
@@ -70,7 +70,7 @@ export function ResearchMethodologyB() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">7. Historical backoff profile</h3>
+        <h2 className="legal-heading">7. Historical backoff profile</h2>
         <p>
           The predictor does not solve every visible set from scratch. It predicts the anchor
           set first and then reconstructs later sets using the user&apos;s historical backoff
@@ -100,7 +100,7 @@ export function ResearchMethodologyB() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">8. Final anchor prediction</h3>
+        <h2 className="legal-heading">8. Final anchor prediction</h2>
         <p>
           The final anchor estimate is the weighted baseline after applying recovery,
           position, and trend adjustments. That strength estimate is then translated back into

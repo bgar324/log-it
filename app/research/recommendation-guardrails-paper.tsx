@@ -9,19 +9,17 @@ export const RECOMMENDATION_GUARDRAILS_TITLE = "recommendation guardrails";
 export const RECOMMENDATION_GUARDRAILS_UPDATED_AT = "Apr 22, 2026";
 export const RECOMMENDATION_GUARDRAILS_CATEGORY = "prediction system";
 export const RECOMMENDATION_GUARDRAILS_SUMMARY =
-  "A post-model safety layer that rounds targets to real gym increments, clamps movement around recent anchor sets, widens uncertainty when confidence is low, and keeps sparse-history outputs conservative.";
+  "A safety layer that rounds targets to real gym increments, clamps them to recent anchors, and widens ranges when confidence is low.";
 
 export function RecommendationGuardrailsPaper({
   id,
 }: RecommendationGuardrailsPaperProps) {
   return (
     <article id={id} className={`legal-section ${styles.paper}`}>
-      <h2 className={styles.paperTitle}>{RECOMMENDATION_GUARDRAILS_TITLE}</h2>
-      <p>{RECOMMENDATION_GUARDRAILS_SUMMARY}</p>
 
       <div className={styles.sectionList}>
         <section className="legal-section">
-          <h3 className="legal-heading">Why guardrails exist</h3>
+          <h2 className="legal-heading">Why guardrails exist</h2>
           <p>
             The predictor does not send its raw output straight into the logger. logit adds a
             second layer whose job is not to be clever, but to keep recommendations within a
@@ -35,7 +33,7 @@ export function RecommendationGuardrailsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">1. Gym-increment rounding</h3>
+          <h2 className="legal-heading">1. Gym-increment rounding</h2>
           <p>
             Every weighted recommendation is snapped to the increment the user can actually load
             in the gym. In logit that increment is five pounds in pound mode and 2.5 kilograms
@@ -62,7 +60,7 @@ export function RecommendationGuardrailsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">2. Anchor clamp around recent reality</h3>
+          <h2 className="legal-heading">2. Anchor clamp around recent reality</h2>
           <p>
             After rounding, the anchor recommendation is still not free to drift arbitrarily.
             Upward movement is limited to one increment above the most recent anchor. Downward
@@ -87,7 +85,7 @@ export function RecommendationGuardrailsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">3. Later-set shape constraints</h3>
+          <h2 className="legal-heading">3. Later-set shape constraints</h2>
           <p>
             Later visible sets are rebuilt from the anchor prediction using historical median
             backoff ratios and rep deltas. If a stable historical profile is missing, logit uses
@@ -126,7 +124,7 @@ export function RecommendationGuardrailsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">4. Confidence-linked uncertainty bands</h3>
+          <h2 className="legal-heading">4. Confidence-linked uncertainty bands</h2>
           <p>
             The surfaced recommendation is not just a single number. logit also shows a rep
             range whose width depends on the confidence label. Low confidence gets a wider band;
@@ -147,7 +145,7 @@ export function RecommendationGuardrailsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">5. Conservative ceilings for sparse and bodyweight history</h3>
+          <h2 className="legal-heading">5. Conservative ceilings for sparse and bodyweight history</h2>
           <p>
             Some limits sit above the numeric score itself. A prediction based on only one
             matching session is always labeled low confidence, even if the raw score would have

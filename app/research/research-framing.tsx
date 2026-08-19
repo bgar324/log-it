@@ -4,7 +4,7 @@ export function ResearchFraming() {
   return (
     <>
       <section className="legal-section">
-        <h3 className="legal-heading">Confidence scoring</h3>
+        <h2 className="legal-heading">Confidence scoring</h2>
         <p>
           A recommendation without confidence invites false precision. The model therefore
           scores the output using four dimensions: history depth, internal consistency of
@@ -36,7 +36,7 @@ export function ResearchFraming() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">Limitations and product framing</h3>
+        <h2 className="legal-heading">Limitations and product framing</h2>
         <p>
           The predictor is intentionally narrow. It performs best when the user is repeating
           a familiar exercise with somewhat stable logging patterns. It becomes less certain

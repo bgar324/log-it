@@ -15,6 +15,7 @@ type UseSplitManagerPersistenceOptions = {
   setSplit: Dispatch<SetStateAction<WorkoutSplitTemplate>>;
   setSplits: Dispatch<SetStateAction<WorkoutSplitTemplate[]>>;
   clearAllExerciseSuggestions: () => void;
+  persistChanges: boolean;
 };
 
 export function useSplitManagerPersistence({
@@ -22,6 +23,7 @@ export function useSplitManagerPersistence({
   setSplit,
   setSplits,
   clearAllExerciseSuggestions,
+  persistChanges,
 }: UseSplitManagerPersistenceOptions) {
   const router = useRouter();
   const [saveState, setSaveState] = useState<SplitManagerSaveState>({
@@ -29,6 +31,11 @@ export function useSplitManagerPersistence({
   });
 
   async function handleSave() {
+    if (!persistChanges) {
+      toast.message("Changes stay in this preview and are not saved.");
+      return;
+    }
+
     const toastId = toast.loading("Saving split...");
     setSaveState({ kind: "saving" });
 
@@ -54,6 +61,11 @@ export function useSplitManagerPersistence({
   }
 
   async function handleCopySplit() {
+    if (!persistChanges) {
+      toast.message("Copying splits is disabled in this preview.");
+      return;
+    }
+
     const toastId = toast.loading("Copying split...");
 
     try {

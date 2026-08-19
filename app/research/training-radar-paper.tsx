@@ -47,7 +47,6 @@ const axisDefinitions = [
 export function TrainingRadarPaper({ id }: TrainingRadarPaperProps) {
   return (
     <article id={id} className={`legal-section ${styles.paper}`}>
-      <h2 className={styles.paperTitle}>{TRAINING_RADAR_TITLE}</h2>
 
       <div className={styles.sectionList}>
         <section className="legal-section">
@@ -60,7 +59,7 @@ export function TrainingRadarPaper({ id }: TrainingRadarPaperProps) {
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">1. Axis definitions</h3>
+          <h2 className="legal-heading">1. Axis definitions</h2>
           <div className={styles.tableWrap}>
             <table className={styles.definitionTable}>
               <thead>
@@ -84,7 +83,7 @@ export function TrainingRadarPaper({ id }: TrainingRadarPaperProps) {
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">2. Normalization</h3>
+          <h2 className="legal-heading">2. Normalization</h2>
           <p className={styles.pageIntro}>
             Every axis is rounded to the nearest whole number and clamped between 0 and 12.
             This keeps the chart stable and comparable while avoiding false precision. Values
@@ -93,7 +92,7 @@ export function TrainingRadarPaper({ id }: TrainingRadarPaperProps) {
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">3. Recent-window metrics</h3>
+          <h2 className="legal-heading">3. Recent-window metrics</h2>
           <p className={styles.pageIntro}>
             Frequency and volume use the most recent eight Monday-first training weeks. That
             keeps those axes responsive to current behavior without erasing longer history for
@@ -102,7 +101,7 @@ export function TrainingRadarPaper({ id }: TrainingRadarPaperProps) {
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">4. Profile consistency</h3>
+          <h2 className="legal-heading">4. Profile consistency</h2>
           <p className={styles.pageIntro}>
             Consistency is a profile-level attendance ratio. logit counts how many distinct
             calendar days have at least one logged workout, then compares that against the number

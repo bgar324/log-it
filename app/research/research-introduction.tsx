@@ -4,7 +4,7 @@ export function ResearchIntroduction() {
   return (
     <>
       <section className="legal-section">
-        <h3 className="legal-heading">Introduction / overview</h3>
+        <h2 className="legal-heading">Introduction / overview</h2>
         <p>
           The Scored Heuristic Predictor exists to answer a narrow but persistent product
           question inside workout logging: <em>what is the most credible working-set starting
@@ -26,7 +26,7 @@ export function ResearchIntroduction() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">Why naive prediction is not enough</h3>
+        <h2 className="legal-heading">Why naive prediction is not enough</h2>
         <p>
           Simple rules are appealing because they are legible, but they collapse different
           training conditions into a single shortcut. &quot;Repeat last time&quot; treats the
@@ -57,7 +57,7 @@ export function ResearchIntroduction() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">Why the system is heuristic-based</h3>
+        <h2 className="legal-heading">Why the system is heuristic-based</h2>
         <p>
           The predictor is heuristic on purpose because the underlying workout data is useful
           but materially incomplete. logit observes the exercise match, set order, reps, load,
@@ -80,7 +80,7 @@ export function ResearchIntroduction() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">Inputs used by the model</h3>
+        <h2 className="legal-heading">Inputs used by the model</h2>
         <div className={styles.inputRows}>
           <div className={styles.inputRow}>
             <span className={styles.inputKey}>01</span>
@@ -124,7 +124,7 @@ export function ResearchIntroduction() {
       </section>
 
       <section className="legal-section">
-        <h3 className="legal-heading">Core notation</h3>
+        <h2 className="legal-heading">Core notation</h2>
         <div className={styles.notationGrid}>
           <div className={styles.notationRow}>
             <span className={styles.notationSymbol}>

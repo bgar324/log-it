@@ -1,19 +1,15 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { PublicArticleShell } from "@/app/components/public-article";
+
+export const metadata = {
+  title: "Changelog — Logit",
+};
 
 export default function ChangelogPage() {
   return (
-    <main className="app-shell">
-      <section className="phone-stage legal-stage" aria-label="logit changelog">
-        <div className="content-stack legal-stack">
-          <div className="auth-top-row">
-            <Link href="/" className="back-link" aria-label="Back">
-              <ArrowLeft className="back-icon" aria-hidden="true" strokeWidth={1.9} />
-            </Link>
-          </div>
-
-          <h1 className="title legal-title">changelog</h1>
-
+    <PublicArticleShell
+      ariaLabel="logit changelog"
+      title="changelog"
+    >
           <article className="changelog-entry">
             <h2 className="changelog-date">August 12, 2026</h2>
 
@@ -257,8 +253,6 @@ export default function ChangelogPage() {
               </ul>
             </div>
           </article>
-        </div>
-      </section>
-    </main>
+    </PublicArticleShell>
   );
 }

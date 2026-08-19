@@ -5,7 +5,7 @@ import { useEffect } from "react";
 const THEME_CHANGE_EVENT = "logit-theme-change";
 
 function themeColorFor(theme: string | undefined) {
-  return theme === "dark" ? "#000000" : "#ffffff";
+  return theme === "dark" ? "#14120b" : "#f1f0eb";
 }
 
 export function PwaClient() {

@@ -9,19 +9,17 @@ export const DASHBOARD_METRIC_DEFINITIONS_TITLE = "dashboard metric definitions"
 export const DASHBOARD_METRIC_DEFINITIONS_UPDATED_AT = "Apr 22, 2026";
 export const DASHBOARD_METRIC_DEFINITIONS_CATEGORY = "dashboard metrics";
 export const DASHBOARD_METRIC_DEFINITIONS_SUMMARY =
-  "A definitions paper for workout counts, month change, exercise summaries, weekly trends, personal bests, and total lifted volume as they are computed inside logit today.";
+  "A definitions paper for workout counts, month change, weekly trends, personal bests, and total lifted volume as computed inside logit today.";
 
 export function DashboardMetricDefinitionsPaper({
   id,
 }: DashboardMetricDefinitionsPaperProps) {
   return (
     <article id={id} className={`legal-section ${styles.paper}`}>
-      <h2 className={styles.paperTitle}>{DASHBOARD_METRIC_DEFINITIONS_TITLE}</h2>
-      <p>{DASHBOARD_METRIC_DEFINITIONS_SUMMARY}</p>
 
       <div className={styles.sectionList}>
         <section className="legal-section">
-          <h3 className="legal-heading">What the dashboard is measuring</h3>
+          <h2 className="legal-heading">What the dashboard is measuring</h2>
           <p>
             The dashboard is a rollup layer over logged workouts, not a hidden training-score
             engine. Most metrics come from simple date and exercise aggregations that are meant
@@ -36,7 +34,7 @@ export function DashboardMetricDefinitionsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">1. Workout counts and reporting windows</h3>
+          <h2 className="legal-heading">1. Workout counts and reporting windows</h2>
           <p>
             Workout counts are built from day-level aggregates keyed by each workout&apos;s
             performed date. Weekly and monthly summaries are then computed by summing those day
@@ -62,7 +60,7 @@ export function DashboardMetricDefinitionsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">2. Month change</h3>
+          <h2 className="legal-heading">2. Month change</h2>
           <p>
             Month change is a relative comparison between workouts logged this month and workouts
             logged in the previous month. When the previous month has no workouts, logit avoids a
@@ -83,7 +81,7 @@ export function DashboardMetricDefinitionsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">3. Exercise summary records</h3>
+          <h2 className="legal-heading">3. Exercise summary records</h2>
           <p>
             Progress and overview views both depend on compressed exercise summaries. These are
             built by grouping normalized exercise history and then counting unique workout
@@ -139,7 +137,7 @@ export function DashboardMetricDefinitionsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">4. Progress-series metrics</h3>
+          <h2 className="legal-heading">4. Progress-series metrics</h2>
           <p>
             The progress view compresses the last twelve Monday-start weeks into a small time
             series. For each week, it records the number of workouts and the sum of logged
@@ -166,7 +164,7 @@ export function DashboardMetricDefinitionsPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">5. Personal bests are literal logged bests</h3>
+          <h2 className="legal-heading">5. Personal bests are literal logged bests</h2>
           <p>
             Personal best cards are selected by sorting exercises on their best logged load and
             taking the top five. That keeps the definition honest: the card shows the heaviest

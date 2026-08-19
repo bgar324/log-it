@@ -1,0 +1,67 @@
+.viewport {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Per-section backdrops: public-domain abstract paintings
+   (Kandinsky, Kandinsky, Marc) served locally from /public/art.
+   Fixed imagery in both themes; the app screen floats on top. */
+.viewportDashboard {
+  background: #8a8175 url("/art/preview-dashboard.webp") center / cover
+    no-repeat;
+}
+
+.viewportSplit {
+  background: #7d8579 url("/art/preview-split.webp") center / cover no-repeat;
+}
+
+.viewportProgress {
+  background: #8c7d73 url("/art/preview-progress.webp") center / cover
+    no-repeat;
+}
+.frame {
+  height: 100%;
+  padding: clamp(0.85rem, 4.5%, 1.5rem);
+}
+
+.screen {
+  --dashboard-border: color-mix(in srgb, var(--text) 12%, transparent);
+  --dashboard-border-strong: color-mix(in srgb, var(--text) 18%, transparent);
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.86rem;
+  padding: 0.96rem 0.82rem 1.2rem;
+  overflow: hidden;
+  border: 1px solid rgba(20, 18, 11, 0.3);
+  border-radius: 0.9rem;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 1.4rem 3.2rem rgba(20, 18, 11, 0.32);
+}
+
+/* Crop, never compress: children keep their natural height like the
+   scrolling dashboard does, and the frame clips the overflow. */
+.screen > * {
+  flex-shrink: 0;
+}
+
+.screenSplit {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  padding: 0.9rem;
+}
+
+@media (max-width: 30rem) {
+  .frame {
+    padding: 0.7rem;
+  }
+
+  .screen {
+    border-radius: 0.7rem;
+  }
+}

@@ -50,10 +50,16 @@ export type SplitManagerState = {
   handleCopySplit: () => Promise<void>;
 };
 
+type UseSplitManagerStateOptions = {
+  persistChanges?: boolean;
+};
+
 export function useSplitManagerState(
   initialSplit: WorkoutSplitTemplate,
   initialSplits: WorkoutSplitTemplate[],
+  options: UseSplitManagerStateOptions = {},
 ): SplitManagerState {
+  const persistChanges = options.persistChanges ?? true;
   const router = useRouter();
   const [mutationState, setMutationState] = useState<SplitManagerSaveState>({
     kind: "idle",
@@ -118,6 +124,7 @@ export function useSplitManagerState(
     setSplit,
     setSplits,
     clearAllExerciseSuggestions,
+    persistChanges,
   });
 
   useEffect(() => {
@@ -130,6 +137,11 @@ export function useSplitManagerState(
   }
 
   async function createSplit() {
+    if (!persistChanges) {
+      toast.message("Creating splits is disabled in this preview.");
+      return;
+    }
+
     if (mutationState.kind === "saving" || persistence.saveState.kind === "saving") {
       return;
     }
@@ -153,6 +165,11 @@ export function useSplitManagerState(
   }
 
   async function deleteSplit(splitId: string) {
+    if (!persistChanges) {
+      toast.message("Deleting splits is disabled in this preview.");
+      return;
+    }
+
     if (mutationState.kind === "saving" || persistence.saveState.kind === "saving") {
       return;
     }
@@ -189,6 +206,11 @@ export function useSplitManagerState(
   }
 
   async function activateSplit(splitId: string) {
+    if (!persistChanges) {
+      toast.message("Changing the active split is disabled in this preview.");
+      return;
+    }
+
     if (mutationState.kind === "saving" || persistence.saveState.kind === "saving") {
       return;
     }

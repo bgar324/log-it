@@ -1,0 +1,125 @@
+.page {
+  min-height: 100dvh;
+  overflow: hidden;
+  overflow: clip;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.main {
+  width: min(calc(100% - 2.5rem), 81.25rem);
+  margin-inline: auto;
+  padding-block: 3rem 7rem;
+}
+
+.title {
+  margin: 0 0 1.4rem;
+  font-size: 0.92rem;
+  font-weight: 520;
+  letter-spacing: -0.01em;
+  color: color-mix(in srgb, var(--text) 62%, var(--muted));
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 1.1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  margin: 0;
+  display: flex;
+}
+
+.card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 0.7rem;
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.art {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  background: var(--surface);
+}
+
+.art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1rem 1.1rem;
+}
+
+.name {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.summary {
+  margin: 0;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
+  font-size: 0.87rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tags {
+  margin-top: auto;
+  padding-top: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0.28rem 0.62rem;
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--text) 76%, var(--muted));
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 44rem) {
+  .main {
+    width: min(calc(100% - 2rem), 81.25rem);
+    padding-block: 2rem 5.5rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

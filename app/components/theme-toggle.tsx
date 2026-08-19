@@ -1,18 +1,43 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 
 export type Theme = "light" | "dark";
+export type ThemePreference = "light" | "dark" | "system";
 const THEME_CHANGE_EVENT = "logit-theme-change";
 const THEME_TRANSITION_ATTRIBUTE = "data-theme-transition";
 const COLOR_SCHEME_ATTRIBUTE = "data-color-scheme";
+const THEME_STORAGE_KEY = "logit-theme";
 const THEME_TRANSITION_DURATION_MS = 280;
 
 let themeTransitionCleanupTimer: number | undefined;
 let themeTransitionFrameOne: number | undefined;
 let themeTransitionFrameTwo: number | undefined;
 let requestedTheme: Theme | undefined;
+
+function resolveTheme(preference: ThemePreference): Theme {
+  if (preference === "light" || preference === "dark") {
+    return preference;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+function readStoredPreference(): ThemePreference {
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (
+    storedTheme === "light" ||
+    storedTheme === "dark" ||
+    storedTheme === "system"
+  ) {
+    return storedTheme;
+  }
+
+  return "system";
+}
 
 function readCurrentTheme(): Theme {
   if (requestedTheme === "dark" || requestedTheme === "light") {
@@ -24,14 +49,7 @@ function readCurrentTheme(): Theme {
     return domTheme;
   }
 
-  const storedTheme = window.localStorage.getItem("logit-theme");
-  if (storedTheme === "dark" || storedTheme === "light") {
-    return storedTheme;
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return resolveTheme(readStoredPreference());
 }
 
 function commitTheme(theme: Theme) {
@@ -39,7 +57,6 @@ function commitTheme(theme: Theme) {
 
   requestedTheme = theme;
   root.dataset.theme = theme;
-  window.localStorage.setItem("logit-theme", theme);
   window.dispatchEvent(
     new CustomEvent<Theme>(THEME_CHANGE_EVENT, {
       detail: theme,
@@ -91,6 +108,11 @@ function applyTheme(theme: Theme) {
   });
 }
 
+function applyPreference(preference: ThemePreference) {
+  window.localStorage.setItem(THEME_STORAGE_KEY, preference);
+  applyTheme(resolveTheme(preference));
+}
+
 export function useThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
 
@@ -121,38 +143,70 @@ export function useThemeToggle() {
   const toggleTheme = useCallback(() => {
     const current = readCurrentTheme();
     const nextTheme = current === "dark" ? "light" : "dark";
-    applyTheme(nextTheme);
+    applyPreference(nextTheme);
     setTheme(nextTheme);
   }, []);
 
   return { theme, toggleTheme };
 }
 
+const THEME_OPTIONS: Array<{
+  preference: ThemePreference;
+  label: string;
+  Icon: typeof Sun;
+}> = [
+  { preference: "system", label: "System theme", Icon: Monitor },
+  { preference: "light", label: "Light theme", Icon: Sun },
+  { preference: "dark", label: "Dark theme", Icon: Moon },
+];
+
 export function ThemeToggle() {
-  const { theme, toggleTheme } = useThemeToggle();
+  const [preference, setPreference] = useState<ThemePreference>("system");
+
+  useLayoutEffect(() => {
+    function syncPreference() {
+      setPreference(readStoredPreference());
+    }
+
+    function handleThemeChange() {
+      syncPreference();
+    }
+
+    syncPreference();
+    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    function handleSystemChange() {
+      if (readStoredPreference() === "system") {
+        applyTheme(resolveTheme("system"));
+      }
+    }
+    mediaQuery.addEventListener("change", handleSystemChange);
+
+    return () => {
+      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+      mediaQuery.removeEventListener("change", handleSystemChange);
+    };
+  }, []);
 
   return (
-    <button
-      type="button"
-      className="theme-icon-toggle"
-      onClick={toggleTheme}
-      aria-label="Toggle color theme"
-      aria-pressed={theme === "dark"}
-    >
-      <span
-        className="theme-toggle-slot theme-toggle-slot-sun"
-        data-active={theme === "light"}
-        aria-hidden="true"
-      >
-        <Sun className="theme-toggle-icon" strokeWidth={1.8} />
-      </span>
-      <span
-        className="theme-toggle-slot theme-toggle-slot-moon"
-        data-active={theme === "dark"}
-        aria-hidden="true"
-      >
-        <Moon className="theme-toggle-icon" strokeWidth={1.8} />
-      </span>
-    </button>
+    <div className="theme-toggle" role="group" aria-label="Color theme">
+      {THEME_OPTIONS.map(({ preference: option, label, Icon }) => (
+        <button
+          key={option}
+          type="button"
+          className="theme-toggle-option"
+          onClick={() => {
+            setPreference(option);
+            applyPreference(option);
+          }}
+          aria-label={label}
+          aria-pressed={preference === option}
+          data-active={preference === option}
+        >
+          <Icon aria-hidden="true" strokeWidth={1.8} />
+        </button>
+      ))}
+    </div>
   );
 }

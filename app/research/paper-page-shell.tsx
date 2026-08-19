@@ -1,36 +1,35 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
-import { BackButton } from "../components/back-button";
+import { PublicArticleShell } from "@/app/components/public-article";
 
 type ResearchPaperPageShellProps = {
   ariaLabel: string;
+  title: string;
+  category: string;
+  updatedAt: string;
+  art: string;
+  lede?: string;
   children: ReactNode;
 };
 
 export function ResearchPaperPageShell({
   ariaLabel,
+  title,
+  category,
+  updatedAt,
+  art,
+  lede,
   children,
 }: ResearchPaperPageShellProps) {
   return (
-    <main className="app-shell">
-      <section className="phone-stage legal-stage" aria-label={ariaLabel}>
-        <div className="content-stack legal-stack">
-          <div className="auth-top-row">
-            <BackButton
-              fallbackHref="/research"
-              label="Back"
-              className="back-link"
-              iconClassName="back-icon"
-              showLabel={false}
-            />
-          </div>
-
-          <Link href="/research" aria-label="View all research papers">
-            <h1 className="title legal-title">research</h1>
-          </Link>
-          {children}
-        </div>
-      </section>
-    </main>
+    <PublicArticleShell
+      ariaLabel={ariaLabel}
+      title={title}
+      kicker={category}
+      date={`Updated ${updatedAt}`}
+      art={art}
+      lede={lede}
+    >
+      {children}
+    </PublicArticleShell>
   );
 }

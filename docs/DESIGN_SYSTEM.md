@@ -26,7 +26,7 @@ Logit uses a restrained monochrome product UI. The working surfaces are dense, d
 - Workout detail: `app/workouts/[workoutId]/workout-detail.styles.ts`.
 - Exercise detail: `app/exercises/[exerciseKey]/exercise-detail.styles.ts`.
 - Public profiles: `app/u/[username]/public-profile.styles.ts`.
-- Research/editorial pages: `app/research/page.styles.ts`.
+- Research/editorial pages: shared article shell in `app/components/public-article.tsx`; content classes (`legal-*`, `changelog-*`) live in `app/globals.css`.
 
 ## Visual Language
 
@@ -39,6 +39,20 @@ Logit uses a restrained monochrome product UI. The working surfaces are dense, d
 - Focus states should be visible through `focus-visible` styles using `--focus-ring`.
 - Motion is subtle: short color/border transitions, small active translate movement, and short enter/exit animations for modal overlays.
 - Dashboard and logger layouts are responsive, with mobile-specific touch targets and compact desktop density.
+
+## Public Landing System
+
+All public pages (landing, research, papers, legal, changelog, auth) share one chrome: `PublicHeader`/`PublicFooter` from `app/components/public-site.tsx`. The landing page uses a deliberately small system derived from the product UI rather than a separate marketing language.
+
+- **Container:** `81.25rem` maximum width with `1.25rem` minimum side gutters. At `1440px`, this yields the `1300px` working width used by the hero and product frame.
+- **Header:** `3.25rem` tall on desktop and `3.5rem` on phones. Navigation is quiet, single-line, and secondary to the product statement.
+- **Vertical rhythm:** hero content begins `7rem` below the header; actions sit `1.375rem` below the statement; the product frame follows after `3.5rem`. Major sections use `7rem` to `8rem` of vertical separation rather than decorative dividers or filler.
+- **Controls:** primary landing actions are `2.6875rem` tall on desktop and at least `2.75rem` on touch devices, use `1rem` text at regular weight, `1.35rem` inline padding, and a pill radius. Header actions use the same shape at a smaller scale.
+- **Surfaces:** each landing preview renders a public-domain abstract painting backdrop inside its frame (Kandinsky's *Improvisation No. 30* for the dashboard, *Painting with Green Center* for the split planner, Marc's *Fighting Forms* for progress; served optimized from `public/art/`) with the app screen floating as an inset card on equal padding, a `0.25rem`-radius outer frame, and no frame border. Backdrops are fixed across themes; only the floating screen follows the app theme.
+- **Color:** landing colors are warm near-black/near-white neutrals. Accent colors are reserved for real product state, not marketing decoration.
+- **Copy:** one declarative product statement leads each section. Do not add eyebrow labels, reassurance strips, feature numbers, slogans split across oversized lines, or generic trust copy. Actions use direct verbs.
+
+Public tokens (`--landing-*`) live on the shared `.publicRoot` class at the top of `app/landing.module.css`; every public page root applies it, and every public rule derives from those properties. Long-form public pages (papers, legal, changelog) use `PublicArticleShell` with a `46rem` article column.
 
 ## Component Conventions
 

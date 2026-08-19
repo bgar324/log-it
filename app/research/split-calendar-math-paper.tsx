@@ -9,19 +9,17 @@ export const SPLIT_CALENDAR_MATH_TITLE = "split and calendar math";
 export const SPLIT_CALENDAR_MATH_UPDATED_AT = "Apr 22, 2026";
 export const SPLIT_CALENDAR_MATH_CATEGORY = "scheduling model";
 export const SPLIT_CALENDAR_MATH_SUMMARY =
-  "A paper on logit’s date model: why workout dates are stored as normalized day values, how Pacific time defines today, how Monday-first weeks and month grids are built, and how split templates become enforceable schedules.";
+  "How logit stores workout dates as normalized day values, defines today in Pacific time, and builds Monday-first weeks and month grids.";
 
 export function SplitCalendarMathPaper({
   id,
 }: SplitCalendarMathPaperProps) {
   return (
     <article id={id} className={`legal-section ${styles.paper}`}>
-      <h2 className={styles.paperTitle}>{SPLIT_CALENDAR_MATH_TITLE}</h2>
-      <p>{SPLIT_CALENDAR_MATH_SUMMARY}</p>
 
       <div className={styles.sectionList}>
         <section className="legal-section">
-          <h3 className="legal-heading">1. Date-only storage without timezone drift</h3>
+          <h2 className="legal-heading">1. Date-only storage without timezone drift</h2>
           <p>
             logit treats workout dates as calendar facts rather than timestamp moments. To keep a
             date stable across parsing, formatting, and timezone transitions, the stored date is
@@ -45,7 +43,7 @@ export function SplitCalendarMathPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">2. Pacific &quot;today&quot; and parsed inputs</h3>
+          <h2 className="legal-heading">2. Pacific &quot;today&quot; and parsed inputs</h2>
           <p>
             The app defines today from the Pacific calendar, not from the user&apos;s machine
             locale and not from UTC midnight. This keeps daily scheduling aligned with the
@@ -68,7 +66,7 @@ export function SplitCalendarMathPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">3. Monday-first week and month-grid construction</h3>
+          <h2 className="legal-heading">3. Monday-first week and month-grid construction</h2>
           <p>
             Weeks start on Monday throughout the product. The dashboard&apos;s weekly summaries and
             the calendar grid both derive their start point from the same Monday-first rule.
@@ -94,7 +92,7 @@ export function SplitCalendarMathPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">4. Split normalization and weekday integrity</h3>
+          <h2 className="legal-heading">4. Split normalization and weekday integrity</h2>
           <p>
             A split is never stored as a partial or ambiguously ordered week. Incoming split
             payloads are normalized into a complete Monday-through-Sunday template. Missing days
@@ -129,7 +127,7 @@ export function SplitCalendarMathPaper({
         </section>
 
         <section className="legal-section">
-          <h3 className="legal-heading">5. Rest-day enforcement and preload logic</h3>
+          <h2 className="legal-heading">5. Rest-day enforcement and preload logic</h2>
           <p>
             Once the split is normalized, it becomes actionable. If the selected day is a rest
             day, the logger is disabled for that date and workout creation is rejected. If the day
