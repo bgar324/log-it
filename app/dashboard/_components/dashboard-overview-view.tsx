@@ -1,258 +1,135 @@
-import { Check, Moon, Plus } from "lucide-react";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
-import type { DashboardClientData } from "../dashboard-types";
-import { WEEKDAY_CHIPS } from "../dashboard-client.shared";
+import type { DashboardClientData, DashboardView } from "../dashboard-types";
+import { countLabel } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
-import type { DashboardCalendarState } from "../_hooks/use-dashboard-calendar";
-import { DashboardMetricHeader } from "./dashboard-metric-header";
-import { DashboardWorkoutList } from "./dashboard-workout-list";
+
+type TodayPlan = DashboardClientData["overview"]["todayPlan"];
 
 type DashboardOverviewViewProps = {
   overview: DashboardClientData["overview"];
-  recentSessions: DashboardClientData["workouts"];
-  todayPlan: DashboardClientData["overview"]["todayPlan"];
+  todayPlan: TodayPlan;
+  greetingName: string;
   weightUnit: WeightUnit;
-  calendar: DashboardCalendarState;
+  onNavigateToView: (view: DashboardView) => void;
 };
+
+// The plan is a sentence, not a metric. Split day names are user-authored, so
+// they are used verbatim rather than bent into grammar we cannot guarantee.
+function planSentence(todayPlan: TodayPlan) {
+  if (todayPlan.isRestDay) {
+    return "Today is a rest day.";
+  }
+
+  if (todayPlan.workoutTypeSlug === null) {
+    return todayPlan.workoutType === "No split"
+      ? "You have not set a split yet."
+      : "Today's plan is unavailable.";
+  }
+
+  return `Today is ${todayPlan.workoutType}.`;
+}
 
 export function DashboardOverviewView({
   overview,
-  recentSessions,
   todayPlan,
+  greetingName,
   weightUnit,
-  calendar,
+  onNavigateToView,
 }: DashboardOverviewViewProps) {
-  function formatWeight(value: number) {
-    return formatWeightWithUnit(value, weightUnit);
-  }
+  const hasSplit = todayPlan.workoutTypeSlug !== null;
+  const actionLabel =
+    hasSplit && !todayPlan.isRestDay && todayPlan.workoutType.length <= 16
+      ? `Log ${todayPlan.workoutType}`
+      : "Log a workout";
 
   return (
     <>
-      <section className={`${styles.kpiGrid} ${styles.dashboardKpiGrid}`} aria-label="Overview stats">
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>Total workouts</p>
-          <p className={styles.kpiValue}>{overview.totalWorkouts}</p>
-          {overview.monthChange !== 0 ? (
-            <p
-              className={`${styles.kpiMeta} ${
-                overview.monthChange > 0 ? styles.kpiDeltaUp : styles.kpiDeltaDown
-              }`}
-            >
-              {overview.monthChange > 0 ? "+" : ""}
-              {Math.round(overview.monthChange)}% vs last month
-            </p>
-          ) : null}
-        </article>
+      <section className={styles.today} aria-label="Today">
+        <p className={styles.todayGreeting}>Hi, {greetingName}.</p>
+        <h2 className={styles.todayPlan}>{planSentence(todayPlan)}</h2>
+        <p className={styles.todayNote}>{todayPlan.subtitle}</p>
 
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>This week</p>
-          <p className={styles.kpiValue}>{overview.workoutsThisWeek}</p>
-          <div className={styles.inlineBars} aria-hidden="true">
-            {overview.weeklyBars.map((bar) => (
-              <span
-                key={bar.label}
-                className={styles.inlineBar}
-                style={{ height: `${8 + bar.count * 6}px` }}
-              />
-            ))}
-          </div>
-          <p className={styles.kpiMeta}>
-            {overview.streak.currentWeeks > 0
-              ? `${overview.streak.currentWeeks}-week streak`
-              : "No active streak"}
-            {overview.streak.bestWeeks > 1 ? ` · best ${overview.streak.bestWeeks}` : ""}
-          </p>
-        </article>
-
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>Exercises logged</p>
-          <p className={styles.kpiValue}>{overview.totalExercises}</p>
-        </article>
-
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>Sets tracked</p>
-          <p className={styles.kpiValue}>{overview.totalSets}</p>
-        </article>
-
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>Today</p>
-          <p className={styles.kpiValue}>{todayPlan.workoutType}</p>
-        </article>
-
-        {todayPlan.isLoggedToday ? (
-          <div className={`${styles.kpiCard} ${styles.kpiActionCard} ${styles.kpiActionCardLogged}`}>
-            <Check className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
-            <span className={styles.kpiActionText}>Logged!</span>
-          </div>
-        ) : todayPlan.isRestDay ? (
-          <Link
-            href="/workouts/new"
-            className={`relative ${styles.kpiCard} ${styles.kpiActionCard}`}
-            aria-label="Rest day options"
-          >
-            <Moon className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
-            <span className={styles.kpiActionText}>Rest day</span>
-            <LinkPendingOverlay />
-          </Link>
-        ) : (
-          <Link
-            href="/workouts/new"
-            className={`relative ${styles.kpiCard} ${styles.kpiActionCard}`}
-            aria-label="Log workout"
-          >
-            <Plus className={styles.kpiActionIcon} aria-hidden={true} strokeWidth={1.9} />
-            <span className={styles.kpiActionText}>Log workout</span>
-            <LinkPendingOverlay />
-          </Link>
-        )}
-      </section>
-
-      <section className={styles.panel}>
-        <div className={styles.panelHead}>
-          <h2 className={styles.panelTitle}>Recent sessions</h2>
-        </div>
-
-        {recentSessions.length > 0 ? (
-          <DashboardWorkoutList rows={recentSessions} weightUnit={weightUnit} />
-        ) : (
-          <p className={styles.empty}>No sessions yet. Log your first workout.</p>
-        )}
-      </section>
-
-      <section className={styles.dashboardInsightGrid}>
-        <section className={styles.panel}>
-          <h2 className={styles.panelTitle}>Personal records</h2>
-
-          {overview.personalBests.length > 0 ? (
-            <div className={styles.metricList}>
-              <DashboardMetricHeader
-                columns={["Date", "Exercise", "Est. 1RM"]}
-                rowClassName={styles.personalBestRow}
-              />
-              <div className={styles.personalRecordsScroll}>
-                {overview.personalBests.map((row) => (
-                  <div key={row.id} className={`${styles.metricRow} ${styles.personalBestRow}`}>
-                    <span className={styles.metricMobileLabel} data-label="Date">
-                      {row.dateLabel}
-                    </span>
-                    <span className={styles.metricMain}>{row.lift}</span>
-                    <span className={styles.metricMobileLabel} data-label="Est. 1RM">
-                      {formatWeight(row.weight)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <div className={styles.todayActionRow}>
+          {todayPlan.isLoggedToday ? (
+            <>
+              <p className={styles.todayLogged}>Logged for today.</p>
+              <Link href="/workouts/new?from=dashboard" className={styles.todayQuietAction}>
+                Log another workout
+                <LinkPendingOverlay />
+              </Link>
+            </>
+          ) : todayPlan.isRestDay ? (
+            <Link href="/workouts/new?from=dashboard" className={styles.todayQuietAction}>
+              Log an unscheduled workout
+              <LinkPendingOverlay />
+            </Link>
+          ) : hasSplit ? (
+            <Link href="/workouts/new?from=dashboard" className={styles.todayAction}>
+              {actionLabel}
+              <LinkPendingOverlay />
+            </Link>
           ) : (
-            <p className={styles.empty}>No lifts logged yet.</p>
+            <>
+              <Link href="/workouts/new?from=dashboard" className={styles.todayAction}>
+                Log a workout
+                <LinkPendingOverlay />
+              </Link>
+              <button
+                type="button"
+                className={styles.todayQuietAction}
+                onClick={() => onNavigateToView("split")}
+              >
+                Set up a split
+              </button>
+            </>
           )}
-        </section>
+        </div>
+      </section>
 
-        <section className={`${styles.panel} min-[900px]:flex min-[900px]:flex-col`}>
-          <div className={styles.calendarHead}>
-            <h2 className={styles.panelTitle}>Workout calendar</h2>
-            <div className={styles.calendarNav}>
-              <button
-                type="button"
-                className={styles.calendarNavButton}
-                onClick={calendar.goToPreviousMonth}
-                disabled={!calendar.canGoToPreviousMonth}
-                aria-label="Previous month"
-              >
-                Prev
-              </button>
-              <button
-                type="button"
-                className={styles.calendarNavButton}
-                onClick={calendar.goToNextMonth}
-                disabled={!calendar.canGoToNextMonth}
-                aria-label="Next month"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+      {overview.todaySession.length > 0 ? (
+        <section className={styles.panel} aria-label="Session preview">
+          <h2 className={styles.panelTitle}>Where you left off</h2>
 
-          <p className={styles.panelSubtitle}>
-            {calendar.selectedMonth.label} · {calendar.selectedMonth.count} workouts
-          </p>
-
-          <div className={styles.calendarWeekdayRow} aria-hidden="true">
-            {WEEKDAY_CHIPS.map((day) => (
-              <span key={day} className={styles.calendarWeekday}>
-                {day}
-              </span>
+          <div className={styles.sessionList}>
+            {overview.todaySession.map((exercise) => (
+              <div key={exercise.id} className={styles.sessionRow}>
+                <div className={styles.sessionRowMain}>
+                  <p className={styles.metricMain}>{exercise.name}</p>
+                  <p className={styles.metricSubtle}>
+                    {countLabel(exercise.plannedSets, "set")}
+                  </p>
+                </div>
+                {/* Three honest states: never trained, trained with a set worth
+                    quoting, and trained without one. "First time" keys off
+                    history alone, never off a missing weight — a bodyweight set
+                    has no weight and is still a session you did. The number is
+                    the top set of that day, so the date under it says which day. */}
+                <div className={styles.sessionRowStats}>
+                  {exercise.lastPerformedLabel === null ? (
+                    <p className={styles.metricSubtle}>First time</p>
+                  ) : (
+                    <>
+                      {exercise.lastReps !== null ? (
+                        <p className={styles.sessionRowTopSet}>
+                          {exercise.lastWeight !== null
+                            ? formatWeightWithUnit(exercise.lastWeight, weightUnit)
+                            : "BW"}{" "}
+                          × {exercise.lastReps}
+                        </p>
+                      ) : null}
+                      <p className={styles.metricSubtle}>
+                        last hit {exercise.lastPerformedLabel}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
-
-          <div className={styles.calendarGrid} role="grid" aria-label="Workout days by month">
-            {calendar.cells.map((cell) =>
-              cell.dayNumber === null ? (
-                <span key={cell.key} className={styles.calendarDayEmpty} aria-hidden="true" />
-              ) : (
-                cell.workouts[0] ? (
-                  <button
-                    key={cell.key}
-                    type="button"
-                    role="gridcell"
-                    className={`${styles.calendarDay} ${styles.calendarDayClickable} ${styles.calendarDayActive}`}
-                    onClick={() => calendar.selectDate(cell.key)}
-                    aria-expanded={calendar.selectedDateKey === cell.key}
-                    aria-label={`Show ${cell.workoutCount} workout${
-                      cell.workoutCount === 1 ? "" : "s"
-                    } logged on ${cell.key}`}
-                    title={`${cell.workoutCount} workout${
-                      cell.workoutCount === 1 ? "" : "s"
-                    } logged`}
-                  >
-                    <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
-                  </button>
-                ) : (
-                  <div
-                    key={cell.key}
-                    role="gridcell"
-                    className={styles.calendarDay}
-                    title="No workout logged"
-                  >
-                    <span className={styles.calendarDayNumber}>{cell.dayNumber}</span>
-                  </div>
-                )
-              ),
-            )}
-          </div>
-
-          {calendar.selectedWorkouts.length > 0 ? (
-            <div className={styles.calendarDayDetails} role="region" aria-live="polite">
-              <p className={styles.calendarDayDetailsTitle}>
-                {calendar.selectedWorkouts.length} workout
-                {calendar.selectedWorkouts.length === 1 ? "" : "s"} on {calendar.selectedDateKey}
-              </p>
-              <div className={styles.calendarDayDetailsLinks}>
-                {calendar.selectedWorkouts.map((workout) => (
-                  <Link
-                    key={workout.id}
-                    href={`/workouts/${workout.id}`}
-                    className={styles.calendarDayDetailsLink}
-                  >
-                    {workout.title}
-                    <LinkPendingOverlay />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : calendar.selectedDateKey && calendar.isLoadingSelectedMonth ? (
-            <p className={styles.calendarDayDetails} role="status">
-              Loading workouts for {calendar.selectedDateKey}…
-            </p>
-          ) : calendar.selectedDateKey && calendar.selectedMonthError ? (
-            <p className={styles.calendarDayDetails} role="alert">
-              {calendar.selectedMonthError}
-            </p>
-          ) : null}
         </section>
-      </section>
+      ) : null}
     </>
   );
 }

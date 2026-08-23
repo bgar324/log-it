@@ -1,6 +1,5 @@
 "use client";
 
-import { Loader2, Plus, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { toast } from "sonner";
@@ -16,9 +15,8 @@ import {
 import { WorkoutLoggerExerciseCard } from "./_components/workout-logger-exercise-card";
 import { WorkoutLoggerConfirmDialog } from "./_components/workout-logger-confirm-dialog";
 import { WorkoutLoggerMetaCard } from "./_components/workout-logger-meta-card";
-import { WorkoutLoggerMobileActions } from "./_components/workout-logger-mobile-actions";
 import { WorkoutLoggerReorderDialog } from "./_components/workout-logger-reorder-dialog";
-import { WorkoutLoggerRestTimer } from "./_components/workout-logger-rest-timer";
+import { WorkoutLoggerToolsFab } from "./_components/workout-logger-tools-fab";
 import { useWorkoutLoggerDraft } from "./_hooks/use-workout-logger-draft";
 import { useWorkoutLoggerInsights } from "./_hooks/use-workout-logger-insights";
 import { styles } from "./workout-logger.styles";
@@ -46,6 +44,7 @@ type WorkoutLoggerProps = {
   weightUnit: WeightUnit;
   bodyWeightDisplay?: number | null;
   isRestDay?: boolean;
+  returnHref?: string;
 };
 
 export function WorkoutLogger({
@@ -57,6 +56,7 @@ export function WorkoutLogger({
   weightUnit,
   bodyWeightDisplay = null,
   isRestDay = false,
+  returnHref = "/dashboard",
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const router = useRouter();
@@ -64,11 +64,15 @@ export function WorkoutLogger({
   const weightUnitName = weightUnit === "KG" ? "kilograms" : "pounds";
   const [isSaving, setIsSaving] = useState(false);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [isRestDayOverrideDialogOpen, setIsRestDayOverrideDialogOpen] = useState(false);
   const [hasRestDayOverride, setHasRestDayOverride] = useState(false);
   const formId = useId();
   const restDayOverrideTitleId = useId();
   const restDayOverrideDescriptionId = useId();
+  const resetConfirmTitleId = useId();
+  const resetConfirmDescriptionId = useId();
   const {
     clearAll,
     clearPendingLookup: clearPendingSuggestionLookup,
@@ -93,6 +97,9 @@ export function WorkoutLogger({
   } = useWorkoutLoggerInsights({
     exercises: draft.exercises,
     performedAt: draft.performedAt,
+    // In edit mode the workout being edited is not history: excluding it stops
+    // the logger from comparing a session against itself.
+    excludeWorkoutId: isEditMode ? (workoutId ?? null) : null,
   });
 
   const hasSplitReset =
@@ -107,7 +114,7 @@ export function WorkoutLogger({
         <section className={styles.loggerStage} aria-label="Rest day notice">
           <div className={styles.topRow}>
             <BackButton
-              fallbackHref="/dashboard"
+              fallbackHref={returnHref}
               label="Back"
               className={styles.backLink}
               iconClassName={styles.backButtonIcon}
@@ -279,7 +286,7 @@ export function WorkoutLogger({
     }
   }
 
-  const backHref = isEditMode ? `/workouts/${workoutId}` : "/dashboard?view=workouts";
+  const backHref = isEditMode ? `/workouts/${workoutId}` : returnHref;
   const backLabel = "Back";
   const workoutTypeLabel = draft.workoutType.trim();
   const dateMeta = formatWorkoutLoggerDateLabel(draft.performedAt);
@@ -308,21 +315,15 @@ export function WorkoutLogger({
             <h1 className={styles.title}>{pageTitle}</h1>
           </div>
         </header>
-
-        <WorkoutLoggerRestTimer />
-
         <form id={formId} className={styles.form} onSubmit={handleSubmit}>
           <WorkoutLoggerMetaCard
             title={draft.title}
             performedAt={draft.performedAt}
             workoutType={draft.workoutType}
             workoutTypeOptions={workoutTypeOptions}
-            canResetFromSplit={hasSplitReset}
             onTitleChange={draft.setTitle}
             onPerformedAtChange={draft.setPerformedAt}
             onWorkoutTypeChange={draft.setWorkoutType}
-            onResetFromSplit={handleResetFromSplit}
-            resetDisabled={isSaving}
             showEditFields={isEditMode}
           />
 
@@ -361,58 +362,23 @@ export function WorkoutLogger({
               />
             ))}
 
-            <button
-              type="button"
-              className={`${styles.secondaryButton} ${styles.desktopOnlyAction}`}
-              onClick={draft.addExercise}
-            >
-              <Plus
-                className={styles.actionIcon}
-                aria-hidden="true"
-                strokeWidth={1.9}
-              />
-              Add another exercise
-            </button>
           </section>
 
-          <button
-            type="submit"
-            className={`${styles.saveButton} ${styles.desktopOnlyAction}`}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <>
-                <Loader2
-                  className={styles.spinningIcon}
-                  aria-hidden="true"
-                  strokeWidth={1.9}
-                />
-                {submitLabel}
-              </>
-            ) : (
-              <>
-                <Save
-                  className={styles.actionIcon}
-                  aria-hidden="true"
-                  strokeWidth={1.9}
-                />
-                {submitLabel}
-              </>
-            )}
-          </button>
-
-          <WorkoutLoggerMobileActions
-            addExerciseLabel="Add another exercise"
-            formId={formId}
-            isSaving={isSaving}
-            reorderDisabled={draft.exercises.length < 2}
-            submitLabel={submitLabel}
-            canResetFromSplit={hasSplitReset}
-            resetDisabled={isSaving}
-            onAddExercise={draft.addExercise}
-            onOpenReorder={() => setIsReorderDialogOpen(true)}
-            onResetFromSplit={handleResetFromSplit}
-          />
+          {isResetConfirmOpen ? (
+            <WorkoutLoggerConfirmDialog
+              titleId={resetConfirmTitleId}
+              descriptionId={resetConfirmDescriptionId}
+              title="Replace the current exercises?"
+              description="This will replace every current exercise and set in this logger with the exercises and set counts from your split for today."
+              cancelLabel="Keep current log"
+              confirmLabel="Reset to split"
+              onCancel={() => setIsResetConfirmOpen(false)}
+              onConfirm={() => {
+                handleResetFromSplit();
+                setIsResetConfirmOpen(false);
+              }}
+            />
+          ) : null}
 
           <WorkoutLoggerReorderDialog
             exercises={draft.exercises}
@@ -424,6 +390,19 @@ export function WorkoutLogger({
             }}
           />
         </form>
+
+        <WorkoutLoggerToolsFab
+          formId={formId}
+          submitLabel={submitLabel}
+          isSaving={isSaving}
+          canReorder={draft.exercises.length > 1}
+          canResetFromSplit={hasSplitReset}
+          isOpen={isToolsOpen}
+          onToggle={setIsToolsOpen}
+          onAddExercise={draft.addExercise}
+          onReorder={() => setIsReorderDialogOpen(true)}
+          onResetFromSplit={() => setIsResetConfirmOpen(true)}
+        />
       </section>
     </main>
   );

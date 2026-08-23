@@ -1,3 +1,5 @@
+import { AppTabBar } from "@/app/components/app-nav";
+import { navStyles } from "@/app/components/app-nav.styles";
 import { BackButton } from "@/app/components/back-button";
 import { styles } from "./workout-detail.styles";
 
@@ -9,55 +11,12 @@ function SkeletonBlock({
   return <span className={`${styles.skeletonBlock} ${className}`} aria-hidden="true" />;
 }
 
-function SetTableSkeleton() {
+function SetRowSkeleton() {
   return (
-    <div className={styles.tableWrap}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th className={styles.tableHeadCell}>
-              <SkeletonBlock className="h-[0.62rem] w-[2rem]" />
-            </th>
-            <th className={styles.tableHeadCell}>
-              <SkeletonBlock className="h-[0.62rem] w-[3.2rem]" />
-            </th>
-            <th className={styles.tableHeadCell}>
-              <SkeletonBlock className="h-[0.62rem] w-[2.4rem]" />
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 4 }, (_, index) => (
-            <tr key={index}>
-              <td className={styles.tableBodyCell}>
-                <SkeletonBlock className="h-[0.78rem] w-[1.8rem]" />
-              </td>
-              <td className={styles.tableBodyCell}>
-                <SkeletonBlock className="h-[0.78rem] w-[4.2rem]" />
-              </td>
-              <td className={styles.tableBodyCell}>
-                <SkeletonBlock className="h-[0.78rem] w-[2.7rem]" />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function MobileSetSkeleton() {
-  return (
-    <div className={styles.mobileSetCard}>
-      <div className={styles.mobileSetCell}>
-        <SkeletonBlock className="h-[0.84rem] w-[2.4rem]" />
-      </div>
-      <div className={styles.mobileSetCell}>
-        <SkeletonBlock className="h-[0.84rem] w-[4.2rem]" />
-      </div>
-      <div className={styles.mobileSetCell}>
-        <SkeletonBlock className="h-[0.84rem] w-[3.5rem]" />
-      </div>
+    <div className={styles.setRow}>
+      <SkeletonBlock className="h-[0.8rem] w-[2.6rem]" />
+      <SkeletonBlock className="h-[0.8rem] w-[min(100%,8.4rem)]" />
+      <SkeletonBlock className="h-[0.8rem] w-[2rem]" />
     </div>
   );
 }
@@ -68,11 +27,11 @@ export default function WorkoutDetailLoading() {
       <p className="sr-only" role="status">
         Loading workout
       </p>
-      <section className={styles.stage}>
+      <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
           <div className={styles.topLead}>
             <BackButton
-              fallbackHref="/workouts"
+              fallbackHref="/dashboard?view=workouts"
               label="Back"
               className={styles.backLink}
               iconClassName={styles.backButtonIcon}
@@ -82,44 +41,35 @@ export default function WorkoutDetailLoading() {
             <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
             <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
             <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
-            <SkeletonBlock className="hidden h-[2.3rem] w-[2.3rem] rounded-full max-[759px]:block" />
+            <SkeletonBlock className="hidden h-[2.75rem] w-[2.75rem] rounded-full max-[759px]:block" />
           </div>
         </header>
 
         <section className={styles.summaryCard} aria-hidden="true">
           <SkeletonBlock className="h-[0.75rem] w-[5.8rem]" />
           <SkeletonBlock className="mt-[0.5rem] h-[2rem] w-[min(100%,24rem)]" />
-          <div className={styles.metaRow}>
-            {Array.from({ length: 4 }, (_, index) => (
-              <span key={index} className={styles.metaPill}>
-                <SkeletonBlock className="h-[0.67rem] w-[4.2rem]" />
-                <SkeletonBlock className="mt-[0.22rem] h-[0.9rem] w-[5.6rem]" />
-              </span>
-            ))}
-          </div>
+          <SkeletonBlock className="mt-[0.66rem] h-[0.95rem] w-[min(100%,18rem)]" />
+          <SkeletonBlock className="mt-[0.28rem] h-[0.82rem] w-[min(100%,12rem)]" />
         </section>
 
         <section className={styles.exerciseList} aria-hidden="true">
           {Array.from({ length: 3 }, (_, exerciseIndex) => (
             <article key={exerciseIndex} className={styles.exerciseCard}>
               <header className={styles.exerciseHead}>
-                <div className="min-w-0 flex-1">
-                  <SkeletonBlock className="h-[0.74rem] w-[5.1rem]" />
-                  <SkeletonBlock className="mt-[0.34rem] h-[1.05rem] w-[min(100%,16rem)]" />
-                </div>
-                <SkeletonBlock className="h-[0.77rem] w-[6.4rem]" />
+                <SkeletonBlock className="h-[1.05rem] w-[min(100%,16rem)]" />
+                <SkeletonBlock className="mt-[0.22rem] h-[0.77rem] w-[min(100%,11rem)]" />
               </header>
 
-              <SetTableSkeleton />
-              <div className={styles.mobileSetList}>
+              <div className={styles.setList}>
                 {Array.from({ length: 4 }, (_, setIndex) => (
-                  <MobileSetSkeleton key={setIndex} />
+                  <SetRowSkeleton key={setIndex} />
                 ))}
               </div>
             </article>
           ))}
         </section>
       </section>
+      <AppTabBar activeView="workouts" />
     </main>
   );
 }

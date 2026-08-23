@@ -1,15 +1,20 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Ellipsis, Trash2 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/app/components/ui/popover";
 import { useId, useState } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../workout-logger.styles";
-import type {
-  ExerciseDraft,
-  ExerciseInsightState,
-  ExerciseSetDraft,
+import {
+  formatCompareDayLabel,
+  type ExerciseDraft,
+  type ExerciseInsightState,
+  type ExerciseSetDraft,
 } from "../workout-logger.utils";
-import { WorkoutLoggerInsightPanel } from "./workout-logger-insight-panel";
 import { WorkoutLoggerSetsEditor } from "./workout-logger-sets-editor";
 import { WorkoutLoggerConfirmDialog } from "./workout-logger-confirm-dialog";
 
@@ -65,86 +70,102 @@ export function WorkoutLoggerExerciseCard({
     setIsRemoveConfirmOpen(false);
   }
 
+  const fallbackTitle = `Exercise ${exerciseIndex + 1}`;
+  const exerciseTitle = exercise.name.trim() || fallbackTitle;
+  const insight = insightState?.data;
+  const lastHitLabel = insight?.lastSession
+    ? formatCompareDayLabel(insight.lastSession.performedAt)
+    : "";
+  // One sentence, and it only changes when the comparison itself does. A refetch
+  // keeps the previous data, so this never flickers mid-workout. No all-time
+  // best: the ghost text on each set row already shows what you actually did.
+  const compareLine = !insight
+    ? ""
+    : lastHitLabel
+      ? `Last hit ${lastHitLabel}`
+      : "First time logging this.";
+
   return (
     <>
       <article className={styles.exerciseCard}>
-        <div className={styles.exerciseHead}>
-          <div className={styles.exerciseHeading}>
-            <div>
-              <h2 className={styles.exerciseTitle}>Exercise {exerciseIndex + 1}</h2>
-            </div>
-          </div>
-          <div className={styles.exerciseHeadActions}>
-            <button
-              type="button"
-              className={styles.iconButton}
-              onClick={() => setIsRemoveConfirmOpen(true)}
-              disabled={!canRemoveExercise}
-              aria-label={`Remove exercise ${exerciseIndex + 1}`}
-            >
-              <Trash2
-                className={styles.icon}
-                aria-hidden="true"
-                strokeWidth={1.9}
-              />
-            </button>
-          </div>
-        </div>
-
+        {/* No title above the field: the input already shows the name, so a
+            heading repeated it. The comparison sits under the input instead,
+            next to the sets it describes. */}
         <div className={styles.field}>
-          <div className={styles.inlineRow}>
-            <input
-              id={`exercise-name-${exercise.id}`}
-              className={styles.input}
-              value={exercise.name}
-              aria-label={`Exercise name for exercise ${exerciseIndex + 1}`}
-              onChange={(event) => onExerciseNameChange(event.target.value)}
-              onFocus={(event) => onExerciseNameFocus(event.target.value)}
-              onBlur={(event) => {
-                void onExerciseNameBlur(event.target.value);
-              }}
-              autoComplete="off"
-              spellCheck={true}
-              autoCapitalize="words"
-              autoCorrect="on"
-              placeholder="Barbell bench press"
-            />
-            {searchResults.length > 0 ? (
-              <div
-                className={styles.searchResults}
-                aria-label={`Exercise matches for exercise ${exerciseIndex + 1}`}
-              >
-                <p className={styles.searchResultsLabel}>Matches</p>
-                <div className={styles.searchResultsList}>
-                  {searchResults.map((result) => (
-                    <button
-                      key={`${exercise.id}-${result}`}
-                      type="button"
-                      className={styles.searchResultButton}
-                      onPointerDown={(event) => {
-                        event.preventDefault();
-                      }}
-                      onClick={() => onApplySearchResult(result)}
-                    >
-                      {result}
-                    </button>
-                  ))}
+          <div className={styles.exerciseNameRow}>
+            <div className={styles.inlineRow}>
+              <input
+                id={`exercise-name-${exercise.id}`}
+                className={styles.input}
+                value={exercise.name}
+                aria-label={`Exercise name for exercise ${exerciseIndex + 1}`}
+                onChange={(event) => onExerciseNameChange(event.target.value)}
+                onFocus={(event) => onExerciseNameFocus(event.target.value)}
+                onBlur={(event) => {
+                  void onExerciseNameBlur(event.target.value);
+                }}
+                autoComplete="off"
+                spellCheck={true}
+                autoCapitalize="words"
+                autoCorrect="on"
+                placeholder="Barbell bench press"
+              />
+              {searchResults.length > 0 ? (
+                <div
+                  className={styles.searchResults}
+                  aria-label={`Exercise matches for exercise ${exerciseIndex + 1}`}
+                >
+                  <p className={styles.searchResultsLabel}>Matches</p>
+                  <div className={styles.searchResultsList}>
+                    {searchResults.map((result) => (
+                      <button
+                        key={`${exercise.id}-${result}`}
+                        type="button"
+                        className={styles.searchResultButton}
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                        }}
+                        onClick={() => onApplySearchResult(result)}
+                      >
+                        {result}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
+              ) : null}
+            </div>
 
-        <WorkoutLoggerInsightPanel
-          exercise={exercise}
-          insightState={insightState}
-          weightUnit={weightUnit}
-          weightUnitLabel={weightUnitLabel}
-          bodyWeightDisplay={bodyWeightDisplay}
-        />
+            {/* On the name's row, not below it: the menu acts on the exercise
+                this field names, so it belongs beside it. The comparison keeps
+                the line underneath to itself. */}
+            <Popover>
+              <PopoverTrigger
+                className={styles.exerciseMenuToggle}
+                aria-label={`More options for ${exerciseTitle}`}
+              >
+                <Ellipsis className={styles.icon} aria-hidden="true" strokeWidth={1.9} />
+              </PopoverTrigger>
+              <PopoverContent align="end" className={styles.exerciseMenu}>
+                <button
+                  type="button"
+                  className={styles.exerciseMenuDangerItem}
+                  onClick={() => setIsRemoveConfirmOpen(true)}
+                  disabled={!canRemoveExercise}
+                >
+                  <Trash2 className={styles.icon} aria-hidden="true" strokeWidth={1.9} />
+                  Delete exercise
+                </button>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <p className={styles.exerciseCompareLine}>{compareLine}</p>
+        </div>
 
         <WorkoutLoggerSetsEditor
           exercise={exercise}
+          insightState={insightState}
+          weightUnit={weightUnit}
           weightUnitLabel={weightUnitLabel}
           weightUnitName={weightUnitName}
           bodyWeightDisplay={bodyWeightDisplay}
@@ -158,7 +179,7 @@ export function WorkoutLoggerExerciseCard({
         <WorkoutLoggerConfirmDialog
           titleId={dialogTitleId}
           descriptionId={dialogDescriptionId}
-          title={`Delete exercise ${exerciseIndex + 1}?`}
+          title={`Delete ${exerciseTitle}?`}
           description="This removes the exercise and every set entered under it."
           cancelLabel="Keep exercise"
           confirmLabel="Delete exercise"

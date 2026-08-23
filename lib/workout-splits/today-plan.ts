@@ -42,12 +42,20 @@ export async function loadTodayPlan(userId: string, date: Date): Promise<TodayPl
     };
   }
 
+  // Sets are the honest measure of how long today takes: ten exercises at two
+  // sets is a different session from seven at five.
+  const exerciseCount = splitSeed.day.exercises.length;
+  const setCount = splitSeed.day.exercises.reduce(
+    (total, exercise) => total + exercise.sets,
+    0,
+  );
+
   return {
     workoutType: splitSeed.day.workoutType,
     workoutTypeSlug: splitSeed.day.workoutTypeSlug,
-    subtitle: `${splitSeed.day.exercises.length} planned exercise${
-      splitSeed.day.exercises.length === 1 ? "" : "s"
-    } ready to preload.`,
+    subtitle: `${exerciseCount} planned exercise${
+      exerciseCount === 1 ? "" : "s"
+    } and ${setCount} set${setCount === 1 ? "" : "s"}.`,
     isRestDay: false,
     isLoggedToday: false,
   };

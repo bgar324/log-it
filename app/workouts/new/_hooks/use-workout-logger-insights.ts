@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createExerciseInsightRequestContext } from "@/lib/workouts/insight-request";
+import {
+  createExerciseInsightRequestContext,
+  type ExerciseInsightRequestContext,
+} from "@/lib/workouts/insight-request";
 import type {
   ExerciseDraft,
   ExerciseInsight,
@@ -11,18 +14,17 @@ import type {
 type UseWorkoutLoggerInsightsOptions = {
   exercises: ExerciseDraft[];
   performedAt: string;
+  excludeWorkoutId?: string | null;
 };
-
-type InsightRequestContext = NonNullable<
-  ReturnType<typeof createExerciseInsightRequestContext>
->;
 
 export function useWorkoutLoggerInsights({
   exercises,
   performedAt,
+  excludeWorkoutId = null,
 }: UseWorkoutLoggerInsightsOptions) {
   const insightCacheRef = useRef<Record<string, ExerciseInsight>>({});
   const latestInsightLookupRef = useRef<Record<string, string>>({});
+  const requestAbortRef = useRef<Record<string, AbortController>>({});
   const [exerciseInsightById, setExerciseInsightById] = useState<
     Record<string, ExerciseInsightState>
   >({});
@@ -36,7 +38,7 @@ export function useWorkoutLoggerInsights({
             exercise.name,
             performedAt,
             exerciseIndex + 1,
-            exercise.sets.length,
+            excludeWorkoutId,
           ),
         }))
         .filter(
@@ -44,10 +46,10 @@ export function useWorkoutLoggerInsights({
             item,
           ): item is {
             exerciseId: string;
-            context: InsightRequestContext;
+            context: ExerciseInsightRequestContext;
           } => item.context !== null,
         ),
-    [exercises, performedAt],
+    [excludeWorkoutId, exercises, performedAt],
   );
 
   const getExerciseInsightContext = useCallback(
@@ -70,10 +72,10 @@ export function useWorkoutLoggerInsights({
         exerciseName ?? exercise.name,
         performedAt,
         exerciseIndex + 1,
-        exercise.sets.length,
+        excludeWorkoutId,
       );
     },
-    [exercises, performedAt],
+    [excludeWorkoutId, exercises, performedAt],
   );
 
   const fetchExerciseInsight = useCallback(
@@ -87,6 +89,8 @@ export function useWorkoutLoggerInsights({
           ...current,
           [exerciseId]: { status: "idle" },
         }));
+        requestAbortRef.current[exerciseId]?.abort();
+        delete requestAbortRef.current[exerciseId];
         delete latestInsightLookupRef.current[exerciseId];
         return;
       }
@@ -107,18 +111,30 @@ export function useWorkoutLoggerInsights({
       }
 
       latestInsightLookupRef.current[exerciseId] = lookupKey;
+      // A newer request for the same exercise wins: cancel the one in flight so
+      // a slow response cannot land on top of it.
+      requestAbortRef.current[exerciseId]?.abort();
+      const abortController = new AbortController();
+      requestAbortRef.current[exerciseId] = abortController;
 
-      setExerciseInsightById((current) => ({
-        ...current,
-        [exerciseId]: {
-          status: "loading",
-          lookupKey,
-        },
-      }));
+      // Keep whatever comparison is already on screen while the refetch runs.
+      setExerciseInsightById((current) => {
+        const previous = current[exerciseId];
+
+        return {
+          ...current,
+          [exerciseId]: {
+            status: "loading",
+            lookupKey,
+            ...(previous?.data ? { data: previous.data } : {}),
+          },
+        };
+      });
 
       try {
         const response = await fetch(requestContext.requestPath, {
           cache: "no-store",
+          signal: abortController.signal,
         });
         const payload = (await response.json()) as
           | ExerciseInsight
@@ -147,21 +163,29 @@ export function useWorkoutLoggerInsights({
           },
         }));
       } catch (error) {
-        if (latestInsightLookupRef.current[exerciseId] !== lookupKey) {
+        if (
+          abortController.signal.aborted ||
+          latestInsightLookupRef.current[exerciseId] !== lookupKey
+        ) {
           return;
         }
 
-        setExerciseInsightById((current) => ({
-          ...current,
-          [exerciseId]: {
-            status: "error",
-            lookupKey,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Unable to compare exercise.",
-          },
-        }));
+        setExerciseInsightById((current) => {
+          const previous = current[exerciseId];
+
+          return {
+            ...current,
+            [exerciseId]: {
+              status: "error",
+              lookupKey,
+              ...(previous?.data ? { data: previous.data } : {}),
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Unable to compare exercise.",
+            },
+          };
+        });
       }
     },
     [getExerciseInsightContext],
@@ -178,19 +202,26 @@ export function useWorkoutLoggerInsights({
       return next;
     });
 
+    requestAbortRef.current[exerciseId]?.abort();
+    delete requestAbortRef.current[exerciseId];
     delete latestInsightLookupRef.current[exerciseId];
   }, []);
 
   const clearAllExerciseInsights = useCallback(() => {
+    for (const controller of Object.values(requestAbortRef.current)) {
+      controller.abort();
+    }
+
+    requestAbortRef.current = {};
     latestInsightLookupRef.current = {};
     setExerciseInsightById({});
   }, []);
 
+  // Typing a name parks the exercise until blur or a picked suggestion, so the
+  // logger never fires a request per keystroke.
   const resetExerciseInsightState = useCallback((exerciseId: string) => {
     setExerciseInsightById((current) => {
-      const previous = current[exerciseId];
-
-      if (!previous || previous.status === "idle") {
+      if (current[exerciseId]?.status === "idle") {
         return current;
       }
 
@@ -205,13 +236,25 @@ export function useWorkoutLoggerInsights({
     for (const { exerciseId, context } of exerciseInsightContexts) {
       const state = exerciseInsightById[exerciseId];
 
-      if (!state || state.status === "idle" || state.lookupKey === context.lookupKey) {
+      // No state yet means the exercise arrived prefilled (edit mode, a split
+      // template, a recovered draft): compare it right away.
+      if (state?.status === "idle" || state?.lookupKey === context.lookupKey) {
         continue;
       }
 
       void fetchExerciseInsight(exerciseId, context.exerciseName, context);
     }
   }, [exerciseInsightById, exerciseInsightContexts, fetchExerciseInsight]);
+
+  useEffect(() => {
+    const controllers = requestAbortRef.current;
+
+    return () => {
+      for (const controller of Object.values(controllers)) {
+        controller.abort();
+      }
+    };
+  }, []);
 
   return {
     clearAllExerciseInsights,

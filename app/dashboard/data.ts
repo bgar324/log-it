@@ -4,7 +4,6 @@ export {
   dashboardViewHref,
   loadAppShellContext,
   normalizeDashboardView,
-  shellDisplayName,
 } from "./data.shared";
 export {
   loadDashboardViewData,

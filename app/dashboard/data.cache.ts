@@ -53,7 +53,28 @@ function loadCachedNutritionSection(
   )();
 }
 
-function loadCachedWorkoutHistorySection(
+// A cached payload is untrusted input: an entry written by an older build can
+// be missing a field this build's renderer requires. The version segment stops
+// that for known changes, and the normalization below keeps an unknown-vintage
+// entry from reaching the view as `undefined`.
+const EMPTY_LIFETIME_TOTALS = { workouts: 0, sets: 0, exercises: 0 } as const;
+
+function withLifetimeTotals(
+  section: Awaited<ReturnType<typeof loadWorkoutHistorySection>>,
+) {
+  const history: { lifetime?: typeof section.workoutHistory.lifetime } =
+    section.workoutHistory;
+
+  return {
+    ...section,
+    workoutHistory: {
+      ...section.workoutHistory,
+      lifetime: history.lifetime ?? EMPTY_LIFETIME_TOTALS,
+    },
+  };
+}
+
+async function loadCachedWorkoutHistorySection(
   userId: string,
   weightUnit: WeightUnit,
   request: WorkoutHistoryRequest,
@@ -62,14 +83,16 @@ function loadCachedWorkoutHistorySection(
     return loadWorkoutHistorySection(userId, weightUnit, request);
   }
 
-  return unstable_cache(
+  const section = await unstable_cache(
     async () => loadWorkoutHistorySection(userId, weightUnit, request),
-    ["workout-history", userId, weightUnit, String(request.offset)],
+    ["workout-history", "v4-lifetime", userId, weightUnit, String(request.offset)],
     {
       revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
       tags: [getWorkoutDataTag(userId)],
     },
   )();
+
+  return withLifetimeTotals(section);
 }
 
 function loadCachedProgressSection(

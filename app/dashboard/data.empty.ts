@@ -5,14 +5,9 @@ import {
   type WorkoutSplitTemplate,
 } from "@/lib/workout-splits/shared";
 import { NO_SPLIT_TODAY_PLAN } from "@/lib/workout-splits/today-plan";
-import {
-  addDaysToDatabaseDate,
-  getCurrentPacificDate,
-  normalizeWorkoutTypeSlug,
-  startOfDatabaseWeek,
-} from "@/lib/workout-utils";
+import { getCurrentPacificDate, normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
 import type { DashboardClientData } from "./dashboard-types";
-import { dateKey, monthKey, monthLabel, WEEKDAY_SHORT_FORMATTER } from "./data.formatters";
+import { dateKey, monthKey, monthLabel } from "./data.formatters";
 
 export function createDefaultSplit(): WorkoutSplitTemplate {
   return {
@@ -67,33 +62,8 @@ export function createEmptyDashboardData(
       joinedAtLabel: monthLabel(user.createdAt),
     },
     overview: {
-      totalWorkouts: 0,
-      workoutsThisWeek: 0,
-      totalExercises: 0,
-      totalSets: 0,
       todayPlan: NO_SPLIT_TODAY_PLAN,
-      monthChange: 0,
-      streak: { currentWeeks: 0, bestWeeks: 0 },
-      weeklyBars: Array.from({ length: 7 }, (_, index) => ({
-        label: WEEKDAY_SHORT_FORMATTER.format(
-          addDaysToDatabaseDate(startOfDatabaseWeek(now), index),
-        ),
-        count: 0,
-      })),
-      personalBests: [],
-      workoutCalendar: {
-        dayCounts: [],
-        workoutsByDay: [],
-        monthCounts: [
-          {
-            monthKey: emptyMonthKey,
-            label: monthLabel(now),
-            count: 0,
-          },
-        ],
-        latestMonthKey: emptyMonthKey,
-        loadedMonthKey: emptyMonthKey,
-      },
+      todaySession: [],
     },
     nutrition: createEmptyNutrition(now),
     workouts: [],
@@ -103,6 +73,7 @@ export function createEmptyDashboardData(
       nextOffset: 0,
       hasMore: false,
       workoutTypes: [],
+      lifetime: { workouts: 0, sets: 0, exercises: 0 },
     },
     exercises: [],
     progress: {
@@ -135,45 +106,15 @@ export async function loadAppShellContext() {
   };
 }
 
-export function shellDisplayName(user: DashboardClientData["user"]) {
-  const trimmed = user.firstName?.trim();
-  return trimmed || user.username;
-}
-
 export function createEmptyOverview(user: DashboardClientData["user"]) {
   const now = getCurrentPacificDate();
-  const emptyMonthKey = monthKey(now);
 
   return {
     user,
     overview: {
-      totalWorkouts: 0,
-      workoutsThisWeek: 0,
-      totalExercises: 0,
-      totalSets: 0,
       todayPlan: NO_SPLIT_TODAY_PLAN,
-      monthChange: 0,
-      streak: { currentWeeks: 0, bestWeeks: 0 },
-      weeklyBars: Array.from({ length: 7 }, (_, index) => ({
-        label: WEEKDAY_SHORT_FORMATTER.format(
-          addDaysToDatabaseDate(startOfDatabaseWeek(now), index),
-        ),
-        count: 0,
-      })),
-      personalBests: [],
-      workoutCalendar: {
-        dayCounts: [],
-        workoutsByDay: [],
-        monthCounts: [
-          {
-            monthKey: emptyMonthKey,
-            label: monthLabel(now),
-            count: 0,
-          },
-        ],
-        latestMonthKey: emptyMonthKey,
-      },
-    },
+      todaySession: [],
+    } satisfies DashboardClientData["overview"],
     workouts: [],
     nutrition: createEmptyNutrition(now),
   };

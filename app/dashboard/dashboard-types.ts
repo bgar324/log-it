@@ -7,7 +7,8 @@ export type DashboardView =
   | "progress"
   | "nutrition"
   | "split"
-  | "profile";
+  | "profile"
+  | "settings";
 
 export type DashboardWorkoutFilters = {
   dateFrom: string;
@@ -70,11 +71,9 @@ export type DashboardClientData = {
     profileImageUpdatedAt: string | null;
     joinedAtLabel: string;
   };
+  // The overview renders a greeting, today's plan, and a preview of the session
+  // that plan asks for. Every other number lives on the view that owns it.
   overview: {
-    totalWorkouts: number;
-    workoutsThisWeek: number;
-    totalExercises: number;
-    totalSets: number;
     todayPlan: {
       workoutType: string;
       workoutTypeSlug: string | null;
@@ -82,42 +81,14 @@ export type DashboardClientData = {
       isRestDay: boolean;
       isLoggedToday: boolean;
     };
-    monthChange: number;
-    streak: {
-      currentWeeks: number;
-      bestWeeks: number;
-    };
-    weeklyBars: Array<{
-      label: string;
-      count: number;
-    }>;
-    personalBests: Array<{
+    todaySession: Array<{
       id: string;
-      lift: string;
-      weight: number;
-      dateLabel: string;
+      name: string;
+      plannedSets: number;
+      lastPerformedLabel: string | null;
+      lastWeight: number | null;
+      lastReps: number | null;
     }>;
-    workoutCalendar: {
-      dayCounts: Array<{
-        dateKey: string;
-        count: number;
-      }>;
-      workoutsByDay: Array<{
-        dateKey: string;
-        workouts: Array<{
-          id: string;
-          title: string;
-          workoutType: string | null;
-        }>;
-      }>;
-      monthCounts: Array<{
-        monthKey: string;
-        label: string;
-        count: number;
-      }>;
-      latestMonthKey: string | null;
-      loadedMonthKey: string;
-    };
   };
   nutrition: DashboardNutritionData;
   workouts: Array<{
@@ -148,6 +119,11 @@ export type DashboardClientData = {
     nextOffset: number;
     hasMore: boolean;
     workoutTypes: string[];
+    lifetime: {
+      workouts: number;
+      sets: number;
+      exercises: number;
+    };
   };
   exercises: Array<{
     key: string;

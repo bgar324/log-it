@@ -65,81 +65,31 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
         <p className="sr-only" role="status">
           Loading dashboard
         </p>
-        <section className={`${styles.kpiGrid} ${styles.dashboardKpiGrid}`} aria-hidden="true">
-          {Array.from({ length: 6 }, (_, index) => (
-            <article key={index} className={styles.skeletonKpiCard}>
-              <SkeletonLine className="h-[0.72rem] w-[5.2rem]" />
-              <SkeletonLine className="h-[1.7rem] w-[5.6rem]" />
-              {index === 1 ? (
-                <div className={styles.inlineBars}>
-                  {Array.from({ length: 7 }, (_, barIndex) => (
-                    <SkeletonLine
-                      key={barIndex}
-                      className="w-full rounded-[0.18rem]"
-                      style={{ height: `${8 + (barIndex % 4) * 4}px` }}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </article>
-          ))}
+        <section className={styles.today} aria-hidden="true">
+          <SkeletonLine className="h-[1rem] w-[7.2rem]" />
+          <SkeletonLine className="mt-[0.3rem] h-[2.1rem] w-[min(20rem,80%)]" />
+          <SkeletonLine className="mt-[0.35rem] h-[0.9rem] w-[12rem]" />
+          <div className={styles.todayActionRow}>
+            <SkeletonLine className="h-[2.75rem] w-[10.5rem] rounded-full" />
+          </div>
         </section>
 
         <section className={styles.panel} aria-hidden="true">
-          <div className={styles.panelHead}>
-            <SkeletonLine className="h-[1rem] w-[7.4rem]" />
-          </div>
-          <div className={styles.metricList}>
-            <div className={`${styles.metricHeader} ${styles.workoutHistoryRow}`}>
-              {Array.from({ length: 5 }, (_, index) => (
-                <SkeletonLine key={index} className="h-[0.62rem] w-[4rem]" />
-              ))}
-            </div>
+          <SkeletonLine className="h-[1rem] w-[11rem]" />
+          <div className={styles.sessionList}>
             {Array.from({ length: 5 }, (_, index) => (
-              <WorkoutRowSkeleton key={index} />
+              <div key={index} className={styles.sessionRow}>
+                <div className={styles.sessionRowMain}>
+                  <SkeletonLine className="h-[0.9rem] w-[9rem]" />
+                  <SkeletonLine className="mt-[0.24rem] h-[0.78rem] w-[7rem]" />
+                </div>
+                <div className={styles.sessionRowStats}>
+                  <SkeletonLine className="h-[0.9rem] w-[4.6rem]" />
+                  <SkeletonLine className="mt-[0.24rem] h-[0.78rem] w-[3.4rem]" />
+                </div>
+              </div>
             ))}
           </div>
-        </section>
-
-        <section className={styles.dashboardInsightGrid} aria-hidden="true">
-          <section className={styles.panel}>
-            <SkeletonLine className="h-[1rem] w-[7.2rem]" />
-            <div className={styles.metricList}>
-              <div className={`${styles.metricHeader} ${styles.personalBestRow}`}>
-                {Array.from({ length: 3 }, (_, index) => (
-                  <SkeletonLine key={index} className="h-[0.62rem] w-[4rem]" />
-                ))}
-              </div>
-              {Array.from({ length: 4 }, (_, index) => (
-                <div key={index} className={`${styles.metricRow} ${styles.personalBestRow}`}>
-                  <SkeletonLine className="h-[0.82rem] w-[4.4rem]" />
-                  <SkeletonLine className="h-[0.88rem] w-[8rem]" />
-                  <SkeletonLine className="h-[0.82rem] w-[4.8rem]" />
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className={styles.panel}>
-            <div className={styles.calendarHead}>
-              <SkeletonLine className="h-[1rem] w-[8.2rem]" />
-              <div className={styles.calendarNav}>
-                <SkeletonLine className="h-[1.9rem] w-[3.5rem]" />
-                <SkeletonLine className="h-[1.9rem] w-[3.5rem]" />
-              </div>
-            </div>
-            <SkeletonLine className="mt-[0.2rem] h-[0.72rem] w-[8.8rem]" />
-            <div className={styles.calendarWeekdayRow}>
-              {Array.from({ length: 7 }, (_, index) => (
-                <SkeletonLine key={index} className="mx-auto h-[0.62rem] w-[1.6rem]" />
-              ))}
-            </div>
-            <div className={styles.calendarGrid}>
-              {Array.from({ length: 35 }, (_, index) => (
-                <SkeletonLine key={index} className="aspect-square w-full rounded-[0.42rem]" />
-              ))}
-            </div>
-          </section>
         </section>
       </>
     );
@@ -151,13 +101,9 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
         <p className="sr-only" role="status">
           Loading progress
         </p>
-        <section className={`${styles.kpiGrid} ${styles.progressKpiGrid}`} aria-hidden="true">
-          {Array.from({ length: 4 }, (_, index) => (
-            <article key={index} className={styles.skeletonKpiCard}>
-              <SkeletonLine className="h-[0.72rem] w-[4.8rem]" />
-              <SkeletonLine className="h-[1.7rem] w-[6.4rem]" />
-            </article>
-          ))}
+        <section aria-hidden="true">
+          <SkeletonLine className="h-[0.9rem] w-[15rem] max-[520px]:w-[12rem]" />
+          <SkeletonLine className="mt-[0.3rem] h-[0.82rem] w-[17rem] max-[520px]:w-[13rem]" />
         </section>
         <section className={styles.chartGrid} aria-hidden="true">
           {Array.from({ length: 2 }, (_, index) => (
@@ -171,12 +117,14 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
           ))}
         </section>
         <section className={styles.skeletonPanel} aria-hidden="true">
+          <SkeletonLine className="h-[1rem] w-[7rem]" />
+          <SkeletonLine className="h-[2.75rem] w-full rounded-[0.52rem]" />
           <div className={styles.skeletonPanelHead}>
-            <SkeletonLine className="h-[1rem] w-[7rem]" />
-            <SkeletonLine className="h-[2.18rem] w-[12rem] max-[760px]:w-full" />
+            <SkeletonLine className="h-[0.84rem] w-[6rem]" />
+            <SkeletonLine className="h-[2.2rem] w-[10rem] max-[760px]:h-[2.75rem]" />
           </div>
           <div className={styles.skeletonMetricList}>
-            {Array.from({ length: 5 }, (_, index) => (
+            {Array.from({ length: 6 }, (_, index) => (
               <ExerciseRowSkeleton key={index} />
             ))}
           </div>
@@ -191,14 +139,9 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
         <p className="sr-only" role="status">
           Loading nutrition
         </p>
-        <section className={`${styles.kpiGrid} ${styles.progressKpiGrid}`} aria-hidden="true">
-          {Array.from({ length: 4 }, (_, index) => (
-            <article key={index} className={styles.skeletonKpiCard}>
-              <SkeletonLine className="h-[0.72rem] w-[5.4rem]" />
-              <SkeletonLine className="h-[1.7rem] w-[5.8rem]" />
-              {index === 2 ? <SkeletonLine className="h-[0.68rem] w-[4.6rem]" /> : null}
-            </article>
-          ))}
+        <section aria-hidden="true">
+          <SkeletonLine className="h-[0.9rem] w-[13rem]" />
+          <SkeletonLine className="mt-[0.3rem] h-[0.82rem] w-[16rem] max-[520px]:w-[12rem]" />
         </section>
 
         <section className={styles.skeletonPanel} aria-hidden="true">
@@ -262,65 +205,46 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
         <p className="sr-only" role="status">
           Loading split
         </p>
-        <div className={splitStyles.splitLibraryLayout} aria-hidden="true">
-          <aside className={splitStyles.splitSidebar}>
-            <div className={splitStyles.splitSidebarHeader}>
-              <div className="min-w-0">
-                <SkeletonLine className="h-[1rem] w-[4.2rem]" />
-                <SkeletonLine className="mt-[0.22rem] h-[0.72rem] w-[3.5rem]" />
+        <div className={splitStyles.splitLayout} aria-hidden="true">
+          <section className={splitStyles.splitSummary}>
+            <div>
+              <div className={splitStyles.splitSummaryHead}>
+                <SkeletonLine className="h-[2.75rem] min-w-0 flex-1 rounded-[0.52rem]" />
+                <SkeletonLine className="h-[2.75rem] w-[2.75rem] shrink-0 rounded-[0.52rem]" />
               </div>
+              <SkeletonLine className="mt-[0.3rem] h-[0.82rem] w-[15rem] max-[520px]:w-[12rem]" />
             </div>
-            <div className={splitStyles.splitSidebarList}>
-              {Array.from({ length: 3 }, (_, index) => (
-                <div key={index} className={splitStyles.splitSidebarItem}>
-                  <SkeletonLine className="h-[0.88rem] w-[7.4rem]" />
-                  <SkeletonLine className="h-[0.72rem] w-[8.8rem]" />
+
+            <div className={splitStyles.splitGrid}>
+              {Array.from({ length: 7 }, (_, index) => (
+                <div key={index} className={splitStyles.splitDayCard}>
+                  <div className={splitStyles.splitDayHeader}>
+                    <SkeletonLine className="h-[0.72rem] w-[4.8rem]" />
+                    <SkeletonLine className="h-[0.72rem] w-[4.4rem]" />
+                  </div>
+                  <SkeletonLine className="h-[1rem] w-[5.6rem]" />
+                  <SkeletonLine className="mt-auto h-[0.84rem] w-[6.2rem]" />
                 </div>
               ))}
             </div>
-            <SkeletonLine className="h-[2.75rem] w-full rounded-[0.52rem]" />
-          </aside>
+          </section>
 
-          <div className={splitStyles.splitLayout}>
-            <section className={splitStyles.splitSummary}>
-              <div className={splitStyles.splitSummaryHead}>
-                <div className="flex min-w-0 flex-1 flex-col gap-[0.36rem]">
-                  <SkeletonLine className="h-[2.75rem] w-[14rem] max-[700px]:w-full" />
-                </div>
-                <SkeletonLine className="h-[2.75rem] w-[2.75rem] shrink-0 rounded-[0.52rem]" />
-              </div>
-
-              <div className={splitStyles.splitGrid}>
-                {Array.from({ length: 7 }, (_, index) => (
-                  <div key={index} className={splitStyles.splitDayCard}>
-                    <div className={splitStyles.splitDayHeader}>
-                      <SkeletonLine className="h-[0.72rem] w-[4.8rem]" />
-                      <SkeletonLine className="h-[0.72rem] w-[4.4rem]" />
-                    </div>
-                    <SkeletonLine className="h-[1rem] w-[5.6rem]" />
-                    <SkeletonLine className="mt-auto h-[0.84rem] w-[6.2rem]" />
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className={splitStyles.splitEditor}>
-              <div className={splitStyles.editorHeader}>
-                <SkeletonLine className="h-[1.35rem] w-[7.4rem]" />
-              </div>
-              <div className={splitStyles.editorField}>
-                <SkeletonLine className="h-[2.75rem] w-full rounded-[0.52rem]" />
-              </div>
-              <div className={splitStyles.editorSectionHead}>
-                <SkeletonLine className="h-[1rem] w-[5.2rem]" />
-              </div>
-              <div className={splitStyles.editorExerciseList}>
-                {Array.from({ length: 6 }, (_, index) => (
-                  <SkeletonLine key={index} className="h-[4.15rem] w-full rounded-[0.52rem]" />
-                ))}
-              </div>
-            </section>
-          </div>
+          <section className={splitStyles.splitEditor}>
+            <div className={splitStyles.editorHeader}>
+              <SkeletonLine className="h-[1.35rem] w-[7.4rem]" />
+            </div>
+            <div className={splitStyles.editorField}>
+              <SkeletonLine className="h-[2.75rem] w-full rounded-[0.52rem]" />
+            </div>
+            <div className={splitStyles.editorSectionHead}>
+              <SkeletonLine className="h-[1rem] w-[5.2rem]" />
+            </div>
+            <div className={splitStyles.editorExerciseList}>
+              {Array.from({ length: 6 }, (_, index) => (
+                <SkeletonLine key={index} className="h-[4.15rem] w-full rounded-[0.52rem]" />
+              ))}
+            </div>
+          </section>
         </div>
       </>
     );
@@ -331,6 +255,10 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
       <p className="sr-only" role="status">
         Loading workouts
       </p>
+      <section aria-hidden="true">
+        <SkeletonLine className="h-[0.9rem] w-[12rem]" />
+        <SkeletonLine className="mt-[0.3rem] h-[0.82rem] w-[15rem] max-[520px]:w-[12rem]" />
+      </section>
       <section className={styles.plainSection} aria-hidden="true">
         <div className={styles.skeletonTimeline}>
           {Array.from({ length: 2 }, (_, monthIndex) => (

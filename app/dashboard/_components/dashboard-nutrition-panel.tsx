@@ -158,26 +158,18 @@ export function DashboardNutritionPanel({
 
   return (
     <>
-      <section className={`${styles.kpiGrid} ${styles.progressKpiGrid}`} aria-label="Nutrition summary">
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>Calories</p>
-          <p className={styles.kpiValue}>{formatNumber(nutrition.today.calories)}</p>
-        </article>
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>Protein</p>
-          <p className={styles.kpiValue}>{formatNumber(nutrition.today.proteinGrams, 1)}g</p>
-        </article>
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>BMR</p>
-          <p className={styles.kpiValue}>
-            {nutrition.bmrCalories === null ? "--" : formatNumber(nutrition.bmrCalories)}
-          </p>
-          <p className={styles.nutritionSummaryMeta}>{bmrMeta}</p>
-        </article>
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>Body weight</p>
-          <p className={styles.kpiValue}>{bodyWeightValue}</p>
-        </article>
+      {/* Today's numbers are the form values below; a tile wall would print them twice. */}
+      <section aria-label="Nutrition summary">
+        <p className={styles.statLine}>
+          {formatNumber(nutrition.today.calories)} cal ·{" "}
+          {formatNumber(nutrition.today.proteinGrams, 1)}g protein
+        </p>
+        <p className={styles.statLineMuted}>
+          {nutrition.bmrCalories === null
+            ? "No BMR target set"
+            : `${formatNumber(nutrition.bmrCalories)} cal target · ${bmrMeta}`}
+          {nutrition.today.bodyWeight === null ? "" : ` · ${bodyWeightValue} today`}
+        </p>
       </section>
 
       <section className={styles.panel} aria-label="Today nutrition log">

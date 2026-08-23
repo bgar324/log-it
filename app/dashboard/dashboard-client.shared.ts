@@ -1,43 +1,14 @@
-import {
-  Blocks,
-  ChartLine,
-  Dumbbell,
-  LayoutDashboard,
-  Utensils,
-} from "lucide-react";
-import type { ComponentType } from "react";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
 
-type DashboardNavIcon = ComponentType<{
-  className?: string;
-  "aria-hidden"?: boolean;
-  strokeWidth?: number;
-}>;
-
-export const PROGRESS_EXERCISES_PER_PAGE = 5;
-
-export const NAV_ITEMS: Array<{
-  view: DashboardView;
-  label: string;
-  icon: DashboardNavIcon;
-}> = [
-  { view: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { view: "workouts", label: "Workouts", icon: Dumbbell },
-  { view: "progress", label: "Progress", icon: ChartLine },
-  { view: "nutrition", label: "Nutrition", icon: Utensils },
-  { view: "split", label: "Split", icon: Blocks },
-];
-
 export const VIEW_TITLES: Record<DashboardView, string> = {
-  dashboard: "Dashboard",
+  dashboard: "Home",
   workouts: "Workouts",
   progress: "Progress",
   nutrition: "Nutrition",
   split: "Split",
   profile: "Profile",
+  settings: "Settings",
 };
-
-export const WEEKDAY_CHIPS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export type WorkoutTableRow = DashboardClientData["workouts"][number];
 
@@ -59,6 +30,10 @@ export function daysAgoLabel(days: number) {
   }
 
   return `${days} days ago`;
+}
+
+export function countLabel(count: number, singular: string, plural = `${singular}s`) {
+  return `${count.toLocaleString()} ${count === 1 ? singular : plural}`;
 }
 
 export function parseMonthKey(monthKey: string) {

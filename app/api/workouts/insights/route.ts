@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
+import { INSIGHT_PREDICTION_SET_COUNT } from "../../../../lib/workouts/insight-request";
 import {
   predictExercisePerformance,
   type PredictionSession,
+  type PredictionSessionSet,
 } from "../../../../lib/workouts/prediction";
 import {
   formatDatabaseDateValue,
@@ -11,7 +13,11 @@ import {
   toDatabaseDateFromInput,
 } from "../../../../lib/workout-utils";
 
-type SessionAggregate = PredictionSession & {
+type SessionSetAggregate = PredictionSessionSet & {
+  durationSeconds: number | null;
+};
+
+type SessionAggregate = Omit<PredictionSession, "sets"> & {
   workoutId: string;
   workoutTitle: string;
   performedAt: Date;
@@ -21,6 +27,7 @@ type SessionAggregate = PredictionSession & {
   bestWeight: number | null;
   bestWeightReps: number | null;
   totalVolume: number;
+  sets: SessionSetAggregate[];
 };
 
 function toWeightNumber(value: { toNumber: () => number } | number | null) {
@@ -39,13 +46,28 @@ function roundToTenth(value: number) {
   return Math.round(value * 10) / 10;
 }
 
-function parsePositiveIntegerParam(value: string | null) {
-  if (!value) {
+// The read model is the truth for all-time bests; the windowed scan below only
+// sees the most recent 120 exercise logs. Never throws: a missing read model
+// falls back to the window rather than failing the comparison.
+async function readSummaryBestWeight(userId: string, normalizedName: string) {
+  try {
+    const summary = await prisma.exerciseSummary.findUnique({
+      where: {
+        userId_normalizedName: {
+          userId,
+          normalizedName,
+        },
+      },
+      select: {
+        bestWeightLb: true,
+      },
+    });
+    const best = toWeightNumber(summary?.bestWeightLb ?? null);
+
+    return best !== null && best > 0 ? best : null;
+  } catch {
     return null;
   }
-
-  const parsed = Number.parseInt(value.trim(), 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 function parsePerformedAtParam(value: string | null) {
@@ -80,14 +102,15 @@ export async function GET(request: NextRequest) {
   const performedAt = parsePerformedAtParam(
     request.nextUrl.searchParams.get("performedAt"),
   );
-  const position = parsePositiveIntegerParam(
-    request.nextUrl.searchParams.get("position"),
+  const positionParam = Number.parseInt(
+    request.nextUrl.searchParams.get("position")?.trim() ?? "",
+    10,
   );
-  const setCount = parsePositiveIntegerParam(
-    request.nextUrl.searchParams.get("setCount"),
-  );
-  const canPredict =
-    performedAt !== null && position !== null && setCount !== null;
+  const position =
+    Number.isInteger(positionParam) && positionParam > 0 ? positionParam : null;
+  // Editing a workout must never compare it against itself.
+  const excludeWorkoutId =
+    request.nextUrl.searchParams.get("excludeWorkoutId")?.trim() || null;
 
   try {
     const exerciseLogs = await prisma.workoutExercise.findMany({
@@ -95,6 +118,7 @@ export async function GET(request: NextRequest) {
         normalizedName,
         workoutLog: {
           userId: user.id,
+          ...(excludeWorkoutId ? { id: { not: excludeWorkoutId } } : {}),
         },
       },
       orderBy: [
@@ -124,6 +148,7 @@ export async function GET(request: NextRequest) {
           select: {
             reps: true,
             weightLb: true,
+            durationSeconds: true,
           },
         },
       },
@@ -184,6 +209,7 @@ export async function GET(request: NextRequest) {
           setIndex: session.sets.length + setIndex + 1,
           reps: set.reps,
           weightLb: toWeightNumber(set.weightLb),
+          durationSeconds: set.durationSeconds,
         })),
       );
 
@@ -195,7 +221,7 @@ export async function GET(request: NextRequest) {
     );
     const lastSession = sessions[0] ?? null;
 
-    const allTimeBestWeight = sessions.reduce<number | null>((max, session) => {
+    const windowedBestWeight = sessions.reduce<number | null>((max, session) => {
       if (session.bestWeight === null) {
         return max;
       }
@@ -206,13 +232,15 @@ export async function GET(request: NextRequest) {
 
       return Math.max(max, session.bestWeight);
     }, null);
+    const allTimeBestWeight =
+      (await readSummaryBestWeight(user.id, normalizedName)) ?? windowedBestWeight;
     const prediction =
-      canPredict && performedAt && position && setCount
+      performedAt && position
         ? predictExercisePerformance({
             sessions,
             performedAt,
             currentPosition: position,
-            setCount,
+            setCount: INSIGHT_PREDICTION_SET_COUNT,
             weightUnit: user.preferredWeightUnit,
           })
         : null;
@@ -240,6 +268,7 @@ export async function GET(request: NextRequest) {
               reps: set.reps,
               weightLb:
                 set.weightLb === null ? null : roundToTenth(set.weightLb),
+              durationSeconds: set.durationSeconds,
             })),
           }
         : null,

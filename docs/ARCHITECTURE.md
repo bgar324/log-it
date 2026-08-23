@@ -22,10 +22,26 @@ Public or auth-aware pages:
 
 Protected product pages use `requireSessionUser()`:
 
-- `/dashboard?view=dashboard|workouts|progress|split|profile`: primary shell with client-side view switching.
+- `/dashboard?view=dashboard|workouts|progress|nutrition|split|profile`: primary shell with client-side view switching.
 - `/workouts`, `/workouts/new`, `/workouts/[workoutId]`, `/workouts/[workoutId]/edit`: workout history, logger, detail, and edit flows.
 - `/exercises`, `/exercises/[exerciseKey]`: exercise index and detail history.
 - `/profile` and `/progress`: redirect to `/dashboard?view=profile` and `/dashboard?view=progress`.
+- `/preview/[view]?shell=1`: verification-only harness (noindex) that renders the real `DashboardShell` with demo data, so app chrome can be checked without a session. Without `shell=1` the same route renders the contained view components used by the landing page previews.
+
+## App Chrome
+
+`app/components/app-nav.tsx` owns every navigation surface of the authenticated app and is built as two layers:
+
+- **Layer B — the drawer** is the base layer: always mounted, pinned to the left edge, `z-0`, `visibility: hidden` and `inert` while closed. It holds the second-class sections (Workouts, Progress, Split, Profile), the shared three-segment theme control, and sign out.
+- **Layer A — the app screen** sits on top at `z-10` with an opaque background. Opening the drawer translates layer A right by `min(17.5rem,78vw)` to reveal layer B underneath, rather than sliding a panel over the app. Dismissed by tapping the exposed app surface or pressing Escape; there is no gesture trigger.
+
+`AppShell` provides both layers plus the bottom bar, owns the open state, locks body scroll, moves focus into the drawer on open, and returns it to the trigger on close. The stage uses `overflow-x: clip` — not `hidden`, which would turn it into a scroll container and break document scrolling and the sticky header.
+
+The bottom bar is a stage sibling rather than a layer-A child, and translates by the same distance in sync. A translated ancestor becomes the containing block for `position: fixed` descendants, so a bar nested inside layer A resolves `bottom: 0` against the full page height and slides off-screen while the drawer is open; measured at 390px it dropped from `y=781` to `y=1126`. Keeping it viewport-anchored and translating it separately produces the same "whole foreground slides" effect without that artifact, and it becomes `pointer-events-none` while open so the close target stays the exposed app surface.
+
+Inside layer A, each surface places the pieces it needs: `AppTopBar` (sticky header: drawer trigger, view title, accessory slot) or the bare `AppDrawerTrigger` next to an existing back control, plus the three-slot bottom bar `AppTabBar` (Home, filled log action, Nutrition) rendered by `AppShell` itself.
+
+`DashboardShell` composes `AppShell` around the desktop sidebar and the content column. The bottom bar and drawer cover every width below 900px; the sidebar, which lists every section, covers 900px and up, so no viewport is left without navigation and layer A never translates on desktop. `/workouts/[workoutId]` and `/exercises/[exerciseKey]` render the same `AppShell` and put `AppDrawerTrigger` beside their back control, so the drawer's destinations are reachable off Home; they add `navStyles.mainInset` so the fixed bar never covers content. Route-loading skeletons render `AppTabBar` alone, since they have no session user. `/workouts/new` and `/workouts/[workoutId]/edit` are task surfaces: no nav chrome, only a sticky header with a back control and a sticky save bar.
 
 API routes:
 
@@ -78,15 +94,23 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 
 `createWorkout()` blocks logging on a split rest day when the user has an active split and the selected date maps to `workoutTypeSlug === "rest"`.
 
+## Workout Logger Compare
+
+`/api/workouts/insights` is the logger's comparison endpoint and the feature the logger is built around. `lib/workouts/insight-request.ts` builds its request and an in-memory cache key from exercise name, date, and position only — deliberately not from set count, so adding a set never refetches. The route returns the last session's ordered sets, the all-time best weight (read from `ExerciseSummary` by primary key, falling back to the scanned window), and a prediction from `lib/workouts/prediction*.ts`.
+
+The UI consumes it inline rather than as a panel: each draft set row shows the matching past set as muted ghost text (`lastSession.sets[index]`) and takes its weight/reps placeholders from `prediction.predictedSets[index]`. The exercise card carries one sentence — `Last hit May 15 · best 140 lb`, or `First time logging this.` Refetches carry the previous payload forward so the card never blanks or shifts, and edit mode passes `excludeWorkoutId` so a workout is never compared against itself.
+
 ## Read Models And Caching
 
 - `ExerciseSummary` and `WorkoutCalendarDay` are read models maintained by `lib/workout-read-models.*`.
 - `syncWorkoutReadModels()` incrementally syncs affected exercise names and performed dates.
+- Adding a field to a cached section payload requires bumping that entry's cache key. `loadCachedWorkoutHistorySection` carries a version segment (currently `"v4-lifetime"`) for exactly this reason: without it, entries written before the field existed keep being served and the view reads `undefined` off a cached object — a runtime crash that a typecheck and a fresh build both pass. `withLifetimeTotals()` backstops the same boundary by filling the field when an older entry lacks it.
 - `ensureWorkoutReadModels()` / `rebuildWorkoutReadModelsForUser()` are available for rebuild paths.
 - Dashboard and split data use `unstable_cache` with user-scoped cache tags from `lib/cache-tags.ts`.
 - Nutrition view data uses a user-scoped cache tag and is invalidated after nutrition writes.
 - The split dashboard payload includes the active split as `split` and the saved split library as `splits`.
 - `todayPlan` includes `workoutTypeSlug` and `isLoggedToday`; overview loading sets `isLoggedToday` by matching today's Pacific date plus normalized workout type against existing workout logs.
+- The overview payload carries only what the overview renders: `todayPlan` and `todaySession`. Counts, streaks, weekly bars, per-day calendar data and personal-best rows were removed with the tiles, calendar and records panel that displayed them. `loadTodaySession` (`data.today-session.ts`) reads the split seed for today, then one `DISTINCT ON (normalizedName)` raw query for the newest `WorkoutExercise` per planned name, then sets for only those rows — three round trips regardless of plan length. Neither alternative works: a shared `take` window is wrong by construction (an exercise untrained for months falls outside it, and the row then contradicts `ExerciseSummary`), and one `findFirst` per exercise is an N-query first paint. It shows the last session's top set, never `bestE1rmLb` or `bestWeightLb`. The workouts payload carries `workoutHistory.lifetime` for its summary line.
 - Dashboard client-side view data is kept only for the mounted dashboard instance in `app/dashboard/dashboard-client.tsx`; `/api/dashboard/view-data` loads missing views. A loaded view is reused on later tab switches, while authoritative server refreshes reset the local data to prevent stale or cross-account payloads from being merged.
 - Workout history is loaded in 60-row server pages. Filters are applied in PostgreSQL before pagination, and the client merges older pages by month on demand rather than serializing the user's full history into the initial dashboard payload.
 - Public profiles use `ExerciseSummary`, `WorkoutCalendarDay`, scalar workout aggregates, grouped workout types, and a best-set-per-exercise query. They do not hydrate every historical workout/set into application memory.

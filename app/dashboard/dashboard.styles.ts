@@ -1,30 +1,36 @@
-function cn(...values: string[]) {
-  return values.filter(Boolean).join(" ");
-}
+import {
+  actionDanger,
+  actionFilled,
+  actionIcon,
+  actionIconFilled,
+  actionIconQuiet,
+  actionNavRow,
+  actionOutline,
+  actionQuiet,
+} from "@/app/components/action.styles";
 
+// One hairline, one value. The old `--dashboard-border-strong` companion existed
+// only to thicken a border on hover or when active; state now reads as a fill
+// tint, so nothing consumes it.
 const dashboardBorder =
-  "[--dashboard-border:color-mix(in_srgb,var(--text)_12%,transparent)] [--dashboard-border-strong:color-mix(in_srgb,var(--text)_18%,transparent)]";
+  "[--dashboard-border:color-mix(in_srgb,var(--text)_12%,transparent)]";
 const dashboardSurface =
   "rounded-[0.54rem] border border-[var(--dashboard-border)] bg-transparent shadow-none";
-const headerActionBase = cn(
-  "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] rounded-full border px-[0.72rem]",
-  "border-[var(--dashboard-border)] bg-transparent text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
-  "max-[760px]:h-[2.75rem] max-[760px]:min-h-[2.75rem] max-[760px]:w-[2.75rem] max-[760px]:min-w-[2.75rem] max-[760px]:px-0",
-  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-  "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-);
-const mobileMenuItemBase = cn(
-  "inline-flex min-h-[2.75rem] w-full cursor-pointer items-center gap-[0.42rem] rounded-[0.42rem] border border-transparent bg-transparent px-[0.58rem]",
-  "text-left text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
-  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-  "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-  "hover:border-[var(--dashboard-border)]",
-);
 const buttonMotion =
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]";
 const buttonFocusRing =
   "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2";
 
+// Every button-like key below is a constant from `app/components/action.styles`
+// plus layout-only extras (width, order, overflow, positioning). Radius, height,
+// font size and border weight live in the canon and nowhere else, so no two
+// buttons in this app can disagree about them.
+//
+// A collapsed or otherwise variant state SELECTS A DIFFERENT KEY rather than
+// appending a modifier: Tailwind emits each utility family in its own fixed
+// order, so `px-0`, `w-[2.75rem]` and `gap-0` all lose to the values a canon
+// variant already set. Only `hover:`, `data-[]:` and `min-[]:` prefixed
+// utilities are safe to append.
 export const styles = {
   shell:
     `dashboard-theme-scope flex min-h-dvh bg-[var(--bg)] ${dashboardBorder} min-[900px]:grid min-[900px]:h-dvh min-[900px]:grid-cols-[12.4rem_minmax(0,1fr)] min-[900px]:overflow-hidden min-[900px]:transition-[grid-template-columns] min-[900px]:duration-300 min-[900px]:ease-[cubic-bezier(0.2,0.7,0.2,1)]`,
@@ -39,9 +45,9 @@ export const styles = {
   sidebarTopCollapsed:
     "justify-center",
   sidebarToggle:
-    `inline-flex h-[2.1rem] w-[2.1rem] shrink-0 cursor-w-resize items-center justify-center rounded-[0.5rem] border-0 bg-transparent text-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] transition-[transform,background-color,color,box-shadow,opacity] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
+    `${actionIconQuiet} hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)]`,
   sidebarCollapsedLogoToggle:
-    `group relative inline-flex h-[2.36rem] w-[2.36rem] shrink-0 cursor-e-resize items-center justify-center rounded-[0.5rem] border-0 bg-transparent text-[var(--text)] hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] transition-[transform,background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
+    `group relative ${actionIcon} hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)]`,
   sidebarCollapsedLogo:
     "absolute inset-0 flex items-center justify-center opacity-100 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-90 group-hover:opacity-0 group-focus-visible:scale-90 group-focus-visible:opacity-0",
   sidebarCollapsedToggleIconWrap:
@@ -50,159 +56,89 @@ export const styles = {
   brand: "text-[2.2rem] leading-[0.92] tracking-[-0.03em] font-[520]",
   sideNav: "flex flex-col gap-[0.28rem]",
   sideNavCollapsed: "items-center",
-  navButton:
-    `inline-flex min-h-[2.36rem] cursor-pointer items-center gap-[0.55rem] overflow-hidden rounded-[0.5rem] border border-transparent bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--muted)] hover:border-[var(--dashboard-border)] hover:text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)] transition-[width,min-width,transform,border-color,background-color,color,box-shadow,padding,gap] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
+  // Current page reads as a fill tint plus a colour, never as a heavier border.
+  navButton: `${actionNavRow} overflow-hidden`,
   navButtonCollapsed:
-    "h-[2.36rem] w-[2.36rem] justify-center gap-0 px-0",
+    `${actionIconQuiet} hover:bg-[color-mix(in_srgb,var(--text)_6%,transparent)] data-[active=true]:bg-[color-mix(in_srgb,var(--text)_8%,transparent)] data-[active=true]:text-[var(--text)]`,
   navIcon: "h-[0.85rem] w-[0.85rem]",
   navLabelCollapsed: "sr-only",
   sidebarUtilityStack: "mt-auto flex flex-col gap-[0.52rem]",
   sidebarUtilityStackCollapsed: "items-center",
-  sidebarAction:
-    `inline-flex min-h-[2.42rem] cursor-pointer items-center gap-[0.55rem] overflow-hidden rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] transition-[width,min-width,transform,border-color,background-color,color,box-shadow,padding,gap] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
-  sidebarActionCollapsed:
-    "h-[2.42rem] w-[2.42rem] justify-center gap-0 px-0",
-  sidebarActionDisabled:
-    "cursor-default border-[var(--calendar-active-border)] bg-[var(--calendar-active-bg)] text-[var(--muted)] hover:border-[var(--calendar-active-border)] active:translate-y-0",
-  sidebarActionLogged:
-    "cursor-default !border-[color-mix(in_srgb,#21834d_42%,transparent)] !bg-[color-mix(in_srgb,#21834d_10%,var(--bg))] !text-[color-mix(in_srgb,#21834d_82%,var(--text))] hover:!border-[color-mix(in_srgb,#21834d_42%,transparent)] active:translate-y-0",
+  // The desktop twin of the phone tab bar's filled `+`, so it is filled here too.
+  sidebarAction: `${actionFilled} w-full justify-start overflow-hidden`,
+  sidebarActionCollapsed: actionIconFilled,
   sidebarActionIcon: "h-[0.9rem] w-[0.9rem]",
   sidebarDivider: "h-px w-full bg-[var(--dashboard-border)]",
-  sidebarSecondaryAction:
-    `inline-flex min-h-[2.36rem] cursor-pointer items-center gap-[0.55rem] overflow-hidden rounded-[0.5rem] border border-transparent bg-transparent px-[0.72rem] text-left text-[0.84rem] text-[var(--muted)] hover:border-[var(--dashboard-border)] hover:text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)] transition-[width,min-width,transform,border-color,background-color,color,box-shadow,padding,gap] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px] ${buttonFocusRing}`,
   main:
-    "flex w-full min-w-0 flex-1 flex-col gap-[0.86rem] bg-[var(--bg)] px-[0.96rem] pt-[1rem] pb-[1.2rem] max-[760px]:px-[0.82rem] min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:overflow-y-auto min-[900px]:overscroll-contain min-[900px]:px-[1.18rem] min-[900px]:pt-[1.06rem] min-[900px]:pb-[1.3rem] [scrollbar-gutter:stable]",
-  header:
-    "flex items-start justify-between gap-[0.75rem] max-[760px]:items-center",
-  headerText: "flex min-w-0 flex-col",
-  title:
-    "m-0 text-[clamp(1.55rem,6.8vw,2.2rem)] leading-[1.05] tracking-[-0.03em] font-[540]",
-  headerActions:
-    "inline-flex shrink-0 items-center gap-[0.5rem] max-[760px]:hidden",
-  mobileHeaderActions:
-    "hidden shrink-0 items-center gap-[0.5rem] max-[760px]:inline-flex",
-  mobileMenu: "relative hidden max-[760px]:inline-flex",
-  mobileMenuToggle: headerActionBase,
-  mobileMenuToggleIcon: "h-[1rem] w-[1rem]",
-  mobileMenuToggleBars: "relative block h-[0.72rem] w-[0.92rem]",
-  mobileMenuToggleBar: cn(
-    "absolute left-0 top-1/2 mt-[-0.75px] h-[1.5px] w-full rounded-full bg-current",
-    "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
-  ),
-  mobileMenuToggleBarTop:
-    "-translate-y-[0.26rem] data-[open=true]:translate-y-0 data-[open=true]:rotate-45",
-  mobileMenuToggleBarMiddle:
-    "data-[open=true]:scale-x-0 data-[open=true]:opacity-0",
-  mobileMenuToggleBarBottom:
-    "translate-y-[0.26rem] data-[open=true]:translate-y-0 data-[open=true]:-rotate-45",
-  mobileMenuPanel: cn(
-    "absolute right-0 top-[calc(100%+0.36rem)] z-20 flex w-[12rem] flex-col gap-[0.22rem] rounded-[0.56rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[0.28rem] min-[900px]:hidden",
-    "origin-top-right",
-    "data-[state=open]:animate-[logit-menu-panel-in_180ms_cubic-bezier(0.2,0.8,0.2,1)_both]",
-    "data-[state=closed]:animate-[logit-menu-panel-out_150ms_cubic-bezier(0.4,0,1,1)_both]",
-  ),
-  mobileMenuNav: "flex flex-col gap-[0.34rem]",
-  mobileMenuItem: cn(
-    mobileMenuItemBase,
-    "data-[state=open]:animate-[logit-menu-item-in_240ms_cubic-bezier(0.2,0.8,0.2,1)_both]",
-    "data-[state=closed]:animate-[logit-menu-item-out_150ms_cubic-bezier(0.4,0,1,1)_both]",
-    "data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:text-[var(--text)]",
-  ),
-  mobileMenuItemIcon: "h-[0.92rem] w-[0.92rem]",
-  kpiGrid:
-    "grid grid-cols-1 gap-[0.56rem] min-[900px]:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]",
-  dashboardKpiGrid:
-    "[&_.dashboard-kpi-action-card]:hidden max-[760px]:grid-cols-2 max-[760px]:[&_.dashboard-kpi-action-card]:flex",
-  progressKpiGrid: "max-[760px]:grid-cols-2",
-  kpiCard:
-    `${dashboardSurface} flex min-h-[4.95rem] flex-col gap-[0.28rem] px-[0.7rem] py-[0.62rem]`,
-  kpiActionCard:
-    `dashboard-kpi-action-card cursor-pointer items-start justify-center gap-[0.42rem] border-dashed text-[var(--text)] no-underline hover:border-[var(--dashboard-border-strong)] max-[760px]:gap-[0.28rem] ${buttonMotion} ${buttonFocusRing}`,
-  kpiActionCardDisabled:
-    "cursor-default border-[var(--calendar-active-border)] bg-[var(--calendar-active-bg)] text-[var(--muted)] hover:border-[var(--calendar-active-border)]",
-  kpiActionCardLogged:
-    "cursor-default !border-[color-mix(in_srgb,#21834d_42%,transparent)] !bg-[color-mix(in_srgb,#21834d_10%,var(--bg))] !text-[color-mix(in_srgb,#21834d_82%,var(--text))] hover:!border-[color-mix(in_srgb,#21834d_42%,transparent)] active:translate-y-0",
-  kpiActionIcon: "h-[1.02rem] w-[1.02rem] max-[760px]:h-[0.92rem] max-[760px]:w-[0.92rem] -mt-3",
-  kpiActionText:
-    "text-[1rem] leading-[1.1] max-[760px]:text-[clamp(1.4rem,4.6vw,2rem)] max-[760px]:leading-none max-[760px]:tracking-[-0.03em] max-[760px]:font-[520]",
-  kpiLabel: "m-0 text-[0.72rem] text-[var(--muted)]",
-  kpiValue:
-    "m-0 break-words text-[clamp(1.4rem,4.6vw,2rem)] leading-none tracking-[-0.03em] font-[520]",
-  kpiMeta: "m-[0.16rem_0_0] text-[0.7rem] text-[var(--muted)]",
-  kpiDeltaUp: "text-[color-mix(in_srgb,#21834d_82%,var(--text))]",
-  kpiDeltaDown: "text-[color-mix(in_srgb,#b13d48_82%,var(--text))]",
-  inlineBars: "mt-[0.28rem] flex min-h-[0.9rem] items-end gap-[0.2rem]",
-  inlineBar:
-    "flex-1 rounded-[0.18rem] bg-[color-mix(in_srgb,var(--text)_24%,transparent)]",
+    "flex w-full min-w-0 flex-1 flex-col bg-[var(--bg)] min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:overflow-y-auto min-[900px]:overscroll-contain [scrollbar-gutter:stable]",
+  mainContent:
+    "flex min-w-0 flex-1 flex-col gap-[0.86rem] px-[0.96rem] pt-[1rem] pb-[calc(5rem+env(safe-area-inset-bottom))] max-[760px]:px-[0.82rem] min-[900px]:px-[1.18rem] min-[900px]:pt-[1.06rem] min-[900px]:pb-[1.3rem]",
+
+  // Today: sentences, not tiles.
+  today: "flex flex-col gap-[0.34rem] pt-[0.3rem]",
+  todayGreeting: "m-0 text-[1.05rem] text-[var(--muted)]",
+  todayPlan:
+    "m-0 text-[clamp(1.75rem,7.6vw,2.35rem)] leading-[1.06] tracking-[-0.03em] font-[540] text-[var(--text)]",
+  todayNote: "m-0 text-[0.9375rem] text-[var(--muted)]",
+  todayActionRow:
+    "mt-[0.72rem] flex flex-col gap-[0.5rem] min-[620px]:flex-row min-[620px]:items-center",
+  // `relative` positions the LinkPendingOverlay these render inside.
+  todayAction: `${actionFilled} relative`,
+  todayQuietAction: `${actionQuiet} relative`,
+  todayLogged:
+    "m-0 inline-flex min-h-[2.75rem] items-center text-[1rem] text-[color-mix(in_srgb,#21834d_82%,var(--text))]",
+  statLine: "m-0 text-[0.9375rem] text-[var(--text)]",
+  statLineMuted: "m-[0.1rem_0_0] text-[0.875rem] text-[var(--muted)]",
+  sectionHead: "flex items-baseline justify-between gap-[0.6rem]",
+  sectionTitle: "m-0 text-[1.0625rem] tracking-[-0.02em] font-[520] text-[var(--text)]",
+  settingRow:
+    "m-0 flex min-h-[3.25rem] flex-wrap items-center justify-between gap-[0.75rem] [&_.theme-toggle-option]:min-h-[2.75rem] [&_.theme-toggle-option]:min-w-[2.75rem]",
+  settingLabel: "text-[1rem] text-[var(--text)]",
+  settingSelect:
+    `min-h-[2.75rem] min-w-[10rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.8rem] text-[1rem] text-[var(--text)] disabled:cursor-progress ${buttonFocusRing}`,
   panel: `${dashboardSurface} p-[0.82rem]`,
-  dashboardInsightGrid:
-    "grid grid-cols-1 gap-[0.56rem] min-[900px]:grid-cols-2",
   plainSection: "min-h-0 p-0",
   panelHead:
     "flex items-center justify-between gap-[0.5rem] max-[760px]:flex-wrap max-[760px]:items-stretch",
   panelTitle: "m-0 text-[1rem] tracking-[-0.03em] font-[560]",
   panelSubtitle: "m-[0.2rem_0_0.8rem] text-[0.72rem] text-[var(--muted)]",
-  calendarHead:
-    "flex flex-wrap items-center justify-between gap-[0.5rem]",
-  calendarNav: "inline-flex items-center gap-[0.35rem]",
-  calendarNavButton:
-    `min-h-[1.9rem] cursor-pointer rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent px-[0.58rem] text-[0.65rem] text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-[0.38] hover:enabled:border-[var(--dashboard-border-strong)] max-[760px]:min-h-[2.75rem] ${buttonMotion} ${buttonFocusRing}`,
-  calendarWeekdayRow: "mt-[0.2rem] grid grid-cols-7 gap-[0.32rem]",
-  calendarWeekday: "text-center text-[0.65rem] text-[var(--muted)]",
-  calendarGrid:
-    "grid grid-cols-7 gap-[0.32rem] min-[900px]:min-h-0 min-[900px]:flex-1 min-[900px]:[grid-auto-rows:minmax(2.1rem,1fr)]",
-  calendarDay:
-    "relative flex aspect-square items-center justify-center rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--surface)] text-[color-mix(in_srgb,var(--text)_88%,var(--muted))] min-[900px]:aspect-auto min-[900px]:h-full",
-  calendarDayActive:
-    "!border-[var(--calendar-active-border)] !bg-[var(--calendar-active-bg)] text-[var(--text)]",
-  calendarDayClickable:
-    `cursor-pointer text-inherit hover:border-[var(--dashboard-border-strong)] [touch-action:manipulation] ${buttonMotion} ${buttonFocusRing}`,
-  calendarDayNumber: "text-[0.84rem] leading-none",
-  calendarDayEmpty:
-    "aspect-square rounded-[0.42rem] border border-transparent min-[900px]:aspect-auto min-[900px]:h-full",
-  calendarDayDetails:
-    "mt-[0.7rem] rounded-[0.44rem] border border-[var(--dashboard-border)] bg-[var(--surface)] p-[0.58rem]",
-  calendarDayDetailsTitle: "m-0 text-[0.72rem] text-[var(--muted)]",
-  calendarDayDetailsLinks: "mt-[0.38rem] flex flex-wrap gap-[0.35rem]",
-  calendarDayDetailsLink:
-    `relative inline-flex min-h-[2.3rem] items-center rounded-[0.42rem] border border-[var(--dashboard-border)] px-[0.58rem] text-[0.76rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] max-[760px]:min-h-[2.75rem] ${buttonMotion} ${buttonFocusRing}`,
+  // Search owns the panel's full width; the sort select and the count share the
+  // line directly above the list so the ordering names what you are looking at.
   searchInput:
-    "h-[2.18rem] w-[clamp(9rem,34vw,14rem)] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.74rem] text-[0.84rem] text-[var(--text)] placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:h-[2.5rem] max-[760px]:w-full",
-  exerciseToolbar:
-    "flex min-w-0 items-center justify-end gap-[0.46rem] max-[760px]:w-full max-[760px]:flex-wrap max-[760px]:justify-start",
-  exerciseSortControls:
-    "relative inline-grid min-h-[2.18rem] shrink-0 grid-cols-2 overflow-hidden rounded-[0.74rem] border border-[var(--dashboard-border)] bg-transparent p-[0.08rem] max-[760px]:min-h-[2.5rem]",
-  exerciseSortIndicator:
-    "pointer-events-none absolute top-[0.08rem] bottom-[0.08rem] left-[0.08rem] z-0 w-[calc(50%-0.08rem)] rounded-[0.62rem] border border-[var(--dashboard-border)] bg-[var(--bg)] transition-transform duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] [[data-active-sort=sessions]_&]:translate-x-full",
-  exerciseSortButton:
-    `relative z-10 inline-flex min-w-[5.5rem] cursor-pointer items-center justify-center gap-[0.34rem] rounded-[0.62rem] border border-transparent bg-transparent px-[0.78rem] text-[0.86rem] text-[color-mix(in_srgb,var(--muted)_74%,transparent)] hover:text-[var(--text)] data-[active=true]:text-[var(--text)] max-[760px]:min-w-[calc(50vw-2.1rem)] max-[760px]:px-[0.64rem] ${buttonMotion} ${buttonFocusRing}`,
-  exerciseSortIcon:
-    "h-[0.92rem] w-[0.92rem] shrink-0",
+    "mt-[0.6rem] h-[2.75rem] w-full rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.74rem] text-base text-[var(--text)] placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+  exerciseListMeta:
+    "mt-[0.6rem] flex flex-wrap items-center justify-between gap-[0.5rem]",
+  exerciseCount: "m-0 text-[0.84rem] text-[var(--muted)]",
+  exerciseSortSelect:
+    `min-h-[2.75rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] pl-[0.7rem] text-[0.9375rem] text-[var(--text)] min-[760px]:min-h-[2.2rem] min-[760px]:text-[0.84rem] ${buttonFocusRing}`,
+  // The reveal needs more air than the row gap, or it reads as one more row.
+  listRevealRow: "mt-[0.72rem] flex",
+  listRevealButton: actionOutline,
+
+  // Today's plan, exercise by exercise: what it asks for on the left, what you
+  // hit last time on the right. Borderless with a hairline between, because ten
+  // bordered rows inside a bordered panel is a second frame around every row.
+  sessionList: "mt-[0.5rem] flex flex-col",
+  sessionRow:
+    "flex min-w-0 items-baseline justify-between gap-[0.75rem] border-b border-[var(--dashboard-border)] py-[0.62rem] last:border-b-0 last:pb-0",
+  sessionRowMain: "flex min-w-0 flex-col gap-[0.12rem]",
+  sessionRowStats: "flex shrink-0 flex-col items-end gap-[0.12rem] text-right",
+  sessionRowTopSet:
+    "m-0 text-[0.9375rem] text-[var(--text)] [font-variant-numeric:tabular-nums]",
   metricList:
     "mt-[0.66rem] flex flex-col gap-[0.36rem] overflow-x-visible min-[761px]:overflow-x-auto min-[761px]:[scrollbar-width:thin]",
-  paginationRow:
-    "mt-[0.58rem] flex flex-wrap items-center justify-between gap-[0.5rem]",
-  paginationMeta: "m-0 text-[0.72rem] text-[var(--muted)]",
-  paginationControls: "inline-flex items-center gap-[0.3rem]",
-  paginationButton:
-    `min-h-[1.9rem] cursor-pointer rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent px-[0.62rem] text-[0.72rem] text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-[0.38] hover:enabled:border-[var(--dashboard-border-strong)] max-[760px]:min-h-[2.12rem] ${buttonMotion} ${buttonFocusRing}`,
-  paginationPage:
-    "text-[0.72rem] text-[var(--muted)]",
   metricHeader:
     "grid w-[max(100%,34rem)] items-center gap-[0.44rem] px-[0.6rem] max-[760px]:hidden",
   metricHeaderCell:
     "whitespace-nowrap text-[0.65rem] font-medium text-[var(--muted)]",
   metricHeaderPrimary: "pl-[0.06rem]",
   metricRow:
-    "grid w-full min-w-0 items-center gap-[0.44rem] rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent p-[0.58rem] text-[0.84rem] transition-[border-color,background-color] duration-150 hover:border-[var(--dashboard-border-strong)] min-[761px]:w-[max(100%,34rem)] max-[760px]:gap-x-[0.48rem] max-[760px]:gap-y-[0.12rem] max-[760px]:px-[0.56rem] max-[760px]:py-[0.52rem]",
+    "grid w-full min-w-0 items-center gap-[0.44rem] rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent p-[0.58rem] text-[0.84rem] min-[761px]:w-[max(100%,34rem)] max-[760px]:min-h-[2.75rem] max-[760px]:gap-x-[0.48rem] max-[760px]:gap-y-[0.12rem] max-[760px]:px-[0.56rem] max-[760px]:py-[0.6rem] max-[760px]:text-[0.9rem]",
+  // A row-shaped <Link>, not a button: it keeps the row's own geometry.
   clickableMetricRow:
     `cursor-pointer text-inherit no-underline hover:translate-y-0 ${buttonFocusRing} ${buttonMotion}`,
   metricMobileLabel:
     "min-w-0",
-  personalRecordsScroll:
-    "flex max-h-[20rem] flex-col gap-[0.36rem] overflow-y-auto pr-[0.18rem] [scrollbar-width:thin]",
-  personalBestRow:
-    "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,1fr)] min-[761px]:w-[max(100%,24rem)] max-[760px]:grid-cols-[4.8rem_minmax(0,1fr)_auto] max-[760px]:[&>*:nth-child(3)]:justify-self-end",
   workoutSummaryLine:
     "m-0 hidden min-w-0 truncate text-[0.84rem] leading-[1.3] font-[520] text-[var(--text)] max-[760px]:block",
   workoutSummaryMeta:
@@ -225,8 +161,9 @@ export const styles = {
     "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,0.9fr)_minmax(0,0.85fr)_minmax(0,1fr)] min-[761px]:w-[max(100%,40rem)] max-[760px]:grid-cols-[4.8rem_minmax(0,1fr)_auto] max-[760px]:[&>*:nth-child(2)]:min-w-0 max-[760px]:[&>*:nth-child(5)]:justify-self-end max-[760px]:[&>*:nth-child(6)]:hidden",
   metricMain: "m-0 text-[0.84rem] leading-[1.3] font-[520] text-[var(--text)]",
   metricSubtle: "m-[0.18rem_0_0] text-[0.72rem] text-[var(--muted)]",
+  // Filters on: a fill tint, not a stronger ring.
   workoutFilterToggle:
-    `relative inline-flex h-[1.95rem] w-[1.95rem] cursor-pointer items-center justify-center rounded-full border border-[var(--dashboard-border)] bg-[var(--toggle-bg)] text-[var(--text)] data-[active=true]:border-[var(--dashboard-border-strong)] data-[active=true]:bg-[var(--toggle-active-bg)] data-[active=true]:text-[var(--toggle-active-icon)] max-[760px]:h-[2.75rem] max-[760px]:w-[2.75rem] ${buttonMotion} ${buttonFocusRing}`,
+    `${actionIcon} data-[active=true]:bg-[color-mix(in_srgb,var(--text)_8%,transparent)]`,
   workoutFilterToggleIcon: "h-[0.92rem] w-[0.92rem]",
   workoutFilterPopover:
     `${dashboardBorder} ${dashboardSurface} z-50 flex w-[min(35rem,calc(100vw-1.64rem))] max-w-[calc(100vw-1.64rem)] flex-col gap-[0.72rem] !bg-[var(--bg)] p-[0.82rem] shadow-[0_14px_32px_color-mix(in_srgb,#000_12%,transparent)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out max-[760px]:max-h-[min(34rem,calc(100dvh-1.64rem))] max-[760px]:overflow-y-auto`,
@@ -235,13 +172,13 @@ export const styles = {
   workoutFilterField:
     "flex min-w-0 flex-col gap-[0.28rem] text-[0.72rem] text-[var(--muted)]",
   workoutFilterInput:
-    "min-h-[2.5rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.84rem] text-[var(--text)] outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "min-h-[2.5rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.84rem] text-[var(--text)] outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
   workoutFilterFooter:
     "flex flex-wrap items-center justify-between gap-[0.55rem] border-t border-[var(--dashboard-border)] pt-[0.68rem] max-[420px]:items-stretch",
   workoutFilterMeta:
     "m-0 text-[0.72rem] text-[var(--muted)]",
-  workoutFilterReset:
-    `inline-flex min-h-[2.18rem] cursor-pointer items-center justify-center rounded-[0.46rem] border border-[var(--dashboard-border)] bg-transparent px-[0.74rem] text-[0.76rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-40 max-[420px]:w-full ${buttonMotion} ${buttonFocusRing}`,
+  workoutFilterReset: `${actionOutline} max-[420px]:w-full`,
+  retryButton: actionOutline,
   timeline: "mt-[0.66rem] flex flex-col gap-[0.9rem]",
   monthSection: "flex flex-col gap-[0.42rem]",
   monthTitle:
@@ -250,26 +187,26 @@ export const styles = {
     "grid grid-cols-1 gap-[0.56rem] min-[900px]:grid-cols-2",
   chartPanel: `${dashboardSurface} p-[0.82rem]`,
   chartFrame: "mt-[0.52rem] h-[15rem] w-full",
-  nutritionSummaryMeta:
-    "m-[0.14rem_0_0] truncate text-[0.68rem] text-[var(--muted)]",
   nutritionForm:
     "grid grid-cols-2 gap-[0.52rem] min-[760px]:grid-cols-4 max-[420px]:grid-cols-1",
   nutritionField:
     "flex min-w-0 flex-col gap-[0.28rem] text-[0.7rem] text-[var(--muted)]",
   nutritionInput:
-    "min-h-[2.6rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.9rem] text-[var(--text)] outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.75rem]",
+    "min-h-[2.6rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.9rem] text-[var(--text)] outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
   nutritionFormActions:
     "mt-[0.72rem] flex justify-end max-[520px]:mt-[0.62rem]",
-  nutritionSaveButton:
-    `inline-flex min-h-[2.6rem] cursor-pointer items-center justify-center gap-[0.4rem] rounded-[0.48rem] border border-[var(--dashboard-border)] bg-transparent px-[1.1rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-progress disabled:opacity-50 max-[520px]:w-full max-[760px]:min-h-[2.75rem] ${buttonMotion} ${buttonFocusRing}`,
+  nutritionSaveButton: `${actionFilled} max-[520px]:w-full`,
   nutritionButtonIcon:
     "h-[0.86rem] w-[0.86rem] shrink-0 stroke-current",
   nutritionChartHead:
     "flex flex-wrap items-center justify-between gap-[0.55rem] max-[520px]:items-stretch",
+  // The track is a pill because its segments are: a 0.68rem track around 999px
+  // buttons clips their corners.
   nutritionSegments:
-    "relative inline-grid min-h-[2.12rem] grid-cols-3 overflow-hidden rounded-[0.68rem] border border-[var(--dashboard-border)] bg-transparent p-[0.08rem] max-[520px]:w-full",
+    "relative inline-grid grid-cols-3 rounded-[999px] border border-[var(--dashboard-border)] p-[0.08rem] max-[520px]:w-full",
+  // Selected is a fill tint plus a colour. Nothing gains a border.
   nutritionSegmentButton:
-    `inline-flex min-w-[4.1rem] cursor-pointer items-center justify-center rounded-[0.56rem] border border-transparent bg-transparent px-[0.58rem] text-[0.76rem] text-[var(--muted)] hover:text-[var(--text)] data-[active=true]:border-[var(--dashboard-border)] data-[active=true]:text-[var(--text)] max-[520px]:min-w-0 ${buttonMotion} ${buttonFocusRing}`,
+    `${actionQuiet} data-[active=true]:bg-[color-mix(in_srgb,var(--text)_8%,transparent)] data-[active=true]:text-[var(--text)]`,
   nutritionChartFrame:
     "mt-[0.52rem] h-[14rem] w-full",
   nutritionRow:
@@ -282,74 +219,47 @@ export const styles = {
     "text-[0.84rem] text-[var(--text)]",
   nutritionMobileStatSecondary:
     "text-[0.72rem] text-[var(--muted)]",
-  profilePanel:
-    "w-full",
-  profileBody:
-    "grid w-full grid-cols-[18rem_minmax(0,1fr)] gap-[1.08rem] max-[900px]:grid-cols-1",
-  profileIdentityPanel:
-    `${dashboardSurface} flex min-w-0 flex-col gap-[0.72rem] p-[1rem] max-[900px]:grid max-[900px]:grid-cols-[auto_minmax(0,1fr)] max-[900px]:items-center max-[900px]:gap-x-[0.86rem] max-[760px]:p-[0.82rem]`,
-  profileEditorPanel:
-    `${dashboardSurface} flex min-w-0 flex-col gap-[1rem] p-[1rem] max-[760px]:p-[0.82rem]`,
-  profileTopBar:
-    "flex items-center",
-  profilePhotoControl:
-    "inline-flex min-h-[4.9rem] items-center gap-[0.72rem] text-[var(--text)]",
-  profileControlsField:
-    "flex min-w-0 items-center gap-[0.58rem] max-[520px]:flex-wrap",
+  profileIdentity:
+    "flex items-center gap-[0.9rem] pt-[0.2rem]",
+  profileIdentityText: "min-w-0 flex-1",
+  profileName:
+    "m-0 truncate text-[1.35rem] leading-[1.15] tracking-[-0.02em] font-[560] text-[var(--text)]",
+  profileMeta: "m-[0.2rem_0_0] truncate text-[0.9375rem] text-[var(--muted)]",
+  profileNameRow: "flex min-w-0 items-center gap-[0.35rem]",
+  profileEditButton: actionIconQuiet,
+  dangerZone:
+    "flex flex-col items-start gap-[0.5rem] rounded-[0.54rem] border border-[color-mix(in_srgb,#b13d48_42%,transparent)] bg-[color-mix(in_srgb,#b13d48_9%,var(--bg))] p-[0.95rem]",
+  dangerZoneTitle:
+    "m-0 text-[1.0625rem] tracking-[-0.02em] font-[540] text-[color-mix(in_srgb,#b13d48_88%,var(--text))]",
+  dangerZoneText: "m-0 text-[0.9375rem] leading-[1.45] text-[var(--muted)]",
   profilePhotoButton:
-    "group relative h-[13.2rem] w-full shrink-0 overflow-hidden rounded-[0.58rem] max-[900px]:row-span-3 max-[900px]:h-[6.2rem] max-[900px]:w-[6.2rem]",
+    "flex shrink-0 flex-col items-center gap-[0.28rem]",
   profilePhotoPreview:
-    `flex h-full w-full cursor-pointer items-center justify-center overflow-hidden rounded-[0.58rem] border border-[var(--dashboard-border)] bg-[var(--calendar-active-bg)] bg-cover bg-center text-[var(--text)] data-[has-image=true]:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-60 [&>svg]:h-[1.2rem] [&>svg]:w-[1.2rem] ${buttonFocusRing}`,
-  profilePhotoEditOverlay:
-    "pointer-events-none absolute inset-0 flex items-center justify-center bg-[color-mix(in_srgb,#000_42%,transparent)] text-[0.78rem] font-medium text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100",
-  profileIdentityText:
-    "min-w-0",
-  profileRailName:
-    "m-0 truncate text-[1.05rem] leading-[1.15] font-[560] text-[var(--text)]",
-  profileRailMeta:
-    `block m-[0.16rem_0_0] truncate !text-[var(--muted)] !no-underline text-[0.74rem] hover:!underline ${buttonFocusRing}`,
-  profileJoinedMeta:
-    "m-0 truncate text-[0.72rem] text-[var(--muted)]",
-  profileForm:
-    "grid min-w-0 grid-cols-1 content-start gap-x-[1rem] gap-y-[0.82rem] min-[900px]:grid-cols-2",
+    `flex h-[4.5rem] w-[4.5rem] cursor-pointer items-center justify-center overflow-hidden rounded-[999px] border border-[var(--dashboard-border)] bg-[var(--calendar-active-bg)] bg-cover bg-center text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-60 [&>svg]:h-[1.3rem] [&>svg]:w-[1.3rem] ${buttonFocusRing}`,
+  profilePhotoCaption: "text-[0.8125rem] text-[var(--muted)]",
   profileField:
     "flex flex-col gap-[0.32rem] [&>span]:text-[0.72rem] [&>span]:leading-none [&>span]:text-[var(--muted)]",
   profileInput:
-    "min-h-[2.78rem] rounded-[0.38rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.78rem] text-[0.84rem] text-[var(--text)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.62rem]",
+    "min-h-[2.78rem] rounded-[0.38rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.78rem] text-[0.84rem] text-[var(--text)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
   profileFileInput: "sr-only",
-  profileFooter:
-    "flex flex-wrap items-center gap-[0.55rem] border-t border-[var(--dashboard-border)] pt-[1rem] max-[520px]:gap-[0.42rem]",
-  profileActions:
-    "inline-flex flex-wrap items-center gap-[0.55rem]",
-  profileActionForm: "m-0",
   buttonInlineIcon: "h-[0.88rem] w-[0.88rem] shrink-0",
-  profileSaveButton:
-    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[520px]:px-[0.72rem] ${buttonMotion} ${buttonFocusRing}`,
-  profileSignOutButton:
-    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] max-[520px]:px-[0.72rem] ${buttonMotion} ${buttonFocusRing}`,
-  profileDeleteButton:
-    `ml-auto inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[color-mix(in_srgb,#b13d48_46%,transparent)] bg-transparent px-[0.9rem] text-[0.84rem] text-[color-mix(in_srgb,#b13d48_88%,var(--text))] hover:bg-[color-mix(in_srgb,#b13d48_12%,var(--bg))] disabled:cursor-not-allowed disabled:opacity-50 max-[520px]:px-[0.72rem] ${buttonMotion} ${buttonFocusRing}`,
-  accountBody:
-    "mt-[1.08rem] grid grid-cols-1 gap-[0.72rem] border-t border-[var(--dashboard-border)] pt-[1.08rem] min-[900px]:grid-cols-2 min-[900px]:items-start",
-  accountSection: `${dashboardSurface} flex flex-col gap-[0.72rem] p-[1rem] max-[760px]:p-[0.82rem]`,
-  accountSectionTitle: "m-0 text-[0.94rem] tracking-[-0.03em] font-[560]",
-  accountSectionHint: "m-[0.16rem_0_0] text-[0.72rem] text-[var(--muted)]",
-  accountForm: "flex min-w-0 flex-col gap-[0.72rem]",
-  accountFieldRow:
-    "grid min-w-0 grid-cols-1 gap-x-[1rem] gap-y-[0.72rem] min-[900px]:grid-cols-2",
-  accountActions: "flex justify-end max-[520px]:justify-stretch",
-  accountActionButton:
-    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[1rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[520px]:w-full ${buttonMotion} ${buttonFocusRing}`,
+  profileSaveButton: actionFilled,
+  dialogCancelButton: actionOutline,
+  profileDeleteButton: `${actionDanger} ml-auto`,
+  // Account rows: label, current value, and an action that opens an inline
+  // form. No nested cards, no always-open forms.
+  accountRow:
+    "flex min-h-[3.25rem] flex-wrap items-center gap-x-[0.75rem] gap-y-[0.2rem] border-b border-[var(--dashboard-border)] py-[0.55rem] last:border-b-0",
+  accountRowLabel: "min-w-0 flex-1 text-[1rem] text-[var(--text)]",
+  accountRowValue: "min-w-0 truncate text-[0.9375rem] text-[var(--muted)]",
+  accountRowAction: actionQuiet,
+  accountDisclosure:
+    "flex flex-col gap-[0.72rem] pb-[0.9rem] pt-[0.2rem] [&>button]:self-start",
   dangerTitle:
     "m-0 text-[1.18rem] leading-[1.15] tracking-[-0.03em] font-[560] text-[color-mix(in_srgb,#b13d48_82%,var(--text))]",
   deleteModalText: "m-0 text-[0.82rem] leading-[1.5] text-[var(--muted)]",
   deleteModalStrong: "text-[var(--text)] font-[560]",
-  dangerButton:
-    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[color-mix(in_srgb,#b13d48_46%,transparent)] bg-transparent px-[1rem] text-[0.84rem] text-[color-mix(in_srgb,#b13d48_88%,var(--text))] hover:bg-[color-mix(in_srgb,#b13d48_12%,var(--bg))] disabled:cursor-not-allowed disabled:opacity-50 max-[520px]:w-full ${buttonMotion} ${buttonFocusRing}`,
-  primaryButton:
-    `inline-flex min-h-[2.34rem] cursor-pointer items-center justify-center gap-[0.38rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[760px]:min-h-[2.52rem] ${buttonMotion} ${buttonFocusRing}`,
-  secondaryButton:
-    `inline-flex min-h-[2.34rem] cursor-pointer items-center justify-center gap-[0.38rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 max-[760px]:min-h-[2.52rem] ${buttonMotion} ${buttonFocusRing}`,
+  dangerButton: actionDanger,
   avatarModalOverlay:
     `dashboard-theme-scope fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-[color-mix(in_srgb,var(--bg)_12%,transparent)] px-[0.78rem] py-[calc(0.78rem+env(safe-area-inset-bottom))] backdrop-blur-[8px] animate-[dashboard-modal-backdrop_180ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-backdrop-exit_160ms_cubic-bezier(0.4,0,1,1)_both] min-[720px]:p-[1rem] ${dashboardBorder}`,
   avatarModal:
@@ -358,8 +268,7 @@ export const styles = {
     "flex items-center justify-between gap-[0.75rem]",
   avatarModalTitle:
     "m-0 text-[1.18rem] leading-[1.15] font-[560] text-[var(--text)]",
-  avatarModalClose:
-    `inline-flex h-[2.05rem] w-[2.05rem] shrink-0 cursor-pointer items-center justify-center rounded-[0.45rem] border border-[var(--dashboard-border)] bg-transparent text-[var(--text)] hover:border-[var(--dashboard-border-strong)] ${buttonMotion} ${buttonFocusRing}`,
+  avatarModalClose: actionIconQuiet,
   avatarModalPreviewWrap:
     "grid items-start gap-[1rem] min-[720px]:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]",
   avatarCropFrame:
@@ -374,8 +283,11 @@ export const styles = {
     "flex flex-col gap-[0.38rem] text-[0.78rem] text-[var(--muted)] [&>input]:accent-[var(--text)]",
   avatarCropActions:
     "grid grid-cols-1 gap-[0.5rem] min-[520px]:grid-cols-2",
-  avatarModalButton:
-    `inline-flex min-h-[2.5rem] cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.52rem] border border-[var(--dashboard-border)] bg-transparent px-[0.92rem] text-[0.84rem] text-[var(--text)] hover:border-[var(--dashboard-border-strong)] disabled:cursor-not-allowed disabled:opacity-50 ${buttonMotion} ${buttonFocusRing}`,
+  // Three roles, three treatments: the modal's one primary, its secondaries,
+  // and the destructive one. They used to be byte-identical.
+  avatarModalApply: actionFilled,
+  avatarModalButton: actionOutline,
+  avatarModalRemove: actionDanger,
   avatarModalFooter:
     "flex flex-col gap-[0.5rem] pt-[0.1rem] min-[520px]:flex-row min-[520px]:justify-end",
   empty: "m-[0.68rem_0_0] text-[0.84rem] text-[var(--muted)]",
@@ -384,12 +296,6 @@ export const styles = {
   skeletonPanel: `${dashboardSurface} flex flex-col gap-[0.82rem] p-[0.82rem]`,
   skeletonPanelHead:
     "flex items-center justify-between gap-[0.7rem] max-[760px]:flex-col max-[760px]:items-stretch",
-  skeletonKpiCard:
-    `${dashboardSurface} flex min-h-[4.95rem] flex-col justify-between gap-[0.28rem] px-[0.7rem] py-[0.62rem]`,
   skeletonMetricList: "flex flex-col gap-[0.42rem]",
   skeletonTimeline: "mt-[0.66rem] flex flex-col gap-[0.42rem]",
-  skeletonSplitLayout:
-    "grid grid-cols-[minmax(0,1fr)_minmax(20rem,0.66fr)] gap-[0.9rem] max-[1020px]:grid-cols-1",
-  skeletonSplitGrid:
-    "grid grid-cols-1 gap-[0.62rem] min-[620px]:grid-cols-2 min-[1200px]:grid-cols-3",
 } as const;

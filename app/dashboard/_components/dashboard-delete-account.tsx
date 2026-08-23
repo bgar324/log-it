@@ -102,7 +102,7 @@ export function DashboardDeleteAccount({
           nutrition data. This cannot be undone.
         </p>
 
-        <form className={styles.accountForm} onSubmit={handleDelete}>
+        <form className={styles.accountDisclosure} onSubmit={handleDelete}>
           <label className={styles.profileField}>
             <span>
               Type your username{" "}
@@ -120,7 +120,7 @@ export function DashboardDeleteAccount({
             />
           </label>
           <div className={styles.avatarModalFooter}>
-            <button type="button" className={styles.avatarModalButton} onClick={close}>
+            <button type="button" className={styles.dialogCancelButton} onClick={close}>
               Cancel
             </button>
             <button

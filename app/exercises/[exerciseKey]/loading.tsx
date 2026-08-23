@@ -1,3 +1,5 @@
+import { AppTabBar } from "@/app/components/app-nav";
+import { navStyles } from "@/app/components/app-nav.styles";
 import { BackButton } from "@/app/components/back-button";
 import { styles } from "./exercise-detail.styles";
 
@@ -33,10 +35,10 @@ export default function ExerciseDetailLoading() {
       <p className="sr-only" role="status">
         Loading exercise
       </p>
-      <section className={styles.stage}>
+      <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
           <BackButton
-            fallbackHref="/progress"
+            fallbackHref="/dashboard?view=progress"
             label="Back"
             className={styles.backLink}
             iconClassName={styles.backButtonIcon}
@@ -46,14 +48,8 @@ export default function ExerciseDetailLoading() {
         <section className={styles.summaryCard} aria-hidden="true">
           <SkeletonBlock className="h-[0.76rem] w-[min(100%,16rem)]" />
           <SkeletonBlock className="mt-[0.48rem] h-[2rem] w-[min(100%,21rem)]" />
-          <div className={styles.metaRow}>
-            {Array.from({ length: 4 }, (_, index) => (
-              <span key={index} className={styles.metaPill}>
-                <SkeletonBlock className="h-[0.76rem] w-[5.4rem]" />
-                <SkeletonBlock className="h-[1rem] w-[6rem]" />
-              </span>
-            ))}
-          </div>
+          <SkeletonBlock className="mt-[0.66rem] h-[0.95rem] w-[min(100%,19rem)]" />
+          <SkeletonBlock className="mt-[0.28rem] h-[0.82rem] w-[min(100%,10rem)]" />
         </section>
 
         <section className={styles.panelGrid} aria-hidden="true">
@@ -80,6 +76,7 @@ export default function ExerciseDetailLoading() {
           </div>
         </section>
       </section>
+      <AppTabBar activeView="progress" />
     </main>
   );
 }

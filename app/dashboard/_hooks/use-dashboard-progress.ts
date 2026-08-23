@@ -1,24 +1,27 @@
 import { useMemo, useState } from "react";
 import type { DashboardClientData } from "../dashboard-types";
-import { PROGRESS_EXERCISES_PER_PAGE } from "../dashboard-client.shared";
+
+const INITIAL_EXERCISES = 6;
+const EXERCISES_PER_REVEAL = 24;
 
 type DashboardExercise = DashboardClientData["exercises"][number];
-type ExerciseSortMode = "recent-desc" | "recent-asc" | "sessions-desc" | "sessions-asc";
+
+export type ExerciseSortMode =
+  | "recent-desc"
+  | "recent-asc"
+  | "sessions-desc"
+  | "sessions-asc";
 
 export type DashboardProgressState = {
   exerciseSearch: string;
   exerciseSortMode: ExerciseSortMode;
   filteredExercises: DashboardExercise[];
-  paginatedExercises: DashboardExercise[];
-  currentPage: number;
-  totalPages: number;
-  rangeStart: number;
-  rangeEnd: number;
+  visibleExercises: DashboardExercise[];
+  hiddenCount: number;
+  revealCount: number;
   handleExerciseSearchChange: (value: string) => void;
-  toggleRecentSort: () => void;
-  toggleSessionSort: () => void;
-  goToPreviousPage: () => void;
-  goToNextPage: () => void;
+  handleExerciseSortChange: (mode: ExerciseSortMode) => void;
+  revealMoreExercises: () => void;
 };
 
 export function useDashboardProgress(
@@ -26,7 +29,7 @@ export function useDashboardProgress(
 ): DashboardProgressState {
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [exerciseSortMode, setExerciseSortMode] = useState<ExerciseSortMode>("recent-desc");
-  const [progressExercisePage, setProgressExercisePage] = useState(1);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_EXERCISES);
   const filteredExercises = useMemo(() => {
     const query = exerciseSearch.trim().toLowerCase();
     const matchingExercises = query
@@ -65,59 +68,38 @@ export function useDashboardProgress(
       );
     });
   }, [exercises, exerciseSearch, exerciseSortMode]);
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredExercises.length / PROGRESS_EXERCISES_PER_PAGE),
-  );
-  const currentPage = Math.min(progressExercisePage, totalPages);
-  const rangeStart =
-    filteredExercises.length === 0 ? 0 : (currentPage - 1) * PROGRESS_EXERCISES_PER_PAGE;
-  const paginatedExercises = filteredExercises.slice(
-    rangeStart,
-    rangeStart + PROGRESS_EXERCISES_PER_PAGE,
-  );
-  const rangeEnd = Math.min(rangeStart + paginatedExercises.length, filteredExercises.length);
+  // Progressive reveal instead of pages: 83 exercises across 17 pages of five
+  // made "Next" the only way through the list, and left a dead "Prev" on the
+  // first page. Search narrows, "show more" extends, neither needs a cursor.
+  const visibleExercises = filteredExercises.slice(0, visibleCount);
+  const hiddenCount = filteredExercises.length - visibleExercises.length;
+  // What the next tap actually appends, so the button can promise that number
+  // rather than the whole remainder.
+  const revealCount = Math.min(EXERCISES_PER_REVEAL, hiddenCount);
 
   function handleExerciseSearchChange(value: string) {
     setExerciseSearch(value);
-    setProgressExercisePage(1);
+    setVisibleCount(INITIAL_EXERCISES);
   }
 
-  function toggleRecentSort() {
-    setExerciseSortMode((current) =>
-      current === "recent-desc" ? "recent-asc" : "recent-desc",
-    );
-    setProgressExercisePage(1);
+  function handleExerciseSortChange(mode: ExerciseSortMode) {
+    setExerciseSortMode(mode);
+    setVisibleCount(INITIAL_EXERCISES);
   }
 
-  function toggleSessionSort() {
-    setExerciseSortMode((current) =>
-      current === "sessions-desc" ? "sessions-asc" : "sessions-desc",
-    );
-    setProgressExercisePage(1);
-  }
-
-  function goToPreviousPage() {
-    setProgressExercisePage((current) => Math.max(current - 1, 1));
-  }
-
-  function goToNextPage() {
-    setProgressExercisePage((current) => Math.min(current + 1, totalPages));
+  function revealMoreExercises() {
+    setVisibleCount((current) => current + EXERCISES_PER_REVEAL);
   }
 
   return {
     exerciseSearch,
     exerciseSortMode,
     filteredExercises,
-    paginatedExercises,
-    currentPage,
-    totalPages,
-    rangeStart,
-    rangeEnd,
+    visibleExercises,
+    hiddenCount,
+    revealCount,
     handleExerciseSearchChange,
-    toggleRecentSort,
-    toggleSessionSort,
-    goToPreviousPage,
-    goToNextPage,
+    handleExerciseSortChange,
+    revealMoreExercises,
   };
 }

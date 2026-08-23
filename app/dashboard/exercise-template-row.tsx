@@ -7,6 +7,7 @@ import { splitStyles } from "./split-system.styles";
 type ExerciseTemplateRowProps = {
   exercise: WorkoutSplitExerciseTemplate;
   searchResults: string[];
+  isEditing: boolean;
   onNameChange: (value: string) => void;
   onNameFocus: (value: string) => void;
   onNameBlur: (value: string) => void;
@@ -18,6 +19,7 @@ type ExerciseTemplateRowProps = {
 export function ExerciseTemplateRow({
   exercise,
   searchResults,
+  isEditing,
   onNameChange,
   onNameFocus,
   onNameBlur,
@@ -79,14 +81,18 @@ export function ExerciseTemplateRow({
         </label>
       </div>
 
-      <button
-        type="button"
-        className={splitStyles.iconGhostButton}
-        onClick={onRemove}
-        aria-label={`Remove ${exercise.exerciseDisplayName || "exercise"}`}
-      >
-        <Trash2 className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
-      </button>
+      {/* Delete lives behind the list's edit mode, so a stray tap while editing
+          a name cannot drop an exercise. In edit mode it removes immediately. */}
+      {isEditing ? (
+        <button
+          type="button"
+          className={splitStyles.dangerIconButton}
+          onClick={onRemove}
+          aria-label={`Remove ${exercise.exerciseDisplayName || "exercise"}`}
+        >
+          <Trash2 className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
+        </button>
+      ) : null}
     </div>
   );
 }

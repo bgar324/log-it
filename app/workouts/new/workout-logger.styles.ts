@@ -1,91 +1,70 @@
+import {
+  actionChip,
+  actionDanger,
+  actionFilled,
+  actionIcon,
+  actionIconDanger,
+  actionIconDrag,
+  actionIconQuiet,
+  actionMenuRow,
+  actionMenuRowDanger,
+  actionOutline,
+  actionQuiet,
+} from "@/app/components/action.styles";
 import { cn } from "../classnames";
 
+// Phone text inputs are 1rem (16px) so iOS Safari never zooms the viewport on
+// focus, and desktop keeps the old density through min-[620px] overrides.
+// Button geometry is not declared here: it comes from `action.styles.ts`.
 const inputBase = cn(
-  "w-full min-h-[2.55rem] rounded-[0.52rem] border",
+  "w-full min-h-[2.75rem] rounded-[0.52rem] border",
   "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-  "bg-[var(--field-bg)] px-[0.74rem] py-[0.64rem]",
+  "bg-[var(--field-bg)] py-[0.5rem]",
   "text-base text-[var(--text)] outline-none",
   "focus:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)]",
   "focus:shadow-[0_0_0_3px_var(--focus-ring)]",
-  "min-[620px]:text-[0.9rem]",
-);
-
-const iconButtonBase = cn(
-  "inline-flex h-[2.05rem] w-[2.05rem] cursor-pointer items-center justify-center rounded-[0.45rem] border",
-  "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
-  "bg-[var(--bg)] text-[var(--muted)] [touch-action:manipulation]",
-  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-  "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-  "disabled:cursor-not-allowed disabled:opacity-[0.35]",
-  "hover:enabled:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
-  "hover:enabled:text-[var(--text)]",
+  "min-[620px]:min-h-[2.4rem] min-[620px]:text-[0.9rem]",
 );
 
 export const styles = {
+  // Bottom padding clears the dial, so the last exercise's "Add set" is never
+  // sitting under it. 5.6rem = the 3.25rem trigger + its inset + breathing room.
   loggerShell: cn(
     "flex min-h-dvh justify-center px-[0.95rem] pt-[0.95rem]",
-    "pb-[calc(0.95rem+env(safe-area-inset-bottom))]",
-    "min-[620px]:p-[1.4rem]",
+    "pb-[calc(5.6rem+env(safe-area-inset-bottom))]",
+    "min-[620px]:px-[1.4rem] min-[620px]:pt-[1.4rem]",
+    "min-[620px]:pb-[calc(6rem+env(safe-area-inset-bottom))]",
   ),
   loggerStage: cn(
     "flex w-full max-w-[36rem] flex-col gap-[0.72rem]",
     "min-[620px]:max-w-[58rem]",
   ),
-  topRow: "flex items-center justify-between gap-[0.5rem]",
-  backLink: cn(
-    "inline-flex min-h-[2rem] cursor-pointer items-center justify-center gap-[0.35rem] whitespace-nowrap rounded-full border",
-    "border-[color:color-mix(in_srgb,var(--text)_14%,transparent)]",
-    "bg-[var(--bg)] px-[0.72rem] text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-    "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
-  ),
+  // Scrolls away with the page: the tools that matter mid-workout live in the
+  // bottom-right dial, so nothing up here needs pinning.
+  topRow: "flex items-center justify-between gap-[0.6rem] pb-[0.5rem]",
+  // Deliberate canon exception: Back is the quietest control on the screen, so
+  // it takes the muted variant with no hairline. Nothing here competes with it.
+  // Pulled left by exactly the quiet variant's own padding, so the label's left
+  // edge lines up with the date and title below it. With no border to explain
+  // the inset, an indented Back just reads as misaligned.
+  backLink: `${actionQuiet} -ml-[1rem]`,
   backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
   header: "flex flex-col gap-[0.28rem]",
-  headerMeta:
-    "m-0 text-xs text-[var(--muted)]",
+  headerMeta: "m-0 text-xs text-[var(--muted)]",
   titleRow: "flex min-w-0 items-start justify-between gap-[0.5rem]",
-  titleActions: "inline-flex shrink-0 items-center gap-[0.35rem]",
-  headerIconButton: iconButtonBase,
   title:
     "m-0 min-w-0 flex-1 text-[clamp(1.8rem,7vw,2.35rem)] leading-[1.02] tracking-[-0.03em] font-[560]",
-  autosaveMeta: "m-0 text-[0.74rem] text-[var(--muted)]",
   form: "flex flex-col gap-[0.62rem] p-[2px]",
   card: cn(
     "flex flex-col gap-[0.6rem] rounded-[0.54rem] border bg-transparent p-[0.78rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
-  restTimer: cn(
-    "flex flex-wrap items-center gap-[0.5rem] rounded-[0.54rem] border bg-transparent px-[0.7rem] py-[0.56rem] max-[619px]:hidden",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "data-[running=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)]",
-  ),
-  restTimerLabel: "text-[0.72rem] text-[var(--muted)]",
-  restTimerTime: cn(
-    "font-[var(--font-mono)] text-[1.05rem] tabular-nums leading-none text-[var(--text)]",
-    "min-w-[3.4rem]",
-  ),
-  restTimerPresets: "flex flex-wrap items-center gap-[0.34rem]",
-  restTimerButton: cn(
-    "inline-flex min-h-[2rem] cursor-pointer items-center justify-center rounded-[0.45rem] border px-[0.62rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "bg-[var(--bg)] text-[0.76rem] text-[var(--text)] [touch-action:manipulation]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-    "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
-  ),
-  restTimerSpacer: "ml-auto flex items-center gap-[0.34rem]",
   mobileHiddenCard: "max-[619px]:hidden",
   metaGrid:
     "grid gap-[0.55rem] min-[620px]:grid-cols-2 min-[860px]:grid-cols-3",
   singleMetaField: "grid gap-[0.55rem]",
   field: "flex flex-col gap-[0.22rem]",
   workoutTitleField: "max-[619px]:hidden",
-  fieldInputRow: "flex items-stretch gap-[0.55rem]",
-  fieldActionButton: cn(
-    iconButtonBase,
-    "!h-auto !w-auto shrink-0 self-stretch aspect-square rounded-[0.52rem]",
-  ),
   confirmOverlay: cn(
     "fixed inset-0 z-[80] flex items-center justify-center",
     "bg-[color:color-mix(in_srgb,#000_36%,transparent)] px-[0.78rem] py-[0.78rem]",
@@ -97,88 +76,41 @@ export const styles = {
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
     "shadow-[0_14px_32px_color-mix(in_srgb,#000_14%,transparent)]",
   ),
-  confirmMeta:
-    "m-0 text-[0.72rem] text-[var(--muted)]",
   confirmTitle:
     "m-0 text-[1rem] leading-[1.15] tracking-[-0.03em] font-[560] text-[var(--text)]",
   confirmBody:
     "m-0 text-[0.84rem] leading-[1.45] text-[color:color-mix(in_srgb,var(--text)_92%,var(--muted))]",
-  confirmActions:
-    "grid grid-cols-2 gap-[0.5rem] pt-[0.1rem]",
-  confirmSecondaryButton: cn(
-    "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center rounded-[0.56rem] border bg-[var(--bg)] px-[0.9rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "text-[0.84rem] text-[var(--text)] [touch-action:manipulation]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-    "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
-    "disabled:cursor-not-allowed disabled:opacity-[0.45]",
-    "w-full",
-  ),
-  confirmPrimaryButton: cn(
-    "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center rounded-[0.56rem] border px-[0.9rem]",
-    "border-[color:color-mix(in_srgb,#b13d48_34%,transparent)]",
-    "bg-[color:color-mix(in_srgb,#b13d48_10%,var(--bg))]",
-    "text-[0.84rem] text-[#b13d48] [touch-action:manipulation]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-    "hover:border-[color:color-mix(in_srgb,#b13d48_46%,transparent)]",
-    "hover:bg-[color:color-mix(in_srgb,#b13d48_14%,var(--bg))]",
-    "disabled:cursor-not-allowed disabled:opacity-[0.45]",
-    "w-full",
-  ),
+  confirmActions: "grid grid-cols-2 gap-[0.5rem] pt-[0.1rem]",
+  confirmSecondaryButton: `${actionOutline} w-full`,
+  confirmPrimaryButton: `${actionDanger} w-full`,
   label: "text-[0.68rem] text-[var(--muted)]",
-  input: inputBase,
-  datePickerWrapper:
-    "w-full [&_.react-datepicker__input-container]:block [&_.react-datepicker__input-container]:w-full",
-  datePickerCalendar: "",
+  input: cn(inputBase, "px-[0.74rem]"),
   dateInput: "w-full [font-variant-numeric:tabular-nums]",
-  datePickerPopper: cn(
-    "z-[60]",
-    "[&_.react-datepicker]:overflow-hidden [&_.react-datepicker]:rounded-[0.56rem]",
-    "[&_.react-datepicker]:border [&_.react-datepicker]:border-[color:color-mix(in_srgb,var(--text)_14%,transparent)]",
-    "[&_.react-datepicker]:bg-[var(--bg)] [&_.react-datepicker]:text-[var(--text)]",
-    "[&_.react-datepicker]:shadow-[0_14px_28px_color-mix(in_srgb,#000_14%,transparent)]",
-    "[&_.react-datepicker__header]:border-b",
-    "[&_.react-datepicker__header]:border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
-    "[&_.react-datepicker__header]:bg-[var(--bg)] [&_.react-datepicker__header]:pt-[0.56rem]",
-    "[&_.react-datepicker__current-month]:text-[0.9rem]",
-    "[&_.react-datepicker__current-month]:tracking-[-0.03em]",
-    "[&_.react-datepicker__current-month]:text-[var(--text)]",
-    "[&_.react-datepicker__current-month]:font-[560]",
-    "[&_.react-datepicker__day-names]:mt-[0.35rem]",
-    "[&_.react-datepicker__day-name]:w-[2rem] [&_.react-datepicker__day-name]:leading-[2rem]",
-    "[&_.react-datepicker__day-name]:text-[0.7rem] [&_.react-datepicker__day-name]:text-[var(--muted)]",
-    "[&_.react-datepicker__month]:mx-[0.5rem] [&_.react-datepicker__month]:mb-[0.5rem]",
-    "[&_.react-datepicker__month]:mt-[0.42rem]",
-    "[&_.react-datepicker__day]:m-[0.12rem] [&_.react-datepicker__day]:w-[2rem]",
-    "[&_.react-datepicker__day]:rounded-[0.5rem] [&_.react-datepicker__day]:leading-[2rem]",
-    "[&_.react-datepicker__day]:text-[color:color-mix(in_srgb,var(--text)_90%,var(--muted))]",
-    "[&_.react-datepicker__day]:transition-colors",
-    "[&_.react-datepicker__day:hover]:bg-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "[&_.react-datepicker__day:hover]:text-[var(--text)]",
-    "[&_.react-datepicker__day--today]:font-[560]",
-    "[&_.react-datepicker__day--today]:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--text)_20%,transparent)]",
-    "[&_.react-datepicker__day--selected]:bg-[color:color-mix(in_srgb,var(--text)_84%,var(--bg))]",
-    "[&_.react-datepicker__day--selected]:text-[var(--bg)]",
-    "[&_.react-datepicker__day--keyboard-selected]:bg-[color:color-mix(in_srgb,var(--text)_84%,var(--bg))]",
-    "[&_.react-datepicker__day--keyboard-selected]:text-[var(--bg)]",
-    "[&_.react-datepicker__navigation]:top-[0.58rem]",
-    "[&_.react-datepicker__navigation-icon::before]:border-[var(--muted)]",
-  ),
   exerciseSection: "flex flex-col gap-[0.62rem]",
   exerciseCard: cn(
     "flex flex-col gap-[0.58rem] rounded-[0.54rem] border bg-transparent p-[0.78rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
     "transition-[border-color,background-color,transform,box-shadow]",
   ),
-  exerciseHead: "flex items-center justify-between gap-[0.55rem]",
-  exerciseHeading: "flex min-w-0 flex-1 items-center gap-[0.48rem]",
-  exerciseHeadActions: "flex shrink-0 items-center gap-[0.34rem]",
-  exerciseNameInput: "min-h-[2.05rem] h-[2.05rem] min-w-0 flex-1 rounded-[0.45rem] px-[0.74rem]",
-  exerciseTitle: "",
-  exerciseMeta: "mt-[0.12rem] text-[0.72rem] text-[var(--muted)]",
-  iconButton: iconButtonBase,
+  // Name field plus its options menu. `items-start` because the search-match
+  // panel grows out of the input's wrapper and the menu must stay level with
+  // the field, not with the panel.
+  exerciseNameRow:
+    "flex items-start gap-[0.4rem] [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1",
+  // One quiet sentence per exercise. Fixed height so the card does not jump
+  // when the comparison lands.
+  exerciseCompareLine:
+    "m-0 mt-[0.3rem] h-[1.1rem] overflow-hidden text-[0.78rem] leading-[1.1rem] text-[var(--muted)]",
+  exerciseMenuToggle: `${actionIconQuiet} h-[2.75rem] w-[2.4rem]`,
+  // `PopoverContent` ships no styling, so every caller owns its surface. Without
+  // this the menu painted straight onto the set rows behind it.
+  exerciseMenu: cn(
+    "z-50 flex w-[13rem] flex-col rounded-[0.56rem] border p-[0.3rem] outline-none",
+    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)]",
+    "shadow-[0_14px_32px_color-mix(in_srgb,#000_28%,transparent)]",
+  ),
+  exerciseMenuDangerItem: actionMenuRowDanger,
+  dangerIconButton: actionIconDanger,
   icon: "h-4 w-4 shrink-0 stroke-current",
   inlineRow: "block",
   searchResults: cn(
@@ -189,78 +121,28 @@ export const styles = {
   searchResultsLabel: "m-0 text-[0.7rem] text-[var(--muted)]",
   searchResultsList:
     "flex max-h-[12rem] flex-wrap gap-[0.42rem] overflow-y-auto max-[420px]:max-h-[14rem] max-[420px]:flex-col max-[420px]:flex-nowrap",
-  searchResultButton: cn(
-    "min-h-[2.4rem] cursor-pointer rounded-full border bg-[var(--bg)] px-[0.78rem] py-[0.45rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "text-left text-[0.86rem] leading-[1.2] text-[var(--text)] [touch-action:manipulation]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-    "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
-    "max-[420px]:w-full max-[420px]:rounded-[0.56rem]",
-  ),
-  compareHint: "mt-[-0.1rem] text-[0.76rem] text-[var(--muted)]",
-  compareCard: cn(
-    "flex flex-col gap-[0.5rem] rounded-[0.56rem] border bg-[var(--bg)] p-[0.62rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-  ),
-  compareHead: "flex flex-wrap items-baseline justify-start gap-[0.35rem]",
-  compareMeta: "m-0 text-[0.72rem] text-[var(--muted)]",
-  compareBody: cn(
-    "grid items-start gap-[0.7rem]",
-    "grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]",
-    "max-[420px]:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]",
-    "min-[620px]:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]",
-  ),
-  compareGrid: "flex flex-col gap-[0.44rem]",
-  compareItem: "flex flex-col gap-[0.12rem]",
-  compareLabel: "m-0 text-[0.67rem] text-[var(--muted)]",
-  compareValue: "m-0 text-[0.88rem] leading-[1.2]",
-  compareSnapshot: "flex flex-col gap-[0.4rem]",
-  compareSetList: "flex flex-col gap-[0.36rem]",
-  compareSetRow: cn(
-    "flex flex-col items-start gap-[0.18rem] rounded-[0.56rem] border bg-[var(--bg)] px-[0.58rem] py-[0.46rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
-    "max-[420px]:min-h-[3.7rem]",
-  ),
-  compareSetIndex:
-    "m-0 text-[0.78rem] font-[560] text-[var(--muted)]",
-  compareSetValue: "text-left text-[0.82rem] leading-[1.2]",
-  compareDelta:
-    "m-0 text-[0.77rem] leading-[1.35] text-[color:color-mix(in_srgb,var(--text)_86%,var(--muted))]",
-  predictionPanel: cn(
-    "grid items-start gap-[0.7rem] border-t pt-[0.55rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_8%,transparent)]",
-    "grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]",
-    "max-[420px]:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]",
-    "min-[620px]:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]",
-  ),
-  predictionSummary: "flex flex-col gap-[0.55rem]",
-  actionButton: cn(
-    "inline-flex min-h-[2.55rem] cursor-pointer items-center gap-[0.35rem] rounded-[0.5rem] border bg-[var(--bg)] px-[0.7rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "text-[0.78rem] text-[var(--text)] [touch-action:manipulation]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-    "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
-  ),
-  actionIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
-  spinningIcon: "h-[0.85rem] w-[0.85rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
-  setsStack: "flex flex-col gap-[0.58rem] overflow-x-visible py-[6px]",
+  searchResultButton: `${actionChip} text-left max-[420px]:w-full max-[420px]:justify-start`,
+  compareHint: "mt-[-0.1rem] text-[0.8rem] text-[var(--muted)]",
+  actionButton: actionOutline,
+  actionButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
+  spinningIcon:
+    "h-[0.85rem] w-[0.85rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
+  setsStack: "flex flex-col gap-[0.5rem] overflow-x-visible py-[6px]",
+  setRowGroup: "flex flex-col gap-[0.12rem]",
   setRow: cn(
-    "grid grid-cols-[1.72rem_minmax(5.4rem,1fr)_minmax(4.25rem,0.72fr)_minmax(4.05rem,0.7fr)_2.35rem] items-center gap-[0.34rem] bg-transparent",
-    "max-[380px]:grid-cols-[1.55rem_minmax(4.85rem,1fr)_minmax(3.7rem,0.7fr)_minmax(3.55rem,0.66fr)_2.25rem] max-[380px]:gap-[0.26rem]",
+    "grid grid-cols-[1.4rem_minmax(0,1fr)_3.5rem_3.25rem_2.75rem] items-center gap-[0.34rem] bg-transparent",
+    "max-[380px]:grid-cols-[1.25rem_minmax(0,1fr)_3.3rem_3.05rem_2.75rem] max-[380px]:gap-[0.26rem]",
     "min-[620px]:grid-cols-[auto_minmax(5.8rem,0.95fr)_minmax(4.8rem,0.72fr)_minmax(4.8rem,0.72fr)_auto]",
     "min-[620px]:items-center min-[620px]:gap-[0.5rem]",
   ),
-  setRowHeader: cn(
-    "hidden",
-    "min-[620px]:grid min-[620px]:grid-cols-[auto_minmax(5.8rem,0.95fr)_minmax(4.8rem,0.72fr)_minmax(4.8rem,0.72fr)_auto]",
-    "min-[620px]:items-center min-[620px]:gap-[0.5rem]",
-    "min-[620px]:bg-transparent min-[620px]:px-[0.1rem] min-[620px]:pb-0 min-[620px]:pt-0",
-    "min-[620px]:mb-[2px]",
+  // What this set was last time. Ghost text, never interactive, fixed height so
+  // typing above it never shifts the inputs.
+  setGhostLine: cn(
+    "pointer-events-none m-0 h-[1rem] select-none overflow-hidden whitespace-nowrap",
+    "pl-[1.74rem] text-[0.78rem] leading-[1rem] text-[var(--muted)]",
+    "max-[380px]:pl-[1.51rem]",
+    "min-[620px]:pl-[2.1rem]",
   ),
-  setHeadLabel:
-    "whitespace-nowrap text-[0.64rem] text-[var(--muted)]",
   setNumber: cn(
     "order-1 m-0 text-center text-[0.72rem] font-[560] text-[var(--muted)]",
     "min-[620px]:min-w-[1.4rem] min-[620px]:text-center",
@@ -272,78 +154,74 @@ export const styles = {
   setFieldDuration: "order-4",
   setFieldLabel:
     "sr-only min-[620px]:not-sr-only min-[620px]:text-[0.64rem] min-[620px]:text-[var(--muted)]",
-  setInput:
-    "min-h-[2.22rem] rounded-[0.44rem] px-[0.5rem] py-[0.44rem] text-[0.82rem] disabled:opacity-100 max-[380px]:px-[0.42rem] max-[380px]:text-[0.78rem]",
+  setInput: cn(
+    inputBase,
+    "px-[0.5rem] disabled:opacity-100 max-[380px]:px-[0.42rem] min-[620px]:px-[0.55rem]",
+  ),
   setWeightControl: "relative block min-w-0",
-  setWeightInput: "pr-[2.55rem] max-[380px]:pr-[2.18rem]",
+  setWeightInput: "pr-[2.95rem] min-[620px]:pr-[2.6rem]",
   bodyweightButton: cn(
-    "absolute bottom-[0.24rem] right-[0.24rem] top-[0.24rem] inline-flex w-[2.04rem] cursor-pointer items-center justify-center rounded-[0.34rem] border bg-transparent",
+    "absolute bottom-0 right-0 top-0 inline-flex w-[2.75rem] cursor-pointer items-center justify-center rounded-r-[0.52rem] border-l bg-transparent",
     "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
-    "text-[0.64rem] font-[560] text-[var(--muted)] [touch-action:manipulation]",
+    "text-[0.7rem] font-[400] text-[var(--muted)] [touch-action:manipulation]",
     "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
     "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)] hover:text-[var(--text)]",
-    "data-[active=true]:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)] data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)]",
-    "max-[380px]:w-[1.76rem] max-[380px]:text-[0.58rem]",
+    "data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)]",
+    "min-[620px]:w-[2.4rem] min-[620px]:text-[0.64rem]",
   ),
-  setRemoveButton:
-    "order-5 !h-[2.22rem] !w-[2.22rem] self-center justify-self-end !rounded-[0.44rem] max-[380px]:!h-[2.14rem] max-[380px]:!w-[2.14rem]",
+  setRemoveButton: "order-5 self-center justify-self-end",
   setActions: "flex w-full min-[620px]:justify-end [&>button]:w-full",
-  desktopOnlyAction: "max-[619px]:hidden",
-  secondaryButton: cn(
-    "inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center gap-[0.44rem] rounded-[0.56rem] border bg-[var(--bg)] px-[0.85rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "text-[0.84rem] text-[var(--text)] [touch-action:manipulation]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-    "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)]",
+  secondaryButton: actionOutline,
+
+  // Thumb-reachable tools dial, low in the corner where the thumb rests.
+  // The trigger is separated from the actions by more than the actions are from
+  // each other, so the column reads as one group with a toggle beneath it
+  // rather than five equally-spaced circles.
+  fabDial: cn(
+    "fixed right-[0.95rem] z-[70] flex flex-col items-end gap-[1.15rem]",
+    "bottom-[calc(1.1rem+env(safe-area-inset-bottom))]",
+    "min-[620px]:bottom-[calc(1.4rem+env(safe-area-inset-bottom))] min-[620px]:right-[1.4rem]",
   ),
-  saveButton:
-    "inline-flex min-h-[2.95rem] w-full cursor-pointer items-center justify-center gap-[0.42rem] rounded-[0.58rem] border-0 bg-[var(--button-bg)] px-[0.95rem] text-[0.92rem] text-[var(--button-text)] [touch-action:manipulation] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 transition-[transform,filter,box-shadow] duration-150 hover:brightness-[0.98] active:translate-y-[1px] disabled:cursor-progress disabled:opacity-70",
-  mobileFabRoot:
-    "fixed bottom-[calc(0.95rem+env(safe-area-inset-bottom))] left-[0.95rem] z-[70] min-[620px]:hidden",
-  mobileFabStack: cn(
-    "absolute bottom-[calc(100%+0.62rem)] left-0 flex w-[3.15rem] flex-col-reverse items-center gap-[0.48rem]",
-    "data-[state=closed]:pointer-events-none",
+  // No panel: the actions sit on a blurred page, so the blur is what focuses
+  // attention rather than a bordered sheet.
+  fabScrim: cn(
+    "fixed inset-0 z-[65] cursor-default border-0 p-0",
+    "bg-[color:color-mix(in_srgb,var(--bg)_38%,transparent)] backdrop-blur-[7px]",
+    "transition-opacity duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)]",
+    "data-[state=closed]:opacity-0 data-[state=open]:opacity-100",
   ),
-  mobileFabPop: cn(
-    "inline-flex",
-    "data-[state=open]:animate-[logit-fab-item-in_200ms_cubic-bezier(0.2,0.8,0.2,1)_both]",
-    "data-[state=closed]:animate-[logit-fab-item-out_150ms_cubic-bezier(0.4,0,1,1)_both]",
+  fabStack: "flex flex-col items-end gap-[0.6rem]",
+  // Each row is label + circle, revealed on its own delay. Transform and
+  // opacity only, so the stagger never reflows the column.
+  fabAction: cn(
+    "group inline-flex cursor-pointer items-center gap-[0.65rem] border-0 bg-transparent p-0",
+    "[touch-action:manipulation] disabled:cursor-not-allowed disabled:opacity-50",
+    "transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)]",
+    "data-[state=closed]:translate-y-[0.5rem] data-[state=closed]:opacity-0",
+    "data-[state=open]:translate-y-0 data-[state=open]:opacity-100",
   ),
-  mobileFabButton: cn(
-    "inline-flex h-[3.15rem] w-[3.15rem] cursor-pointer items-center justify-center rounded-full border",
-    "border-[color:color-mix(in_srgb,var(--button-text)_18%,transparent)]",
-    "bg-[var(--button-bg)] text-[var(--button-text)] [touch-action:manipulation]",
-    "shadow-[0_12px_26px_color-mix(in_srgb,#000_22%,transparent)]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "transition-[transform,filter,box-shadow] duration-200 active:translate-y-[1px]",
+  fabActionLabel: cn(
+    "whitespace-nowrap text-[0.9375rem] font-[400] text-[var(--text)]",
+    "min-[52rem]:text-[1rem]",
   ),
-  mobileFabAction: cn(
-    "inline-flex h-[2.78rem] w-[2.78rem] cursor-pointer items-center justify-center rounded-full border",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)] text-[var(--text)] [touch-action:manipulation]",
-    "shadow-[0_10px_22px_color-mix(in_srgb,#000_16%,transparent)]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
-    "hover:border-[color:color-mix(in_srgb,var(--text)_22%,transparent)]",
-    "disabled:cursor-not-allowed disabled:opacity-[0.42]",
-    "data-[active=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)] data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_8%,transparent)]",
+  // Same 3.25rem circle as the trigger, so the column reads as one control
+  // rather than four small buttons stacked above a big one.
+  fabActionIcon: cn(
+    "inline-flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center rounded-[999px]",
+    "border border-[var(--field-line)] bg-[var(--bg)] text-[var(--text)]",
+    "group-data-[primary=true]:border-0",
+    "group-data-[primary=true]:bg-[var(--button-bg)] group-data-[primary=true]:text-[var(--button-text)]",
   ),
-  mobileFabActionDanger: cn(
-    "border-[color:color-mix(in_srgb,#b13d48_38%,transparent)]",
-    "bg-[color:color-mix(in_srgb,#b13d48_10%,var(--bg))] text-[#b13d48]",
-    "hover:border-[color:color-mix(in_srgb,#b13d48_52%,transparent)]",
-    "hover:bg-[color:color-mix(in_srgb,#b13d48_16%,var(--bg))]",
+  fabTriggerClock:
+    "font-[var(--font-mono)] text-[0.9375rem] tabular-nums leading-none",
+  fabActionGlyph: "h-[1.25rem] w-[1.25rem] shrink-0 stroke-current",
+  fabTrigger: cn(
+    `${actionFilled} h-[3.25rem] w-[3.25rem] px-0`,
+    "shadow-[0_10px_30px_color-mix(in_srgb,#000_32%,transparent)]",
   ),
-  mobileFabTimerBar: cn(
-    "absolute inset-y-0 left-[calc(100%+0.62rem)] flex flex-row items-center gap-[0.48rem]",
-    "data-[state=closed]:pointer-events-none",
-  ),
-  mobileFabCountdown: "text-[0.84rem] font-[560] tabular-nums leading-none stroke-current",
-  mobileFabIcon: "h-[1rem] w-[1rem] shrink-0 stroke-current",
-  mobileFabIconSpin:
-    "h-[1rem] w-[1rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
-  mobileFabMainIcon: "h-[1.08rem] w-[1.08rem] shrink-0 stroke-current",
+  fabTriggerIcon: "h-[1.25rem] w-[1.25rem] shrink-0 stroke-current",
+  saveButton: `${actionFilled} w-full`,
   reorderOverlay:
     "fixed inset-0 z-[90] flex items-end justify-center p-[0.78rem] pb-[calc(0.78rem+env(safe-area-inset-bottom))] min-[620px]:items-center min-[620px]:p-[1rem]",
   reorderBackdrop:
@@ -357,7 +235,7 @@ export const styles = {
   reorderList:
     "flex max-h-[min(58dvh,28rem)] flex-col gap-[0.45rem] overflow-y-auto py-[0.1rem]",
   reorderItem: cn(
-    "flex min-h-[3.2rem] items-center justify-between gap-[0.65rem] rounded-[0.56rem] border bg-[var(--field-bg)] px-[0.66rem] py-[0.52rem]",
+    "flex min-h-[3.5rem] items-center justify-between gap-[0.5rem] rounded-[0.56rem] border bg-[var(--field-bg)] px-[0.55rem] py-[0.42rem]",
     "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
     "transition-[transform,border-color,background-color,box-shadow] duration-150",
     "data-[dragging=true]:scale-[0.99] data-[dragging=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)] data-[dragging=true]:bg-[var(--bg)] data-[dragging=true]:shadow-[0_12px_24px_color-mix(in_srgb,#000_14%,transparent)]",
@@ -366,11 +244,8 @@ export const styles = {
   reorderItemTitle:
     "m-0 truncate text-[0.9rem] font-[520] leading-[1.2] text-[var(--text)]",
   reorderItemMeta: "m-0 mt-[0.14rem] text-[0.72rem] text-[var(--muted)]",
-  reorderDragHandle: cn(
-    "inline-flex h-[2.35rem] w-[2.35rem] shrink-0 cursor-grab items-center justify-center rounded-[0.5rem] border bg-[var(--bg)] text-[var(--muted)] [touch-action:none]",
-    "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
-    "active:cursor-grabbing",
-  ),
+  reorderItemActions: "flex shrink-0 items-center gap-[0.28rem]",
+  // Muted to match the drag handle beside them: one reorder row, one colour.
+  reorderDragHandle: actionIconDrag,
   reorderActions: "grid grid-cols-2 gap-[0.5rem]",
 } as const;

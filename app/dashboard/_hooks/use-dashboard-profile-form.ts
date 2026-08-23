@@ -1,9 +1,14 @@
-import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { WeightUnit } from "@/lib/weight-unit";
 import type { DashboardClientData } from "../dashboard-types";
 
+
+function avatarFormData(file: File) {
+  const formData = new FormData();
+  formData.set("image", file);
+  return formData;
+}
 type DashboardUser = DashboardClientData["user"];
 
 type SaveState =
@@ -14,6 +19,7 @@ type ProfileResponse =
   | {
       ok: true;
       user: {
+        username: string;
         firstName: string | null;
         lastName: string | null;
         preferredWeightUnit: WeightUnit;
@@ -50,7 +56,17 @@ export type DashboardProfileFormState = {
   setLastNameInput: (value: string) => void;
   setPreferredWeightUnitInput: (value: WeightUnit) => void;
   setPublicProfileEnabledInput: (value: boolean) => void;
-  handleProfileSave: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  isSaving: boolean;
+  saveIdentity: (next: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    publicProfileEnabled: boolean;
+  }) => Promise<boolean>;
+  savePreference: (overrides: {
+    preferredWeightUnit?: WeightUnit;
+    publicProfileEnabled?: boolean;
+  }) => Promise<void>;
   handleAvatarFileChange: (file: File | null) => void;
   handleAvatarDelete: () => void;
 };
@@ -99,110 +115,63 @@ export function useDashboardProfileForm(
     };
   }, [avatarFileInput]);
 
-  async function handleProfileSave(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function patchProfile(body: {
+    firstName: string;
+    lastName: string;
+    username?: string;
+    preferredWeightUnit: WeightUnit;
+    publicProfileEnabled: boolean;
+  }) {
+    const response = await fetch("/api/profile", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
 
-    const toastId = toast.loading("Saving profile...");
+    return (await response.json()) as ProfileResponse;
+  }
+
+  // Persists one preference from the *saved* profile values, never from the
+  // profile form's inputs, and never touches a pending avatar. A units toggle
+  // in Settings must not commit half-typed edits sitting on the Profile view.
+  async function savePreference(overrides: {
+    preferredWeightUnit?: WeightUnit;
+    publicProfileEnabled?: boolean;
+  }) {
+    const toastId = toast.loading("Saving preference...");
     setSaveState({ kind: "saving" });
 
     try {
-      const response = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName: firstNameInput,
-          lastName: lastNameInput,
-          preferredWeightUnit: preferredWeightUnitInput,
-          publicProfileEnabled: publicProfileEnabledInput,
-        }),
+      const payload = await patchProfile({
+        firstName: profile.firstName ?? "",
+        lastName: profile.lastName ?? "",
+        preferredWeightUnit: overrides.preferredWeightUnit ?? profile.preferredWeightUnit,
+        publicProfileEnabled:
+          overrides.publicProfileEnabled ?? profile.publicProfileEnabled,
       });
 
-      const payload = (await response.json()) as ProfileResponse;
-
-      if (!response.ok || !payload || !("ok" in payload && payload.ok)) {
-        throw new Error(payload && "error" in payload ? payload.error : "Unable to save profile.");
+      if (!payload || !("ok" in payload && payload.ok)) {
+        throw new Error(
+          payload && "error" in payload ? payload.error : "Unable to save preference.",
+        );
       }
 
-      let profileImageUpdatedAt = payload.user.profileImageUpdatedAt;
-
-      // Profile fields and avatar bytes are separate requests. Reflect the
-      // completed profile write immediately so a later image failure never
-      // makes the screen pretend the whole save was rolled back.
       setProfile((current) => ({
         ...current,
-        firstName: payload.user.firstName,
-        lastName: payload.user.lastName,
         preferredWeightUnit: payload.user.preferredWeightUnit,
         publicProfileEnabled: payload.user.publicProfileEnabled,
-        profileImageUpdatedAt,
       }));
-      setFirstNameInput(payload.user.firstName ?? "");
-      setLastNameInput(payload.user.lastName ?? "");
       setPreferredWeightUnitInput(payload.user.preferredWeightUnit);
       setPublicProfileEnabledInput(payload.user.publicProfileEnabled);
-
-      if (avatarFileInput) {
-        const formData = new FormData();
-        formData.set("image", avatarFileInput);
-
-        const avatarResponse = await fetch("/api/profile/avatar", {
-          method: "POST",
-          body: formData,
-        });
-        const avatarPayload = (await avatarResponse.json()) as AvatarResponse;
-
-        if (
-          !avatarResponse.ok ||
-          !avatarPayload ||
-          !("ok" in avatarPayload && avatarPayload.ok)
-        ) {
-          throw new Error(
-            `Profile settings saved, but the picture was not uploaded: ${
-              avatarPayload && "error" in avatarPayload
-                ? avatarPayload.error
-                : "Unable to upload profile picture."
-            }`,
-          );
-        }
-
-        profileImageUpdatedAt = avatarPayload.profileImageUpdatedAt;
-      } else if (avatarRemovalPending) {
-        const avatarResponse = await fetch("/api/profile/avatar", {
-          method: "DELETE",
-        });
-        const avatarPayload = (await avatarResponse.json()) as AvatarResponse;
-
-        if (
-          !avatarResponse.ok ||
-          !avatarPayload ||
-          !("ok" in avatarPayload && avatarPayload.ok)
-        ) {
-          throw new Error(
-            `Profile settings saved, but the picture was not removed: ${
-              avatarPayload && "error" in avatarPayload
-                ? avatarPayload.error
-                : "Unable to remove profile picture."
-            }`,
-          );
-        }
-
-        profileImageUpdatedAt = avatarPayload.profileImageUpdatedAt;
-      }
-
-      setProfile((current) => ({
-        ...current,
-        profileImageUpdatedAt,
-      }));
-      setAvatarFileInput(null);
-      setAvatarRemovalPending(false);
-      toast.success("Profile updated.", {
-        id: toastId,
-      });
+      toast.success("Preference saved.", { id: toastId });
       onProfileSaved();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save profile.", {
+      // Roll the optimistic control back to what is actually stored.
+      setPreferredWeightUnitInput(profile.preferredWeightUnit);
+      setPublicProfileEnabledInput(profile.publicProfileEnabled);
+      toast.error(error instanceof Error ? error.message : "Unable to save preference.", {
         id: toastId,
       });
     } finally {
@@ -210,6 +179,98 @@ export function useDashboardProfileForm(
     }
   }
 
+  // Identity edits (names, username, visibility) come from the profile modal as
+  // one explicit save. Avatar bytes are a separate request and now apply on
+  // their own, so there is no combined "save everything" path to reason about.
+  async function saveIdentity(next: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    publicProfileEnabled: boolean;
+  }) {
+    const toastId = toast.loading("Saving profile...");
+    setSaveState({ kind: "saving" });
+
+    try {
+      const payload = await patchProfile({
+        firstName: next.firstName,
+        lastName: next.lastName,
+        username: next.username,
+        preferredWeightUnit: profile.preferredWeightUnit,
+        publicProfileEnabled: next.publicProfileEnabled,
+      });
+
+      if (!payload || !("ok" in payload && payload.ok)) {
+        throw new Error(
+          payload && "error" in payload ? payload.error : "Unable to save profile.",
+        );
+      }
+
+      setProfile((current) => ({
+        ...current,
+        username: payload.user.username,
+        firstName: payload.user.firstName,
+        lastName: payload.user.lastName,
+        publicProfileEnabled: payload.user.publicProfileEnabled,
+      }));
+      setFirstNameInput(payload.user.firstName ?? "");
+      setLastNameInput(payload.user.lastName ?? "");
+      setPublicProfileEnabledInput(payload.user.publicProfileEnabled);
+      toast.success("Profile updated.", { id: toastId });
+      onProfileSaved();
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to save profile.", {
+        id: toastId,
+      });
+      return false;
+    } finally {
+      setSaveState({ kind: "idle" });
+    }
+  }
+
+  async function commitAvatar(file: File | null) {
+    const toastId = toast.loading(file ? "Uploading photo..." : "Removing photo...");
+    setSaveState({ kind: "saving" });
+
+    try {
+      const response = file
+        ? await fetch("/api/profile/avatar", { method: "POST", body: avatarFormData(file) })
+        : await fetch("/api/profile/avatar", { method: "DELETE" });
+      const payload = (await response.json()) as AvatarResponse;
+
+      if (!response.ok || !payload || !("ok" in payload && payload.ok)) {
+        throw new Error(
+          payload && "error" in payload
+            ? payload.error
+            : file
+              ? "Unable to upload profile picture."
+              : "Unable to remove profile picture.",
+        );
+      }
+
+      setProfile((current) => ({
+        ...current,
+        profileImageUpdatedAt: payload.profileImageUpdatedAt,
+      }));
+      setAvatarFileInput(null);
+      setAvatarRemovalPending(false);
+      toast.success(file ? "Photo updated." : "Photo removed.", { id: toastId });
+      onProfileSaved();
+    } catch (error) {
+      setAvatarFileInput(null);
+      setAvatarRemovalPending(false);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to update profile picture.",
+        { id: toastId },
+      );
+    } finally {
+      setSaveState({ kind: "idle" });
+    }
+  }
+
+  // A photo choice applies straight away: with the name form gone there is no
+  // other control that would have committed it.
   function handleAvatarFileChange(file: File | null) {
     if (!file) {
       return;
@@ -217,21 +278,21 @@ export function useDashboardProfileForm(
 
     setAvatarFileInput(file);
     setAvatarRemovalPending(false);
-    toast.message("Profile photo ready.", {
-      description: "Save profile to apply it.",
-    });
+    void commitAvatar(file);
   }
 
   function handleAvatarDelete() {
     if (avatarFileInput) {
       setAvatarFileInput(null);
-    } else if (profile.profileImageUpdatedAt) {
-      setAvatarRemovalPending(true);
+      return;
     }
 
-    toast.message("Profile photo marked for removal.", {
-      description: "Save profile to apply it.",
-    });
+    if (!profile.profileImageUpdatedAt) {
+      return;
+    }
+
+    setAvatarRemovalPending(true);
+    void commitAvatar(null);
   }
 
   return {
@@ -248,7 +309,9 @@ export function useDashboardProfileForm(
     setLastNameInput,
     setPreferredWeightUnitInput,
     setPublicProfileEnabledInput,
-    handleProfileSave,
+    isSaving: saveState.kind === "saving",
+    saveIdentity,
+    savePreference,
     handleAvatarFileChange,
     handleAvatarDelete,
   };

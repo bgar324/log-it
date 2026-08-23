@@ -5,11 +5,12 @@ import {
   Circle,
   Copy,
   ListOrdered,
+  Pencil,
   Plus,
   Save,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   isRestDayWorkoutTypeSlug,
@@ -37,6 +38,44 @@ export function SplitManager({
     persistChanges,
   });
   const [isReorderDaysOpen, setIsReorderDaysOpen] = useState(false);
+  // Holds the name as it was when rename started. Typing mutates the selected
+  // split in local state, so cancelling has to restore this snapshot or the
+  // discarded name stays visible and can be persisted by a later save.
+  //
+  // The ref, not the state, is the source of truth for "still renaming". The
+  // input commits on blur, and cancelling unmounts a focused input, so a late
+  // blur must not be able to turn Escape into a save. Clearing the ref first
+  // closes that path without depending on browser blur-on-unmount behavior.
+  const [renameDraft, setRenameDraft] = useState<string | null>(null);
+  const renameDraftRef = useRef<string | null>(null);
+  const isRenaming = renameDraft !== null;
+
+  function startRename() {
+    renameDraftRef.current = state.split.name;
+    setRenameDraft(state.split.name);
+  }
+
+  // Renaming reuses the split save path, so a new name persists immediately
+  // instead of waiting for an unrelated "Save split".
+  function commitRename() {
+    if (renameDraftRef.current === null) {
+      return;
+    }
+
+    renameDraftRef.current = null;
+    setRenameDraft(null);
+    void state.handleSave();
+  }
+
+  function cancelRename() {
+    const originalName = renameDraftRef.current;
+    renameDraftRef.current = null;
+    setRenameDraft(null);
+
+    if (originalName !== null) {
+      state.setSplitName(originalName);
+    }
+  }
 
   if (!state.selectedDay) {
     return null;
@@ -64,85 +103,100 @@ export function SplitManager({
     });
   }
 
+  const selectedSplitMeta = (() => {
+    const trainingDays = state.split.days.filter(
+      (day) => !isRestDayWorkoutTypeSlug(day.workoutTypeSlug),
+    ).length;
+    const exercises = state.split.days.reduce((sum, day) => sum + day.exercises.length, 0);
+
+    return `${trainingDays} training ${trainingDays === 1 ? "day" : "days"} · ${exercises} ${
+      exercises === 1 ? "exercise" : "exercises"
+    }`;
+  })();
+
   return (
-    <div className={splitStyles.splitLibraryLayout}>
-      <aside className={splitStyles.splitSidebar} aria-label="Workout splits">
-        <div className={splitStyles.splitSidebarHeader}>
-          <div>
-            <h2 className={splitStyles.splitSidebarTitle}>Splits</h2>
-            <p className={splitStyles.splitSidebarMeta}>
-              {state.splits.filter((split) => split.id).length} saved
-            </p>
-          </div>
-        </div>
-
-        <div className={splitStyles.splitSidebarList}>
-          {state.splits.map((split) => {
-            const isSelected = split.id === state.split.id;
-            const totalExercises = split.days.reduce(
-              (sum, day) => sum + day.exercises.length,
-              0,
-            );
-            const totalTrainingDays = split.days.filter(
-              (day) => !isRestDayWorkoutTypeSlug(day.workoutTypeSlug),
-            ).length;
-
-            return (
-              <button
-                key={split.id ?? "draft-split"}
-                type="button"
-                className={`${splitStyles.splitSidebarItem} ${
-                  isSelected ? splitStyles.splitSidebarItemActive : ""
-                }`}
-                onClick={() => {
-                  state.selectSplit(split.id);
-                }}
-              >
-                <span className={splitStyles.splitSidebarItemTitleRow}>
-                  <span className={splitStyles.splitSidebarItemTitle}>
-                    {split.name.trim() || "Untitled split"}
-                  </span>
-                  {split.isActive ? (
-                    <span className={splitStyles.splitSidebarActiveMeta}>
-                      · Active
-                    </span>
-                  ) : null}
-                </span>
-                <span className={splitStyles.splitSidebarItemMeta}>
-                  {totalTrainingDays} days · {totalExercises} exercises
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <button
-          type="button"
-          className={splitStyles.splitSidebarCreateButton}
-          onClick={() => void state.createSplit()}
-          aria-label="Create split"
-          title="Create split"
-          disabled={state.saveState.kind === "saving"}
-        >
-          <Plus className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
-        </button>
-      </aside>
-
-      <div className={splitStyles.splitLayout}>
-        <section className={splitStyles.splitSummary}>
+    <div className={splitStyles.splitLayout}>
+      <section className={splitStyles.splitSummary}>
+        <div>
           <div className={splitStyles.splitSummaryHead}>
-            <label className={`${splitStyles.editorField} min-w-0 flex-1`}>
-                <input
-                  className={splitStyles.editorInput}
-                  value={state.split.name}
-                  onChange={(event) => state.setSplitName(event.target.value)}
-                  placeholder="Split name"
-                  aria-label="Split name"
-                />
-            </label>
+            {isRenaming ? (
+              <input
+                autoFocus
+                className={`${splitStyles.editorInput} min-w-0 flex-1`}
+                value={state.split.name}
+                onChange={(event) => state.setSplitName(event.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    commitRename();
+                  }
+
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    cancelRename();
+                  }
+                }}
+                placeholder="Split name"
+                aria-label="Split name"
+              />
+            ) : (
+              <div className={splitStyles.splitSelectWrap}>
+                <select
+                  className={splitStyles.splitSelect}
+                  value={state.split.id ?? ""}
+                  onChange={(event) =>
+                    state.selectSplit(event.target.value === "" ? null : event.target.value)
+                  }
+                  aria-label="Selected split"
+                >
+                  {state.splits.map((split) => (
+                    <option key={split.id ?? "draft-split"} value={split.id ?? ""}>
+                      {`${split.name.trim() || "Untitled split"}${
+                        split.isActive ? " · Active" : ""
+                      }`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <SplitActionMenu label="Split tools">
               {(close) => (
                 <>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={splitStyles.actionMenuItem}
+                    onClick={() => {
+                      startRename();
+                      close();
+                    }}
+                  >
+                    <Pencil
+                      className={splitStyles.inlineIcon}
+                      aria-hidden="true"
+                      strokeWidth={1.9}
+                    />
+                    Rename split
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={splitStyles.actionMenuItem}
+                    onClick={() => {
+                      void state.createSplit();
+                      close();
+                    }}
+                    disabled={state.saveState.kind === "saving"}
+                  >
+                    <Plus
+                      className={splitStyles.inlineIcon}
+                      aria-hidden="true"
+                      strokeWidth={1.9}
+                    />
+                    New split
+                  </button>
+                  <div className={splitStyles.actionMenuDivider} role="separator" />
                   <button
                     type="button"
                     role="menuitem"
@@ -221,7 +275,7 @@ export function SplitManager({
                       <button
                         type="button"
                         role="menuitem"
-                        className={`${splitStyles.actionMenuItem} ${splitStyles.actionMenuDangerItem}`}
+                        className={splitStyles.actionMenuDangerItem}
                         onClick={() => {
                           handleDeleteSplit();
                           close();
@@ -241,33 +295,34 @@ export function SplitManager({
               )}
             </SplitActionMenu>
           </div>
+          <p className={splitStyles.splitSelectMeta}>{selectedSplitMeta}</p>
+        </div>
 
-          <div className={splitStyles.splitGrid}>
-            {state.split.days.map((day) => (
-              <SplitDayCard
-                key={day.weekday}
-                day={day}
-                isSelected={day.weekday === state.selectedWeekday}
-                onSelect={() => state.selectWeekday(day.weekday)}
-              />
-            ))}
-          </div>
-        </section>
+        <div className={splitStyles.splitGrid}>
+          {state.split.days.map((day) => (
+            <SplitDayCard
+              key={day.weekday}
+              day={day}
+              isSelected={day.weekday === state.selectedWeekday}
+              onSelect={() => state.selectWeekday(day.weekday)}
+            />
+          ))}
+        </div>
+      </section>
 
-        <SplitEditor
-          day={state.selectedDay}
-          exerciseSearchResults={state.selectedDayExerciseSearchResults}
-          onWorkoutTypeChange={state.setWorkoutType}
-          onExerciseNameChange={state.handleExerciseNameChange}
-          onExerciseNameFocus={state.handleExerciseNameFocus}
-          onExerciseNameBlur={state.handleExerciseNameBlur}
-          onApplyExerciseSearchResult={state.applyExerciseSearchResult}
-          onExerciseSetsChange={state.setExerciseSets}
-          onAddExercise={state.addExercise}
-          onRemoveExercise={state.removeExercise}
-          onReorderExercises={state.reorderExercises}
-        />
-      </div>
+      <SplitEditor
+        day={state.selectedDay}
+        exerciseSearchResults={state.selectedDayExerciseSearchResults}
+        onWorkoutTypeChange={state.setWorkoutType}
+        onExerciseNameChange={state.handleExerciseNameChange}
+        onExerciseNameFocus={state.handleExerciseNameFocus}
+        onExerciseNameBlur={state.handleExerciseNameBlur}
+        onApplyExerciseSearchResult={state.applyExerciseSearchResult}
+        onExerciseSetsChange={state.setExerciseSets}
+        onAddExercise={state.addExercise}
+        onRemoveExercise={state.removeExercise}
+        onReorderExercises={state.reorderExercises}
+      />
 
       {isReorderDaysOpen ? (
         <SplitDayReorderDialog

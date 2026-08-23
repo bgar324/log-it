@@ -9,6 +9,7 @@ const DASHBOARD_VIEWS: DashboardView[] = [
   "nutrition",
   "split",
   "profile",
+  "settings",
 ];
 
 export function normalizeDashboardView(value: string | undefined): DashboardView {

@@ -44,6 +44,7 @@ export type ExerciseInsight = {
     sets: Array<{
       reps: number;
       weightLb: number | null;
+      durationSeconds: number | null;
     }>;
   } | null;
   allTimeBestWeight: number | null;

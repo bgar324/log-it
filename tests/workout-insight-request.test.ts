@@ -2,54 +2,60 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createExerciseInsightRequestContext } from "../lib/workouts/insight-request";
 
-test("createExerciseInsightRequestContext keys prediction requests off exercise, date, position, and visible set count", () => {
-  const base = createExerciseInsightRequestContext(
-    "Bench Press",
+test("createExerciseInsightRequestContext keys compare requests off exercise, date, and position", () => {
+  const base = createExerciseInsightRequestContext("Bench Press", "2026-04-20", 2);
+  const earlier = createExerciseInsightRequestContext("Bench Press", "2026-04-20", 1);
+  const laterDate = createExerciseInsightRequestContext("Bench Press", "2026-04-22", 2);
+  const otherExercise = createExerciseInsightRequestContext(
+    "Incline Press",
     "2026-04-20",
     2,
-    3,
-  );
-  const earlier = createExerciseInsightRequestContext(
-    "Bench Press",
-    "2026-04-20",
-    1,
-    3,
-  );
-  const laterDate = createExerciseInsightRequestContext(
-    "Bench Press",
-    "2026-04-22",
-    2,
-    3,
-  );
-  const extraSet = createExerciseInsightRequestContext(
-    "Bench Press",
-    "2026-04-20",
-    2,
-    4,
   );
 
   assert.ok(base);
   assert.ok(earlier);
   assert.ok(laterDate);
-  assert.ok(extraSet);
+  assert.ok(otherExercise);
   assert.notEqual(base?.lookupKey, earlier?.lookupKey);
   assert.notEqual(base?.lookupKey, laterDate?.lookupKey);
-  assert.notEqual(base?.lookupKey, extraSet?.lookupKey);
+  assert.notEqual(base?.lookupKey, otherExercise?.lookupKey);
 });
 
-test("createExerciseInsightRequestContext ignores manual set values and only depends on visible set count", () => {
-  const fromEmptyInputs = createExerciseInsightRequestContext(
+test("createExerciseInsightRequestContext never varies with the number of sets being logged", () => {
+  const before = createExerciseInsightRequestContext("Bench Press", "2026-04-20", 2);
+  const afterAddingSets = createExerciseInsightRequestContext(
     "Bench Press",
     "2026-04-20",
     2,
-    3,
-  );
-  const afterEditingWeightsAndReps = createExerciseInsightRequestContext(
-    "Bench Press",
-    "2026-04-20",
-    2,
-    3,
   );
 
-  assert.deepEqual(afterEditingWeightsAndReps, fromEmptyInputs);
+  assert.deepEqual(afterAddingSets, before);
+  assert.ok(!before?.requestPath.includes("setCount"));
+});
+
+test("createExerciseInsightRequestContext carries the workout being edited so it can be excluded", () => {
+  const creating = createExerciseInsightRequestContext("Bench Press", "2026-04-20", 2);
+  const editing = createExerciseInsightRequestContext(
+    "Bench Press",
+    "2026-04-20",
+    2,
+    "workout-7",
+  );
+
+  assert.ok(creating);
+  assert.ok(editing);
+  assert.equal(creating?.excludeWorkoutId, null);
+  assert.equal(editing?.excludeWorkoutId, "workout-7");
+  assert.notEqual(creating?.lookupKey, editing?.lookupKey);
+  assert.ok(editing?.requestPath.includes("excludeWorkoutId=workout-7"));
+  assert.ok(!creating?.requestPath.includes("excludeWorkoutId"));
+});
+
+test("createExerciseInsightRequestContext rejects incomplete context", () => {
+  assert.equal(createExerciseInsightRequestContext("", "2026-04-20", 2), null);
+  assert.equal(createExerciseInsightRequestContext("Bench Press", "", 2), null);
+  assert.equal(
+    createExerciseInsightRequestContext("Bench Press", "2026-04-20", 0),
+    null,
+  );
 });

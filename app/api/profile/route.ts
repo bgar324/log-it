@@ -7,6 +7,7 @@ import {
   getInvalidRequestOriginError,
   isTrustedMutationRequest,
 } from "@/lib/request-security";
+import { isValidUsername, USERNAME_RULE_MESSAGE } from "@/lib/username";
 
 function toOptionalName(value: unknown) {
   if (typeof value !== "string") {
@@ -66,6 +67,31 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // `username` is optional: preference writes omit it, identity edits send it.
+    const username =
+      typeof body.username === "string" ? body.username.trim() : null;
+
+    if (username !== null && !isValidUsername(username)) {
+      return NextResponse.json(
+        { ok: false, error: USERNAME_RULE_MESSAGE },
+        { status: 400 },
+      );
+    }
+
+    if (username !== null && username !== user.username) {
+      const taken = await prisma.user.findFirst({
+        where: { username, id: { not: user.id } },
+        select: { id: true },
+      });
+
+      if (taken) {
+        return NextResponse.json(
+          { ok: false, error: "That username is taken." },
+          { status: 409 },
+        );
+      }
+    }
+
     const updated = await prisma.user.update({
       where: {
         id: user.id,
@@ -75,6 +101,7 @@ export async function PATCH(request: NextRequest) {
         lastName,
         preferredWeightUnit,
         publicProfileEnabled,
+        ...(username === null ? {} : { username }),
       },
       select: {
         id: true,
@@ -92,6 +119,7 @@ export async function PATCH(request: NextRequest) {
     const response = NextResponse.json({
       ok: true,
       user: {
+        username: updated.username,
         firstName: updated.firstName,
         lastName: updated.lastName,
         preferredWeightUnit: updated.preferredWeightUnit,
@@ -104,6 +132,17 @@ export async function PATCH(request: NextRequest) {
 
     return response;
   } catch (error) {
+    // The pre-check above is racy by nature; the unique index is the real guard.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { ok: false, error: "That username is taken." },
+        { status: 409 },
+      );
+    }
+
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       (error.code === "P2021" || error.code === "P2022")

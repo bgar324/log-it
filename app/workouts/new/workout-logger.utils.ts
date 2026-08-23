@@ -13,14 +13,10 @@ export {
 } from "./workout-logger.draft";
 
 export {
-  formatConfidenceLabel,
-  formatDelta,
-  formatExerciseInsightDate,
+  formatCompareDayLabel,
   formatWorkoutLoggerDateLabel,
   formatLoggedSetSnapshot,
-  formatPredictedSetSnapshot,
-  formatRepRange,
-  summarizeDraftSets,
+  formatPredictedWeightPlaceholder,
 } from "./workout-logger.formatters";
 
 export {

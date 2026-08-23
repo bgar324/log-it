@@ -288,6 +288,7 @@ export async function loadExerciseDetailPageData(rawExerciseKey: string) {
     }));
 
   return {
+    user,
     displayName: summary.displayName,
     subtitle: `Last hit ${formatDate(summary.lastHit)} (${daysAgoLabel(daysSinceLastHit)})`,
     weightUnit,
