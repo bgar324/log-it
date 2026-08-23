@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useId, useState } from "react";
+import { useState } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../workout-logger.styles";
 import {
@@ -21,7 +21,6 @@ type WorkoutLoggerSetsEditorProps = {
   insightState?: ExerciseInsightState;
   weightUnit: WeightUnit;
   weightUnitLabel: string;
-  weightUnitName: string;
   bodyWeightDisplay: number | null;
   onAddSet: () => void;
   onRemoveSet: (setId: string) => void;
@@ -37,7 +36,6 @@ export function WorkoutLoggerSetsEditor({
   insightState,
   weightUnit,
   weightUnitLabel,
-  weightUnitName,
   bodyWeightDisplay,
   onAddSet,
   onRemoveSet,
@@ -49,8 +47,6 @@ export function WorkoutLoggerSetsEditor({
     id: string;
     index: number;
   } | null>(null);
-  const dialogTitleId = useId();
-  const dialogDescriptionId = useId();
 
   function handleConfirmRemoveSet() {
     if (!pendingRemoval) {
@@ -114,13 +110,6 @@ export function WorkoutLoggerSetsEditor({
                     }
                     value={setItem.weightLb}
                     disabled={isBodyweight}
-                    aria-label={
-                      isBodyweight
-                        ? bodyWeightLabel
-                          ? `Bodyweight ${bodyWeightLabel} ${weightUnitName} selected for set ${setIndex + 1}`
-                          : `Bodyweight selected for set ${setIndex + 1}`
-                        : `Weight in ${weightUnitName} for set ${setIndex + 1}`
-                    }
                     onChange={(event) => {
                       onUpdateSet(setItem.id, "usesBodyweight", false);
                       onUpdateSet(
@@ -143,12 +132,6 @@ export function WorkoutLoggerSetsEditor({
                       onUpdateSet(setItem.id, "weightLb", "");
                       onUpdateSet(setItem.id, "usesBodyweight", true);
                     }}
-                    aria-pressed={isBodyweight}
-                    aria-label={
-                      isBodyweight
-                        ? `Stop using bodyweight for set ${setIndex + 1}`
-                        : `Use bodyweight for set ${setIndex + 1}`
-                    }
                   >
                     BW
                   </button>
@@ -167,7 +150,6 @@ export function WorkoutLoggerSetsEditor({
                   className={styles.setInput}
                   placeholder={repsPlaceholder}
                   value={setItem.reps}
-                  aria-label={`Repetitions for set ${setIndex + 1}`}
                   onChange={(event) =>
                     onUpdateSet(
                       setItem.id,
@@ -190,7 +172,6 @@ export function WorkoutLoggerSetsEditor({
                   className={styles.setInput}
                   placeholder="Sec"
                   value={setItem.durationSeconds}
-                  aria-label={`Time in seconds for set ${setIndex + 1}`}
                   onChange={(event) =>
                     onUpdateSet(
                       setItem.id,
@@ -207,18 +188,13 @@ export function WorkoutLoggerSetsEditor({
                   setPendingRemoval({ id: setItem.id, index: setIndex })
                 }
                 disabled={exercise.sets.length === 1}
-                aria-label={`Remove set ${setIndex + 1}`}
               >
-                <Trash2
-                  className={styles.icon}
-                  aria-hidden="true"
-                  strokeWidth={1.9}
-                />
+                <Trash2 className={styles.icon} strokeWidth={1.9} />
               </button>
             </div>
 
             {showGhostLine ? (
-              <p className={styles.setGhostLine} aria-hidden="true">
+              <p className={styles.setGhostLine}>
                 {lastSet
                   ? `last: ${formatLoggedSetSnapshot(lastSet, weightUnit)}`
                   : ""}
@@ -230,8 +206,6 @@ export function WorkoutLoggerSetsEditor({
 
       {pendingRemoval ? (
         <WorkoutLoggerConfirmDialog
-          titleId={dialogTitleId}
-          descriptionId={dialogDescriptionId}
           title={`Delete set ${pendingRemoval.index + 1}?`}
           description="This removes the reps, weight, and time entered for this set."
           cancelLabel="Keep set"
@@ -243,11 +217,7 @@ export function WorkoutLoggerSetsEditor({
 
       <div className={styles.setActions}>
         <button type="button" className={styles.actionButton} onClick={onAddSet}>
-          <Plus
-            className={styles.actionButtonIcon}
-            aria-hidden="true"
-            strokeWidth={1.9}
-          />
+          <Plus className={styles.actionButtonIcon} strokeWidth={1.9} />
           Add set
         </button>
       </div>

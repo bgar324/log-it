@@ -59,7 +59,7 @@ export function DashboardProgressView({
 
   if (error) {
     return (
-      <section className={styles.panel} role="alert">
+      <section className={styles.panel}>
         <p className={styles.empty}>{error}</p>
         {onRetry ? (
           <button type="button" className={styles.retryButton} onClick={onRetry}>
@@ -89,7 +89,7 @@ export function DashboardProgressView({
 
   return (
     <>
-      <section aria-label="Progress summary">
+      <section>
         <p className={styles.statLine}>
           You have logged {thisWeek} this week, {weekComparison}.
         </p>
@@ -113,7 +113,6 @@ export function DashboardProgressView({
           onChange={(event) => state.handleExerciseSearchChange(event.target.value)}
           placeholder="Search exercise"
           className={styles.searchInput}
-          aria-label="Search exercises"
         />
 
         <div className={styles.exerciseListMeta}>
@@ -127,7 +126,6 @@ export function DashboardProgressView({
             onChange={(event) =>
               state.handleExerciseSortChange(event.target.value as ExerciseSortMode)
             }
-            aria-label="Sort exercises"
           >
             {EXERCISE_SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

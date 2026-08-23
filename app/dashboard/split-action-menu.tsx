@@ -8,11 +8,10 @@ import { splitStyles } from "./split-system.styles";
 const MENU_EXIT_MS = 150;
 
 type SplitActionMenuProps = {
-  label: string;
   children: (close: () => void) => ReactNode;
 };
 
-export function SplitActionMenu({ label, children }: SplitActionMenuProps) {
+export function SplitActionMenu({ children }: SplitActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const isMounted = usePresence(isOpen, MENU_EXIT_MS);
@@ -48,17 +47,12 @@ export function SplitActionMenu({ label, children }: SplitActionMenuProps) {
       <button
         type="button"
         className={splitStyles.actionMenuToggle}
-        aria-label={label}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
         onClick={() => setIsOpen((current) => !current)}
       >
-        <Ellipsis className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={2} />
+        <Ellipsis className={splitStyles.inlineIcon} strokeWidth={2} />
       </button>
       {isMounted ? (
         <div
-          role="menu"
-          aria-label={label}
           data-state={isOpen ? "open" : "closed"}
           className={splitStyles.actionMenuPanel}
         >

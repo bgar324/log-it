@@ -21,7 +21,6 @@ export function LinkPendingOverlay({
 
   return (
     <span
-      aria-hidden="true"
       className={`pointer-events-none absolute inset-0 z-[2] flex items-center justify-center rounded-[inherit] bg-[color-mix(in_srgb,var(--bg)_58%,transparent)] backdrop-blur-[1px] ${className}`}
     >
       <Loader2

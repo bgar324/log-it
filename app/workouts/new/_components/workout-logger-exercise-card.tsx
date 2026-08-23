@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/app/components/ui/popover";
-import { useId, useState } from "react";
+import { useState } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../workout-logger.styles";
 import {
@@ -26,7 +26,6 @@ type WorkoutLoggerExerciseCardProps = {
   insightState?: ExerciseInsightState;
   weightUnit: WeightUnit;
   weightUnitLabel: string;
-  weightUnitName: string;
   bodyWeightDisplay: number | null;
   onAddSet: () => void;
   onApplySearchResult: (suggestion: string) => void;
@@ -50,7 +49,6 @@ export function WorkoutLoggerExerciseCard({
   insightState,
   weightUnit,
   weightUnitLabel,
-  weightUnitName,
   bodyWeightDisplay,
   onAddSet,
   onApplySearchResult,
@@ -62,8 +60,6 @@ export function WorkoutLoggerExerciseCard({
   onUpdateSet,
 }: WorkoutLoggerExerciseCardProps) {
   const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
-  const dialogTitleId = useId();
-  const dialogDescriptionId = useId();
 
   function handleConfirmRemoveExercise() {
     onRemoveExercise();
@@ -98,7 +94,6 @@ export function WorkoutLoggerExerciseCard({
                 id={`exercise-name-${exercise.id}`}
                 className={styles.input}
                 value={exercise.name}
-                aria-label={`Exercise name for exercise ${exerciseIndex + 1}`}
                 onChange={(event) => onExerciseNameChange(event.target.value)}
                 onFocus={(event) => onExerciseNameFocus(event.target.value)}
                 onBlur={(event) => {
@@ -111,10 +106,7 @@ export function WorkoutLoggerExerciseCard({
                 placeholder="Barbell bench press"
               />
               {searchResults.length > 0 ? (
-                <div
-                  className={styles.searchResults}
-                  aria-label={`Exercise matches for exercise ${exerciseIndex + 1}`}
-                >
+                <div className={styles.searchResults}>
                   <p className={styles.searchResultsLabel}>Matches</p>
                   <div className={styles.searchResultsList}>
                     {searchResults.map((result) => (
@@ -139,11 +131,8 @@ export function WorkoutLoggerExerciseCard({
                 this field names, so it belongs beside it. The comparison keeps
                 the line underneath to itself. */}
             <Popover>
-              <PopoverTrigger
-                className={styles.exerciseMenuToggle}
-                aria-label={`More options for ${exerciseTitle}`}
-              >
-                <Ellipsis className={styles.icon} aria-hidden="true" strokeWidth={1.9} />
+              <PopoverTrigger className={styles.exerciseMenuToggle}>
+                <Ellipsis className={styles.icon} strokeWidth={1.9} />
               </PopoverTrigger>
               <PopoverContent align="end" className={styles.exerciseMenu}>
                 <button
@@ -152,7 +141,7 @@ export function WorkoutLoggerExerciseCard({
                   onClick={() => setIsRemoveConfirmOpen(true)}
                   disabled={!canRemoveExercise}
                 >
-                  <Trash2 className={styles.icon} aria-hidden="true" strokeWidth={1.9} />
+                  <Trash2 className={styles.icon} strokeWidth={1.9} />
                   Delete exercise
                 </button>
               </PopoverContent>
@@ -167,7 +156,6 @@ export function WorkoutLoggerExerciseCard({
           insightState={insightState}
           weightUnit={weightUnit}
           weightUnitLabel={weightUnitLabel}
-          weightUnitName={weightUnitName}
           bodyWeightDisplay={bodyWeightDisplay}
           onAddSet={onAddSet}
           onRemoveSet={onRemoveSet}
@@ -177,8 +165,6 @@ export function WorkoutLoggerExerciseCard({
 
       {isRemoveConfirmOpen ? (
         <WorkoutLoggerConfirmDialog
-          titleId={dialogTitleId}
-          descriptionId={dialogDescriptionId}
           title={`Delete ${exerciseTitle}?`}
           description="This removes the exercise and every set entered under it."
           cancelLabel="Keep exercise"

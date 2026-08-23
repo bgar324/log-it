@@ -46,7 +46,7 @@ export function DashboardOverviewView({
 
   return (
     <>
-      <section className={styles.today} aria-label="Today">
+      <section className={styles.today}>
         <p className={styles.todayGreeting}>Hi, {greetingName}.</p>
         <h2 className={styles.todayPlan}>{planSentence(todayPlan)}</h2>
         <p className={styles.todayNote}>{todayPlan.subtitle}</p>
@@ -89,7 +89,7 @@ export function DashboardOverviewView({
       </section>
 
       {overview.todaySession.length > 0 ? (
-        <section className={styles.panel} aria-label="Session preview">
+        <section className={styles.panel}>
           <h2 className={styles.panelTitle}>Where you left off</h2>
 
           <div className={styles.sessionList}>

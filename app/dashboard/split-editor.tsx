@@ -66,39 +66,34 @@ export function SplitEditor({
             value={day.workoutType}
             onChange={(event) => onWorkoutTypeChange(event.target.value)}
             placeholder="Workout type"
-            aria-label="Workout type"
           />
         </label>
         {!isRestDay ? (
-          <SplitActionMenu label="Exercise tools">
+          <SplitActionMenu>
             {(close) => (
               <>
                 <button
                   type="button"
-                  role="menuitem"
                   className={splitStyles.actionMenuItem}
                   onClick={() => handleAddExercise(close)}
                 >
-                  <Plus className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
+                  <Plus className={splitStyles.inlineIcon} strokeWidth={1.9} />
                   Add exercise
                 </button>
                 <button
                   type="button"
-                  role="menuitem"
                   className={splitStyles.actionMenuItem}
                   onClick={() => handleOpenReorder(close)}
                   disabled={day.exercises.length < 2}
                 >
                   <ListOrdered
                     className={splitStyles.inlineIcon}
-                    aria-hidden="true"
                     strokeWidth={1.9}
                   />
                   Reorder exercises
                 </button>
                 <button
                   type="button"
-                  role="menuitem"
                   className={splitStyles.actionMenuItem}
                   onClick={() => {
                     setIsEditingExercises((editing) => !editing);
@@ -108,7 +103,6 @@ export function SplitEditor({
                 >
                   <Pencil
                     className={splitStyles.inlineIcon}
-                    aria-hidden="true"
                     strokeWidth={1.9}
                   />
                   {isEditingExercises ? "Done editing" : "Edit exercises"}

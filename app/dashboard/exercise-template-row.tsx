@@ -42,7 +42,6 @@ export function ExerciseTemplateRow({
             autoCapitalize="words"
             autoCorrect="on"
             placeholder="Bench Press"
-            aria-label="Exercise name"
           />
           {searchResults.length > 0 ? (
             <div className={splitStyles.searchResults}>
@@ -76,7 +75,6 @@ export function ExerciseTemplateRow({
             onChange={(event) =>
               onSetsChange(Number.parseInt(event.target.value, 10) || 1)
             }
-            aria-label="Planned sets"
           />
         </label>
       </div>
@@ -88,9 +86,8 @@ export function ExerciseTemplateRow({
           type="button"
           className={splitStyles.dangerIconButton}
           onClick={onRemove}
-          aria-label={`Remove ${exercise.exerciseDisplayName || "exercise"}`}
         >
-          <Trash2 className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
+          <Trash2 className={splitStyles.inlineIcon} strokeWidth={1.9} />
         </button>
       ) : null}
     </div>

@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { styles } from "../workout-logger.styles";
 
 type WorkoutLoggerConfirmDialogProps = {
-  titleId: string;
-  descriptionId: string;
   title: string;
   description: string;
   cancelLabel: string;
@@ -16,8 +14,6 @@ type WorkoutLoggerConfirmDialogProps = {
 };
 
 export function WorkoutLoggerConfirmDialog({
-  titleId,
-  descriptionId,
   title,
   description,
   cancelLabel,
@@ -25,12 +21,9 @@ export function WorkoutLoggerConfirmDialog({
   onCancel,
   onConfirm,
 }: WorkoutLoggerConfirmDialogProps) {
-  const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
-
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    cancelButtonRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -53,22 +46,17 @@ export function WorkoutLoggerConfirmDialog({
   return createPortal(
     <div className={styles.confirmOverlay} onClick={onCancel}>
       <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={descriptionId}
         className={styles.confirmDialog}
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 id={titleId} className={styles.confirmTitle}>
+        <h2 className={styles.confirmTitle}>
           {title}
         </h2>
-        <p id={descriptionId} className={styles.confirmBody}>
+        <p className={styles.confirmBody}>
           {description}
         </p>
         <div className={styles.confirmActions}>
           <button
-            ref={cancelButtonRef}
             type="button"
             className={styles.confirmSecondaryButton}
             onClick={onCancel}

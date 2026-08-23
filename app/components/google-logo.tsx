@@ -4,7 +4,7 @@ type GoogleLogoProps = {
 
 export function GoogleLogo({ className }: GoogleLogoProps) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+    <svg viewBox="0 0 24 24" className={className}>
       <path
         fill="#4285F4"
         d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.31h6.44a5.51 5.51 0 0 1-2.39 3.62v3h3.87c2.26-2.08 3.57-5.15 3.57-8.66Z"

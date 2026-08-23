@@ -1,7 +1,7 @@
 "use client";
 
 import { GripVertical } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { reorderItems } from "@/lib/workout-utils";
 import { styles } from "../workout-logger.styles";
@@ -48,68 +48,7 @@ function WorkoutLoggerReorderDialogContent({
     exercises.map((exercise) => exercise.id),
   );
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  // Keyboard drag: the grab handle is the only reorder affordance now, so it
-  // has to work without a pointer. Space picks an exercise up, the arrows move
-  // it, Escape puts it back where it started.
-  const [keyboardDragId, setKeyboardDragId] = useState<string | null>(null);
-  const orderAtPickup = useRef<string[] | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const titleId = useId();
-
-  function handleHandleKeyDown(
-    event: React.KeyboardEvent<HTMLButtonElement>,
-    exerciseId: string,
-    index: number,
-  ) {
-    const isPickedUp = keyboardDragId === exerciseId;
-
-    if (event.key === " " || event.key === "Enter") {
-      event.preventDefault();
-      orderAtPickup.current = isPickedUp ? null : orderedIds;
-      setKeyboardDragId(isPickedUp ? null : exerciseId);
-      return;
-    }
-
-    if (!isPickedUp) {
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (orderAtPickup.current) {
-        setOrderedIds(orderAtPickup.current);
-      }
-
-      orderAtPickup.current = null;
-      setKeyboardDragId(null);
-      return;
-    }
-
-    const offset = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
-
-    if (offset === 0) {
-      return;
-    }
-
-    event.preventDefault();
-    const nextIndex = index + offset;
-
-    if (nextIndex < 0 || nextIndex >= orderedIds.length) {
-      return;
-    }
-
-    setOrderedIds((current) => reorderItems(current, index, nextIndex));
-    // Keep the moved handle focused so repeated arrows keep moving it.
-    window.requestAnimationFrame(() => {
-      listRef.current
-        ?.querySelector<HTMLButtonElement>(
-          `[data-reorder-id="${exerciseId}"] button`,
-        )
-        ?.focus();
-    });
-  }
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -176,18 +115,12 @@ function WorkoutLoggerReorderDialogContent({
       <button
         type="button"
         className={styles.reorderBackdrop}
-        aria-label="Cancel workout reorder"
         onClick={onCancel}
       />
-      <section
-        className={styles.reorderDialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
+      <section className={styles.reorderDialog}>
         <div className={styles.reorderHeader}>
           <div>
-            <h2 id={titleId} className={styles.confirmTitle}>
+            <h2 className={styles.confirmTitle}>
               Reorder exercises
             </h2>
           </div>
@@ -216,9 +149,7 @@ function WorkoutLoggerReorderDialogContent({
               <div
                 key={exercise.id}
                 data-reorder-id={exercise.id}
-                data-dragging={
-                  draggingId === exercise.id || keyboardDragId === exercise.id
-                }
+                data-dragging={draggingId === exercise.id}
                 className={styles.reorderItem}
               >
                 <div className={styles.reorderItemText}>
@@ -229,19 +160,6 @@ function WorkoutLoggerReorderDialogContent({
                   <button
                     type="button"
                     className={styles.reorderDragHandle}
-                    aria-pressed={keyboardDragId === exercise.id}
-                    aria-label={
-                      keyboardDragId === exercise.id
-                        ? `${exerciseName}, position ${exerciseIndex + 1} of ${
-                            orderedExercises.length
-                          }. Use the arrow keys to move, space to drop, escape to cancel.`
-                        : `Reorder ${exerciseName}, position ${exerciseIndex + 1} of ${
-                            orderedExercises.length
-                          }. Press space to pick up.`
-                    }
-                    onKeyDown={(event) =>
-                      handleHandleKeyDown(event, exercise.id, exerciseIndex)
-                    }
                     onPointerDown={(event) => {
                       event.currentTarget.setPointerCapture(event.pointerId);
                       setDraggingId(exercise.id);
@@ -249,7 +167,6 @@ function WorkoutLoggerReorderDialogContent({
                   >
                     <GripVertical
                       className={styles.icon}
-                      aria-hidden="true"
                       strokeWidth={1.9}
                     />
                   </button>

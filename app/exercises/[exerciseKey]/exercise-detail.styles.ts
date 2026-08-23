@@ -1,7 +1,5 @@
 import { actionOutline } from "@/app/components/action.styles";
 
-const buttonFocusRing =
-  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2";
 const buttonMotion =
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]";
 
@@ -60,7 +58,7 @@ export const styles = {
   sessionMobileHidden:
     "max-[760px]:hidden",
   sessionLinkRow:
-    `cursor-pointer text-inherit no-underline hover:border-[color-mix(in_srgb,var(--text)_18%,transparent)] ${buttonFocusRing} ${buttonMotion}`,
+    `cursor-pointer text-inherit no-underline hover:border-[color-mix(in_srgb,var(--text)_18%,transparent)] ${buttonMotion}`,
   sessionTitle: "m-0 text-[0.84rem] font-[520] text-[var(--text)]",
   sessionMeta: "m-[0.16rem_0_0] text-[0.72rem] text-[var(--muted)]",
   skeletonBlock:

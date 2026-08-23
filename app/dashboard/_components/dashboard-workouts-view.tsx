@@ -138,10 +138,8 @@ export function DashboardWorkoutFiltersControl({
           type="button"
           className={styles.workoutFilterToggle}
           data-active={open || hasFilters}
-          aria-label="Filter workouts"
-          aria-controls="dashboard-workout-filters"
         >
-          <Filter className={styles.workoutFilterToggleIcon} aria-hidden="true" strokeWidth={1.9} />
+          <Filter className={styles.workoutFilterToggleIcon} strokeWidth={1.9} />
         </button>
       </PopoverTrigger>
 
@@ -152,12 +150,7 @@ export function DashboardWorkoutFiltersControl({
         avoidCollisions
         collisionPadding={13}
       >
-        <div
-          id="dashboard-workout-filters"
-          className={styles.workoutFilterPopover}
-          role="dialog"
-          aria-label="Workout filters"
-        >
+        <div className={styles.workoutFilterPopover}>
           <div className={styles.workoutFilterGrid}>
             <label className={styles.workoutFilterField}>
               <span>From</span>
@@ -274,7 +267,7 @@ export function DashboardWorkoutsView({
 
   if (error) {
     return (
-      <section className={styles.panel} role="alert">
+      <section className={styles.panel}>
         <p className={styles.empty}>{error}</p>
         {onRetry ? (
           <button type="button" className={styles.retryButton} onClick={onRetry}>
@@ -294,7 +287,7 @@ export function DashboardWorkoutsView({
 
   return (
     <>
-      <section aria-label="Workout history summary">
+      <section>
         <p className={styles.statLine}>
           {filtersActive
             ? `${countLabel(filterCount, "workout")} ${
@@ -308,7 +301,7 @@ export function DashboardWorkoutsView({
         </p>
       </section>
 
-      <section className={styles.plainSection} aria-busy={isLoadingMore}>
+      <section className={styles.plainSection}>
       {filteredWorkoutMonths.length > 0 ? (
         <div className={styles.timeline}>
           {renderedMonths.map((month) => (

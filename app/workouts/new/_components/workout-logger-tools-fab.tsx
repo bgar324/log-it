@@ -14,7 +14,7 @@ import {
   Timer,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   REST_PRESETS_SECONDS,
   formatRestClock,
@@ -102,10 +102,6 @@ export function WorkoutLoggerToolsFab({
   }
 
   const state = revealed ? "open" : "closed";
-  const dialRef = useRef<HTMLDivElement | null>(null);
-  const stackRef = useRef<HTMLDivElement | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const wasOpen = useRef(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -116,22 +112,6 @@ export function WorkoutLoggerToolsFab({
     return () => window.cancelAnimationFrame(frame);
   }, [isOpen]);
 
-  // Open is modal: the blur is only the visual half. Focus moves into the
-  // actions, Tab cycles within them, and closing returns the caret to the
-  // trigger — otherwise a keyboard user tabs straight into the blurred form
-  // they cannot see.
-  useEffect(() => {
-    if (isOpen) {
-      stackRef.current
-        ?.querySelector<HTMLButtonElement>("button:not([disabled])")
-        ?.focus();
-    } else if (wasOpen.current) {
-      triggerRef.current?.focus();
-    }
-
-    wasOpen.current = isOpen;
-  }, [isOpen]);
-
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -140,34 +120,6 @@ export function WorkoutLoggerToolsFab({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         onToggle(false);
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const focusable = Array.from(
-        dialRef.current?.querySelectorAll<HTMLButtonElement>(
-          "button:not([disabled])",
-        ) ?? [],
-      );
-
-      if (focusable.length === 0) {
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const active = document.activeElement;
-
-      // Wrap at both ends so Tab never escapes into the page behind the blur.
-      if (event.shiftKey && active === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
       }
     }
 
@@ -260,24 +212,13 @@ export function WorkoutLoggerToolsFab({
           className={styles.fabScrim}
           data-state={state}
           onClick={() => onToggle(false)}
-          aria-label="Close workout tools"
           tabIndex={-1}
         />
       ) : null}
 
-      {/* The dialog is the whole dial, not just the action column: the trigger
-          doubles as the close button, and the focus trap cycles through it. If
-          `aria-modal` sat on the column alone it would tell assistive tech the
-          trigger does not exist while Tab was still landing on it. */}
-      <div
-        className={styles.fabDial}
-        ref={dialRef}
-        {...(isOpen
-          ? { role: "dialog" as const, "aria-modal": true, "aria-label": "Workout tools" }
-          : {})}
-      >
+      <div className={styles.fabDial}>
         {isOpen ? (
-          <div className={styles.fabStack} ref={stackRef}>
+          <div className={styles.fabStack}>
             {actions.map((action, index) => {
               const Icon = action.busy ? Loader2 : action.icon;
 
@@ -312,7 +253,6 @@ export function WorkoutLoggerToolsFab({
                       className={
                         action.busy ? styles.spinningIcon : styles.fabActionGlyph
                       }
-                      aria-hidden="true"
                       strokeWidth={1.9}
                     />
                   </span>
@@ -328,11 +268,11 @@ export function WorkoutLoggerToolsFab({
             because you wanted out of the durations is the wrong default. Open
             on the action list, it closes. */}
         <button
-          ref={triggerRef}
           type="button"
           className={styles.fabTrigger}
           data-state={state}
           data-timing={timer.isRunning ? "true" : undefined}
+          data-fab-trigger="true"
           onClick={() => {
             if (!isOpen) {
               onToggle(true);
@@ -346,29 +286,19 @@ export function WorkoutLoggerToolsFab({
 
             onToggle(false);
           }}
-          aria-expanded={isOpen}
-          aria-label={
-            !isOpen
-              ? timer.isRunning
-                ? `Rest timer, ${formatRestClock(timer.remaining ?? 0)} remaining`
-                : "Workout tools"
-              : pane === "actions"
-                ? "Close workout tools"
-                : "Back to workout tools"
-          }
         >
           {isOpen ? (
             pane === "actions" ? (
-              <X className={styles.fabTriggerIcon} aria-hidden="true" strokeWidth={1.9} />
+              <X className={styles.fabTriggerIcon} strokeWidth={1.9} />
             ) : (
-              <ArrowLeft className={styles.fabTriggerIcon} aria-hidden="true" strokeWidth={1.9} />
+              <ArrowLeft className={styles.fabTriggerIcon} strokeWidth={1.9} />
             )
           ) : timer.isRunning ? (
             <span className={styles.fabTriggerClock}>
               {formatRestClock(timer.remaining ?? 0)}
             </span>
           ) : (
-            <Ellipsis className={styles.fabTriggerIcon} aria-hidden="true" strokeWidth={1.9} />
+            <Ellipsis className={styles.fabTriggerIcon} strokeWidth={1.9} />
           )}
         </button>
       </div>

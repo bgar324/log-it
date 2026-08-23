@@ -61,7 +61,6 @@ export function WorkoutLogger({
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const router = useRouter();
   const weightUnitLabel = getWeightUnitLabel(weightUnit);
-  const weightUnitName = weightUnit === "KG" ? "kilograms" : "pounds";
   const [isSaving, setIsSaving] = useState(false);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
@@ -69,10 +68,6 @@ export function WorkoutLogger({
   const [isRestDayOverrideDialogOpen, setIsRestDayOverrideDialogOpen] = useState(false);
   const [hasRestDayOverride, setHasRestDayOverride] = useState(false);
   const formId = useId();
-  const restDayOverrideTitleId = useId();
-  const restDayOverrideDescriptionId = useId();
-  const resetConfirmTitleId = useId();
-  const resetConfirmDescriptionId = useId();
   const {
     clearAll,
     clearPendingLookup: clearPendingSuggestionLookup,
@@ -111,7 +106,7 @@ export function WorkoutLogger({
   if (isRestDay && !draft.hasRecoveredDraft && !hasRestDayOverride) {
     return (
       <main className={styles.loggerShell}>
-        <section className={styles.loggerStage} aria-label="Rest day notice">
+        <section className={styles.loggerStage}>
           <div className={styles.topRow}>
             <BackButton
               fallbackHref={returnHref}
@@ -137,8 +132,6 @@ export function WorkoutLogger({
         </section>
         {isRestDayOverrideDialogOpen ? (
           <WorkoutLoggerConfirmDialog
-            titleId={restDayOverrideTitleId}
-            descriptionId={restDayOverrideDescriptionId}
             title="Log on a rest day?"
             description="This workout will be saved as an unscheduled session and will not change your weekly split."
             cancelLabel="Keep rest day"
@@ -299,7 +292,7 @@ export function WorkoutLogger({
 
   return (
     <main className={styles.loggerShell}>
-      <section className={styles.loggerStage} aria-label="Workout logger">
+      <section className={styles.loggerStage}>
         <div className={styles.topRow}>
           <BackButton
             fallbackHref={backHref}
@@ -338,7 +331,6 @@ export function WorkoutLogger({
                 insightState={exerciseInsightById[exercise.id]}
                 weightUnit={weightUnit}
                 weightUnitLabel={weightUnitLabel}
-                weightUnitName={weightUnitName}
                 bodyWeightDisplay={bodyWeightDisplay}
                 onAddSet={() => draft.addSet(exercise.id)}
                 onApplySearchResult={(suggestion) => {
@@ -366,8 +358,6 @@ export function WorkoutLogger({
 
           {isResetConfirmOpen ? (
             <WorkoutLoggerConfirmDialog
-              titleId={resetConfirmTitleId}
-              descriptionId={resetConfirmDescriptionId}
               title="Replace the current exercises?"
               description="This will replace every current exercise and set in this logger with the exercises and set counts from your split for today."
               cancelLabel="Keep current log"

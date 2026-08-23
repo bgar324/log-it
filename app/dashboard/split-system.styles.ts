@@ -13,15 +13,13 @@ const splitPanel =
   "[--split-border:color-mix(in_srgb,var(--text)_12%,transparent)] [--split-border-strong:color-mix(in_srgb,var(--text)_18%,transparent)] rounded-[0.54rem] border border-[var(--split-border)] bg-transparent shadow-none";
 const buttonMotion =
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]";
-const buttonFocusRing =
-  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2";
 
 export const splitStyles = {
   // The saved-split library used to be a panel above the editor. It is now a
   // selector in the editor header, so the layout is just the editor.
   splitSelectWrap: "relative min-w-0 flex-1",
   splitSelect:
-    `min-h-[2.75rem] w-full min-w-0 cursor-pointer rounded-[0.52rem] border border-[var(--split-border)] bg-[var(--bg)] py-[0.4rem] pl-[0.9rem] text-[1rem] text-[var(--text)] ${buttonFocusRing}`,
+    "min-h-[2.75rem] w-full min-w-0 cursor-pointer rounded-[0.52rem] border border-[var(--split-border)] bg-[var(--bg)] py-[0.4rem] pl-[0.9rem] text-[1rem] text-[var(--text)]",
   splitSelectMeta: "m-[0.3rem_0_0] text-[0.8125rem] text-[var(--muted)]",
   splitLayout:
     "grid min-h-0 grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] gap-[0.9rem] min-[900px]:h-full max-[980px]:grid-cols-1",
@@ -39,7 +37,7 @@ export const splitStyles = {
   // the selected tint below. An element's background is transparent by default
   // anyway, and preflight already resets it on <button>.
   splitDayCard:
-    `flex min-h-[7.6rem] cursor-pointer flex-col gap-[0.45rem] rounded-[0.54rem] border border-[var(--split-border)] p-[0.85rem] text-left text-[var(--text)] [touch-action:manipulation] ${buttonMotion} ${buttonFocusRing}`,
+    `flex min-h-[7.6rem] cursor-pointer flex-col gap-[0.45rem] rounded-[0.54rem] border border-[var(--split-border)] p-[0.85rem] text-left text-[var(--text)] [touch-action:manipulation] ${buttonMotion}`,
   // Selected reads as a fill tint, never a heavier border.
   splitDayCardActive: "bg-[color-mix(in_srgb,var(--text)_8%,transparent)]",
   splitDayCardRest:

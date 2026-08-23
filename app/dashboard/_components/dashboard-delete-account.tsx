@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X } from "lucide-react";
@@ -20,7 +20,6 @@ export function DashboardDeleteAccount({
   const [isOpen, setIsOpen] = useState(false);
   const [confirmValue, setConfirmValue] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const titleId = useId();
 
   const matches = confirmValue.trim().toLowerCase() === username.toLowerCase();
 
@@ -77,23 +76,19 @@ export function DashboardDeleteAccount({
   const modal = isOpen ? (
     <div className={styles.avatarModalOverlay} onClick={close}>
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
         className={styles.avatarModal}
         onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.avatarModalHead}>
-          <h2 id={titleId} className={styles.dangerTitle}>
+          <h2 className={styles.dangerTitle}>
             Delete account
           </h2>
           <button
             type="button"
             className={styles.avatarModalClose}
             onClick={close}
-            aria-label="Close delete account dialog"
           >
-            <X className={styles.buttonInlineIcon} aria-hidden="true" strokeWidth={1.9} />
+            <X className={styles.buttonInlineIcon} strokeWidth={1.9} />
           </button>
         </div>
 
@@ -127,7 +122,6 @@ export function DashboardDeleteAccount({
               type="submit"
               className={styles.dangerButton}
               disabled={!matches || isDeleting}
-              aria-busy={isDeleting}
             >
               Permanently delete
             </button>

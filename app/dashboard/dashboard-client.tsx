@@ -438,7 +438,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       {activeView === "dashboard" ? (
         <div key="dashboard" className="view-transition-shell">
           {activeViewError ? (
-            <div className={styles.panel} role="alert">
+            <div className={styles.panel}>
               <p className={styles.empty}>{activeViewError}</p>
               <button
                 type="button"
@@ -509,7 +509,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       {activeView === "nutrition" ? (
         <div key="nutrition" className="view-transition-shell">
           {activeViewError ? (
-            <div className={styles.panel} role="alert">
+            <div className={styles.panel}>
               <p className={styles.empty}>{activeViewError}</p>
               <button
                 type="button"
@@ -538,7 +538,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
         >
           <section className={`${styles.plainSection} min-[900px]:h-full`}>
             {activeViewError ? (
-              <div className={styles.panel} role="alert">
+              <div className={styles.panel}>
                 <p className={styles.empty}>{activeViewError}</p>
                 <button
                   type="button"

@@ -159,7 +159,7 @@ export function DashboardNutritionPanel({
   return (
     <>
       {/* Today's numbers are the form values below; a tile wall would print them twice. */}
-      <section aria-label="Nutrition summary">
+      <section>
         <p className={styles.statLine}>
           {formatNumber(nutrition.today.calories)} cal ·{" "}
           {formatNumber(nutrition.today.proteinGrams, 1)}g protein
@@ -172,7 +172,7 @@ export function DashboardNutritionPanel({
         </p>
       </section>
 
-      <section className={styles.panel} aria-label="Today nutrition log">
+      <section className={styles.panel}>
         <div className={styles.panelHead}>
           <div>
             <h2 className={styles.panelTitle}>Today</h2>
@@ -224,30 +224,28 @@ export function DashboardNutritionPanel({
             type="button"
             className={styles.nutritionSaveButton}
             disabled={isSaving}
-            aria-busy={isSaving}
             onClick={handleSave}
           >
             {isSaving ? (
-              <Loader2 className={`${styles.nutritionButtonIcon} animate-spin`} aria-hidden="true" />
+              <Loader2 className={`${styles.nutritionButtonIcon} animate-spin`} />
             ) : (
-              <Save className={styles.nutritionButtonIcon} aria-hidden="true" />
+              <Save className={styles.nutritionButtonIcon} />
             )}
             Save
           </button>
         </div>
       </section>
 
-      <section className={styles.chartPanel} aria-label="Calories vs BMR">
+      <section className={styles.chartPanel}>
         <div className={styles.nutritionChartHead}>
           <h2 className={styles.panelTitle}>Calories vs BMR</h2>
-          <div className={styles.nutritionSegments} aria-label="Nutrition chart range">
+          <div className={styles.nutritionSegments}>
             {(["day", "week", "month"] as const).map((mode) => (
               <button
                 key={mode}
                 type="button"
                 className={styles.nutritionSegmentButton}
                 data-active={chartMode === mode}
-                aria-pressed={chartMode === mode}
                 onClick={() => setChartMode(mode)}
               >
                 {mode === "day" ? "Day" : mode === "week" ? "Week" : "Month"}
@@ -261,7 +259,7 @@ export function DashboardNutritionPanel({
       </section>
 
       {bodyWeightSeries.length >= 2 ? (
-        <section className={styles.chartPanel} aria-label="Body weight trend">
+        <section className={styles.chartPanel}>
           <div className={styles.nutritionChartHead}>
             <h2 className={styles.panelTitle}>Body weight</h2>
           </div>
@@ -274,7 +272,7 @@ export function DashboardNutritionPanel({
         </section>
       ) : null}
 
-      <section className={styles.panel} aria-label="Nutrition history">
+      <section className={styles.panel}>
         <div className={styles.panelHead}>
           <h2 className={styles.panelTitle}>History</h2>
         </div>

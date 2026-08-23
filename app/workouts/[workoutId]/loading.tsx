@@ -8,7 +8,7 @@ function SkeletonBlock({
 }: {
   className?: string;
 }) {
-  return <span className={`${styles.skeletonBlock} ${className}`} aria-hidden="true" />;
+  return <span className={`${styles.skeletonBlock} ${className}`} />;
 }
 
 function SetRowSkeleton() {
@@ -24,9 +24,6 @@ function SetRowSkeleton() {
 export default function WorkoutDetailLoading() {
   return (
     <main className={styles.shell}>
-      <p className="sr-only" role="status">
-        Loading workout
-      </p>
       <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
           <div className={styles.topLead}>
@@ -45,14 +42,14 @@ export default function WorkoutDetailLoading() {
           </div>
         </header>
 
-        <section className={styles.summaryCard} aria-hidden="true">
+        <section className={styles.summaryCard}>
           <SkeletonBlock className="h-[0.75rem] w-[5.8rem]" />
           <SkeletonBlock className="mt-[0.5rem] h-[2rem] w-[min(100%,24rem)]" />
           <SkeletonBlock className="mt-[0.66rem] h-[0.95rem] w-[min(100%,18rem)]" />
           <SkeletonBlock className="mt-[0.28rem] h-[0.82rem] w-[min(100%,12rem)]" />
         </section>
 
-        <section className={styles.exerciseList} aria-hidden="true">
+        <section className={styles.exerciseList}>
           {Array.from({ length: 3 }, (_, exerciseIndex) => (
             <article key={exerciseIndex} className={styles.exerciseCard}>
               <header className={styles.exerciseHead}>

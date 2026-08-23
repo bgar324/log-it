@@ -63,7 +63,6 @@ export function DashboardProfileAvatarEditor({
     handleRemoveAvatar,
     handleZoomChange,
     isAvatarModalOpen,
-    modalTitleId,
     setIsAvatarModalOpen,
   } = useDashboardProfileAvatarCrop({
     displayedAvatarUrl,
@@ -96,24 +95,20 @@ export function DashboardProfileAvatarEditor({
       onClick={closeAvatarModal}
     >
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={modalTitleId}
         className={styles.avatarModal}
         data-closing={shouldAnimateAvatarModalExit}
         onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.avatarModalHead}>
-          <h2 id={modalTitleId} className={styles.avatarModalTitle}>
+          <h2 className={styles.avatarModalTitle}>
             Edit profile photo
           </h2>
           <button
             type="button"
             className={styles.avatarModalClose}
             onClick={closeAvatarModal}
-            aria-label="Close profile photo editor"
           >
-            <X className={styles.buttonInlineIcon} aria-hidden="true" strokeWidth={1.9} />
+            <X className={styles.buttonInlineIcon} strokeWidth={1.9} />
           </button>
         </div>
 
@@ -179,7 +174,7 @@ export function DashboardProfileAvatarEditor({
                 onClick={() => modalAvatarInputRef.current?.click()}
                 disabled={isSaving}
               >
-                <Upload className={styles.buttonInlineIcon} aria-hidden="true" strokeWidth={1.9} />
+                <Upload className={styles.buttonInlineIcon} strokeWidth={1.9} />
                 Upload new
               </button>
               <button
@@ -188,7 +183,7 @@ export function DashboardProfileAvatarEditor({
                 onClick={() => void handleDownloadAvatar()}
                 disabled={!cropSourceUrl}
               >
-                <Download className={styles.buttonInlineIcon} aria-hidden="true" strokeWidth={1.9} />
+                <Download className={styles.buttonInlineIcon} strokeWidth={1.9} />
                 Download
               </button>
             </div>
@@ -201,7 +196,7 @@ export function DashboardProfileAvatarEditor({
             onClick={handleRemoveAvatar}
             disabled={!hasAvatar || isSaving}
           >
-            <Trash2 className={styles.buttonInlineIcon} aria-hidden="true" strokeWidth={1.9} />
+            <Trash2 className={styles.buttonInlineIcon} strokeWidth={1.9} />
             Remove
           </button>
           <button
@@ -239,7 +234,6 @@ export function DashboardProfileAvatarEditor({
           type="button"
           className={styles.profilePhotoPreview}
           data-has-image={hasAvatar}
-          aria-label={hasAvatar ? "Edit profile picture" : "Upload profile picture"}
           disabled={isSaving}
           onClick={() => {
             if (hasAvatar) {
@@ -254,7 +248,7 @@ export function DashboardProfileAvatarEditor({
               : undefined
           }
         >
-          {displayedAvatarUrl ? null : <ImagePlus aria-hidden="true" strokeWidth={1.9} />}
+          {displayedAvatarUrl ? null : <ImagePlus strokeWidth={1.9} />}
         </button>
         <span className={styles.profilePhotoCaption}>{hasAvatar ? "Edit" : "Upload"}</span>
       </span>

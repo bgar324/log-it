@@ -1,7 +1,7 @@
 "use client";
 
 import { GripVertical } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { WorkoutSplitExerciseTemplate } from "@/lib/workout-splits/shared";
 import { reorderItems } from "@/lib/workout-utils";
@@ -23,7 +23,6 @@ export function SplitExerciseReorderDialog({
   );
   const [draggingOrder, setDraggingOrder] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const titleId = useId();
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -90,16 +89,10 @@ export function SplitExerciseReorderDialog({
       <button
         type="button"
         className={splitStyles.splitDialogBackdrop}
-        aria-label="Cancel exercise reorder"
         onClick={onCancel}
       />
-      <section
-        className={splitStyles.splitDialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
-        <h2 id={titleId} className={splitStyles.splitDialogTitle}>
+      <section className={splitStyles.splitDialog}>
+        <h2 className={splitStyles.splitDialogTitle}>
           Reorder exercises
         </h2>
 
@@ -135,7 +128,6 @@ export function SplitExerciseReorderDialog({
                 <button
                   type="button"
                   className={splitStyles.splitReorderDragHandle}
-                  aria-label={`Drag ${exerciseName}`}
                   onPointerDown={(event) => {
                     event.currentTarget.setPointerCapture(event.pointerId);
                     setDraggingOrder(exercise.order);
@@ -143,7 +135,6 @@ export function SplitExerciseReorderDialog({
                 >
                   <GripVertical
                     className={splitStyles.inlineIcon}
-                    aria-hidden="true"
                     strokeWidth={1.9}
                   />
                 </button>

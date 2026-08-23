@@ -33,9 +33,6 @@
 const actionMotion =
   "transition-[transform,background-color,color,border-color,opacity] duration-140 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px]";
 
-const actionFocusRing =
-  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2";
-
 /**
  * Shape and type only: no border, background, colour, cursor or touch-action.
  *
@@ -50,7 +47,7 @@ const actionFocusRing =
  * but 43px vs 44px is invisible and 44px is the documented tap floor, so one
  * number beats a breakpoint that buys nothing.
  */
-const actionGeometry = `inline-flex shrink-0 min-h-[2.75rem] items-center justify-center gap-[0.35rem] rounded-[999px] text-[0.9375rem] font-[400] leading-none tracking-normal no-underline min-[52rem]:text-[1rem] disabled:cursor-not-allowed disabled:opacity-50 ${actionMotion} ${actionFocusRing}`;
+const actionGeometry = `inline-flex shrink-0 min-h-[2.75rem] items-center justify-center gap-[0.35rem] rounded-[999px] text-[0.9375rem] font-[400] leading-none tracking-normal no-underline min-[52rem]:text-[1rem] disabled:cursor-not-allowed disabled:opacity-50 ${actionMotion}`;
 
 /** Tap interaction for anything you press once. */
 const actionPointer = "cursor-pointer [touch-action:manipulation]";

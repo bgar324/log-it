@@ -27,8 +27,8 @@ export function BackButton({
   }
 
   return (
-    <button type="button" className={className} onClick={handleClick} aria-label={label}>
-      <ArrowLeft className={iconClassName} aria-hidden="true" strokeWidth={1.9} />
+    <button type="button" className={className} onClick={handleClick}>
+      <ArrowLeft className={iconClassName} strokeWidth={1.9} />
       {showLabel ? <span>{label}</span> : null}
     </button>
   );

@@ -123,12 +123,8 @@ export function WorkoutDetailActions({
   return (
     <>
       <div className={styles.detailActionsGroup}>
-        <Link href={editHref} className={`relative ${styles.actionButton}`} aria-label="Edit workout">
-          <SquarePen
-            className={styles.actionButtonIcon}
-            aria-hidden="true"
-            strokeWidth={1.9}
-          />
+        <Link href={editHref} className={`relative ${styles.actionButton}`}>
+          <SquarePen className={styles.actionButtonIcon} strokeWidth={1.9} />
           <span className={styles.actionButtonLabel}>Edit workout</span>
           <LinkPendingOverlay />
         </Link>
@@ -137,9 +133,8 @@ export function WorkoutDetailActions({
           className={styles.actionButton}
           onClick={() => void handleCopy()}
           disabled={status !== "idle"}
-          aria-label="Copy workout"
         >
-          <Copy className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+          <Copy className={styles.actionButtonIcon} strokeWidth={1.9} />
           <span className={styles.actionButtonLabel}>Copy workout</span>
         </button>
         <button
@@ -147,10 +142,8 @@ export function WorkoutDetailActions({
           className={styles.dangerActionButton}
           onClick={handleDelete}
           disabled={status !== "idle"}
-          aria-label={status === "deleting" ? "Deleting workout" : "Delete workout"}
-          aria-busy={status === "deleting"}
         >
-          <Trash2 className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+          <Trash2 className={styles.actionButtonIcon} strokeWidth={1.9} />
           <span className={styles.actionButtonLabel}>Delete workout</span>
         </button>
       </div>
@@ -159,25 +152,17 @@ export function WorkoutDetailActions({
           type="button"
           className={styles.mobileActionToggle}
           onClick={() => setIsMenuOpen((open) => !open)}
-          aria-label="More workout actions"
-          aria-expanded={isMenuOpen}
-          aria-haspopup="menu"
         >
-          <Ellipsis className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+          <Ellipsis className={styles.actionButtonIcon} strokeWidth={1.9} />
         </button>
         {isMenuOpen ? (
-          <div className={styles.mobileActionDropdown} role="menu">
+          <div className={styles.mobileActionDropdown}>
             <Link
               href={editHref}
               className={`relative ${styles.mobileActionMenuItem}`}
-              role="menuitem"
               onClick={() => setIsMenuOpen(false)}
             >
-              <SquarePen
-                className={styles.actionButtonIcon}
-                aria-hidden="true"
-                strokeWidth={1.9}
-              />
+              <SquarePen className={styles.actionButtonIcon} strokeWidth={1.9} />
               <span>Edit workout</span>
               <LinkPendingOverlay />
             </Link>
@@ -186,9 +171,8 @@ export function WorkoutDetailActions({
               className={styles.mobileActionMenuItem}
               onClick={() => void handleCopy()}
               disabled={status !== "idle"}
-              role="menuitem"
             >
-              <Copy className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+              <Copy className={styles.actionButtonIcon} strokeWidth={1.9} />
               <span>Copy workout</span>
             </button>
             <button
@@ -196,10 +180,8 @@ export function WorkoutDetailActions({
               className={styles.mobileActionDangerItem}
               onClick={handleDelete}
               disabled={status !== "idle"}
-              role="menuitem"
-              aria-busy={status === "deleting"}
             >
-              <Trash2 className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
+              <Trash2 className={styles.actionButtonIcon} strokeWidth={1.9} />
               <span>Delete workout</span>
             </button>
           </div>

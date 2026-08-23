@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { USERNAME_RULE_MESSAGE } from "@/lib/username";
 import { styles } from "../dashboard.styles";
 import type { DashboardProfileFormState } from "../_hooks/use-dashboard-profile-form";
@@ -16,7 +16,6 @@ export function DashboardProfileEditDialog({
   state,
   onClose,
 }: DashboardProfileEditDialogProps) {
-  const titleId = useId();
   const [firstName, setFirstName] = useState(state.profile.firstName ?? "");
   const [lastName, setLastName] = useState(state.profile.lastName ?? "");
   const [username, setUsername] = useState(state.profile.username);
@@ -39,23 +38,19 @@ export function DashboardProfileEditDialog({
   return createPortal(
     <div className={styles.avatarModalOverlay} onClick={onClose}>
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
         className={styles.avatarModal}
         onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.avatarModalHead}>
-          <h2 id={titleId} className={styles.sectionTitle}>
+          <h2 className={styles.sectionTitle}>
             Edit profile
           </h2>
           <button
             type="button"
             className={styles.avatarModalClose}
             onClick={onClose}
-            aria-label="Close edit profile dialog"
           >
-            <X className={styles.buttonInlineIcon} aria-hidden="true" strokeWidth={1.9} />
+            <X className={styles.buttonInlineIcon} strokeWidth={1.9} />
           </button>
         </div>
 
@@ -122,7 +117,6 @@ export function DashboardProfileEditDialog({
             type="submit"
             className={styles.profileSaveButton}
             disabled={state.isSaving}
-            aria-busy={state.isSaving}
           >
             Save changes
           </button>

@@ -29,7 +29,7 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
 
   return (
     <>
-      <section className={styles.profileIdentity} aria-label="Your profile">
+      <section className={styles.profileIdentity}>
         <DashboardProfileAvatarEditor
           displayedAvatarUrl={displayedAvatarUrl}
           hasAvatar={Boolean(displayedAvatarUrl)}
@@ -45,9 +45,8 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
               type="button"
               className={styles.profileEditButton}
               onClick={() => setIsEditOpen(true)}
-              aria-label="Edit profile"
             >
-              <Pencil className={styles.buttonInlineIcon} aria-hidden="true" strokeWidth={1.9} />
+              <Pencil className={styles.buttonInlineIcon} strokeWidth={1.9} />
             </button>
           </div>
           <p className={styles.profileMeta}>
@@ -57,7 +56,7 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
         </div>
       </section>
 
-      <section aria-label="Account">
+      <section>
         <div className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>Account</h2>
         </div>
@@ -66,7 +65,7 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
 
       {/* Irreversible actions get their own tinted, bordered zone so they read
           as a different class of control from everything above. */}
-      <section className={styles.dangerZone} aria-label="Danger zone">
+      <section className={styles.dangerZone}>
         <h2 className={styles.dangerZoneTitle}>Danger zone</h2>
         <p className={styles.dangerZoneText}>
           Deleting your account removes every workout, split, and nutrition entry.

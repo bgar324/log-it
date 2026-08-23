@@ -6,11 +6,7 @@ const skeleton =
 export default function NewWorkoutLoading() {
   return (
     <main className={styles.loggerShell}>
-      <section
-        className={styles.loggerStage}
-        aria-label="Loading workout logger"
-        aria-busy="true"
-      >
+      <section className={styles.loggerStage}>
         <div className={styles.topRow}>
           <div className={`${skeleton} h-[2.75rem] w-[5.6rem] rounded-full`} />
         </div>

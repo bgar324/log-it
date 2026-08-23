@@ -21,7 +21,6 @@ import { styles } from "../dashboard.styles";
 
 type SidebarIcon = ComponentType<{
   className?: string;
-  "aria-hidden"?: boolean;
   strokeWidth?: number;
 }>;
 
@@ -63,13 +62,9 @@ export function DashboardShell({
   const appScreen = (
     <main
       className={`${styles.shell} ${sidebarCollapsed ? styles.shellSidebarCollapsed : ""}`}
-      aria-label="Training dashboard shell"
       data-sidebar-collapsed={sidebarCollapsed}
     >
-      <aside
-        className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}
-        aria-label="Dashboard sidebar"
-      >
+      <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}>
         <div
           className={`${styles.sidebarTop} ${
             sidebarCollapsed ? styles.sidebarTopCollapsed : ""
@@ -80,21 +75,18 @@ export function DashboardShell({
               type="button"
               className={styles.sidebarCollapsedLogoToggle}
               onClick={onToggleSidebar}
-              aria-label="Open sidebar"
               title="Open sidebar"
-              aria-expanded={false}
             >
-              <span className={styles.sidebarCollapsedLogo} aria-hidden="true">
+              <span className={styles.sidebarCollapsedLogo}>
                 <AppBrand
                   compact
                   iconClassName="h-[1.35rem] w-[1.35rem]"
-                  textClassName="sr-only"
+                  textClassName="hidden"
                 />
               </span>
-              <span className={styles.sidebarCollapsedToggleIconWrap} aria-hidden="true">
+              <span className={styles.sidebarCollapsedToggleIconWrap}>
                 <PanelLeft
                   className={styles.sidebarToggleIcon}
-                  aria-hidden="true"
                   strokeWidth={1.9}
                 />
               </span>
@@ -111,13 +103,10 @@ export function DashboardShell({
                 type="button"
                 className={styles.sidebarToggle}
                 onClick={onToggleSidebar}
-                aria-label="Close sidebar"
                 title="Close sidebar"
-                aria-expanded={true}
               >
                 <PanelLeft
                   className={styles.sidebarToggleIcon}
-                  aria-hidden="true"
                   strokeWidth={1.9}
                 />
               </button>
@@ -125,10 +114,7 @@ export function DashboardShell({
           )}
         </div>
 
-        <nav
-          className={`${styles.sideNav} ${sidebarCollapsed ? styles.sideNavCollapsed : ""}`}
-          aria-label="Main navigation"
-        >
+        <nav className={`${styles.sideNav} ${sidebarCollapsed ? styles.sideNavCollapsed : ""}`}>
           {SIDEBAR_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.view;
@@ -141,9 +127,8 @@ export function DashboardShell({
                 data-active={isActive}
                 onClick={() => onNavigate(item.view)}
                 title={sidebarCollapsed ? item.label : undefined}
-                aria-label={sidebarCollapsed ? item.label : undefined}
               >
-                <Icon className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
+                <Icon className={styles.navIcon} strokeWidth={1.9} />
                 <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
                   {item.label}
                 </span>
@@ -163,14 +148,13 @@ export function DashboardShell({
               sidebarCollapsed ? styles.sidebarActionCollapsed : styles.sidebarAction
             }`}
             title={sidebarCollapsed ? "Log workout" : undefined}
-            aria-label={sidebarCollapsed ? "Log workout" : undefined}
           >
-            <Plus className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
+            <Plus className={styles.sidebarActionIcon} strokeWidth={1.9} />
             <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Log workout</span>
             <LinkPendingOverlay />
           </Link>
 
-          <div className={styles.sidebarDivider} aria-hidden="true" />
+          <div className={styles.sidebarDivider} />
 
           <button
             type="button"
@@ -178,9 +162,8 @@ export function DashboardShell({
             data-active={activeView === "profile"}
             onClick={() => onNavigate("profile")}
             title={sidebarCollapsed ? user.displayName : undefined}
-            aria-label={sidebarCollapsed ? user.displayName : undefined}
           >
-            <UserRound className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
+            <UserRound className={styles.navIcon} strokeWidth={1.9} />
             <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
               {user.displayName}
             </span>
@@ -192,9 +175,8 @@ export function DashboardShell({
             data-active={activeView === "settings"}
             onClick={() => onNavigate("settings")}
             title={sidebarCollapsed ? "Settings" : undefined}
-            aria-label={sidebarCollapsed ? "Settings" : undefined}
           >
-            <Settings className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
+            <Settings className={styles.navIcon} strokeWidth={1.9} />
             <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Settings</span>
           </button>
         </div>

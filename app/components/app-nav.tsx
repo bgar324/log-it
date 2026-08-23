@@ -16,7 +16,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
   type ComponentType,
   type MouseEvent as ReactMouseEvent,
@@ -29,7 +28,6 @@ import { navStyles } from "./app-nav.styles";
 
 type NavIcon = ComponentType<{
   className?: string;
-  "aria-hidden"?: boolean;
   strokeWidth?: number;
 }>;
 
@@ -56,7 +54,6 @@ export type AppNavUser = {
 };
 
 const AppNavContext = createContext<{
-  drawerOpen: boolean;
   openDrawer: () => void;
 } | null>(null);
 
@@ -113,7 +110,7 @@ function Avatar({
   }
 
   return (
-    <span className={fallbackClassName} aria-hidden="true">
+    <span className={fallbackClassName}>
       {initialsFor(user.displayName, user.username)}
     </span>
   );
@@ -128,8 +125,6 @@ export function AppDrawerTrigger({ user }: { user: AppNavUser }) {
       type="button"
       className={navStyles.avatarButton}
       onClick={() => nav?.openDrawer()}
-      aria-label="Open account menu"
-      aria-expanded={nav?.drawerOpen ?? false}
       data-app-drawer-trigger="true"
     >
       <Avatar
@@ -180,16 +175,15 @@ export function AppTabBar({
   return (
     <nav
       className={`${navStyles.tabBar} ${shifted ? navStyles.tabBarShifted : ""}`}
-      aria-label="Primary"
+      data-app-nav="tabbar"
     >
       <Link
         href={toViewHref(HOME_TAB.view)}
         className={navStyles.tabItem}
         data-active={activeView === HOME_TAB.view}
-        aria-current={activeView === HOME_TAB.view ? "page" : undefined}
         onClick={viewClickHandler(onNavigate, HOME_TAB.view)}
       >
-        <House className={navStyles.tabIcon} aria-hidden={true} strokeWidth={1.9} />
+        <House className={navStyles.tabIcon} strokeWidth={1.9} />
         <span className={navStyles.tabLabel}>{HOME_TAB.label}</span>
         <LinkPendingOverlay />
       </Link>
@@ -197,9 +191,8 @@ export function AppTabBar({
       <Link
         href={`/workouts/new?from=${activeView}`}
         className={navStyles.tabAction}
-        aria-label="Log a workout"
       >
-        <Plus className={navStyles.tabActionIcon} aria-hidden={true} strokeWidth={2} />
+        <Plus className={navStyles.tabActionIcon} strokeWidth={2} />
         <LinkPendingOverlay />
       </Link>
 
@@ -207,10 +200,9 @@ export function AppTabBar({
         href={toViewHref(NUTRITION_TAB.view)}
         className={navStyles.tabItem}
         data-active={activeView === NUTRITION_TAB.view}
-        aria-current={activeView === NUTRITION_TAB.view ? "page" : undefined}
         onClick={viewClickHandler(onNavigate, NUTRITION_TAB.view)}
       >
-        <Apple className={navStyles.tabIcon} aria-hidden={true} strokeWidth={1.9} />
+        <Apple className={navStyles.tabIcon} strokeWidth={1.9} />
         <span className={navStyles.tabLabel}>{NUTRITION_TAB.label}</span>
         <LinkPendingOverlay />
       </Link>
@@ -236,8 +228,6 @@ export function AppShell({
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const drawerRef = useRef<HTMLDivElement | null>(null);
-  const stageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!drawerOpen) {
@@ -254,27 +244,18 @@ export function AppShell({
     const previousOverflow = body.style.overflow;
     body.style.overflow = "hidden";
     document.addEventListener("keydown", handleKeyDown);
-    drawerRef.current?.querySelector<HTMLElement>("a,button")?.focus();
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       body.style.overflow = previousOverflow;
-      stageRef.current
-        ?.querySelector<HTMLElement>('[data-app-drawer-trigger="true"]')
-        ?.focus();
     };
   }, [drawerOpen]);
 
   return (
-    <AppNavContext.Provider
-      value={{ drawerOpen, openDrawer: () => setDrawerOpen(true) }}
-    >
-      <div className={navStyles.stage} ref={stageRef}>
+    <AppNavContext.Provider value={{ openDrawer: () => setDrawerOpen(true) }}>
+      <div className={navStyles.stage}>
         <div
-          ref={drawerRef}
           className={`${navStyles.drawerLayer} ${drawerOpen ? navStyles.drawerLayerOpen : ""}`}
-          aria-hidden={!drawerOpen}
-          inert={!drawerOpen}
         >
           <div className={navStyles.drawerIdentity}>
             <Avatar
@@ -290,7 +271,7 @@ export function AppShell({
 
           <div className={navStyles.drawerDivider} />
 
-          <nav className={navStyles.drawerNav} aria-label="Sections">
+          <nav className={navStyles.drawerNav} data-app-nav="sections">
             {DRAWER_ITEMS.map((item) => {
               const Icon = item.icon;
 
@@ -300,17 +281,12 @@ export function AppShell({
                   href={toViewHref(item.view)}
                   className={navStyles.drawerItem}
                   data-active={activeView === item.view}
-                  aria-current={activeView === item.view ? "page" : undefined}
                   onClick={(event) => {
                     viewClickHandler(onNavigate, item.view)(event);
                     setDrawerOpen(false);
                   }}
                 >
-                  <Icon
-                    className={navStyles.drawerItemIcon}
-                    aria-hidden={true}
-                    strokeWidth={1.9}
-                  />
+                  <Icon className={navStyles.drawerItemIcon} strokeWidth={1.9} />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -326,31 +302,21 @@ export function AppShell({
                 href={toViewHref(DRAWER_FOOTER_ITEM.view)}
                 className={navStyles.drawerItem}
                 data-active={activeView === DRAWER_FOOTER_ITEM.view}
-                aria-current={activeView === DRAWER_FOOTER_ITEM.view ? "page" : undefined}
                 onClick={(event) => {
                   viewClickHandler(onNavigate, DRAWER_FOOTER_ITEM.view)(event);
                   setDrawerOpen(false);
                 }}
               >
-                <Settings
-                  className={navStyles.drawerItemIcon}
-                  aria-hidden={true}
-                  strokeWidth={1.9}
-                />
+                <Settings className={navStyles.drawerItemIcon} strokeWidth={1.9} />
                 <span>{DRAWER_FOOTER_ITEM.label}</span>
               </Link>
               <form method="post" action="/auth/signout">
                 <button
                   type="submit"
                   className={navStyles.drawerIconAction}
-                  aria-label="Sign out"
                   title="Sign out"
                 >
-                  <LogOut
-                    className={navStyles.drawerItemIcon}
-                    aria-hidden={true}
-                    strokeWidth={1.9}
-                  />
+                  <LogOut className={navStyles.drawerItemIcon} strokeWidth={1.9} />
                 </button>
               </form>
             </div>
@@ -365,7 +331,6 @@ export function AppShell({
               type="button"
               className={navStyles.appLayerScrim}
               onClick={() => setDrawerOpen(false)}
-              aria-label="Close account menu"
             />
           ) : null}
         </div>

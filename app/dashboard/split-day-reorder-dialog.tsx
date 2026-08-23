@@ -1,7 +1,7 @@
 "use client";
 
 import { GripVertical } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   getSplitWeekdayIndex,
@@ -37,7 +37,6 @@ export function SplitDayReorderDialog({
   );
   const [draggingWeekday, setDraggingWeekday] = useState<SplitWeekdayValue | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const titleId = useId();
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -106,16 +105,10 @@ export function SplitDayReorderDialog({
       <button
         type="button"
         className={splitStyles.splitDialogBackdrop}
-        aria-label="Cancel day reorder"
         onClick={onCancel}
       />
-      <section
-        className={splitStyles.splitDialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
-        <h2 id={titleId} className={splitStyles.splitDialogTitle}>
+      <section className={splitStyles.splitDialog}>
+        <h2 className={splitStyles.splitDialogTitle}>
           Reorder days
         </h2>
 
@@ -159,7 +152,6 @@ export function SplitDayReorderDialog({
                 <button
                   type="button"
                   className={splitStyles.splitReorderDragHandle}
-                  aria-label={`Drag ${dayTitle}`}
                   onPointerDown={(event) => {
                     event.currentTarget.setPointerCapture(event.pointerId);
                     setDraggingWeekday(day.weekday);
@@ -167,7 +159,6 @@ export function SplitDayReorderDialog({
                 >
                   <GripVertical
                     className={splitStyles.inlineIcon}
-                    aria-hidden="true"
                     strokeWidth={1.9}
                   />
                 </button>

@@ -18,8 +18,6 @@ const dashboardSurface =
   "rounded-[0.54rem] border border-[var(--dashboard-border)] bg-transparent shadow-none";
 const buttonMotion =
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]";
-const buttonFocusRing =
-  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2";
 
 // Every button-like key below is a constant from `app/components/action.styles`
 // plus layout-only extras (width, order, overflow, positioning). Radius, height,
@@ -49,9 +47,9 @@ export const styles = {
   sidebarCollapsedLogoToggle:
     `group relative ${actionIcon} hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)]`,
   sidebarCollapsedLogo:
-    "absolute inset-0 flex items-center justify-center opacity-100 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-90 group-hover:opacity-0 group-focus-visible:scale-90 group-focus-visible:opacity-0",
+    "absolute inset-0 flex items-center justify-center opacity-100 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-90 group-hover:opacity-0",
   sidebarCollapsedToggleIconWrap:
-    "absolute inset-0 flex scale-110 items-center justify-center opacity-0 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100",
+    "absolute inset-0 flex scale-110 items-center justify-center opacity-0 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-100 group-hover:opacity-100",
   sidebarToggleIcon: "h-[1rem] w-[1rem]",
   brand: "text-[2.2rem] leading-[0.92] tracking-[-0.03em] font-[520]",
   sideNav: "flex flex-col gap-[0.28rem]",
@@ -61,7 +59,7 @@ export const styles = {
   navButtonCollapsed:
     `${actionIconQuiet} hover:bg-[color-mix(in_srgb,var(--text)_6%,transparent)] data-[active=true]:bg-[color-mix(in_srgb,var(--text)_8%,transparent)] data-[active=true]:text-[var(--text)]`,
   navIcon: "h-[0.85rem] w-[0.85rem]",
-  navLabelCollapsed: "sr-only",
+  navLabelCollapsed: "hidden",
   sidebarUtilityStack: "mt-auto flex flex-col gap-[0.52rem]",
   sidebarUtilityStackCollapsed: "items-center",
   // The desktop twin of the phone tab bar's filled `+`, so it is filled here too.
@@ -95,7 +93,7 @@ export const styles = {
     "m-0 flex min-h-[3.25rem] flex-wrap items-center justify-between gap-[0.75rem] [&_.theme-toggle-option]:min-h-[2.75rem] [&_.theme-toggle-option]:min-w-[2.75rem]",
   settingLabel: "text-[1rem] text-[var(--text)]",
   settingSelect:
-    `min-h-[2.75rem] min-w-[10rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.8rem] text-[1rem] text-[var(--text)] disabled:cursor-progress ${buttonFocusRing}`,
+    "min-h-[2.75rem] min-w-[10rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.8rem] text-[1rem] text-[var(--text)] disabled:cursor-progress",
   panel: `${dashboardSurface} p-[0.82rem]`,
   plainSection: "min-h-0 p-0",
   panelHead:
@@ -105,12 +103,12 @@ export const styles = {
   // Search owns the panel's full width; the sort select and the count share the
   // line directly above the list so the ordering names what you are looking at.
   searchInput:
-    "mt-[0.6rem] h-[2.75rem] w-full rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.74rem] text-base text-[var(--text)] placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
+    "mt-[0.6rem] h-[2.75rem] w-full rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.74rem] text-base text-[var(--text)] placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)]",
   exerciseListMeta:
     "mt-[0.6rem] flex flex-wrap items-center justify-between gap-[0.5rem]",
   exerciseCount: "m-0 text-[0.84rem] text-[var(--muted)]",
   exerciseSortSelect:
-    `min-h-[2.75rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] pl-[0.7rem] text-[0.9375rem] text-[var(--text)] min-[760px]:min-h-[2.2rem] min-[760px]:text-[0.84rem] ${buttonFocusRing}`,
+    "min-h-[2.75rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] pl-[0.7rem] text-[0.9375rem] text-[var(--text)] min-[760px]:min-h-[2.2rem] min-[760px]:text-[0.84rem]",
   // The reveal needs more air than the row gap, or it reads as one more row.
   listRevealRow: "mt-[0.72rem] flex",
   listRevealButton: actionOutline,
@@ -136,7 +134,7 @@ export const styles = {
     "grid w-full min-w-0 items-center gap-[0.44rem] rounded-[0.5rem] border border-[var(--dashboard-border)] bg-transparent p-[0.58rem] text-[0.84rem] min-[761px]:w-[max(100%,34rem)] max-[760px]:min-h-[2.75rem] max-[760px]:gap-x-[0.48rem] max-[760px]:gap-y-[0.12rem] max-[760px]:px-[0.56rem] max-[760px]:py-[0.6rem] max-[760px]:text-[0.9rem]",
   // A row-shaped <Link>, not a button: it keeps the row's own geometry.
   clickableMetricRow:
-    `cursor-pointer text-inherit no-underline hover:translate-y-0 ${buttonFocusRing} ${buttonMotion}`,
+    `cursor-pointer text-inherit no-underline hover:translate-y-0 ${buttonMotion}`,
   metricMobileLabel:
     "min-w-0",
   workoutSummaryLine:
@@ -172,7 +170,7 @@ export const styles = {
   workoutFilterField:
     "flex min-w-0 flex-col gap-[0.28rem] text-[0.72rem] text-[var(--muted)]",
   workoutFilterInput:
-    "min-h-[2.5rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.84rem] text-[var(--text)] outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
+    "min-h-[2.5rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.84rem] text-[var(--text)] outline-none max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
   workoutFilterFooter:
     "flex flex-wrap items-center justify-between gap-[0.55rem] border-t border-[var(--dashboard-border)] pt-[0.68rem] max-[420px]:items-stretch",
   workoutFilterMeta:
@@ -192,7 +190,7 @@ export const styles = {
   nutritionField:
     "flex min-w-0 flex-col gap-[0.28rem] text-[0.7rem] text-[var(--muted)]",
   nutritionInput:
-    "min-h-[2.6rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.9rem] text-[var(--text)] outline-none focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
+    "min-h-[2.6rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.9rem] text-[var(--text)] outline-none max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
   nutritionFormActions:
     "mt-[0.72rem] flex justify-end max-[520px]:mt-[0.62rem]",
   nutritionSaveButton: `${actionFilled} max-[520px]:w-full`,
@@ -235,13 +233,13 @@ export const styles = {
   profilePhotoButton:
     "flex shrink-0 flex-col items-center gap-[0.28rem]",
   profilePhotoPreview:
-    `flex h-[4.5rem] w-[4.5rem] cursor-pointer items-center justify-center overflow-hidden rounded-[999px] border border-[var(--dashboard-border)] bg-[var(--calendar-active-bg)] bg-cover bg-center text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-60 [&>svg]:h-[1.3rem] [&>svg]:w-[1.3rem] ${buttonFocusRing}`,
+    "flex h-[4.5rem] w-[4.5rem] cursor-pointer items-center justify-center overflow-hidden rounded-[999px] border border-[var(--dashboard-border)] bg-[var(--calendar-active-bg)] bg-cover bg-center text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-60 [&>svg]:h-[1.3rem] [&>svg]:w-[1.3rem]",
   profilePhotoCaption: "text-[0.8125rem] text-[var(--muted)]",
   profileField:
     "flex flex-col gap-[0.32rem] [&>span]:text-[0.72rem] [&>span]:leading-none [&>span]:text-[var(--muted)]",
   profileInput:
-    "min-h-[2.78rem] rounded-[0.38rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.78rem] text-[0.84rem] text-[var(--text)] focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2 max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
-  profileFileInput: "sr-only",
+    "min-h-[2.78rem] rounded-[0.38rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.78rem] text-[0.84rem] text-[var(--text)] max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
+  profileFileInput: "hidden",
   buttonInlineIcon: "h-[0.88rem] w-[0.88rem] shrink-0",
   profileSaveButton: actionFilled,
   dialogCancelButton: actionOutline,

@@ -138,7 +138,6 @@ export function SplitManager({
                   }
                 }}
                 placeholder="Split name"
-                aria-label="Split name"
               />
             ) : (
               <div className={splitStyles.splitSelectWrap}>
@@ -148,7 +147,6 @@ export function SplitManager({
                   onChange={(event) =>
                     state.selectSplit(event.target.value === "" ? null : event.target.value)
                   }
-                  aria-label="Selected split"
                 >
                   {state.splits.map((split) => (
                     <option key={split.id ?? "draft-split"} value={split.id ?? ""}>
@@ -160,12 +158,11 @@ export function SplitManager({
                 </select>
               </div>
             )}
-            <SplitActionMenu label="Split tools">
+            <SplitActionMenu>
               {(close) => (
                 <>
                   <button
                     type="button"
-                    role="menuitem"
                     className={splitStyles.actionMenuItem}
                     onClick={() => {
                       startRename();
@@ -174,14 +171,12 @@ export function SplitManager({
                   >
                     <Pencil
                       className={splitStyles.inlineIcon}
-                      aria-hidden="true"
                       strokeWidth={1.9}
                     />
                     Rename split
                   </button>
                   <button
                     type="button"
-                    role="menuitem"
                     className={splitStyles.actionMenuItem}
                     onClick={() => {
                       void state.createSplit();
@@ -191,15 +186,13 @@ export function SplitManager({
                   >
                     <Plus
                       className={splitStyles.inlineIcon}
-                      aria-hidden="true"
                       strokeWidth={1.9}
                     />
                     New split
                   </button>
-                  <div className={splitStyles.actionMenuDivider} role="separator" />
+                  <div className={splitStyles.actionMenuDivider} />
                   <button
                     type="button"
-                    role="menuitem"
                     className={splitStyles.actionMenuItem}
                     onClick={() => {
                       void state.activateSplit(state.split.id ?? "");
@@ -214,13 +207,11 @@ export function SplitManager({
                     {state.split.id === activeSplitId ? (
                       <CheckCircle2
                         className={splitStyles.inlineIcon}
-                        aria-hidden="true"
                         strokeWidth={1.9}
                       />
                     ) : (
                       <Circle
                         className={splitStyles.inlineIcon}
-                        aria-hidden="true"
                         strokeWidth={1.9}
                       />
                     )}
@@ -228,7 +219,6 @@ export function SplitManager({
                   </button>
                   <button
                     type="button"
-                    role="menuitem"
                     className={splitStyles.actionMenuItem}
                     onClick={() => {
                       setIsReorderDaysOpen(true);
@@ -238,14 +228,12 @@ export function SplitManager({
                   >
                     <ListOrdered
                       className={splitStyles.inlineIcon}
-                      aria-hidden="true"
                       strokeWidth={1.9}
                     />
                     Reorder days
                   </button>
                   <button
                     type="button"
-                    role="menuitem"
                     className={splitStyles.actionMenuItem}
                     onClick={() => {
                       void state.handleCopySplit();
@@ -253,12 +241,11 @@ export function SplitManager({
                     }}
                     disabled={state.saveState.kind === "saving"}
                   >
-                    <Copy className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
+                    <Copy className={splitStyles.inlineIcon} strokeWidth={1.9} />
                     Copy split
                   </button>
                   <button
                     type="button"
-                    role="menuitem"
                     className={splitStyles.actionMenuItem}
                     onClick={() => {
                       void state.handleSave();
@@ -266,15 +253,14 @@ export function SplitManager({
                     }}
                     disabled={state.saveState.kind === "saving"}
                   >
-                    <Save className={splitStyles.inlineIcon} aria-hidden="true" strokeWidth={1.9} />
+                    <Save className={splitStyles.inlineIcon} strokeWidth={1.9} />
                     Save split
                   </button>
                   {state.split.id ? (
                     <>
-                      <div className={splitStyles.actionMenuDivider} role="separator" />
+                      <div className={splitStyles.actionMenuDivider} />
                       <button
                         type="button"
-                        role="menuitem"
                         className={splitStyles.actionMenuDangerItem}
                         onClick={() => {
                           handleDeleteSplit();
@@ -284,7 +270,6 @@ export function SplitManager({
                       >
                         <Trash2
                           className={splitStyles.inlineIcon}
-                          aria-hidden="true"
                           strokeWidth={1.9}
                         />
                         Delete split

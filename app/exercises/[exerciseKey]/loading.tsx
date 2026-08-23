@@ -8,7 +8,7 @@ function SkeletonBlock({
 }: {
   className?: string;
 }) {
-  return <span className={`${styles.skeletonBlock} ${className}`} aria-hidden="true" />;
+  return <span className={`${styles.skeletonBlock} ${className}`} />;
 }
 
 function SessionRowSkeleton() {
@@ -32,9 +32,6 @@ function SessionRowSkeleton() {
 export default function ExerciseDetailLoading() {
   return (
     <main className={styles.shell}>
-      <p className="sr-only" role="status">
-        Loading exercise
-      </p>
       <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
           <BackButton
@@ -45,14 +42,14 @@ export default function ExerciseDetailLoading() {
           />
         </header>
 
-        <section className={styles.summaryCard} aria-hidden="true">
+        <section className={styles.summaryCard}>
           <SkeletonBlock className="h-[0.76rem] w-[min(100%,16rem)]" />
           <SkeletonBlock className="mt-[0.48rem] h-[2rem] w-[min(100%,21rem)]" />
           <SkeletonBlock className="mt-[0.66rem] h-[0.95rem] w-[min(100%,19rem)]" />
           <SkeletonBlock className="mt-[0.28rem] h-[0.82rem] w-[min(100%,10rem)]" />
         </section>
 
-        <section className={styles.panelGrid} aria-hidden="true">
+        <section className={styles.panelGrid}>
           {Array.from({ length: 2 }, (_, index) => (
             <section key={index} className={styles.panel}>
               <SkeletonBlock className="h-[1rem] w-[9rem]" />
@@ -62,7 +59,7 @@ export default function ExerciseDetailLoading() {
           ))}
         </section>
 
-        <section className={styles.panel} aria-hidden="true">
+        <section className={styles.panel}>
           <SkeletonBlock className="h-[1rem] w-[9rem]" />
           <div className={styles.skeletonMetricList}>
             <div className={styles.sessionHeader}>

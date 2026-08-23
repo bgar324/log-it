@@ -104,7 +104,6 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
         <button
           type="button"
           className={styles.accountRowAction}
-          aria-expanded={openSection === "email"}
           onClick={() => setOpenSection(openSection === "email" ? null : "email")}
         >
           {openSection === "email" ? "Cancel" : "Change"}
@@ -137,7 +136,6 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
             type="submit"
             className={styles.profileSaveButton}
             disabled={emailPending}
-            aria-busy={emailPending}
           >
             Update email
           </button>
@@ -150,7 +148,6 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
         <button
           type="button"
           className={styles.accountRowAction}
-          aria-expanded={openSection === "password"}
           onClick={() => setOpenSection(openSection === "password" ? null : "password")}
         >
           {openSection === "password" ? "Cancel" : "Change"}
@@ -194,7 +191,6 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
             type="submit"
             className={styles.profileSaveButton}
             disabled={passwordPending}
-            aria-busy={passwordPending}
           >
             Update password
           </button>

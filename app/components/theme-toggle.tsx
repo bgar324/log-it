@@ -190,7 +190,7 @@ export function ThemeToggle() {
   }, []);
 
   return (
-    <div className="theme-toggle" role="group" aria-label="Color theme">
+    <div className="theme-toggle">
       {THEME_OPTIONS.map(({ preference: option, label, Icon }) => (
         <button
           key={option}
@@ -200,11 +200,10 @@ export function ThemeToggle() {
             setPreference(option);
             applyPreference(option);
           }}
-          aria-label={label}
-          aria-pressed={preference === option}
+          title={label}
           data-active={preference === option}
         >
-          <Icon aria-hidden="true" strokeWidth={1.8} />
+          <Icon strokeWidth={1.8} />
         </button>
       ))}
     </div>

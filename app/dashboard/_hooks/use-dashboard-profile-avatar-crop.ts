@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PointerEvent, SyntheticEvent } from "react";
 import { toast } from "sonner";
 
@@ -36,7 +36,6 @@ export function useDashboardProfileAvatarCrop({
   const cropFrameRef = useRef<HTMLDivElement | null>(null);
   const cropDragRef = useRef<CropDragState | null>(null);
   const avatarEditorObjectUrlRef = useRef<string | null>(null);
-  const modalTitleId = useId();
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [avatarEditorSourceUrl, setAvatarEditorSourceUrl] = useState<string | null>(null);
   const [cropZoom, setCropZoom] = useState(1);
@@ -335,7 +334,6 @@ export function useDashboardProfileAvatarCrop({
     handleRemoveAvatar,
     handleZoomChange,
     isAvatarModalOpen,
-    modalTitleId,
     setIsAvatarModalOpen,
   };
 }

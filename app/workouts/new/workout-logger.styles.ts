@@ -153,7 +153,7 @@ export const styles = {
   setFieldReps: "order-3",
   setFieldDuration: "order-4",
   setFieldLabel:
-    "sr-only min-[620px]:not-sr-only min-[620px]:text-[0.64rem] min-[620px]:text-[var(--muted)]",
+    "hidden min-[620px]:block min-[620px]:text-[0.64rem] min-[620px]:text-[var(--muted)]",
   setInput: cn(
     inputBase,
     "px-[0.5rem] disabled:opacity-100 max-[380px]:px-[0.42rem] min-[620px]:px-[0.55rem]",
@@ -164,7 +164,6 @@ export const styles = {
     "absolute bottom-0 right-0 top-0 inline-flex w-[2.75rem] cursor-pointer items-center justify-center rounded-r-[0.52rem] border-l bg-transparent",
     "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
     "text-[0.7rem] font-[400] text-[var(--muted)] [touch-action:manipulation]",
-    "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2",
     "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
     "hover:border-[color:color-mix(in_srgb,var(--text)_20%,transparent)] hover:text-[var(--text)]",
     "data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)]",

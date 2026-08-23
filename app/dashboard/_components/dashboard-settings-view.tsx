@@ -34,7 +34,7 @@ export function DashboardSettingsView({ state }: DashboardSettingsViewProps) {
 
   return (
     <>
-      <section aria-label="Appearance">
+      <section>
         <div className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>Appearance</h2>
         </div>
@@ -46,7 +46,7 @@ export function DashboardSettingsView({ state }: DashboardSettingsViewProps) {
         </div>
       </section>
 
-      <section aria-label="Units">
+      <section>
         <div className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>Units</h2>
         </div>
@@ -57,7 +57,6 @@ export function DashboardSettingsView({ state }: DashboardSettingsViewProps) {
             value={state.preferredWeightUnitInput}
             disabled={state.isSaving}
             onChange={(event) => selectWeightUnit(event.target.value as WeightUnit)}
-            aria-label="Weight unit"
           >
             {WEIGHT_UNITS.map((unit) => (
               <option key={unit.value} value={unit.value}>

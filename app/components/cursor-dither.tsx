@@ -66,5 +66,5 @@ export function CursorDither() {
     };
   }, []);
 
-  return <div ref={layerRef} className="cursor-dither-layer" aria-hidden="true" />;
+  return <div ref={layerRef} className="cursor-dither-layer" />;
 }

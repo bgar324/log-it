@@ -15,9 +15,6 @@
 
 import { actionIconQuiet, actionNavRow } from "./action.styles";
 
-const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2";
-
 export const navStyles = {
   // `overflow-x: clip` instead of `hidden`: clip does not turn the stage into a
   // scroll container, so document scrolling and the sticky top bar still work.
@@ -25,11 +22,14 @@ export const navStyles = {
   appLayer:
     "relative z-10 min-h-dvh bg-[var(--bg)] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] min-[900px]:!translate-x-0",
   appLayerOpen: "translate-x-[min(17.5rem,78vw)]",
-  appLayerScrim: `absolute inset-0 z-40 cursor-default border-0 bg-[color-mix(in_srgb,#14120b_22%,transparent)] p-0 min-[900px]:hidden ${focusRing}`,
+  appLayerScrim:
+    "absolute inset-0 z-40 cursor-default border-0 bg-[color-mix(in_srgb,#14120b_22%,transparent)] p-0 min-[900px]:hidden",
 
-  // Visibility flips instantly (not transitioned): a discrete transition would
-  // leave the layer hidden for the first frames, and focus() cannot land on a
-  // hidden element. Layer A covers it until the slide starts anyway.
+  // `invisible` is functional, not cosmetic: the closed drawer sits at the left
+  // edge underneath layer A, and `visibility: hidden` is what keeps an edge tap
+  // from landing on it. Visibility flips instantly rather than transitioning —
+  // a discrete transition would leave the layer hidden for the first frames of
+  // the slide, and layer A covers it until the slide starts anyway.
   drawerLayer:
     "fixed inset-y-0 left-0 z-0 flex w-[min(17.5rem,78vw)] flex-col gap-[1rem] bg-[var(--bg)] px-[1.05rem] pt-[calc(1.15rem+env(safe-area-inset-top))] pb-[calc(1.15rem+env(safe-area-inset-bottom))] invisible -translate-x-[9%] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] min-[900px]:hidden",
   drawerLayerOpen: "visible translate-x-0",
@@ -63,10 +63,12 @@ export const navStyles = {
   // The bar is a fixed-height surface, so the tab keeps its own 3.25rem and its
   // small label; only the radius joins the canon, since a 0.6rem corner here
   // was the app's one-off.
-  tabItem: `relative mx-auto inline-flex min-h-[3.25rem] w-full max-w-[6.5rem] cursor-pointer flex-col items-center justify-center gap-[0.14rem] rounded-[999px] border-0 bg-transparent text-[var(--muted)] no-underline [touch-action:manipulation] transition-colors duration-150 active:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)] ${focusRing}`,
+  tabItem:
+    "relative mx-auto inline-flex min-h-[3.25rem] w-full max-w-[6.5rem] cursor-pointer flex-col items-center justify-center gap-[0.14rem] rounded-[999px] border-0 bg-transparent text-[var(--muted)] no-underline [touch-action:manipulation] transition-colors duration-150 active:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)]",
   tabIcon: "h-[1.3rem] w-[1.3rem]",
   tabLabel: "text-[0.6875rem] leading-none tracking-[-0.01em]",
-  tabAction: `app-filled-action relative mx-auto inline-flex h-[3.1rem] w-[3.1rem] cursor-pointer items-center justify-center rounded-[999px] border-0 [touch-action:manipulation] transition-[transform,opacity] duration-150 active:translate-y-[1px] active:opacity-90 ${focusRing}`,
+  tabAction:
+    "app-filled-action relative mx-auto inline-flex h-[3.1rem] w-[3.1rem] cursor-pointer items-center justify-center rounded-[999px] border-0 [touch-action:manipulation] transition-[transform,opacity] duration-150 active:translate-y-[1px] active:opacity-90",
   tabActionIcon: "h-[1.5rem] w-[1.5rem]",
 
   drawerIdentity: "flex flex-col gap-[0.5rem]",

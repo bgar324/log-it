@@ -45,7 +45,7 @@ export function ProgressCharts({ weeklySeries, weightUnit }: ProgressChartsProps
   const unitLabel = getWeightUnitLabel(weightUnit);
 
   return (
-    <section className={styles.chartGrid} aria-label="Progress charts">
+    <section className={styles.chartGrid}>
       <article className={styles.chartPanel}>
         <h2 className={styles.panelTitle}>Workout frequency</h2>
         <p className={styles.panelSubtitle}>Sessions started per week.</p>
