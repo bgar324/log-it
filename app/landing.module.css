@@ -7,7 +7,6 @@
   --landing-border-subtle: rgba(237, 236, 236, 0.075);
   --landing-control: #edecec;
   --landing-control-text: #14120b;
-  --landing-control-secondary: #26241e;
   --landing-container: 81.25rem;
   --landing-gutter: 1.25rem;
   --landing-header-height: 3.25rem;
@@ -39,7 +38,6 @@
   --landing-border-subtle: rgba(23, 21, 15, 0.075);
   --landing-control: #17150f;
   --landing-control-text: #f1f0eb;
-  --landing-control-secondary: #e2e0d8;
 }
 
 :global(:root[data-theme-transition="true"]) .publicRoot,

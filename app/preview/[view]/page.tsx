@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Toaster } from "@/app/components/ui/toaster";
 import {
   ProductPreview,
+  ProductPreviewShell,
   type ProductPreviewView,
 } from "./product-preview";
 
@@ -35,15 +36,26 @@ const VIEW_ART: Record<ProductPreviewView, string> = {
 
 export default async function ProductPreviewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ view: string }>;
+  searchParams: Promise<{ shell?: string }>;
 }) {
   const { view } = await params;
+  const { shell } = await searchParams;
 
   if (!PRODUCT_PREVIEW_VIEWS.some((previewView) => previewView === view)) {
     notFound();
   }
 
+  if (shell) {
+    return (
+      <>
+        <ProductPreviewShell view={view as ProductPreviewView} />
+        <Toaster />
+      </>
+    );
+  }
 
   preload(VIEW_ART[view as ProductPreviewView], { as: "image" });
   return (

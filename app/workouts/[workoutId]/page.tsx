@@ -1,4 +1,7 @@
 import { notFound } from "next/navigation";
+import { AppDrawerTrigger, AppShell } from "@/app/components/app-nav";
+import { appNavUserFromSession } from "@/app/components/app-nav.user";
+import { navStyles } from "@/app/components/app-nav.styles";
 import { BackButton } from "@/app/components/back-button";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -79,25 +82,21 @@ export default async function WorkoutDetailPage({
     workout.exercises.some((exercise) =>
       exercise.sets.some((set) => set.weightLb === null && set.reps > 0),
     );
-  const summaryItems = [
-    { label: "Date", value: formatDate(workout.performedAt) },
-    { label: "Exercises", value: `${workout.exercises.length}` },
-    { label: "Sets", value: `${totalSets}` },
-    {
-      label: "Total volume",
-      value: formatWeightWithUnit(totalWeight, unit, { maximumFractionDigits: 0 }),
-    },
-    ...(hasBodyweightVolume
-      ? [
-          {
-            label: "Bodyweight",
-            value: formatWeightWithUnit(bodyWeight ?? 0, unit, {
-              maximumFractionDigits: 1,
-            }),
-          },
-        ]
-      : []),
-  ];
+  const exerciseCountLabel = `${workout.exercises.length} ${
+    workout.exercises.length === 1 ? "exercise" : "exercises"
+  }`;
+  const setCountLabel = `${totalSets} ${totalSets === 1 ? "set" : "sets"}`;
+  const volumeLabel = formatWeightWithUnit(totalWeight, unit, {
+    maximumFractionDigits: 0,
+  });
+  const summarySentence = `${exerciseCountLabel} · ${setCountLabel} · ${volumeLabel} total volume`;
+  const summaryMeta = hasBodyweightVolume
+    ? `${formatDate(workout.performedAt)} · bodyweight ${formatWeightWithUnit(
+        bodyWeight ?? 0,
+        unit,
+        { maximumFractionDigits: 1 },
+      )}`
+    : formatDate(workout.performedAt);
   const workoutExport = formatWorkoutForClipboard({
     performedAt: workout.performedAt,
     workoutType: workout.workoutType,
@@ -113,13 +112,14 @@ export default async function WorkoutDetailPage({
     })),
   });
 
-  return (
+  const screen = (
     <main className={styles.shell}>
-      <section className={styles.stage}>
+      <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
           <div className={styles.topLead}>
+            <AppDrawerTrigger user={appNavUserFromSession(user)} />
             <BackButton
-              fallbackHref="/workouts"
+              fallbackHref="/dashboard?view=workouts"
               label="Back"
               className={styles.backLink}
               iconClassName={styles.backButtonIcon}
@@ -135,18 +135,12 @@ export default async function WorkoutDetailPage({
         </header>
 
         <section className={styles.summaryCard}>
-          {workout.workoutType ? (
+          {workout.workoutType && workout.workoutType !== workout.title ? (
             <p className={styles.titleMeta}>{workout.workoutType}</p>
           ) : null}
           <h1 className={styles.title}>{workout.title}</h1>
-          <div className={styles.metaRow}>
-            {summaryItems.map((item) => (
-              <span key={item.label} className={styles.metaPill}>
-                <span className={styles.metaPillLabel}>{item.label}</span>
-                <span className={styles.metaPillValue}>{item.value}</span>
-              </span>
-            ))}
-          </div>
+          <p className={styles.summaryLine}>{summarySentence}</p>
+          <p className={styles.summaryMeta}>{summaryMeta}</p>
         </section>
 
         <section className={styles.exerciseList}>
@@ -169,80 +163,39 @@ export default async function WorkoutDetailPage({
             return (
               <article key={exercise.id} className={styles.exerciseCard}>
                 <header className={styles.exerciseHead}>
-                  <div>
-                    <p className={styles.exerciseOrder}>Exercise {exercise.order}</p>
-                    <h2 className={styles.exerciseName}>{exercise.name}</h2>
-                  </div>
-                  <p className={styles.exerciseVolume}>
-                    {formatWeightWithUnit(exerciseVolume, unit, {
+                  <h2 className={styles.exerciseName}>{exercise.name}</h2>
+                  <p className={styles.exerciseMeta}>
+                    {`Exercise ${exercise.order} · ${exercise.sets.length} ${
+                      exercise.sets.length === 1 ? "set" : "sets"
+                    } · ${formatWeightWithUnit(exerciseVolume, unit, {
                       maximumFractionDigits: 0,
-                    })}{" "}
-                    volume
+                    })} volume`}
                   </p>
                 </header>
 
-                <div className={styles.tableWrap}>
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th className={styles.tableHeadCell}>Set</th>
-                        <th className={styles.tableHeadCell}>Weight</th>
-                        <th className={styles.tableHeadCell}>Reps</th>
-                        <th className={styles.tableHeadCell}>Time</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {exercise.sets.map((set) => (
-                        <tr key={set.id}>
-                          <td className={styles.tableBodyCell}>#{set.order}</td>
-                          <td className={styles.tableBodyCell}>
-                            {set.weightLb !== null
-                              ? formatWeightWithUnit(
-                                  convertStoredWeightToDisplay(set.weightLb, unit) ?? 0,
-                                  unit,
-                                  { maximumFractionDigits: 0 },
-                                )
-                              : "--"}
-                          </td>
-                          <td className={styles.tableBodyCell}>{set.reps}</td>
-                          <td className={styles.tableBodyCell}>
-                            {set.durationSeconds ? `${set.durationSeconds}s` : "--"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className={styles.mobileSetList}>
-                  {exercise.sets.map((set) => (
-                    <div key={set.id} className={styles.mobileSetCard}>
-                      <div className={styles.mobileSetCell}>
-                        <p className={styles.mobileSetNumber}>Set {set.order}</p>
-                      </div>
-                      <div className={styles.mobileSetCell}>
-                        <span className={styles.mobileSetMeta}>Weight</span>
-                        <span className={styles.mobileSetValue}>
-                          {set.weightLb !== null
-                            ? formatWeightWithUnit(
-                                convertStoredWeightToDisplay(set.weightLb, unit) ?? 0,
-                                unit,
-                                { maximumFractionDigits: 0 },
-                              )
-                            : "--"}
+                <div className={styles.setList}>
+                  {exercise.sets.map((set) => {
+                    const weightLabel =
+                      set.weightLb !== null
+                        ? formatWeightWithUnit(
+                            convertStoredWeightToDisplay(set.weightLb, unit) ?? 0,
+                            unit,
+                            { maximumFractionDigits: 0 },
+                          )
+                        : "Bodyweight";
+
+                    return (
+                      <div key={set.id} className={styles.setRow}>
+                        <span className={styles.setOrder}>Set {set.order}</span>
+                        <span className={styles.setDetail}>
+                          {set.reps > 0 ? `${weightLabel} × ${set.reps} reps` : weightLabel}
+                        </span>
+                        <span className={styles.setDuration}>
+                          {set.durationSeconds ? `${set.durationSeconds}s` : null}
                         </span>
                       </div>
-                      <div className={styles.mobileSetCell}>
-                        <span className={styles.mobileSetMeta}>Reps</span>
-                        <span className={styles.mobileSetValue}>{set.reps} reps</span>
-                      </div>
-                      <div className={styles.mobileSetCell}>
-                        <span className={styles.mobileSetMeta}>Time</span>
-                        <span className={styles.mobileSetValue}>
-                          {set.durationSeconds ? `${set.durationSeconds}s` : "--"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </article>
             );
@@ -250,5 +203,11 @@ export default async function WorkoutDetailPage({
         </section>
       </section>
     </main>
+  );
+
+  return (
+    <AppShell user={appNavUserFromSession(user)} activeView="workouts">
+      {screen}
+    </AppShell>
   );
 }

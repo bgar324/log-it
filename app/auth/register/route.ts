@@ -7,9 +7,9 @@ import {
 } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isTrustedMutationRequest } from "@/lib/request-security";
+import { USERNAME_REGEX } from "@/lib/username";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,24}$/;
 
 function redirectTo(path: string) {
   return new NextResponse(null, {

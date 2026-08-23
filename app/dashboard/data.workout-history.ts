@@ -1,4 +1,5 @@
 import { parseDateKey } from "@/lib/workout-splits/shared";
+import { prisma } from "@/lib/prisma";
 import {
   convertStoredWeightToDisplay,
   type WeightUnit,
@@ -8,7 +9,12 @@ import type {
   DashboardWorkoutFilters,
 } from "./dashboard-types";
 import { monthDateLabel, monthLabel, timelineDateLabel } from "./data.formatters";
-import { loadWorkoutLogPage, mapWorkoutSummaries } from "./data.queries";
+import {
+  loadWorkoutCalendarSummary,
+  loadWorkoutLogPage,
+  mapWorkoutSummaries,
+} from "./data.queries";
+import { formatDatabaseDateValue } from "@/lib/workout-utils";
 
 export const WORKOUT_HISTORY_PAGE_SIZE = 60;
 const MAX_WORKOUT_HISTORY_OFFSET = 1_000_000;
@@ -60,6 +66,31 @@ export function hasWorkoutHistoryFilters(filters: DashboardWorkoutFilters) {
   );
 }
 
+// Lifetime counts from the maintained read model, with a zeroed fallback in the
+// same spirit as the other loaders: a missing summary table must not take the
+// workouts view down with it.
+export async function loadWorkoutLifetimeTotals(userId: string) {
+  try {
+    const [workouts, exercises] = await Promise.all([
+      prisma.workoutLog.count({ where: { userId } }),
+      prisma.exerciseSummary.aggregate({
+        where: { userId },
+        _count: { _all: true },
+        _sum: { setCount: true },
+      }),
+    ]);
+
+    return {
+      workouts,
+      exercises: exercises._count._all,
+      sets: exercises._sum.setCount ?? 0,
+    };
+  } catch (error) {
+    console.error("workout lifetime totals failure:", error);
+    return { workouts: 0, exercises: 0, sets: 0 };
+  }
+}
+
 export async function loadWorkoutHistorySection(
   userId: string,
   weightUnit: WeightUnit,
@@ -108,6 +139,9 @@ export async function loadWorkoutHistorySection(
       nextOffset,
       hasMore: nextOffset < page.totalCount,
       workoutTypes: page.workoutTypes,
+      // Lifetime totals travel with this view so the workouts summary is never
+      // blank on a direct link; `totalCount` above follows the active filters.
+      lifetime: await loadWorkoutLifetimeTotals(userId),
     },
   };
 }

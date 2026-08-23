@@ -6,6 +6,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
 } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { recoverWorkoutDraft } from "@/lib/workouts/draft-recovery";
@@ -271,7 +272,10 @@ export function useWorkoutLoggerDraft({
   function addSet(exerciseId: string) {
     updateExercise(exerciseId, (exercise) => ({
       ...exercise,
-      sets: [...exercise.sets, createSetDraft(nextSetId())],
+      sets: [
+        ...exercise.sets,
+        createSetDraft(nextSetId(), exercise.sets[exercise.sets.length - 1]),
+      ],
     }));
   }
 

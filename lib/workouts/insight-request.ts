@@ -1,31 +1,33 @@
 import { normalizeExerciseName } from "../workout-utils";
 
+// One compare request per exercise. The logger always asks for the same generous
+// number of predicted sets and slices client-side, so adding a set is a cache
+// hit instead of a refetch.
+export const INSIGHT_PREDICTION_SET_COUNT = 5;
+
 export type ExerciseInsightRequestContext = {
   exerciseName: string;
   normalizedName: string;
   performedAt: string;
   position: number;
-  setCount: number;
+  excludeWorkoutId: string | null;
   lookupKey: string;
   requestPath: string;
 };
-
-function parsePositiveInteger(value: number) {
-  return Number.isInteger(value) && value > 0 ? value : null;
-}
 
 export function createExerciseInsightRequestContext(
   exerciseName: string,
   performedAt: string,
   position: number,
-  setCount: number,
+  excludeWorkoutId?: string | null,
 ) {
   const normalizedName = normalizeExerciseName(exerciseName);
-  const safePosition = parsePositiveInteger(position);
-  const safeSetCount = parsePositiveInteger(setCount);
+  const safePosition =
+    Number.isInteger(position) && position > 0 ? position : null;
   const safePerformedAt = performedAt.trim();
+  const safeExcludeWorkoutId = excludeWorkoutId?.trim() ? excludeWorkoutId.trim() : null;
 
-  if (!normalizedName || !safePosition || !safeSetCount || !safePerformedAt) {
+  if (!normalizedName || !safePosition || !safePerformedAt) {
     return null;
   }
 
@@ -33,21 +35,24 @@ export function createExerciseInsightRequestContext(
     normalizedName,
     safePerformedAt,
     `${safePosition}`,
-    `${safeSetCount}`,
+    safeExcludeWorkoutId ?? "",
   ].join("::");
   const params = new URLSearchParams({
     exercise: exerciseName,
     performedAt: safePerformedAt,
     position: `${safePosition}`,
-    setCount: `${safeSetCount}`,
   });
+
+  if (safeExcludeWorkoutId) {
+    params.set("excludeWorkoutId", safeExcludeWorkoutId);
+  }
 
   return {
     exerciseName,
     normalizedName,
     performedAt: safePerformedAt,
     position: safePosition,
-    setCount: safeSetCount,
+    excludeWorkoutId: safeExcludeWorkoutId,
     lookupKey,
     requestPath: `/api/workouts/insights?${params.toString()}`,
   } satisfies ExerciseInsightRequestContext;

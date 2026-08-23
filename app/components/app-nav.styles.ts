@@ -1,0 +1,91 @@
+// Authenticated app chrome, built as two layers.
+//
+//   Layer B  the drawer, pinned to the left edge, always mounted, sitting
+//            underneath everything as the base layer.
+//   Layer A  the app itself (top bar, view, bottom bar). Opaque, on top.
+//            Opening the drawer slides layer A to the right to reveal layer B
+//            rather than sliding a panel over the app.
+//
+// Phones only: at min-[900px] the sidebar is the navigation and layer A never
+// moves. Open state is applied as an explicit class from React rather than a
+// nested data-attribute variant, and every arbitrary value is spelled out in
+// source somewhere — either here or in the constant it is interpolated from —
+// because Tailwind's scanner reads source text and cannot see a class value
+// computed at runtime.
+
+import { actionIconQuiet, actionNavRow } from "./action.styles";
+
+const focusRing =
+  "focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2";
+
+export const navStyles = {
+  // `overflow-x: clip` instead of `hidden`: clip does not turn the stage into a
+  // scroll container, so document scrolling and the sticky top bar still work.
+  stage: "relative min-h-dvh bg-[var(--bg)] [overflow-x:clip]",
+  appLayer:
+    "relative z-10 min-h-dvh bg-[var(--bg)] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] min-[900px]:!translate-x-0",
+  appLayerOpen: "translate-x-[min(17.5rem,78vw)]",
+  appLayerScrim: `absolute inset-0 z-40 cursor-default border-0 bg-[color-mix(in_srgb,#14120b_22%,transparent)] p-0 min-[900px]:hidden ${focusRing}`,
+
+  // Visibility flips instantly (not transitioned): a discrete transition would
+  // leave the layer hidden for the first frames, and focus() cannot land on a
+  // hidden element. Layer A covers it until the slide starts anyway.
+  drawerLayer:
+    "fixed inset-y-0 left-0 z-0 flex w-[min(17.5rem,78vw)] flex-col gap-[1rem] bg-[var(--bg)] px-[1.05rem] pt-[calc(1.15rem+env(safe-area-inset-top))] pb-[calc(1.15rem+env(safe-area-inset-bottom))] invisible -translate-x-[9%] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] min-[900px]:hidden",
+  drawerLayerOpen: "visible translate-x-0",
+
+  // Tighter left inset than right: the avatar is a circle, so its optical edge
+  // sits inside its box and a symmetric gutter reads as too much space.
+  topBar:
+    "sticky top-0 z-30 flex min-h-[3.5rem] items-center gap-[0.5rem] border-b border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)] pl-[0.5rem] pr-[0.82rem] min-[900px]:min-h-[3.75rem] min-[900px]:pl-[0.85rem] min-[900px]:pr-[1.18rem]",
+  topBarTitle:
+    "min-w-0 flex-1 truncate text-[1.0625rem] font-[540] tracking-[-0.02em] text-[var(--text)] min-[900px]:text-[1.35rem]",
+  topBarAccessory: "flex shrink-0 items-center gap-[0.375rem]",
+
+  avatarButton: `${actionIconQuiet} p-0 active:opacity-70 min-[900px]:hidden`,
+  avatarImage:
+    "h-[2.05rem] w-[2.05rem] rounded-[999px] border border-[color-mix(in_srgb,var(--text)_12%,transparent)] object-cover",
+  avatarFallback:
+    "inline-flex h-[2.05rem] w-[2.05rem] items-center justify-center rounded-[999px] bg-[color-mix(in_srgb,var(--text)_7%,transparent)] text-[0.8125rem] font-[540] text-[var(--text)]",
+  // The bar is a stage sibling, not a layer-A child: a translated ancestor
+  // becomes the containing block for fixed descendants, which would resolve
+  // `bottom: 0` against the full page height and push the bar off-screen while
+  // the drawer is open. It stays viewport-anchored and translates in sync.
+  //
+  // Being a sibling also puts it outside `appLayerScrim`, so it needs its own
+  // dim or it stays bright while the rest of layer A greys out. Same tint as
+  // the scrim, drawn as an overlay so the bar's own background still reads.
+  tabBarShifted:
+    "translate-x-[min(17.5rem,78vw)] pointer-events-none after:pointer-events-none after:absolute after:inset-0 after:bg-[color-mix(in_srgb,#14120b_22%,transparent)]",
+
+  tabBar:
+    "fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 items-center border-t border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)] px-[0.5rem] pt-[0.3rem] pb-[calc(0.3rem+env(safe-area-inset-bottom))] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] min-[900px]:hidden",
+  // The bar is a fixed-height surface, so the tab keeps its own 3.25rem and its
+  // small label; only the radius joins the canon, since a 0.6rem corner here
+  // was the app's one-off.
+  tabItem: `relative mx-auto inline-flex min-h-[3.25rem] w-full max-w-[6.5rem] cursor-pointer flex-col items-center justify-center gap-[0.14rem] rounded-[999px] border-0 bg-transparent text-[var(--muted)] no-underline [touch-action:manipulation] transition-colors duration-150 active:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)] ${focusRing}`,
+  tabIcon: "h-[1.3rem] w-[1.3rem]",
+  tabLabel: "text-[0.6875rem] leading-none tracking-[-0.01em]",
+  tabAction: `app-filled-action relative mx-auto inline-flex h-[3.1rem] w-[3.1rem] cursor-pointer items-center justify-center rounded-[999px] border-0 [touch-action:manipulation] transition-[transform,opacity] duration-150 active:translate-y-[1px] active:opacity-90 ${focusRing}`,
+  tabActionIcon: "h-[1.5rem] w-[1.5rem]",
+
+  drawerIdentity: "flex flex-col gap-[0.5rem]",
+  drawerAvatarImage:
+    "h-[2.6rem] w-[2.6rem] rounded-[999px] border border-[color-mix(in_srgb,var(--text)_12%,transparent)] object-cover",
+  drawerAvatarFallback:
+    "inline-flex h-[2.6rem] w-[2.6rem] items-center justify-center rounded-[999px] bg-[color-mix(in_srgb,var(--text)_7%,transparent)] text-[0.95rem] font-[540] text-[var(--text)]",
+  drawerName: "m-0 text-[1.0625rem] font-[540] tracking-[-0.01em] text-[var(--text)]",
+  drawerHandle: "m-0 text-[0.8125rem] text-[var(--muted)]",
+
+  drawerNav: "flex flex-col gap-[0.1rem]",
+  // Canon nav row: muted until it is the current page, current marked by fill
+  // plus colour. Never a weight change — that reflows the label as you navigate.
+  drawerItem: `${actionNavRow} gap-[0.7rem]`,
+  drawerItemIcon: "h-[1.2rem] w-[1.2rem] shrink-0",
+  drawerDivider: "h-px w-full bg-[color-mix(in_srgb,var(--text)_12%,transparent)]",
+  drawerFooter: "mt-auto flex flex-col gap-[0.6rem]",
+  drawerFooterRow: "flex items-center gap-[0.35rem] [&>a]:min-w-0 [&>a]:flex-1",
+  drawerIconAction: actionIconQuiet,
+
+  mainInset: "pb-[calc(4.9rem+env(safe-area-inset-bottom))] min-[900px]:pb-0",
+} as const;

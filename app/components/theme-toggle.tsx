@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useState } from "react";
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Moon, Smartphone, Sun } from "lucide-react";
 
 export type Theme = "light" | "dark";
 export type ThemePreference = "light" | "dark" | "system";
@@ -155,7 +155,7 @@ const THEME_OPTIONS: Array<{
   label: string;
   Icon: typeof Sun;
 }> = [
-  { preference: "system", label: "System theme", Icon: Monitor },
+  { preference: "system", label: "System theme", Icon: Smartphone },
   { preference: "light", label: "Light theme", Icon: Sun },
   { preference: "dark", label: "Dark theme", Icon: Moon },
 ];

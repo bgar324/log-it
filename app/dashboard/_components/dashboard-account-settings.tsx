@@ -19,6 +19,7 @@ async function readResponse(response: Response) {
 
 export function DashboardAccountSettings({ currentEmail }: DashboardAccountSettingsProps) {
   const router = useRouter();
+  const [openSection, setOpenSection] = useState<"email" | "password" | null>(null);
 
   const [emailValue, setEmailValue] = useState(currentEmail);
   const [emailPassword, setEmailPassword] = useState("");
@@ -94,15 +95,24 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
   }
 
   return (
-    <div className={styles.accountBody}>
-      <section className={styles.accountSection} aria-label="Change email">
-        <div>
-          <h3 className={styles.accountSectionTitle}>Change email</h3>
-          <p className={styles.accountSectionHint}>
-            Confirm with your current password. Your username stays the same.
-          </p>
-        </div>
-        <form className={styles.accountForm} onSubmit={handleEmailSubmit}>
+    <>
+      {/* Two always-open forms made this the heaviest screen in the app. Each is
+          now a row that states the current value and opens on request. */}
+      <div className={styles.accountRow}>
+        <span className={styles.accountRowLabel}>Email</span>
+        <span className={styles.accountRowValue}>{currentEmail}</span>
+        <button
+          type="button"
+          className={styles.accountRowAction}
+          aria-expanded={openSection === "email"}
+          onClick={() => setOpenSection(openSection === "email" ? null : "email")}
+        >
+          {openSection === "email" ? "Cancel" : "Change"}
+        </button>
+      </div>
+
+      {openSection === "email" ? (
+        <form className={styles.accountDisclosure} onSubmit={handleEmailSubmit}>
           <label className={styles.profileField}>
             <span>New email</span>
             <input
@@ -123,26 +133,32 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
               onChange={(event) => setEmailPassword(event.target.value)}
             />
           </label>
-        </form>
-        <div className={styles.accountActions}>
           <button
-            type="button"
-            className={styles.accountActionButton}
+            type="submit"
+            className={styles.profileSaveButton}
             disabled={emailPending}
             aria-busy={emailPending}
-            onClick={handleEmailSubmit}
           >
             Update email
           </button>
-        </div>
-      </section>
+        </form>
+      ) : null}
 
-      <section className={styles.accountSection} aria-label="Change password">
-        <div>
-          <h3 className={styles.accountSectionTitle}>Change password</h3>
-          <p className={styles.accountSectionHint}>Use at least 8 characters.</p>
-        </div>
-        <form className={styles.accountForm} onSubmit={handlePasswordSubmit}>
+      <div className={styles.accountRow}>
+        <span className={styles.accountRowLabel}>Password</span>
+        <span className={styles.accountRowValue}>••••••••</span>
+        <button
+          type="button"
+          className={styles.accountRowAction}
+          aria-expanded={openSection === "password"}
+          onClick={() => setOpenSection(openSection === "password" ? null : "password")}
+        >
+          {openSection === "password" ? "Cancel" : "Change"}
+        </button>
+      </div>
+
+      {openSection === "password" ? (
+        <form className={styles.accountDisclosure} onSubmit={handlePasswordSubmit}>
           <label className={styles.profileField}>
             <span>Current password</span>
             <input
@@ -153,41 +169,37 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
               onChange={(event) => setCurrentPassword(event.target.value)}
             />
           </label>
-          <div className={styles.accountFieldRow}>
-            <label className={styles.profileField}>
-              <span>New password</span>
-              <input
-                className={styles.profileInput}
-                type="password"
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-              />
-            </label>
-            <label className={styles.profileField}>
-              <span>Confirm new password</span>
-              <input
-                className={styles.profileInput}
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-              />
-            </label>
-          </div>
-        </form>
-        <div className={styles.accountActions}>
+          <label className={styles.profileField}>
+            <span>New password</span>
+            <input
+              className={styles.profileInput}
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+            />
+          </label>
+          <label className={styles.profileField}>
+            <span>Confirm new password</span>
+            <input
+              className={styles.profileInput}
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+            />
+          </label>
+          <p className={styles.statLineMuted}>Use at least 8 characters.</p>
           <button
-            type="button"
-            className={styles.accountActionButton}
+            type="submit"
+            className={styles.profileSaveButton}
             disabled={passwordPending}
             aria-busy={passwordPending}
-            onClick={handlePasswordSubmit}
           >
             Update password
           </button>
-        </div>
-      </section>
-    </div>
+        </form>
+      ) : null}
+    </>
   );
 }

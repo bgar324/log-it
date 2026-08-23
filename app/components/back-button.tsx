@@ -21,11 +21,8 @@ export function BackButton({
   const router = useRouter();
 
   function handleClick() {
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
-
+    // Never router.back(): when the user arrived from an external referrer that
+    // walks them out of the app entirely. The fallback is always in-app.
     router.push(fallbackHref);
   }
 

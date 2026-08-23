@@ -42,9 +42,33 @@ The dashboard shell uses `?view=` for overview/workouts/progress/split/profile. 
 
 The overview returns calendar aggregates for statistics and month navigation, but returns workout titles and ids only for the current month. The client fetches another month from `/api/dashboard/calendar` after the user navigates there, keeping long training histories out of the initial dashboard payload.
 
+## Navigate By Trip Frequency, Not Object Importance
+
+The authenticated app has exactly three first-class destinations in a fixed bottom bar — Home, the log action, Nutrition — because those are the trips a user makes reflexively. Workouts, Progress, Split, and Profile are deliberate trips, so they live in a drawer opened by the top-left avatar; the poor reachability of that corner is acceptable precisely because the reach frequency is low.
+
+The drawer is modeled as a layer, not a panel. It is the base layer of the app (`z-0`, always mounted, `inert` while closed) and the app screen is an opaque layer on top of it; opening translates the app screen right to reveal the drawer underneath. A panel sliding over the app with a dimming scrim was built first and rejected: it reads as a web dropdown, while the reveal reads as an app. Consequences worth keeping: the stage uses `overflow-x: clip` rather than `hidden` so the document still scrolls and the header still sticks, and the trigger ships on every browsing surface (including workout and exercise detail) so second-class destinations are never reachable only from Home.
+
+The hamburger dropdown and its 761–899px navigation dead zone are gone: the bottom bar covers every width below 900px, the sidebar every width above it. The drawer has no gesture trigger, because a left-edge swipe collides with the platform back gesture in installed standalone web apps.
+
+## State Facts In Sentences, Not Metric Tiles
+
+The authenticated app ships zero KPI tiles. Today greets the user and names the plan (`Hi, Benjamin. / Today is Upper B.`), summary numbers render as one or two quiet typographic lines, and workout/exercise detail summaries are sentences. Every fact the old tile grids showed is retained; only the boxes are gone. A number is never printed twice on one screen, so views that expose an editable value no longer repeat it in a tile above the input.
+
+## Compare Belongs Inside The Set Row
+
+The workout logger's comparison is the feature the product is built around, so it renders where the work happens: each set row shows what that set was last time as ghost text and takes its placeholder from the prediction for that set index. The old panel above the sets — recommended target, expected range, confidence, predicted set flow, volume delta — is deleted. `lib/workouts/insight-request.ts` keys the request on exercise, date, and position but never set count, so adding a set costs no request, and refetches carry the previous payload forward so the card cannot collapse and shove the inputs down mid-workout.
+
+## Phone Control Floors Are Not Negotiable
+
+Anything a thumb hits is at least 44px on a phone and every text input is at least 16px, because smaller inputs make iOS Safari zoom the viewport on focus. Desktop density is restored with `min-[620px]:` / `min-[760px]:` overrides rather than by lowering the phone floor. `viewport` no longer sets `maximumScale`/`userScalable`, so pinch-zoom works.
+
+## Filled Actions Use A Real CSS Class
+
+Inverted primary actions use `.app-filled-action` in `app/globals.css` rather than Tailwind arbitrary color utilities. A `bg-[var(--text)] text-[var(--bg)]` pill was observed shipping with no color rule at all — a white label on a white pill that typechecks, builds, and reviews clean. Filled actions therefore carry real CSS and must be confirmed in a browser.
+
 ## Keep UI Monochrome And Operational
 
-The product UI uses Geist, global `-0.03em` tracking, black/white theme variables, transparent panels, thin borders, compact controls, and natural-case text. See `docs/DESIGN_SYSTEM.md` and `docs/TYPOGRAPHY.md`.
+The product UI uses Geist, global `-0.03em` tracking, black/white theme variables, transparent panels, thin borders, and natural-case text. Controls are pill-radius; panels stay compact. See `docs/DESIGN_SYSTEM.md` and `docs/TYPOGRAPHY.md`.
 
 ## Track Nutrition By Date
 

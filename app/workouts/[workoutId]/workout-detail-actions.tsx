@@ -88,7 +88,7 @@ export function WorkoutDetailActions({
       }
 
       toast.success("Workout deleted.", { id: toastId });
-      router.push("/workouts");
+      router.push("/dashboard?view=workouts");
       router.refresh();
     } catch (caughtError) {
       toast.error(
@@ -123,7 +123,7 @@ export function WorkoutDetailActions({
   return (
     <>
       <div className={styles.detailActionsGroup}>
-        <Link href={editHref} className={`relative ${styles.actionLink}`} aria-label="Edit workout">
+        <Link href={editHref} className={`relative ${styles.actionButton}`} aria-label="Edit workout">
           <SquarePen
             className={styles.actionButtonIcon}
             aria-hidden="true"
@@ -140,11 +140,11 @@ export function WorkoutDetailActions({
           aria-label="Copy workout"
         >
           <Copy className={styles.actionButtonIcon} aria-hidden="true" strokeWidth={1.9} />
-          <span className={`${styles.actionButtonLabel} text-[0.76rem]`}>Copy workout</span>
+          <span className={styles.actionButtonLabel}>Copy workout</span>
         </button>
         <button
           type="button"
-          className={`${styles.actionButton} ${styles.dangerActionButton}`}
+          className={styles.dangerActionButton}
           onClick={handleDelete}
           disabled={status !== "idle"}
           aria-label={status === "deleting" ? "Deleting workout" : "Delete workout"}
@@ -193,7 +193,7 @@ export function WorkoutDetailActions({
             </button>
             <button
               type="button"
-              className={`${styles.mobileActionMenuItem} ${styles.mobileActionDangerItem}`}
+              className={styles.mobileActionDangerItem}
               onClick={handleDelete}
               disabled={status !== "idle"}
               role="menuitem"

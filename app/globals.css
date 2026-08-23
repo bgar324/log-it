@@ -11,6 +11,7 @@
   --surface: #f1f0eb;
   --text: #17150f;
   --muted: #74726b;
+  --select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2374726b' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6.4 8 10.4 12 6.4'/%3E%3C/svg%3E");
   --field-bg: #f1f0eb;
   --field-line: rgba(23, 21, 15, 0.14);
   --button-bg: #17150f;
@@ -39,6 +40,7 @@
   --surface: #14120b;
   --text: #edecec;
   --muted: #96958f;
+  --select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2396958f' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6.4 8 10.4 12 6.4'/%3E%3C/svg%3E");
   --field-bg: #14120b;
   --field-line: rgba(237, 236, 236, 0.18);
   --button-bg: #edecec;
@@ -202,30 +204,6 @@ body {
   }
 }
 
-@keyframes logit-fab-item-in {
-  from {
-    opacity: 0;
-    transform: scale(0.55);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes logit-fab-item-out {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  to {
-    opacity: 0;
-    transform: scale(0.55);
-  }
-}
-
 @keyframes dashboard-skeleton {
   0% {
     background-position: 120% 0;
@@ -284,9 +262,19 @@ samp {
   font-family: var(--font-mono);
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/*
+ * In `@layer base` on purpose. Unlayered, this rule outranked every Tailwind
+ * utility, so no `text-*` class could colour a link: `actionQuiet` and
+ * `actionNavRow` rendered at full `--text` on `<a>` while the identical class
+ * on a `<button>` rendered muted. Tailwind preflight already declares
+ * `a { color: inherit }` in base, so layering it loses nothing and lets the
+ * utilities that were written to override it actually win.
+ */
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 @layer base {
@@ -306,6 +294,18 @@ a {
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
+}
+
+/*
+ * Authenticated app chrome. Filled primary actions (the Today CTA and the
+ * bottom-bar log action) invert the surface, so they carry real CSS rather than
+ * arbitrary Tailwind color values: `text-[var(--x)]` candidates only exist if
+ * Tailwind's scanner has seen that exact literal, which makes inverted text a
+ * silent white-on-white failure waiting to happen.
+ */
+.app-filled-action {
+  background: var(--button-bg);
+  color: var(--button-text);
 }
 
 .theme-toggle {
@@ -401,11 +401,19 @@ a {
   min-width: 0;
 }
 
+/*
+ * The auth submit. Same geometry as `actionFilled` in
+ * `app/components/action.styles.ts`: a 999px pill, 44px tall, 1rem at weight
+ * 400. Colour still comes from `.btn-primary`.
+ */
 .btn {
   border: none;
-  border-radius: 0.52rem;
-  font-size: 0.92rem;
-  padding: 0.8rem 0.95rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: normal;
+  padding: 0.7rem 1.2rem;
   text-align: center;
   cursor: pointer;
   transition:
@@ -419,7 +427,7 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.85rem;
+  min-height: 2.75rem;
   width: 100%;
 }
 
@@ -439,31 +447,6 @@ a {
 .btn-primary {
   background: var(--button-bg);
   color: var(--button-text);
-}
-
-.btn-outline {
-  border: 1px solid var(--field-line);
-  background: var(--field-bg);
-  color: var(--text);
-}
-
-.btn-google {
-  border: 1px solid var(--field-line);
-  background: var(--field-bg);
-  color: var(--text);
-}
-
-.btn-inner {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-}
-
-.google-logo {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
 }
 
 .tos {
@@ -591,14 +574,26 @@ article.legal-section section.legal-section + section.legal-section,
   border-radius: 0;
 }
 
+/*
+ * The auth Sign in / Register pair. Canon geometry: 999px pill, 44px tall,
+ * 1rem at weight 400. Selection is already a fill flip, so the hairline stays
+ * a hairline.
+ */
 .switch-option {
   font-family: var(--font-heading);
   border: 1px solid var(--field-line);
-  border-radius: 0.5rem;
+  border-radius: 999px;
   background: var(--field-bg);
   color: var(--muted);
-  font-size: 0.78rem;
-  padding: 0.56rem 0.62rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: normal;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   cursor: pointer;
   transition:
@@ -659,6 +654,40 @@ article.legal-section section.legal-section + section.legal-section,
   color: var(--muted);
 }
 
+/*
+ * Native number steppers are desktop chrome: tiny, unstyleable, and useless on
+ * a phone where the numeric keyboard is the real input. Nothing in this app
+ * wants them, so they are removed once here rather than per field.
+ */
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/*
+ * Chrome draws the native select caret flush against the right border and no
+ * amount of padding-right moves it. Draw our own instead, once, so no dropdown
+ * in the app can ship with a cramped caret. Specificity beats `.input` and the
+ * Tailwind `px-*` utilities on purpose: the right padding belongs to the caret,
+ * the left padding stays with each control.
+ */
+select:not([multiple]) {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: var(--select-caret);
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 0.8rem 0.8rem;
+  padding-right: 2.35rem;
+}
+
 .input {
   border: 1px solid var(--field-line);
   background: var(--field-bg);
@@ -682,32 +711,41 @@ article.legal-section section.legal-section + section.legal-section,
   width: 100%;
 }
 
+/*
+ * The right padding is reserved for the toggle: 0.2rem offset + a 2.75rem
+ * circle + a 0.3rem gap, so typed text never runs under the button.
+ */
 .password-input {
   width: 100%;
-  padding-right: 2.65rem;
+  padding-right: 3.25rem;
 }
 
+/* Canon icon action: a 2.75rem circle, same tap floor as every other button. */
 .password-toggle {
   position: absolute;
-  right: 0.62rem;
+  right: 0.2rem;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  border-radius: 0.35rem;
+  border-radius: 999px;
   background: transparent;
   color: var(--muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.72rem;
-  height: 1.72rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   cursor: pointer;
 }
 
+/*
+ * A tint, not an opaque fill: the circle is taller than the field, so an opaque
+ * background would paint over the input's border.
+ */
 .password-toggle:hover {
   color: var(--text);
-  background: var(--bg);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
 .password-toggle:focus-visible {

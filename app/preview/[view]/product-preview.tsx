@@ -9,8 +9,9 @@ import {
 import { DashboardOverviewView } from "@/app/dashboard/_components/dashboard-overview-view";
 import { DashboardProgressView } from "@/app/dashboard/_components/dashboard-progress-view";
 import { useDashboardProgress } from "@/app/dashboard/_hooks/use-dashboard-progress";
-import type { DashboardCalendarState } from "@/app/dashboard/_hooks/use-dashboard-calendar";
-import type { DashboardClientData } from "@/app/dashboard/dashboard-types";
+import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
+import { VIEW_TITLES } from "@/app/dashboard/dashboard-client.shared";
+import type { DashboardClientData, DashboardView } from "@/app/dashboard/dashboard-types";
 import { SplitManager } from "@/app/dashboard/split-manager";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
 import previewStyles from "./preview.module.css";
@@ -291,85 +292,47 @@ const PREVIEW_DATA = {
     joinedAtLabel: "July 2025",
   },
   overview: {
-    totalWorkouts: 48,
-    workoutsThisWeek: 3,
-    totalExercises: 26,
-    totalSets: 312,
     todayPlan: {
       workoutType: "Push",
       workoutTypeSlug: "push",
-      subtitle: "6 exercises",
+      subtitle: "4 planned exercises and 13 sets.",
       isRestDay: false,
       isLoggedToday: false,
     },
-    monthChange: 12,
-    streak: {
-      currentWeeks: 4,
-      bestWeeks: 7,
-    },
-    weeklyBars: [
-      { label: "Mon", count: 1 },
-      { label: "Tue", count: 0 },
-      { label: "Wed", count: 1 },
-      { label: "Thu", count: 0 },
-      { label: "Fri", count: 1 },
-      { label: "Sat", count: 0 },
-      { label: "Sun", count: 0 },
+    todaySession: [
+      {
+        id: "preview-plan-bench",
+        name: "Barbell bench press",
+        plannedSets: 4,
+        lastPerformedLabel: "Aug 12",
+        lastWeight: 205,
+        lastReps: 5,
+      },
+      {
+        id: "preview-plan-incline",
+        name: "Incline dumbbell press",
+        plannedSets: 3,
+        lastPerformedLabel: "Aug 12",
+        lastWeight: 80,
+        lastReps: 8,
+      },
+      {
+        id: "preview-plan-dip",
+        name: "Weighted dip",
+        plannedSets: 3,
+        lastPerformedLabel: "Aug 5",
+        lastWeight: 45,
+        lastReps: 10,
+      },
+      {
+        id: "preview-plan-lateral",
+        name: "Cable lateral raise",
+        plannedSets: 3,
+        lastPerformedLabel: null,
+        lastWeight: null,
+        lastReps: null,
+      },
     ],
-    personalBests: [
-      {
-        id: "preview-pr-bench",
-        lift: "Barbell bench press",
-        weight: 221,
-        dateLabel: "Aug 12",
-      },
-      {
-        id: "preview-pr-squat",
-        lift: "Back squat",
-        weight: 338,
-        dateLabel: "Aug 8",
-      },
-      {
-        id: "preview-pr-rdl",
-        lift: "Romanian deadlift",
-        weight: 372,
-        dateLabel: "Jul 29",
-      },
-    ],
-    workoutCalendar: {
-      dayCounts: [
-        { dateKey: "2026-08-03", count: 1 },
-        { dateKey: "2026-08-05", count: 1 },
-        { dateKey: "2026-08-08", count: 1 },
-        { dateKey: "2026-08-10", count: 1 },
-        { dateKey: "2026-08-12", count: 1 },
-      ],
-      workoutsByDay: [
-        {
-          dateKey: "2026-08-03",
-          workouts: [{ id: "calendar-upper", title: "Upper strength", workoutType: "Upper" }],
-        },
-        {
-          dateKey: "2026-08-05",
-          workouts: [{ id: "calendar-lower", title: "Lower strength", workoutType: "Lower" }],
-        },
-        {
-          dateKey: "2026-08-08",
-          workouts: [{ id: "preview-workout-legs", title: "Legs", workoutType: "Legs" }],
-        },
-        {
-          dateKey: "2026-08-10",
-          workouts: [{ id: "preview-workout-pull", title: "Pull day", workoutType: "Pull" }],
-        },
-        {
-          dateKey: "2026-08-12",
-          workouts: [{ id: "preview-workout-push", title: "Push day", workoutType: "Push" }],
-        },
-      ],
-      monthCounts: [{ monthKey: "2026-08", label: "August 2026", count: 5 }],
-      latestMonthKey: "2026-08",
-      loadedMonthKey: "2026-08",
-    },
   },
   nutrition: {
     bmrCalories: 2020,
@@ -391,6 +354,7 @@ const PREVIEW_DATA = {
     nextOffset: 7,
     hasMore: false,
     workoutTypes: ["Full body", "Legs", "Lower", "Pull", "Push", "Upper"],
+    lifetime: { workouts: 48, sets: 312, exercises: 26 },
   },
   exercises: [
     {
@@ -506,87 +470,51 @@ const PREVIEW_DATA = {
   splits: PREVIEW_SPLITS,
 } satisfies DashboardClientData;
 
-function usePreviewCalendar(): DashboardCalendarState {
-  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
-  const month = PREVIEW_DATA.overview.workoutCalendar.monthCounts[0]!;
-  const workoutCounts = useMemo(
-    () =>
-      new Map(
-        PREVIEW_DATA.overview.workoutCalendar.dayCounts.map((entry) => [
-          entry.dateKey,
-          entry.count,
-        ]),
-      ),
-    [],
+// Auth-free harness for the real app chrome: same DashboardShell the signed-in
+// app renders, fed the demo payload above. Verification-only, noindex.
+export function ProductPreviewShell({ view }: { view: ProductPreviewView }) {
+  const progressState = useDashboardProgress(PREVIEW_DATA.exercises);
+  const [activeView, setActiveView] = useState<DashboardView>(
+    view === "split" ? "split" : view === "progress" ? "progress" : "dashboard",
   );
-  const workoutsByDay = useMemo(
-    () =>
-      new Map(
-        PREVIEW_DATA.overview.workoutCalendar.workoutsByDay.map((entry) => [
-          entry.dateKey,
-          entry.workouts,
-        ]),
-      ),
-    [],
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  return (
+    <DashboardShell
+      activeView={activeView}
+      title={VIEW_TITLES[activeView]}
+      user={{ displayName: "Benjamin Garcia", username: "benjamin", avatarUrl: null }}
+      sidebarCollapsed={sidebarCollapsed}
+      onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
+      onNavigate={setActiveView}
+    >
+      {activeView === "progress" ? (
+        <DashboardProgressView
+          progress={PREVIEW_DATA.progress}
+          exercises={PREVIEW_DATA.exercises}
+          weightUnit={PREVIEW_DATA.user.preferredWeightUnit}
+          state={progressState}
+        />
+      ) : activeView === "split" ? (
+        <SplitManager
+          initialSplit={PREVIEW_SPLIT}
+          initialSplits={PREVIEW_SPLITS}
+          persistChanges={false}
+        />
+      ) : (
+        <DashboardOverviewView
+          overview={PREVIEW_DATA.overview}
+          todayPlan={PREVIEW_DATA.overview.todayPlan}
+          greetingName="Benjamin"
+          weightUnit={PREVIEW_DATA.user.preferredWeightUnit}
+          onNavigateToView={setActiveView}
+        />
+      )}
+    </DashboardShell>
   );
-  const cells = useMemo<DashboardCalendarState["cells"]>(() => {
-    const nextCells: DashboardCalendarState["cells"] = [];
-    const firstDay = new Date(2026, 7, 1).getDay();
-
-    for (let index = 0; index < firstDay; index += 1) {
-      nextCells.push({
-        key: `empty-start-${index}`,
-        dayNumber: null,
-        workoutCount: 0,
-        workoutType: null,
-        workouts: [],
-      });
-    }
-
-    for (let day = 1; day <= 31; day += 1) {
-      const dateKey = `2026-08-${String(day).padStart(2, "0")}`;
-      const workouts = workoutsByDay.get(dateKey) ?? [];
-      nextCells.push({
-        key: dateKey,
-        dayNumber: day,
-        workoutCount: workoutCounts.get(dateKey) ?? 0,
-        workoutType: workouts[0]?.workoutType ?? null,
-        workouts,
-      });
-    }
-
-    while (nextCells.length % 7 !== 0) {
-      nextCells.push({
-        key: `empty-end-${nextCells.length}`,
-        dayNumber: null,
-        workoutCount: 0,
-        workoutType: null,
-        workouts: [],
-      });
-    }
-
-    return nextCells;
-  }, [workoutCounts, workoutsByDay]);
-
-  return {
-    selectedMonth: month,
-    cells,
-    selectedDateKey,
-    selectedWorkouts:
-      cells.find((cell) => cell.key === selectedDateKey)?.workouts ?? [],
-    isLoadingSelectedMonth: false,
-    selectedMonthError: null,
-    canGoToPreviousMonth: false,
-    canGoToNextMonth: false,
-    selectDate: (dateKey) =>
-      setSelectedDateKey((current) => (current === dateKey ? null : dateKey)),
-    goToPreviousMonth: () => undefined,
-    goToNextMonth: () => undefined,
-  };
 }
 
 export function ProductPreview({ view }: { view: ProductPreviewView }) {
-  const calendar = usePreviewCalendar();
   const progressState = useDashboardProgress(PREVIEW_DATA.exercises);
 
   useEffect(() => {
@@ -655,10 +583,10 @@ export function ProductPreview({ view }: { view: ProductPreviewView }) {
           {view === "dashboard" ? (
             <DashboardOverviewView
               overview={PREVIEW_DATA.overview}
-              recentSessions={PREVIEW_DATA.workouts}
               todayPlan={PREVIEW_DATA.overview.todayPlan}
+              greetingName="Benjamin"
               weightUnit={PREVIEW_DATA.user.preferredWeightUnit}
-              calendar={calendar}
+              onNavigateToView={() => {}}
             />
           ) : view === "progress" ? (
             <DashboardProgressView

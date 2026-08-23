@@ -39,6 +39,7 @@ function view(
 ) {
   return createElement(DashboardWorkoutsView, {
     workoutMonths: months,
+    lifetime: { workouts: 80, sets: 960, exercises: 12 },
     displayWeightUnit: "LB" as const,
     filters,
     ...overrides,

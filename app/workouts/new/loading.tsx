@@ -12,7 +12,7 @@ export default function NewWorkoutLoading() {
         aria-busy="true"
       >
         <div className={styles.topRow}>
-          <div className={`${skeleton} h-[2.2rem] w-[4.8rem] rounded-full`} />
+          <div className={`${skeleton} h-[2.75rem] w-[5.6rem] rounded-full`} />
         </div>
 
         <header className={styles.header}>
@@ -24,19 +24,19 @@ export default function NewWorkoutLoading() {
 
         <div className={styles.form}>
           <div className="flex flex-col gap-[0.62rem] rounded-[0.54rem] border border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] p-[0.78rem]">
-            <div className={`${skeleton} h-[2.55rem] w-full rounded-[0.52rem]`} />
+            <div className={`${skeleton} h-[2.75rem] w-full rounded-[0.52rem]`} />
             <div className="grid grid-cols-2 gap-[0.55rem]">
-              <div className={`${skeleton} h-[2.55rem] rounded-[0.52rem]`} />
-              <div className={`${skeleton} h-[2.55rem] rounded-[0.52rem]`} />
+              <div className={`${skeleton} h-[2.75rem] rounded-[0.52rem]`} />
+              <div className={`${skeleton} h-[2.75rem] rounded-[0.52rem]`} />
             </div>
           </div>
 
           <div className="flex flex-col gap-[0.62rem] rounded-[0.54rem] border border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] p-[0.78rem]">
             <div className={`${skeleton} h-[1.15rem] w-[9rem] rounded-full`} />
-            <div className={`${skeleton} h-[2.55rem] w-full rounded-[0.52rem]`} />
+            <div className={`${skeleton} h-[2.75rem] w-full rounded-[0.52rem]`} />
             <div className="grid grid-cols-2 gap-[0.55rem]">
-              <div className={`${skeleton} h-[2.55rem] rounded-[0.52rem]`} />
-              <div className={`${skeleton} h-[2.55rem] rounded-[0.52rem]`} />
+              <div className={`${skeleton} h-[2.75rem] rounded-[0.52rem]`} />
+              <div className={`${skeleton} h-[2.75rem] rounded-[0.52rem]`} />
             </div>
           </div>
         </div>

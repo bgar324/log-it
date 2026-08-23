@@ -1,3 +1,6 @@
+import { AppDrawerTrigger, AppShell } from "@/app/components/app-nav";
+import { appNavUserFromSession } from "@/app/components/app-nav.user";
+import { navStyles } from "@/app/components/app-nav.styles";
 import { BackButton } from "@/app/components/back-button";
 import { ExerciseDetailChart } from "./exercise-detail-chart";
 import { loadExerciseDetailPageData } from "./exercise-detail.data";
@@ -14,34 +17,36 @@ export default async function ExerciseDetailPage({
   const { exerciseKey: rawExerciseKey } = await params;
   const data = await loadExerciseDetailPageData(rawExerciseKey);
 
-  return (
+  const sessionsLabel = `${data.sessionsCount} ${
+    data.sessionsCount === 1 ? "session" : "sessions"
+  }`;
+  const setsLabel = `${data.totalSetCount} ${data.totalSetCount === 1 ? "set" : "sets"}`;
+  const repsLabel = `${data.averageRepsPerSet} ${
+    data.averageRepsPerSet === 1 ? "rep" : "reps"
+  } per set on average`;
+
+  const screen = (
     <main className={styles.shell}>
-      <section className={styles.stage}>
+      <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
-          <BackButton
-            fallbackHref="/progress"
-            label="Back"
-            className={styles.backLink}
-            iconClassName={styles.backButtonIcon}
-          />
+          <div className={styles.topLead}>
+            <AppDrawerTrigger user={appNavUserFromSession(data.user)} />
+            <BackButton
+              fallbackHref="/dashboard?view=progress"
+              label="Back"
+              className={styles.backLink}
+              iconClassName={styles.backButtonIcon}
+            />
+          </div>
         </header>
 
         <section className={styles.summaryCard}>
           <p className={styles.titleMeta}>{data.subtitle}</p>
           <h1 className={styles.title}>{data.displayName}</h1>
-          <div className={styles.metaRow} aria-label="Exercise metrics">
-            {[
-              { label: "Sessions", value: data.sessionsCount },
-              { label: "Sets", value: data.totalSetCount },
-              { label: "Average reps", value: data.averageRepsPerSet },
-              { label: "Best weight", value: data.bestWeightLabel },
-            ].map((item) => (
-              <span key={item.label} className={styles.metaPill}>
-                <span className={styles.metaPillLabel}>{item.label}</span>
-                <span className={styles.metaPillValue}>{item.value}</span>
-              </span>
-            ))}
-          </div>
+          <p className={styles.summaryLine}>
+            {`${sessionsLabel} · ${setsLabel} · ${repsLabel}`}
+          </p>
+          <p className={styles.summaryMeta}>{`Best weight ${data.bestWeightLabel}`}</p>
         </section>
 
         <section className={styles.panelGrid}>
@@ -76,5 +81,11 @@ export default async function ExerciseDetailPage({
         </section>
       </section>
     </main>
+  );
+
+  return (
+    <AppShell user={appNavUserFromSession(data.user)} activeView="progress">
+      {screen}
+    </AppShell>
   );
 }

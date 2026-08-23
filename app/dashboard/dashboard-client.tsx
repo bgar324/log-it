@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { AppNavUser } from "@/app/components/app-nav";
 import { SplitManager } from "./split-manager";
 import { VIEW_TITLES, toViewHref } from "./dashboard-client.shared";
 import { styles } from "./dashboard.styles";
@@ -14,6 +15,7 @@ import { normalizeDashboardView } from "./data.view-helpers";
 import { DashboardOverviewView } from "./_components/dashboard-overview-view";
 import { DashboardNutritionPanel } from "./_components/dashboard-nutrition-panel";
 import { DashboardProfileView } from "./_components/dashboard-profile-view";
+import { DashboardSettingsView } from "./_components/dashboard-settings-view";
 import { DashboardProgressView } from "./_components/dashboard-progress-view";
 import { DashboardShell } from "./_components/dashboard-shell";
 import { DashboardViewSkeleton } from "./_components/dashboard-view-skeleton";
@@ -26,7 +28,6 @@ import {
   getWorkoutTypes,
   hasActiveWorkoutFilters,
 } from "./_components/dashboard-workouts-view";
-import { useDashboardCalendar } from "./_hooks/use-dashboard-calendar";
 import { useDashboardProfileForm } from "./_hooks/use-dashboard-profile-form";
 import { useDashboardProgress } from "./_hooks/use-dashboard-progress";
 import { useDashboardTodayPlan } from "./_hooks/use-dashboard-today-plan";
@@ -109,35 +110,39 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   );
   const inFlightViewsRef = useRef<Set<DashboardView>>(new Set());
   const workoutHistoryRequestRef = useRef(0);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [workoutFilters, setWorkoutFilters] = useState(emptyWorkoutFilters);
   const [appliedWorkoutFilters, setAppliedWorkoutFilters] =
     useState(emptyWorkoutFilters);
   const [workoutHistoryLoading, setWorkoutHistoryLoading] = useState(false);
-  const recentSessions = dashboardData.workouts.slice(0, 5);
   const profileFormState = useDashboardProfileForm(dashboardData.user, () => {
     router.refresh();
   });
   const progressState = useDashboardProgress(dashboardData.exercises);
-  const calendarState = useDashboardCalendar(
-    dashboardData.overview.workoutCalendar,
-    dashboardData.split,
-  );
   const todayPlan = useDashboardTodayPlan(dashboardData.overview.todayPlan);
   const activeViewIsLoading = loadingViews.has(activeView);
   const activeViewError = viewErrors[activeView] ?? null;
-  const profileLabel = useMemo(() => {
+  const navUser = useMemo<AppNavUser>(() => {
     const firstName = (profileFormState.profile.firstName ?? "").trim();
     const lastName = (profileFormState.profile.lastName ?? "").trim();
     const fullName = `${firstName} ${lastName}`.trim();
+    const updatedAt = profileFormState.profile.profileImageUpdatedAt;
 
-    return fullName || firstName || profileFormState.profile.username;
+    return {
+      displayName: fullName || firstName || profileFormState.profile.username,
+      username: profileFormState.profile.username,
+      avatarUrl: updatedAt
+        ? `/api/profile/avatar?v=${encodeURIComponent(updatedAt)}`
+        : null,
+    };
   }, [
     profileFormState.profile.firstName,
     profileFormState.profile.lastName,
+    profileFormState.profile.profileImageUpdatedAt,
     profileFormState.profile.username,
   ]);
+  const greetingName =
+    (profileFormState.profile.firstName ?? "").trim() || profileFormState.profile.username;
   const displayWeightUnit = profileFormState.profile.preferredWeightUnit;
   const workoutTypes = useMemo(
     () =>
@@ -182,8 +187,10 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     view: DashboardView,
     options: LoadViewDataOptions = {},
   ) => {
+    // Profile and settings render from state the shell already has.
     if (
       view === "profile" ||
+      view === "settings" ||
       inFlightViewsRef.current.has(view) ||
       loadedViewsRef.current.has(view)
     ) {
@@ -384,8 +391,6 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   }, [loadViewData]);
 
   function navigateToView(view: DashboardView) {
-    setMobileMenuOpen(false);
-
     if (view === activeView) {
       return;
     }
@@ -410,15 +415,9 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
     <DashboardShell
       activeView={activeView}
       title={VIEW_TITLES[activeView]}
-      profileLabel={profileLabel}
-      canLogWorkout={!todayPlan.isRestDay}
-      hasLoggedToday={todayPlan.isLoggedToday}
-      isRestDay={todayPlan.isRestDay}
-      mobileMenuOpen={mobileMenuOpen}
+      user={navUser}
       sidebarCollapsed={sidebarCollapsed}
-      onToggleMobileMenu={() => setMobileMenuOpen((open) => !open)}
       onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
-      onCloseMobileMenu={() => setMobileMenuOpen(false)}
       onNavigate={navigateToView}
       renderHeaderAccessory={() =>
         activeView === "workouts" &&
@@ -443,7 +442,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               <p className={styles.empty}>{activeViewError}</p>
               <button
                 type="button"
-                className={styles.workoutFilterReset}
+                className={styles.retryButton}
                 onClick={() => void loadViewData("dashboard", { showError: true, showLoading: true })}
               >
                 Retry
@@ -454,10 +453,10 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
           ) : (
             <DashboardOverviewView
               overview={dashboardData.overview}
-              recentSessions={recentSessions}
               todayPlan={todayPlan}
+              greetingName={greetingName}
               weightUnit={displayWeightUnit}
-              calendar={calendarState}
+              onNavigateToView={navigateToView}
             />
           )}
         </div>
@@ -467,6 +466,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
         <div key="workouts" className="view-transition-shell">
           <DashboardWorkoutsView
             workoutMonths={dashboardData.workoutMonths}
+            lifetime={dashboardData.workoutHistory.lifetime}
             displayWeightUnit={displayWeightUnit}
             filters={workoutFilters}
             isLoading={activeViewIsLoading && !loadedViews.has("workouts")}
@@ -513,7 +513,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
               <p className={styles.empty}>{activeViewError}</p>
               <button
                 type="button"
-                className={styles.workoutFilterReset}
+                className={styles.retryButton}
                 onClick={() => void loadViewData("nutrition", { showError: true, showLoading: true })}
               >
                 Retry
@@ -542,7 +542,7 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
                 <p className={styles.empty}>{activeViewError}</p>
                 <button
                   type="button"
-                  className={styles.workoutFilterReset}
+                  className={styles.retryButton}
                   onClick={() => void loadViewData("split", { showError: true, showLoading: true })}
                 >
                   Retry
@@ -563,6 +563,12 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
       {activeView === "profile" ? (
         <div key="profile" className="view-transition-shell">
           <DashboardProfileView state={profileFormState} />
+        </div>
+      ) : null}
+
+      {activeView === "settings" ? (
+        <div key="settings" className="view-transition-shell">
+          <DashboardSettingsView state={profileFormState} />
         </div>
       ) : null}
     </DashboardShell>

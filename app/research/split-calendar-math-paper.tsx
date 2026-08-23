@@ -136,8 +136,8 @@ export function SplitCalendarMathPaper({
           </p>
           <p>
             The same split seed also drives today&apos;s plan on the dashboard: no split yields a
-            setup prompt, a rest day yields a recovery label, and an active day yields a count of
-            planned exercises ready to preload.
+            setup prompt, a rest day yields a recovery label, and an active day yields the count of
+            planned exercises and the sets they add up to.
           </p>
         </section>
       </div>

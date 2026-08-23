@@ -1,7 +1,7 @@
 "use client";
 
-import { ListOrdered, Plus } from "lucide-react";
-import { useId, useState } from "react";
+import { ListOrdered, Pencil, Plus } from "lucide-react";
+import { useState } from "react";
 import {
   getSplitWeekdayLabel,
   isRestDayWorkoutTypeSlug,
@@ -9,7 +9,6 @@ import {
 } from "@/lib/workout-splits/shared";
 import { ExerciseTemplateRow } from "./exercise-template-row";
 import { SplitActionMenu } from "./split-action-menu";
-import { SplitConfirmDialog } from "./split-confirm-dialog";
 import { SplitExerciseReorderDialog } from "./split-exercise-reorder-dialog";
 import { splitStyles } from "./split-system.styles";
 
@@ -41,13 +40,8 @@ export function SplitEditor({
   onReorderExercises,
 }: SplitEditorProps) {
   const [isReorderOpen, setIsReorderOpen] = useState(false);
-  const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
-  const removeTitleId = useId();
-  const removeDescriptionId = useId();
+  const [isEditingExercises, setIsEditingExercises] = useState(false);
   const isRestDay = isRestDayWorkoutTypeSlug(day.workoutTypeSlug);
-  const pendingExercise =
-    pendingRemoveIndex === null ? null : day.exercises[pendingRemoveIndex] ?? null;
-  const pendingExerciseName = pendingExercise?.exerciseDisplayName.trim() || "this exercise";
 
   function handleAddExercise(close: () => void) {
     onAddExercise();
@@ -57,14 +51,6 @@ export function SplitEditor({
   function handleOpenReorder(close: () => void) {
     setIsReorderOpen(true);
     close();
-  }
-
-  function handleConfirmRemove() {
-    if (pendingRemoveIndex !== null) {
-      onRemoveExercise(pendingRemoveIndex);
-    }
-
-    setPendingRemoveIndex(null);
   }
 
   return (
@@ -110,6 +96,23 @@ export function SplitEditor({
                   />
                   Reorder exercises
                 </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={splitStyles.actionMenuItem}
+                  onClick={() => {
+                    setIsEditingExercises((editing) => !editing);
+                    close();
+                  }}
+                  disabled={day.exercises.length === 0}
+                >
+                  <Pencil
+                    className={splitStyles.inlineIcon}
+                    aria-hidden="true"
+                    strokeWidth={1.9}
+                  />
+                  {isEditingExercises ? "Done editing" : "Edit exercises"}
+                </button>
               </>
             )}
           </SplitActionMenu>
@@ -121,7 +124,7 @@ export function SplitEditor({
       </div>
 
       {isRestDay ? (
-        <div className={splitStyles.restEmptyState}>
+        <div className={splitStyles.emptyState}>
           <p>Rest days cannot include exercises.</p>
           <p>Change the workout type if you want to add movements for this day.</p>
         </div>
@@ -132,6 +135,7 @@ export function SplitEditor({
               key={exercise.id ?? `${day.weekday}-${exercise.order}`}
               exercise={exercise}
               searchResults={exerciseSearchResults[`${day.weekday}-${index}`] ?? []}
+              isEditing={isEditingExercises}
               onNameChange={(value) => onExerciseNameChange(index, value)}
               onNameFocus={(value) => onExerciseNameFocus(index, value)}
               onNameBlur={(value) => onExerciseNameBlur(index, value)}
@@ -139,7 +143,7 @@ export function SplitEditor({
                 onApplyExerciseSearchResult(index, suggestion)
               }
               onSetsChange={(value) => onExerciseSetsChange(index, value)}
-              onRemove={() => setPendingRemoveIndex(index)}
+              onRemove={() => onRemoveExercise(index)}
             />
           ))}
         </div>
@@ -161,18 +165,7 @@ export function SplitEditor({
         />
       ) : null}
 
-      {pendingExercise ? (
-        <SplitConfirmDialog
-          titleId={removeTitleId}
-          descriptionId={removeDescriptionId}
-          title="Remove exercise?"
-          description={`Remove ${pendingExerciseName} from ${getSplitWeekdayLabel(day.weekday)}?`}
-          cancelLabel="Keep exercise"
-          confirmLabel="Remove"
-          onCancel={() => setPendingRemoveIndex(null)}
-          onConfirm={handleConfirmRemove}
-        />
-      ) : null}
+
     </section>
   );
 }

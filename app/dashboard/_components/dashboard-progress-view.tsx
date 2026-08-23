@@ -1,18 +1,31 @@
 import dynamic from "next/dynamic";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
-import { daysAgoLabel } from "../dashboard-client.shared";
+import { countLabel, daysAgoLabel } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
 import type { DashboardClientData } from "../dashboard-types";
-import type { DashboardProgressState } from "../_hooks/use-dashboard-progress";
+import type {
+  DashboardProgressState,
+  ExerciseSortMode,
+} from "../_hooks/use-dashboard-progress";
 import { DashboardMetricHeader } from "./dashboard-metric-header";
 import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
 
 const ProgressCharts = dynamic(
   () => import("../progress-charts").then((module) => module.ProgressCharts),
 );
+
+// Four named orderings in one control. The old pair of chevron toggles carried
+// the same four states, but "Recent" meant three different things depending on
+// which button was already active. Labels stay parallel and short so the select
+// sizes to its widest option without dominating the count line.
+const EXERCISE_SORT_OPTIONS = [
+  { value: "recent-desc", label: "Most recent" },
+  { value: "recent-asc", label: "Least recent" },
+  { value: "sessions-desc", label: "Most sessions" },
+  { value: "sessions-asc", label: "Fewest sessions" },
+] as const satisfies ReadonlyArray<{ value: ExerciseSortMode; label: string }>;
 
 type DashboardProgressViewProps = {
   progress: DashboardClientData["progress"];
@@ -43,15 +56,13 @@ export function DashboardProgressView({
     });
   }
 
-  const isRecentSort = state.exerciseSortMode.startsWith("recent");
-  const isSessionSort = state.exerciseSortMode.startsWith("sessions");
 
   if (error) {
     return (
       <section className={styles.panel} role="alert">
         <p className={styles.empty}>{error}</p>
         {onRetry ? (
-          <button type="button" className={styles.workoutFilterReset} onClick={onRetry}>
+          <button type="button" className={styles.retryButton} onClick={onRetry}>
             Retry
           </button>
         ) : null}
@@ -63,89 +74,67 @@ export function DashboardProgressView({
     return <DashboardViewSkeleton kind="progress" />;
   }
 
+  const thisWeek = `${progress.currentWeek} ${
+    progress.currentWeek === 1 ? "workout" : "workouts"
+  }`;
+  const weekComparison =
+    progress.weekDelta === 0
+      ? "the same as last week"
+      : progress.weekDelta > 0
+        ? `${progress.weekDelta} more than last week`
+        : `${Math.abs(progress.weekDelta)} fewer than last week`;
+  // Product rule: round up. A fractional average reads like a rounding error,
+  // and "0 per week" reads like you never trained.
+  const weeklyAverage = Math.ceil(progress.avgWeekly);
+
   return (
     <>
-      <section className={`${styles.kpiGrid} ${styles.progressKpiGrid}`} aria-label="Progress summary">
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>This week</p>
-          <p className={styles.kpiValue}>{progress.currentWeek}</p>
-        </article>
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>Week delta</p>
-          <p className={styles.kpiValue}>
-            {progress.weekDelta >= 0 ? `+${progress.weekDelta}` : progress.weekDelta}
-          </p>
-        </article>
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>12 week avg</p>
-          <p className={styles.kpiValue}>{progress.avgWeekly}</p>
-        </article>
-        <article className={styles.kpiCard}>
-          <p className={styles.kpiLabel}>Total weight lifted</p>
-          <p className={styles.kpiValue}>{formatRoundedWeight(progress.totalWeightLifted)}</p>
-        </article>
+      <section aria-label="Progress summary">
+        <p className={styles.statLine}>
+          You have logged {thisWeek} this week, {weekComparison}.
+        </p>
+        <p className={styles.statLineMuted}>
+          Over the past 12 weeks you have averaged {weeklyAverage}{" "}
+          {weeklyAverage === 1 ? "workout" : "workouts"} a week.
+        </p>
       </section>
 
       <ProgressCharts weeklySeries={progress.weeklySeries} weightUnit={weightUnit} />
 
       <section className={styles.panel}>
-        <div className={styles.panelHead}>
-          <h2 className={styles.panelTitle}>Exercises</h2>
-          <div className={styles.exerciseToolbar}>
-            <div
-              className={styles.exerciseSortControls}
-              data-active-sort={isSessionSort ? "sessions" : "recent"}
-              aria-label="Sort exercises"
-            >
-              <span className={styles.exerciseSortIndicator} aria-hidden="true" />
-              <button
-                type="button"
-                className={styles.exerciseSortButton}
-                data-active={isRecentSort}
-                onClick={state.toggleRecentSort}
-                aria-pressed={isRecentSort}
-                aria-label={
-                  state.exerciseSortMode === "recent-desc"
-                    ? "Sort exercises oldest first"
-                    : "Sort exercises newest first"
-                }
-              >
-                Recent
-                {state.exerciseSortMode === "recent-asc" ? (
-                  <ChevronUp className={styles.exerciseSortIcon} aria-hidden="true" strokeWidth={2} />
-                ) : (
-                  <ChevronDown className={styles.exerciseSortIcon} aria-hidden="true" strokeWidth={2} />
-                )}
-              </button>
-              <button
-                type="button"
-                className={styles.exerciseSortButton}
-                data-active={isSessionSort}
-                onClick={state.toggleSessionSort}
-                aria-pressed={isSessionSort}
-                aria-label={
-                  state.exerciseSortMode === "sessions-desc"
-                    ? "Sort exercises by fewest sessions"
-                    : "Sort exercises by most sessions"
-                }
-              >
-                Sessions
-                {state.exerciseSortMode === "sessions-asc" ? (
-                  <ChevronUp className={styles.exerciseSortIcon} aria-hidden="true" strokeWidth={2} />
-                ) : (
-                  <ChevronDown className={styles.exerciseSortIcon} aria-hidden="true" strokeWidth={2} />
-                )}
-              </button>
-            </div>
-            <input
-              type="search"
-              value={state.exerciseSearch}
-              onChange={(event) => state.handleExerciseSearchChange(event.target.value)}
-              placeholder="Search exercise"
-              className={styles.searchInput}
-              aria-label="Search exercises"
-            />
-          </div>
+        <h2 className={styles.panelTitle}>Exercises</h2>
+
+        {/* Search leads: with dozens of exercises, naming one beats ordering
+            them all. The sort sits on the count line as a single named choice —
+            two chevron toggles hid four states behind three labels. */}
+        <input
+          type="search"
+          value={state.exerciseSearch}
+          onChange={(event) => state.handleExerciseSearchChange(event.target.value)}
+          placeholder="Search exercise"
+          className={styles.searchInput}
+          aria-label="Search exercises"
+        />
+
+        <div className={styles.exerciseListMeta}>
+          <p className={styles.exerciseCount}>
+            {state.filteredExercises.length}{" "}
+            {state.filteredExercises.length === 1 ? "exercise" : "exercises"}
+          </p>
+          <select
+            className={styles.exerciseSortSelect}
+            value={state.exerciseSortMode}
+            onChange={(event) =>
+              state.handleExerciseSortChange(event.target.value as ExerciseSortMode)
+            }
+            aria-label="Sort exercises"
+          >
+            {EXERCISE_SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
         {state.filteredExercises.length > 0 ? (
           <>
@@ -154,7 +143,7 @@ export function DashboardProgressView({
                 columns={["Exercise", "Sessions", "Sets", "Reps", "Best weight"]}
                 rowClassName={styles.exerciseRow}
               />
-              {state.paginatedExercises.map((exercise) => (
+              {state.visibleExercises.map((exercise) => (
                 <Link
                   key={exercise.key}
                   href={`/exercises/${encodeURIComponent(exercise.routeKey)}`}
@@ -167,23 +156,24 @@ export function DashboardProgressView({
                     </p>
                   </div>
                   <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Sessions">
-                    {exercise.sessionCount} sessions
+                    {countLabel(exercise.sessionCount, "session")}
                   </span>
                   <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Sets">
-                    {exercise.setCount} sets
+                    {countLabel(exercise.setCount, "set")}
                   </span>
                   <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Reps">
-                    {exercise.totalReps} reps
+                    {countLabel(exercise.totalReps, "rep")}
                   </span>
                   <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Best weight">
                     {formatWeight(exercise.bestWeight)}
                   </span>
                   <span className={styles.exerciseMobileStats}>
                     <span className={styles.exerciseMobileStatPrimary}>
-                      {exercise.sessionCount} sessions · {exercise.setCount} sets
+                      {countLabel(exercise.sessionCount, "session")} ·{" "}
+                      {countLabel(exercise.setCount, "set")}
                     </span>
                     <span className={styles.exerciseMobileStatSecondary}>
-                      {exercise.totalReps} reps · {formatWeight(exercise.bestWeight)}
+                      {countLabel(exercise.totalReps, "rep")} · {formatWeight(exercise.bestWeight)}
                     </span>
                   </span>
                   <LinkPendingOverlay />
@@ -191,37 +181,17 @@ export function DashboardProgressView({
               ))}
             </div>
 
-            <div className={styles.paginationRow}>
-              <p className={styles.paginationMeta}>
-                Showing {state.rangeStart + 1}-{state.rangeEnd} of {state.filteredExercises.length}
-              </p>
-
-              {state.totalPages > 1 ? (
-                <div className={styles.paginationControls}>
-                  <button
-                    type="button"
-                    className={styles.paginationButton}
-                    onClick={state.goToPreviousPage}
-                    disabled={state.currentPage === 1}
-                    aria-label="Go to previous exercise page"
-                  >
-                    Prev
-                  </button>
-                  <span className={styles.paginationPage}>
-                    Page {state.currentPage} of {state.totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    className={styles.paginationButton}
-                    onClick={state.goToNextPage}
-                    disabled={state.currentPage === state.totalPages}
-                    aria-label="Go to next exercise page"
-                  >
-                    Next
-                  </button>
-                </div>
-              ) : null}
-            </div>
+            {state.hiddenCount > 0 ? (
+              <div className={styles.listRevealRow}>
+                <button
+                  type="button"
+                  className={styles.listRevealButton}
+                  onClick={state.revealMoreExercises}
+                >
+                  Show {countLabel(state.revealCount, "more exercise")}
+                </button>
+              </div>
+            ) : null}
           </>
         ) : (
           <p className={styles.empty}>

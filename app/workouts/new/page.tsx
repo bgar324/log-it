@@ -9,9 +9,12 @@ import {
   parseDateKey,
 } from "@/lib/workout-splits/shared";
 import { getCurrentPacificDate } from "@/lib/workout-utils";
+import { toViewHref } from "@/app/dashboard/dashboard-client.shared";
+import { normalizeDashboardView } from "@/app/dashboard/data.view-helpers";
 
 type SearchParams = Promise<{
   date?: string;
+  from?: string;
 }>;
 
 export default async function NewWorkoutPage({
@@ -41,6 +44,11 @@ export default async function NewWorkoutPage({
       ? splitSeed.initialData
       : undefined;
 
+  // Where Back lands. The logger is reachable from every view, so the caller
+  // says where it came from; `normalizeDashboardView` collapses anything
+  // unexpected to Home rather than trusting the query string with a redirect.
+  const returnHref = toViewHref(normalizeDashboardView(params.from));
+
   return (
     <WorkoutLogger
       initialData={initialData}
@@ -48,6 +56,7 @@ export default async function NewWorkoutPage({
       weightUnit={user.preferredWeightUnit}
       bodyWeightDisplay={bodyWeightDisplay}
       isRestDay={Boolean(isRestDay)}
+      returnHref={returnHref}
     />
   );
 }

@@ -11,6 +11,7 @@ import type {
   DashboardClientData,
   DashboardWorkoutFilters,
 } from "../dashboard-types";
+import { countLabel } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
 import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
 import { DashboardWorkoutList } from "./dashboard-workout-list";
@@ -27,6 +28,7 @@ type WorkoutFiltersControlProps = {
 
 type DashboardWorkoutsViewProps = {
   workoutMonths: DashboardClientData["workoutMonths"];
+  lifetime: DashboardClientData["workoutHistory"]["lifetime"];
   displayWeightUnit: DashboardClientData["user"]["preferredWeightUnit"];
   filters: DashboardWorkoutFilters;
   isLoading?: boolean;
@@ -230,8 +232,10 @@ export function DashboardWorkoutFiltersControl({
 const INITIAL_MONTHS = 3;
 const MONTHS_PER_REVEAL = 6;
 
+
 export function DashboardWorkoutsView({
   workoutMonths,
+  lifetime,
   displayWeightUnit,
   filters,
   isLoading = false,
@@ -261,6 +265,11 @@ export function DashboardWorkoutsView({
   const hiddenWorkoutCount = getWorkoutCount(
     filteredWorkoutMonths.slice(visibleMonths),
   );
+  // The button reveals a fixed number of months, so it promises the workouts in
+  // those months rather than every hidden one.
+  const revealWorkoutCount = getWorkoutCount(
+    filteredWorkoutMonths.slice(visibleMonths, visibleMonths + MONTHS_PER_REVEAL),
+  );
   const canLoadMore = hiddenWorkoutCount > 0 || (hasMore && Boolean(onLoadMore));
 
   if (error) {
@@ -268,7 +277,7 @@ export function DashboardWorkoutsView({
       <section className={styles.panel} role="alert">
         <p className={styles.empty}>{error}</p>
         {onRetry ? (
-          <button type="button" className={styles.workoutFilterReset} onClick={onRetry}>
+          <button type="button" className={styles.retryButton} onClick={onRetry}>
             Retry
           </button>
         ) : null}
@@ -280,8 +289,26 @@ export function DashboardWorkoutsView({
     return <DashboardViewSkeleton kind="workouts" />;
   }
 
+  const filterCount = getWorkoutCount(filteredWorkoutMonths);
+  const filtersActive = hasActiveWorkoutFilters(filters);
+
   return (
-    <section className={styles.plainSection} aria-busy={isLoadingMore}>
+    <>
+      <section aria-label="Workout history summary">
+        <p className={styles.statLine}>
+          {filtersActive
+            ? `${countLabel(filterCount, "workout")} ${
+                filterCount === 1 ? "matches" : "match"
+              } these filters.`
+            : `You have logged ${countLabel(lifetime.workouts, "workout")}.`}
+        </p>
+        <p className={styles.statLineMuted}>
+          {countLabel(lifetime.sets, "set")} across{" "}
+          {countLabel(lifetime.exercises, "exercise")} all time.
+        </p>
+      </section>
+
+      <section className={styles.plainSection} aria-busy={isLoadingMore}>
       {filteredWorkoutMonths.length > 0 ? (
         <div className={styles.timeline}>
           {renderedMonths.map((month) => (
@@ -296,7 +323,7 @@ export function DashboardWorkoutsView({
           {canLoadMore ? (
             <button
               type="button"
-              className={styles.workoutFilterReset}
+              className={styles.listRevealButton}
               disabled={hiddenWorkoutCount === 0 && isLoadingMore}
               onClick={() => {
                 if (hiddenWorkoutCount > 0) {
@@ -307,14 +334,10 @@ export function DashboardWorkoutsView({
               }}
             >
               {hiddenWorkoutCount > 0
-                ? `Show ${hiddenWorkoutCount} older workout${
-                    hiddenWorkoutCount === 1 ? "" : "s"
-                  }`
+                ? `Show ${countLabel(revealWorkoutCount, "older workout")}`
                 : isLoadingMore
                   ? "Loading older workouts..."
-                  : `Load ${remainingCount} older workout${
-                      remainingCount === 1 ? "" : "s"
-                    }`}
+                  : `Load ${countLabel(remainingCount, "older workout")}`}
             </button>
           ) : null}
         </div>
@@ -323,6 +346,7 @@ export function DashboardWorkoutsView({
       ) : (
         <p className={styles.empty}>No workouts logged yet.</p>
       )}
-    </section>
+      </section>
+    </>
   );
 }

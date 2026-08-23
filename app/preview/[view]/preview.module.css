@@ -28,7 +28,6 @@
 
 .screen {
   --dashboard-border: color-mix(in srgb, var(--text) 12%, transparent);
-  --dashboard-border-strong: color-mix(in srgb, var(--text) 18%, transparent);
   height: 100%;
   min-height: 0;
   display: flex;

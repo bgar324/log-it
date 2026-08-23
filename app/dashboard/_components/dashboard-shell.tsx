@@ -1,40 +1,50 @@
 "use client";
 
-import { Check, Moon, PanelLeft, Plus, Sun, User2 } from "lucide-react";
+import {
+  Apple,
+  CalendarDays,
+  ClipboardList,
+  House,
+  PanelLeft,
+  Plus,
+  Settings,
+  TrendingUp,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { type ComponentType, type ReactNode } from "react";
 import type { DashboardView } from "../dashboard-types";
-import { useThemeToggle } from "@/app/components/theme-toggle";
-import { usePresence } from "@/app/hooks/use-presence";
+import { AppShell, AppTopBar, type AppNavUser } from "@/app/components/app-nav";
 import { AppBrand } from "@/app/components/ui";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
-import { NAV_ITEMS } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
 
-const MENU_EXIT_MS = 280;
-const MENU_ITEM_COUNT = NAV_ITEMS.length + 2;
+type SidebarIcon = ComponentType<{
+  className?: string;
+  "aria-hidden"?: boolean;
+  strokeWidth?: number;
+}>;
 
-function menuItemDelay(index: number, open: boolean) {
-  return {
-    animationDelay: open
-      ? `${index * 35}ms`
-      : `${(MENU_ITEM_COUNT - 1 - index) * 22}ms`,
-  };
-}
+// Desktop lists every section; phones get Home/Log/Nutrition in the tab bar and
+// the rest behind the avatar drawer.
+const SIDEBAR_ITEMS: Array<{
+  view: DashboardView;
+  label: string;
+  icon: SidebarIcon;
+}> = [
+  { view: "dashboard", label: "Home", icon: House },
+  { view: "workouts", label: "Workouts", icon: ClipboardList },
+  { view: "progress", label: "Progress", icon: TrendingUp },
+  { view: "nutrition", label: "Nutrition", icon: Apple },
+  { view: "split", label: "Split", icon: CalendarDays },
+];
 
 type DashboardShellProps = {
   activeView: DashboardView;
   title: string;
-  profileLabel: string;
-  canLogWorkout: boolean;
-  hasLoggedToday: boolean;
-  isRestDay: boolean;
-  mobileMenuOpen: boolean;
+  user: AppNavUser;
   sidebarCollapsed: boolean;
-  onToggleMobileMenu: () => void;
   onToggleSidebar: () => void;
-  onCloseMobileMenu: () => void;
   onNavigate: (view: DashboardView) => void;
   renderHeaderAccessory?: () => ReactNode;
   children: ReactNode;
@@ -43,53 +53,14 @@ type DashboardShellProps = {
 export function DashboardShell({
   activeView,
   title,
-  profileLabel,
-  canLogWorkout,
-  hasLoggedToday,
-  isRestDay,
-  mobileMenuOpen,
+  user,
   sidebarCollapsed,
-  onToggleMobileMenu,
   onToggleSidebar,
-  onCloseMobileMenu,
   onNavigate,
   renderHeaderAccessory,
   children,
 }: DashboardShellProps) {
-  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
-  const menuMounted = usePresence(mobileMenuOpen, MENU_EXIT_MS);
-  const menuState = mobileMenuOpen ? "open" : "closed";
-  const { theme, toggleTheme } = useThemeToggle();
-  const nextIsDark = theme === "light";
-  const ThemeIcon = nextIsDark ? Moon : Sun;
-  const themeLabel = nextIsDark ? "Dark mode" : "Light mode";
-
-  useEffect(() => {
-    if (!mobileMenuOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!mobileMenuRef.current?.contains(event.target as Node)) {
-        onCloseMobileMenu();
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onCloseMobileMenu();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [mobileMenuOpen, onCloseMobileMenu]);
-
-  return (
+  const appScreen = (
     <main
       className={`${styles.shell} ${sidebarCollapsed ? styles.shellSidebarCollapsed : ""}`}
       aria-label="Training dashboard shell"
@@ -158,7 +129,7 @@ export function DashboardShell({
           className={`${styles.sideNav} ${sidebarCollapsed ? styles.sideNavCollapsed : ""}`}
           aria-label="Main navigation"
         >
-          {NAV_ITEMS.map((item) => {
+          {SIDEBAR_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.view;
 
@@ -166,9 +137,7 @@ export function DashboardShell({
               <button
                 key={item.view}
                 type="button"
-                className={`${styles.navButton} ${
-                  sidebarCollapsed ? styles.navButtonCollapsed : ""
-                }`}
+                className={sidebarCollapsed ? styles.navButtonCollapsed : styles.navButton}
                 data-active={isActive}
                 onClick={() => onNavigate(item.view)}
                 title={sidebarCollapsed ? item.label : undefined}
@@ -188,197 +157,59 @@ export function DashboardShell({
             sidebarCollapsed ? styles.sidebarUtilityStackCollapsed : ""
           }`}
         >
-          {hasLoggedToday ? (
-            <div
-              className={`${styles.sidebarAction} ${styles.sidebarActionLogged} ${
-                sidebarCollapsed ? styles.sidebarActionCollapsed : ""
-              }`}
-              title={sidebarCollapsed ? "Logged!" : undefined}
-              aria-label={sidebarCollapsed ? "Logged!" : undefined}
-            >
-              <Check className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
-              <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
-                Logged!
-              </span>
-            </div>
-          ) : isRestDay ? (
-            <Link
-              href="/workouts/new"
-              className={`relative ${styles.sidebarAction} ${
-                sidebarCollapsed ? styles.sidebarActionCollapsed : ""
-              }`}
-              title={sidebarCollapsed ? "Rest day options" : undefined}
-              aria-label={sidebarCollapsed ? "Rest day options" : undefined}
-            >
-              <Moon className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
-              <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Rest day</span>
-              <LinkPendingOverlay />
-            </Link>
-          ) : canLogWorkout ? (
-            <Link
-              href="/workouts/new"
-              className={`relative ${styles.sidebarAction} ${
-                sidebarCollapsed ? styles.sidebarActionCollapsed : ""
-              }`}
-              title={sidebarCollapsed ? "Log workout" : undefined}
-              aria-label={sidebarCollapsed ? "Log workout" : undefined}
-            >
-              <Plus className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
-              <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Log workout</span>
-              <LinkPendingOverlay />
-            </Link>
-          ) : (
-            <div
-              className={`${styles.sidebarAction} ${styles.sidebarActionDisabled} ${
-                sidebarCollapsed ? styles.sidebarActionCollapsed : ""
-              }`}
-              title={sidebarCollapsed ? "Rest" : undefined}
-              aria-label={sidebarCollapsed ? "Rest" : undefined}
-            >
-              <Moon className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
-              <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Rest</span>
-            </div>
-          )}
+          <Link
+            href={`/workouts/new?from=${activeView}`}
+            className={`relative ${
+              sidebarCollapsed ? styles.sidebarActionCollapsed : styles.sidebarAction
+            }`}
+            title={sidebarCollapsed ? "Log workout" : undefined}
+            aria-label={sidebarCollapsed ? "Log workout" : undefined}
+          >
+            <Plus className={styles.sidebarActionIcon} aria-hidden="true" strokeWidth={1.9} />
+            <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Log workout</span>
+            <LinkPendingOverlay />
+          </Link>
+
           <div className={styles.sidebarDivider} aria-hidden="true" />
+
           <button
             type="button"
-            className={`${styles.sidebarSecondaryAction} ${
-              sidebarCollapsed ? styles.sidebarActionCollapsed : ""
-            }`}
+            className={sidebarCollapsed ? styles.navButtonCollapsed : styles.navButton}
             data-active={activeView === "profile"}
             onClick={() => onNavigate("profile")}
-            title={sidebarCollapsed ? profileLabel : undefined}
-            aria-label={sidebarCollapsed ? profileLabel : undefined}
+            title={sidebarCollapsed ? user.displayName : undefined}
+            aria-label={sidebarCollapsed ? user.displayName : undefined}
           >
-            <User2 className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
+            <UserRound className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
             <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
-              {profileLabel}
+              {user.displayName}
             </span>
           </button>
+
           <button
             type="button"
-            className={`${styles.sidebarSecondaryAction} ${
-              sidebarCollapsed ? styles.sidebarActionCollapsed : ""
-            }`}
-            onClick={toggleTheme}
-            title={sidebarCollapsed ? themeLabel : undefined}
-            aria-label={themeLabel}
+            className={sidebarCollapsed ? styles.navButtonCollapsed : styles.navButton}
+            data-active={activeView === "settings"}
+            onClick={() => onNavigate("settings")}
+            title={sidebarCollapsed ? "Settings" : undefined}
+            aria-label={sidebarCollapsed ? "Settings" : undefined}
           >
-            <ThemeIcon className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
-            <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
-              {themeLabel}
-            </span>
+            <Settings className={styles.navIcon} aria-hidden={true} strokeWidth={1.9} />
+            <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Settings</span>
           </button>
         </div>
       </aside>
 
       <section className={styles.main}>
-        <header className={styles.header}>
-          <div className={styles.headerText}>
-            <h1 className={styles.title}>{title}</h1>
-          </div>
-
-          <div className={styles.headerActions}>
-            {renderHeaderAccessory?.()}
-          </div>
-
-          <div className={styles.mobileHeaderActions}>
-            {renderHeaderAccessory?.()}
-            <div className={styles.mobileMenu} ref={mobileMenuRef}>
-              <button
-                type="button"
-                className={styles.mobileMenuToggle}
-                aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-                aria-expanded={mobileMenuOpen}
-                aria-controls="dashboard-mobile-menu"
-                aria-haspopup="menu"
-                onClick={onToggleMobileMenu}
-              >
-                <span className={styles.mobileMenuToggleBars} aria-hidden="true">
-                  <span
-                    className={`${styles.mobileMenuToggleBar} ${styles.mobileMenuToggleBarTop}`}
-                    data-open={mobileMenuOpen}
-                  />
-                  <span
-                    className={`${styles.mobileMenuToggleBar} ${styles.mobileMenuToggleBarMiddle}`}
-                    data-open={mobileMenuOpen}
-                  />
-                  <span
-                    className={`${styles.mobileMenuToggleBar} ${styles.mobileMenuToggleBarBottom}`}
-                    data-open={mobileMenuOpen}
-                  />
-                </span>
-              </button>
-              {menuMounted ? (
-                <div
-                  id="dashboard-mobile-menu"
-                  className={styles.mobileMenuPanel}
-                  data-state={menuState}
-                  aria-label="Dashboard mobile navigation"
-                >
-                  <nav className={styles.mobileMenuNav} aria-label="Dashboard sections">
-                    {NAV_ITEMS.map((item, index) => {
-                      const Icon = item.icon;
-                      const isActive = activeView === item.view;
-
-                      return (
-                        <button
-                          key={item.view}
-                          type="button"
-                          className={styles.mobileMenuItem}
-                          data-state={menuState}
-                          style={menuItemDelay(index, mobileMenuOpen)}
-                          data-active={isActive}
-                          onClick={() => onNavigate(item.view)}
-                        >
-                          <Icon
-                            className={styles.mobileMenuItemIcon}
-                            aria-hidden={true}
-                            strokeWidth={1.9}
-                          />
-                          <span>{item.label}</span>
-                        </button>
-                      );
-                    })}
-                    <button
-                      type="button"
-                      className={styles.mobileMenuItem}
-                      data-state={menuState}
-                      style={menuItemDelay(NAV_ITEMS.length, mobileMenuOpen)}
-                      data-active={activeView === "profile"}
-                      onClick={() => onNavigate("profile")}
-                    >
-                      <User2
-                        className={styles.mobileMenuItemIcon}
-                        aria-hidden={true}
-                        strokeWidth={1.9}
-                      />
-                      <span>{profileLabel}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.mobileMenuItem}
-                      data-state={menuState}
-                      style={menuItemDelay(NAV_ITEMS.length + 1, mobileMenuOpen)}
-                      onClick={toggleTheme}
-                      aria-label={themeLabel}
-                    >
-                      <ThemeIcon
-                        className={styles.mobileMenuItemIcon}
-                        aria-hidden={true}
-                        strokeWidth={1.9}
-                      />
-                      <span>{themeLabel}</span>
-                    </button>
-                  </nav>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </header>
-
-        {children}
+        <AppTopBar title={title} user={user} accessory={renderHeaderAccessory?.()} />
+        <div className={styles.mainContent}>{children}</div>
       </section>
     </main>
+  );
+
+  return (
+    <AppShell user={user} activeView={activeView} onNavigate={onNavigate}>
+      {appScreen}
+    </AppShell>
   );
 }

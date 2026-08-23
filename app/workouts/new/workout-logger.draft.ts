@@ -20,13 +20,19 @@ type WorkoutDraftSnapshotExercise = WorkoutDraftSnapshot["exercises"][number];
 const INITIAL_EXERCISE_ID = "exercise-1";
 const INITIAL_SET_ID = "set-1";
 
-export function createSetDraft(id: string): ExerciseSetDraft {
+// Sets in one exercise repeat far more often than they differ, so a new set
+// starts as a copy of the one above it. The first set of an exercise has
+// nothing to copy and stays blank.
+export function createSetDraft(
+  id: string,
+  previousSet?: ExerciseSetDraft,
+): ExerciseSetDraft {
   return {
     id,
-    reps: "",
-    weightLb: "",
-    usesBodyweight: false,
-    durationSeconds: "",
+    reps: previousSet?.reps ?? "",
+    weightLb: previousSet?.weightLb ?? "",
+    usesBodyweight: previousSet?.usesBodyweight ?? false,
+    durationSeconds: previousSet?.durationSeconds ?? "",
   };
 }
 

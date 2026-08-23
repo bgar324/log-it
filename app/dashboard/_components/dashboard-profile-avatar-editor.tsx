@@ -197,7 +197,7 @@ export function DashboardProfileAvatarEditor({
         <div className={styles.avatarModalFooter}>
           <button
             type="button"
-            className={styles.avatarModalButton}
+            className={styles.avatarModalRemove}
             onClick={handleRemoveAvatar}
             disabled={!hasAvatar || isSaving}
           >
@@ -206,7 +206,7 @@ export function DashboardProfileAvatarEditor({
           </button>
           <button
             type="button"
-            className={styles.avatarModalButton}
+            className={styles.avatarModalApply}
             onClick={() => void handleApplyCrop()}
             disabled={!cropSourceUrl || isSaving}
           >
@@ -232,6 +232,8 @@ export function DashboardProfileAvatarEditor({
             handleAvatarFile(nextFile);
           }}
       />
+      {/* One round, tappable avatar with a visible label underneath. The old
+          hover-revealed "Edit" caption never appeared on touch at all. */}
       <span className={styles.profilePhotoButton}>
         <button
           type="button"
@@ -254,11 +256,7 @@ export function DashboardProfileAvatarEditor({
         >
           {displayedAvatarUrl ? null : <ImagePlus aria-hidden="true" strokeWidth={1.9} />}
         </button>
-        {!shouldRenderAvatarModal ? (
-          <span className={styles.profilePhotoEditOverlay}>
-            {hasAvatar ? "Edit" : "Upload"}
-          </span>
-        ) : null}
+        <span className={styles.profilePhotoCaption}>{hasAvatar ? "Edit" : "Upload"}</span>
       </span>
 
       {avatarModal && typeof document !== "undefined"
