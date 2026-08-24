@@ -66,6 +66,95 @@ function formatBmrDelta(delta: number | null) {
   return `${Math.abs(delta)} ${delta < 0 ? "below" : "above"}`;
 }
 
+type RecallOption = {
+  key: string;
+  label: string;
+  calories: number;
+  proteinGrams: number;
+};
+
+function median(values: number[]) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+
+  return sorted.length % 2 === 0
+    ? (sorted[middle - 1] + sorted[middle]) / 2
+    : sorted[middle];
+}
+
+/**
+ * A calorie count is not something anyone can estimate, but a day already
+ * logged is an exact number the user produced themselves. These options replay
+ * those days into the form so the same total never has to be guessed twice.
+ *
+ * Ordered by how often a total repeats, then by recency, so a habitual day
+ * rises on its own and needs no copy explaining why it is first.
+ */
+function buildRecallOptions(history: NutritionData["history"]): RecallOption[] {
+  // Index 0 is today, which the form below already holds; replaying it is a no-op.
+  const logged = history
+    .map((row, offset) => ({ row, offset }))
+    .slice(1)
+    .filter(({ row }) => row.calories > 0 || row.proteinGrams > 0);
+
+  if (logged.length === 0) {
+    return [];
+  }
+
+  const grouped = new Map<
+    string,
+    { option: RecallOption; count: number; recency: number }
+  >();
+
+  for (const { row, offset } of logged) {
+    const key = `${row.calories}|${row.proteinGrams}`;
+    const existing = grouped.get(key);
+
+    if (existing) {
+      existing.count += 1;
+      continue;
+    }
+
+    grouped.set(key, {
+      option: {
+        key,
+        label: offset === 1 ? "Same as yesterday" : `Same as ${row.label}`,
+        calories: row.calories,
+        proteinGrams: row.proteinGrams,
+      },
+      count: 1,
+      recency: offset,
+    });
+  }
+
+  const options = [...grouped.values()]
+    .sort((left, right) => right.count - left.count || left.recency - right.recency)
+    .slice(0, 3)
+    .map((entry) => entry.option);
+
+  if (logged.length < 3) {
+    return options;
+  }
+
+  // Nothing in the list fits today? The user's own middle day beats a guess.
+  const loggedCalories = logged.map(({ row }) => row.calories).filter((value) => value > 0);
+  const loggedProtein = logged.map(({ row }) => row.proteinGrams).filter((value) => value > 0);
+  const typical: RecallOption = {
+    key: "typical",
+    label: "A typical day for you",
+    calories: loggedCalories.length > 0 ? Math.round(median(loggedCalories)) : 0,
+    proteinGrams:
+      loggedProtein.length > 0 ? Math.round(median(loggedProtein) * 10) / 10 : 0,
+  };
+
+  const alreadyOffered = options.some(
+    (option) =>
+      option.calories === typical.calories && option.proteinGrams === typical.proteinGrams,
+  );
+
+  return alreadyOffered ? options : [typical, ...options];
+}
+
 export function DashboardNutritionPanel({
   nutrition,
   weightUnit,
@@ -81,11 +170,13 @@ export function DashboardNutritionPanel({
   );
   const [chartMode, setChartMode] = useState<ChartMode>("day");
   const [isSaving, setIsSaving] = useState(false);
+  const [activeRecallKey, setActiveRecallKey] = useState<string | null>(null);
   const unitLabel = getWeightUnitLabel(weightUnit);
   const chartRows = nutrition.chart[chartMode];
   const historyRows = nutrition.history.filter(
     (row) => row.calories > 0 || row.proteinGrams > 0 || row.bodyWeight !== null,
   );
+  const recallOptions = buildRecallOptions(nutrition.history);
   const bodyWeightSeries = [...nutrition.history]
     .reverse()
     .filter((row) => row.bodyWeight !== null)
@@ -102,7 +193,14 @@ export function DashboardNutritionPanel({
     setProteinInput(formatInputNumber(nutrition.today.proteinGrams));
     setBmrInput(`${nutrition.bmrCalories ?? ""}`);
     setBodyWeightInput(formatInputNumber(nutrition.today.bodyWeight));
+    setActiveRecallKey(null);
   }, [nutrition]);
+
+  function applyRecall(option: RecallOption) {
+    setCaloriesInput(`${option.calories}`);
+    setProteinInput(formatInputNumber(option.proteinGrams));
+    setActiveRecallKey(option.key);
+  }
 
   async function handleSave() {
     if (isSaving) {
@@ -176,9 +274,33 @@ export function DashboardNutritionPanel({
         <div className={styles.panelHead}>
           <div>
             <h2 className={styles.panelTitle}>Today</h2>
-            <p className={styles.panelSubtitle}>Log intake, target, and body weight.</p>
+            <p className={styles.panelSubtitle}>
+              {recallOptions.length > 0
+                ? "Reuse a day you already logged, or type what you know."
+                : "Type what you know. Blank fields stay blank."}
+            </p>
           </div>
         </div>
+
+        {recallOptions.length > 0 ? (
+          <div className={styles.nutritionRecall} data-nutrition-recall="true">
+            {recallOptions.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                className={styles.nutritionRecallRow}
+                data-nutrition-recall-row={option.key}
+                data-active={activeRecallKey === option.key}
+                onClick={() => applyRecall(option)}
+              >
+                <span className={styles.nutritionRecallLabel}>{option.label}</span>
+                <span className={styles.nutritionRecallStat}>
+                  {formatNumber(option.calories)} cal · {formatNumber(option.proteinGrams, 1)}g
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className={styles.nutritionForm}>
           <label className={styles.nutritionField}>
@@ -187,7 +309,10 @@ export function DashboardNutritionPanel({
               className={styles.nutritionInput}
               inputMode="numeric"
               value={caloriesInput}
-              onChange={(event) => setCaloriesInput(event.target.value.replace(/\D/g, ""))}
+              onChange={(event) => {
+                setCaloriesInput(event.target.value.replace(/\D/g, ""));
+                setActiveRecallKey(null);
+              }}
             />
           </label>
           <label className={styles.nutritionField}>
@@ -196,7 +321,10 @@ export function DashboardNutritionPanel({
               className={styles.nutritionInput}
               inputMode="decimal"
               value={proteinInput}
-              onChange={(event) => setProteinInput(event.target.value.replace(/[^0-9.]/g, ""))}
+              onChange={(event) => {
+                setProteinInput(event.target.value.replace(/[^0-9.]/g, ""));
+                setActiveRecallKey(null);
+              }}
             />
           </label>
           <label className={styles.nutritionField}>

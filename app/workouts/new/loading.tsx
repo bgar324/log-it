@@ -1,40 +1,79 @@
 import { styles } from "./workout-logger.styles";
 
+// The app's one skeleton fill, kept verbatim so a logger block and a dashboard
+// block shimmer as the same material. Radius is left to each usage.
 const skeleton =
-  "animate-[dashboard-skeleton_1.2s_ease-in-out_infinite] bg-[linear-gradient(100deg,color-mix(in_srgb,var(--text)_5%,transparent)_20%,color-mix(in_srgb,var(--text)_10%,transparent)_42%,color-mix(in_srgb,var(--text)_5%,transparent)_64%)] bg-[length:220%_100%]";
+  "block bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]";
+
+/**
+ * One exercise card: name field and its overflow control, the "last hit" line,
+ * then two set rows and Add set. Sized from the shipped card at 390px, where a
+ * two-set card is 302px tall.
+ */
+function ExerciseCardSkeleton() {
+  return (
+    <article className={styles.exerciseCard}>
+      <div className="flex flex-col gap-[0.22rem]">
+        <div className="flex items-start gap-[0.4rem]">
+          <span className={`${skeleton} h-[2.75rem] min-w-0 flex-1 rounded-[0.52rem]`} />
+          <span className={`${skeleton} h-[2.75rem] w-[2.75rem] shrink-0 rounded-full`} />
+        </div>
+        <span className={`${skeleton} mt-[0.3rem] h-[1.1rem] w-[8.5rem] rounded-[0.42rem]`} />
+      </div>
+
+      <div className={styles.setsStack}>
+        {Array.from({ length: 2 }, (_, index) => (
+          <div key={index} className={styles.setRowGroup}>
+            <span className={`${skeleton} h-[2.75rem] w-full rounded-[0.52rem]`} />
+            <span className={`${skeleton} h-[1rem] w-[7.5rem] rounded-[0.42rem]`} />
+          </div>
+        ))}
+        <div className="flex w-full min-[620px]:justify-end">
+          <span className={`${skeleton} h-[2.75rem] w-full rounded-full min-[620px]:w-[7rem]`} />
+        </div>
+      </div>
+    </article>
+  );
+}
 
 export default function NewWorkoutLoading() {
   return (
     <main className={styles.loggerShell}>
       <section className={styles.loggerStage}>
         <div className={styles.topRow}>
-          <div className={`${skeleton} h-[2.75rem] w-[5.6rem] rounded-full`} />
+          <span className={`${skeleton} h-[2.75rem] w-[5.6rem] rounded-full`} />
         </div>
 
         <header className={styles.header}>
-          <div className={`${skeleton} h-[0.72rem] w-[7.5rem] rounded-full`} />
-          <div className={`${skeleton} h-[2.25rem] w-[min(18rem,76vw)] rounded-[0.44rem]`} />
+          <span className={`${skeleton} h-[1rem] w-[7.5rem] rounded-[0.42rem]`} />
+          <div className={styles.titleRow}>
+            <span className={`${skeleton} h-[1.8rem] w-[min(18rem,76vw)] rounded-[0.44rem]`} />
+          </div>
         </header>
 
-        <div className={`${skeleton} h-[3rem] w-full rounded-[0.54rem]`} />
-
         <div className={styles.form}>
-          <div className="flex flex-col gap-[0.62rem] rounded-[0.54rem] border border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] p-[0.78rem]">
-            <div className={`${skeleton} h-[2.75rem] w-full rounded-[0.52rem]`} />
-            <div className="grid grid-cols-2 gap-[0.55rem]">
-              <div className={`${skeleton} h-[2.75rem] rounded-[0.52rem]`} />
-              <div className={`${skeleton} h-[2.75rem] rounded-[0.52rem]`} />
+          {/* The title card is desktop-only on a new workout, exactly as the
+              logger renders it. On a phone the exercise cards start here. */}
+          <section className={`${styles.card} ${styles.mobileHiddenCard}`}>
+            <div className={styles.singleMetaField}>
+              <div className={styles.field}>
+                <span className={`${skeleton} h-[0.9rem] w-[6rem] rounded-[0.42rem]`} />
+                <span className={`${skeleton} h-[2.75rem] w-full rounded-[0.52rem]`} />
+              </div>
             </div>
-          </div>
+          </section>
 
-          <div className="flex flex-col gap-[0.62rem] rounded-[0.54rem] border border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] p-[0.78rem]">
-            <div className={`${skeleton} h-[1.15rem] w-[9rem] rounded-full`} />
-            <div className={`${skeleton} h-[2.75rem] w-full rounded-[0.52rem]`} />
-            <div className="grid grid-cols-2 gap-[0.55rem]">
-              <div className={`${skeleton} h-[2.75rem] rounded-[0.52rem]`} />
-              <div className={`${skeleton} h-[2.75rem] rounded-[0.52rem]`} />
-            </div>
-          </div>
+          <section className={styles.exerciseSection}>
+            {Array.from({ length: 2 }, (_, index) => (
+              <ExerciseCardSkeleton key={index} />
+            ))}
+          </section>
+        </div>
+
+        {/* The tools dial is the logger's only pinned control; the save bar and
+            the inline rest timer it replaced are gone. */}
+        <div className={styles.fabDial}>
+          <span className={`${skeleton} h-[3.25rem] w-[3.25rem] rounded-full`} />
         </div>
       </section>
     </main>

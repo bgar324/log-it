@@ -106,14 +106,6 @@ export function DashboardProfileEditDialog({
 
         <div className={styles.avatarModalFooter}>
           <button
-            type="button"
-            className={styles.dialogCancelButton}
-            onClick={onClose}
-            disabled={state.isSaving}
-          >
-            Cancel
-          </button>
-          <button
             type="submit"
             className={styles.profileSaveButton}
             disabled={state.isSaving}

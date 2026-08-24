@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
 import type { DashboardClientData } from "../dashboard-types";
 
-const INITIAL_EXERCISES = 6;
-const EXERCISES_PER_REVEAL = 24;
+// Sized to about one phone screen, so a page turn replaces the list instead of
+// extending it past the fold. Exported because the loading skeleton has to draw
+// exactly this many rows; a hardcoded copy there would drift the first time
+// this number changes.
+export const EXERCISES_PER_PAGE = 8;
 
 type DashboardExercise = DashboardClientData["exercises"][number];
 
@@ -17,11 +20,13 @@ export type DashboardProgressState = {
   exerciseSortMode: ExerciseSortMode;
   filteredExercises: DashboardExercise[];
   visibleExercises: DashboardExercise[];
-  hiddenCount: number;
-  revealCount: number;
+  rangeLabel: string;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
   handleExerciseSearchChange: (value: string) => void;
   handleExerciseSortChange: (mode: ExerciseSortMode) => void;
-  revealMoreExercises: () => void;
+  goToPreviousPage: () => void;
+  goToNextPage: () => void;
 };
 
 export function useDashboardProgress(
@@ -29,7 +34,7 @@ export function useDashboardProgress(
 ): DashboardProgressState {
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [exerciseSortMode, setExerciseSortMode] = useState<ExerciseSortMode>("recent-desc");
-  const [visibleCount, setVisibleCount] = useState(INITIAL_EXERCISES);
+  const [pageIndex, setPageIndex] = useState(0);
   const filteredExercises = useMemo(() => {
     const query = exerciseSearch.trim().toLowerCase();
     const matchingExercises = query
@@ -68,27 +73,38 @@ export function useDashboardProgress(
       );
     });
   }, [exercises, exerciseSearch, exerciseSortMode]);
-  // Progressive reveal instead of pages: 83 exercises across 17 pages of five
-  // made "Next" the only way through the list, and left a dead "Prev" on the
-  // first page. Search narrows, "show more" extends, neither needs a cursor.
-  const visibleExercises = filteredExercises.slice(0, visibleCount);
-  const hiddenCount = filteredExercises.length - visibleExercises.length;
-  // What the next tap actually appends, so the button can promise that number
-  // rather than the whole remainder.
-  const revealCount = Math.min(EXERCISES_PER_REVEAL, hiddenCount);
+  // Pages, not progressive reveal: appending 24 rows at a time grew the page
+  // without bound, so the only way back to the search field was a long scroll.
+  // A page is sized to roughly one phone screen, and both directions are one
+  // tap, so the list never gets taller than the thing you are reading it on.
+  const pageCount = Math.max(1, Math.ceil(filteredExercises.length / EXERCISES_PER_PAGE));
+  // Clamp rather than trust: a narrowing search can strand the cursor past the
+  // end, and resetting on every keystroke would fight the user mid-word.
+  const currentPage = Math.min(pageIndex, pageCount - 1);
+  const rangeStart = currentPage * EXERCISES_PER_PAGE;
+  const visibleExercises = filteredExercises.slice(
+    rangeStart,
+    rangeStart + EXERCISES_PER_PAGE,
+  );
+  const hasPreviousPage = currentPage > 0;
+  const hasNextPage = currentPage < pageCount - 1;
 
   function handleExerciseSearchChange(value: string) {
     setExerciseSearch(value);
-    setVisibleCount(INITIAL_EXERCISES);
+    setPageIndex(0);
   }
 
   function handleExerciseSortChange(mode: ExerciseSortMode) {
     setExerciseSortMode(mode);
-    setVisibleCount(INITIAL_EXERCISES);
+    setPageIndex(0);
   }
 
-  function revealMoreExercises() {
-    setVisibleCount((current) => current + EXERCISES_PER_REVEAL);
+  function goToPreviousPage() {
+    setPageIndex((current) => Math.max(0, current - 1));
+  }
+
+  function goToNextPage() {
+    setPageIndex((current) => Math.min(pageCount - 1, current + 1));
   }
 
   return {
@@ -96,10 +112,15 @@ export function useDashboardProgress(
     exerciseSortMode,
     filteredExercises,
     visibleExercises,
-    hiddenCount,
-    revealCount,
+    // 1-based and inclusive, because this reads as a sentence to a person.
+    rangeLabel: filteredExercises.length
+      ? `${rangeStart + 1}-${rangeStart + visibleExercises.length} of ${filteredExercises.length}`
+      : "",
+    hasPreviousPage,
+    hasNextPage,
     handleExerciseSearchChange,
     handleExerciseSortChange,
-    revealMoreExercises,
+    goToPreviousPage,
+    goToNextPage,
   };
 }

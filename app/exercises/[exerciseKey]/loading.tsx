@@ -61,15 +61,26 @@ export default function ExerciseDetailLoading() {
 
         <section className={styles.panel}>
           <SkeletonBlock className="h-[1rem] w-[9rem]" />
-          <div className={styles.skeletonMetricList}>
+          <div className={styles.metricList}>
             <div className={styles.sessionHeader}>
               {Array.from({ length: 6 }, (_, index) => (
                 <SkeletonBlock key={index} className="h-[0.62rem] w-[4rem]" />
               ))}
             </div>
+            {/* One page of the session table, which pages five at a time. */}
             {Array.from({ length: 5 }, (_, index) => (
               <SessionRowSkeleton key={index} />
             ))}
+          </div>
+          {/* The table ends in a pager once there is a second page; reserving it
+              keeps the panel from growing a row taller on arrival. */}
+          <div className={styles.paginationRow}>
+            <SkeletonBlock className="h-[0.74rem] w-[7.5rem]" />
+            <div className={styles.paginationControls}>
+              <SkeletonBlock className="h-[2.75rem] w-[4.4rem] rounded-full" />
+              <SkeletonBlock className="h-[0.71rem] w-[3.2rem]" />
+              <SkeletonBlock className="h-[2.75rem] w-[4.4rem] rounded-full" />
+            </div>
           </div>
         </section>
       </section>

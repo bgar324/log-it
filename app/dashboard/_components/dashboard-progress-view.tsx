@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
@@ -179,14 +180,24 @@ export function DashboardProgressView({
               ))}
             </div>
 
-            {state.hiddenCount > 0 ? (
-              <div className={styles.listRevealRow}>
+            {state.hasPreviousPage || state.hasNextPage ? (
+              <div className={styles.pagerRow} data-pager="exercises">
                 <button
                   type="button"
-                  className={styles.listRevealButton}
-                  onClick={state.revealMoreExercises}
+                  className={styles.pagerButton}
+                  onClick={state.goToPreviousPage}
+                  disabled={!state.hasPreviousPage}
                 >
-                  Show {countLabel(state.revealCount, "more exercise")}
+                  <ChevronLeft className={styles.pagerIcon} strokeWidth={1.9} />
+                </button>
+                <span className={styles.pagerRange}>{state.rangeLabel}</span>
+                <button
+                  type="button"
+                  className={styles.pagerButton}
+                  onClick={state.goToNextPage}
+                  disabled={!state.hasNextPage}
+                >
+                  <ChevronRight className={styles.pagerIcon} strokeWidth={1.9} />
                 </button>
               </div>
             ) : null}

@@ -227,31 +227,32 @@ export function DashboardProfileAvatarEditor({
             handleAvatarFile(nextFile);
           }}
       />
-      {/* One round, tappable avatar with a visible label underneath. The old
-          hover-revealed "Edit" caption never appeared on touch at all. */}
-      <span className={styles.profilePhotoButton}>
-        <button
-          type="button"
-          className={styles.profilePhotoPreview}
-          data-has-image={hasAvatar}
-          disabled={isSaving}
-          onClick={() => {
-            if (hasAvatar) {
-              openAvatarModal();
-            } else {
-              avatarInputRef.current?.click();
-            }
-          }}
-          style={
-            displayedAvatarUrl
-              ? { backgroundImage: `url(${displayedAvatarUrl})` }
-              : undefined
+      {/* One round, tappable avatar carrying its own label. A caption sitting
+          underneath read as a second control; on the photo it reads as part of
+          the picture, which is what every social app does. */}
+      <button
+        type="button"
+        className={styles.profilePhotoButton}
+        data-has-image={hasAvatar}
+        disabled={isSaving}
+        onClick={() => {
+          if (hasAvatar) {
+            openAvatarModal();
+          } else {
+            avatarInputRef.current?.click();
           }
-        >
-          {displayedAvatarUrl ? null : <ImagePlus strokeWidth={1.9} />}
-        </button>
-        <span className={styles.profilePhotoCaption}>{hasAvatar ? "Edit" : "Upload"}</span>
-      </span>
+        }}
+        style={
+          displayedAvatarUrl
+            ? { backgroundImage: `url(${displayedAvatarUrl})` }
+            : undefined
+        }
+      >
+        {displayedAvatarUrl ? null : <ImagePlus strokeWidth={1.9} />}
+        <span className={styles.profilePhotoSliver}>
+          {hasAvatar ? "Edit" : "Upload"}
+        </span>
+      </button>
 
       {avatarModal && typeof document !== "undefined"
         ? createPortal(avatarModal, document.body)

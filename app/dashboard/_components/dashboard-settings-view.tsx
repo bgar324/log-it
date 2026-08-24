@@ -66,7 +66,8 @@ export function DashboardSettingsView({ state }: DashboardSettingsViewProps) {
           </select>
         </div>
         <p className={styles.statLineMuted}>
-          Weights are stored in pounds and converted for display.
+          Switching units changes what you see. Nothing you have already logged
+          is rewritten.
         </p>
       </section>
     </>

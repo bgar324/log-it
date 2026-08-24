@@ -293,33 +293,32 @@ export function AppShell({
             })}
           </nav>
 
-          <div className={navStyles.drawerFooter}>
-            <div className={navStyles.drawerDivider} />
-            {/* Settings and sign out share one row: one is the only place you
-                go for preferences, the other is a single rare action. */}
-            <div className={navStyles.drawerFooterRow}>
-              <Link
-                href={toViewHref(DRAWER_FOOTER_ITEM.view)}
-                className={navStyles.drawerItem}
-                data-active={activeView === DRAWER_FOOTER_ITEM.view}
-                onClick={(event) => {
-                  viewClickHandler(onNavigate, DRAWER_FOOTER_ITEM.view)(event);
-                  setDrawerOpen(false);
-                }}
+          {/* Settings and sign out share one row: one is the only place you go
+              for preferences, the other is a single rare action. The row is also
+              the drawer's half of the bottom strip, so it carries its own
+              hairline and sits flush with the tab bar beside it. */}
+          <div className={navStyles.drawerFooterRow}>
+            <Link
+              href={toViewHref(DRAWER_FOOTER_ITEM.view)}
+              className={navStyles.drawerItem}
+              data-active={activeView === DRAWER_FOOTER_ITEM.view}
+              onClick={(event) => {
+                viewClickHandler(onNavigate, DRAWER_FOOTER_ITEM.view)(event);
+                setDrawerOpen(false);
+              }}
+            >
+              <Settings className={navStyles.drawerItemIcon} strokeWidth={1.9} />
+              <span>{DRAWER_FOOTER_ITEM.label}</span>
+            </Link>
+            <form method="post" action="/auth/signout">
+              <button
+                type="submit"
+                className={navStyles.drawerIconAction}
+                title="Sign out"
               >
-                <Settings className={navStyles.drawerItemIcon} strokeWidth={1.9} />
-                <span>{DRAWER_FOOTER_ITEM.label}</span>
-              </Link>
-              <form method="post" action="/auth/signout">
-                <button
-                  type="submit"
-                  className={navStyles.drawerIconAction}
-                  title="Sign out"
-                >
-                  <LogOut className={navStyles.drawerItemIcon} strokeWidth={1.9} />
-                </button>
-              </form>
-            </div>
+                <LogOut className={navStyles.drawerItemIcon} strokeWidth={1.9} />
+              </button>
+            </form>
           </div>
         </div>
 

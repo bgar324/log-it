@@ -15,6 +15,28 @@
 
 import { actionIconQuiet, actionNavRow } from "./action.styles";
 
+// One bottom strip, two owners. With the drawer open, its footer row occupies
+// the left of the screen and the tab bar the right, on the same band — so a
+// hairline, a height or a safe-area inset that differs by a few pixels reads as
+// a broken line. Both sides are built from the fragments below, and the two
+// numbers live once, as custom properties, so changing the band changes both
+// halves at the same time.
+//
+// Declared per surface rather than inherited from the stage: a route-loading
+// skeleton renders the tab bar on its own, outside the app shell.
+const barMetrics = "[--bar-row:3.25rem] [--bar-pad:0.3rem]";
+const barHairline = "border-t border-[color-mix(in_srgb,var(--text)_12%,transparent)]";
+const barBlockPadding =
+  "pt-[var(--bar-pad)] pb-[calc(var(--bar-pad)+env(safe-area-inset-bottom))]";
+// The tab bar's height is this row inside `barBlockPadding` and `barHairline`.
+const barRowHeight = "min-h-[var(--bar-row)]";
+// The same band measured from the outside, for a surface that has to state its
+// own height. `border-box` sizing (globals.css sets it on `*`, unlayered, so a
+// `box-content` utility cannot override it) means the padding and the 1px
+// hairline have to be added back in by hand.
+const barBandHeight =
+  "min-h-[calc(var(--bar-row)+var(--bar-pad)+var(--bar-pad)+1px+env(safe-area-inset-bottom))]";
+
 export const navStyles = {
   // `overflow-x: clip` instead of `hidden`: clip does not turn the stage into a
   // scroll container, so document scrolling and the sticky top bar still work.
@@ -30,8 +52,10 @@ export const navStyles = {
   // from landing on it. Visibility flips instantly rather than transitioning —
   // a discrete transition would leave the layer hidden for the first frames of
   // the slide, and layer A covers it until the slide starts anyway.
+  // No bottom padding: the footer row is a flush bottom band that owns the
+  // safe-area inset itself, so it can line up with the tab bar beside it.
   drawerLayer:
-    "fixed inset-y-0 left-0 z-0 flex w-[min(17.5rem,78vw)] flex-col gap-[1rem] bg-[var(--bg)] px-[1.05rem] pt-[calc(1.15rem+env(safe-area-inset-top))] pb-[calc(1.15rem+env(safe-area-inset-bottom))] invisible -translate-x-[9%] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] min-[900px]:hidden",
+    "fixed inset-y-0 left-0 z-0 flex w-[min(17.5rem,78vw)] flex-col gap-[1rem] bg-[var(--bg)] px-[1.05rem] pt-[calc(1.15rem+env(safe-area-inset-top))] invisible -translate-x-[9%] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] min-[900px]:hidden",
   drawerLayerOpen: "visible translate-x-0",
 
   // Tighter left inset than right: the avatar is a circle, so its optical edge
@@ -59,12 +83,12 @@ export const navStyles = {
     "translate-x-[min(17.5rem,78vw)] pointer-events-none after:pointer-events-none after:absolute after:inset-0 after:bg-[color-mix(in_srgb,#14120b_22%,transparent)]",
 
   tabBar:
-    "fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 items-center border-t border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)] px-[0.5rem] pt-[0.3rem] pb-[calc(0.3rem+env(safe-area-inset-bottom))] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] min-[900px]:hidden",
-  // The bar is a fixed-height surface, so the tab keeps its own 3.25rem and its
-  // small label; only the radius joins the canon, since a 0.6rem corner here
-  // was the app's one-off.
+    `fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 items-center ${barMetrics} ${barHairline} bg-[var(--bg)] px-[0.5rem] ${barBlockPadding} transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] min-[900px]:hidden`,
+  // The bar is a fixed-height surface, so the tab keeps the band's own row
+  // height and its small label; only the radius joins the canon, since a 0.6rem
+  // corner here was the app's one-off.
   tabItem:
-    "relative mx-auto inline-flex min-h-[3.25rem] w-full max-w-[6.5rem] cursor-pointer flex-col items-center justify-center gap-[0.14rem] rounded-[999px] border-0 bg-transparent text-[var(--muted)] no-underline [touch-action:manipulation] transition-colors duration-150 active:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)]",
+    `relative mx-auto inline-flex ${barRowHeight} w-full max-w-[6.5rem] cursor-pointer flex-col items-center justify-center gap-[0.14rem] rounded-[999px] border-0 bg-transparent text-[var(--muted)] no-underline [touch-action:manipulation] transition-colors duration-150 active:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)]`,
   tabIcon: "h-[1.3rem] w-[1.3rem]",
   tabLabel: "text-[0.6875rem] leading-none tracking-[-0.01em]",
   tabAction:
@@ -85,8 +109,12 @@ export const navStyles = {
   drawerItem: `${actionNavRow} gap-[0.7rem]`,
   drawerItemIcon: "h-[1.2rem] w-[1.2rem] shrink-0",
   drawerDivider: "h-px w-full bg-[color-mix(in_srgb,var(--text)_12%,transparent)]",
-  drawerFooter: "mt-auto flex flex-col gap-[0.6rem]",
-  drawerFooterRow: "flex items-center gap-[0.35rem] [&>a]:min-w-0 [&>a]:flex-1",
+  // The footer row is the drawer's half of the bottom strip: same metrics, same
+  // hairline, same block padding and the same band height as the tab bar it sits
+  // beside, so the two line up to the pixel and stay aligned on a notched phone.
+  // It bleeds past the drawer's gutter so its hairline runs edge to edge and
+  // meets the bar's border with no gap.
+  drawerFooterRow: `mt-auto -mx-[1.05rem] flex ${barMetrics} ${barBandHeight} items-center gap-[0.35rem] ${barHairline} px-[1.05rem] ${barBlockPadding} [&>a]:min-w-0 [&>a]:flex-1`,
   drawerIconAction: actionIconQuiet,
 
   mainInset: "pb-[calc(4.9rem+env(safe-area-inset-bottom))] min-[900px]:pb-0",

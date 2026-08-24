@@ -4,6 +4,7 @@ import {
   actionIcon,
   actionIconFilled,
   actionIconQuiet,
+  actionMenuRow,
   actionNavRow,
   actionOutline,
   actionQuiet,
@@ -110,8 +111,14 @@ export const styles = {
   exerciseSortSelect:
     "min-h-[2.75rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] pl-[0.7rem] text-[0.9375rem] text-[var(--text)] min-[760px]:min-h-[2.2rem] min-[760px]:text-[0.84rem]",
   // The reveal needs more air than the row gap, or it reads as one more row.
-  listRevealRow: "mt-[0.72rem] flex",
   listRevealButton: actionOutline,
+  // Arrows pinned to the edges with the position between them: a thumb reaches
+  // either end without moving, and the range says where you are so two bare
+  // chevrons are not the only feedback.
+  pagerRow: "mt-[0.72rem] flex items-center justify-between gap-[0.5rem]",
+  pagerButton: `${actionIconQuiet} disabled:opacity-40`,
+  pagerIcon: "h-[1.05rem] w-[1.05rem] shrink-0 stroke-current",
+  pagerRange: "tabular-nums text-[0.8125rem] text-[var(--muted)]",
 
   // Today's plan, exercise by exercise: what it asks for on the left, what you
   // hit last time on the right. Borderless with a hairline between, because ten
@@ -196,6 +203,13 @@ export const styles = {
   nutritionSaveButton: `${actionFilled} max-[520px]:w-full`,
   nutritionButtonIcon:
     "h-[0.86rem] w-[0.86rem] shrink-0 stroke-current",
+  // "I don't know the numbers" is solved by not asking twice: these rows replay
+  // a day the user already logged into the form below.
+  nutritionRecall: "mt-[0.66rem] flex flex-col gap-[0.14rem]",
+  nutritionRecallRow:
+    `${actionMenuRow} data-[active=true]:bg-[color-mix(in_srgb,var(--text)_8%,transparent)]`,
+  nutritionRecallLabel: "min-w-0 flex-1 truncate",
+  nutritionRecallStat: "shrink-0 tabular-nums text-[0.84rem] text-[var(--muted)]",
   nutritionChartHead:
     "flex flex-wrap items-center justify-between gap-[0.55rem] max-[520px]:items-stretch",
   // The track is a pill because its segments are: a 0.68rem track around 999px
@@ -231,10 +245,12 @@ export const styles = {
     "m-0 text-[1.0625rem] tracking-[-0.02em] font-[540] text-[color-mix(in_srgb,#b13d48_88%,var(--text))]",
   dangerZoneText: "m-0 text-[0.9375rem] leading-[1.45] text-[var(--muted)]",
   profilePhotoButton:
-    "flex shrink-0 flex-col items-center gap-[0.28rem]",
-  profilePhotoPreview:
-    "flex h-[4.5rem] w-[4.5rem] cursor-pointer items-center justify-center overflow-hidden rounded-[999px] border border-[var(--dashboard-border)] bg-[var(--calendar-active-bg)] bg-cover bg-center text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-60 [&>svg]:h-[1.3rem] [&>svg]:w-[1.3rem]",
-  profilePhotoCaption: "text-[0.8125rem] text-[var(--muted)]",
+    "relative flex h-[4.5rem] w-[4.5rem] shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-[999px] border border-[var(--dashboard-border)] bg-[var(--calendar-active-bg)] bg-cover bg-center text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-60 [&>svg]:h-[1.3rem] [&>svg]:w-[1.3rem]",
+  // The label rides on the photo the way social apps do it, clipped by the
+  // circle's own overflow. A caption underneath cost a row of layout and read
+  // as a separate control; this reads as part of the picture.
+  profilePhotoSliver:
+    "absolute inset-x-0 bottom-0 bg-[color-mix(in_srgb,#000_58%,transparent)] py-[0.2rem] text-center text-[0.6875rem] leading-none text-[#f1f0eb]",
   profileField:
     "flex flex-col gap-[0.32rem] [&>span]:text-[0.72rem] [&>span]:leading-none [&>span]:text-[var(--muted)]",
   profileInput:
@@ -260,15 +276,17 @@ export const styles = {
   dangerButton: actionDanger,
   avatarModalOverlay:
     `dashboard-theme-scope fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-[color-mix(in_srgb,var(--bg)_12%,transparent)] px-[0.78rem] py-[calc(0.78rem+env(safe-area-inset-bottom))] backdrop-blur-[8px] animate-[dashboard-modal-backdrop_180ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-backdrop-exit_160ms_cubic-bezier(0.4,0,1,1)_both] min-[720px]:p-[1rem] ${dashboardBorder}`,
+  // On a phone every child stacks into one column with the buttons, so the
+  // panel gap is the same 0.5rem step; roomier only once there is width for it.
   avatarModal:
-    "my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-[46rem] flex-col gap-[1rem] overflow-y-auto rounded-[0.56rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[1.1rem] shadow-[0_14px_32px_color-mix(in_srgb,var(--text)_10%,transparent)] animate-[dashboard-modal-panel_220ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-panel-exit_160ms_cubic-bezier(0.4,0,1,1)_both] max-[520px]:p-[0.82rem]",
+    "my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-[46rem] flex-col gap-[1rem] overflow-y-auto rounded-[0.56rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[1.1rem] shadow-[0_14px_32px_color-mix(in_srgb,var(--text)_10%,transparent)] animate-[dashboard-modal-panel_220ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-panel-exit_160ms_cubic-bezier(0.4,0,1,1)_both] max-[520px]:gap-[0.5rem] max-[520px]:p-[0.82rem]",
   avatarModalHead:
     "flex items-center justify-between gap-[0.75rem]",
   avatarModalTitle:
     "m-0 text-[1.18rem] leading-[1.15] font-[560] text-[var(--text)]",
   avatarModalClose: actionIconQuiet,
   avatarModalPreviewWrap:
-    "grid items-start gap-[1rem] min-[720px]:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]",
+    "grid items-start gap-[1rem] max-[520px]:gap-[0.5rem] min-[720px]:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]",
   avatarCropFrame:
     "relative aspect-square w-full touch-none overflow-hidden rounded-[0.58rem] border border-[var(--dashboard-border)] bg-[var(--calendar-active-bg)] cursor-grab active:cursor-grabbing",
   avatarCropImage:
@@ -276,7 +294,7 @@ export const styles = {
   avatarCropEmpty:
     "flex h-full w-full items-center justify-center text-[0.78rem] text-[var(--muted)]",
   avatarCropControls:
-    "flex min-w-0 flex-col gap-[0.78rem]",
+    "flex min-w-0 flex-col gap-[0.5rem]",
   avatarCropField:
     "flex flex-col gap-[0.38rem] text-[0.78rem] text-[var(--muted)] [&>input]:accent-[var(--text)]",
   avatarCropActions:
@@ -286,14 +304,11 @@ export const styles = {
   avatarModalApply: actionFilled,
   avatarModalButton: actionOutline,
   avatarModalRemove: actionDanger,
+  // No top padding: on a phone the four buttons are one stack, so the gap here
+  // has to be the same 0.5rem the groups use, not that plus a stray pad.
   avatarModalFooter:
-    "flex flex-col gap-[0.5rem] pt-[0.1rem] min-[520px]:flex-row min-[520px]:justify-end",
+    "flex flex-col gap-[0.5rem] min-[520px]:flex-row min-[520px]:justify-end",
   empty: "m-[0.68rem_0_0] text-[0.84rem] text-[var(--muted)]",
   skeletonBlock:
     "block rounded-[0.42rem] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]",
-  skeletonPanel: `${dashboardSurface} flex flex-col gap-[0.82rem] p-[0.82rem]`,
-  skeletonPanelHead:
-    "flex items-center justify-between gap-[0.7rem] max-[760px]:flex-col max-[760px]:items-stretch",
-  skeletonMetricList: "flex flex-col gap-[0.42rem]",
-  skeletonTimeline: "mt-[0.66rem] flex flex-col gap-[0.42rem]",
 } as const;
