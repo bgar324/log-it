@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { BackButton } from "@/app/components/back-button";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
@@ -67,7 +67,7 @@ export function WorkoutLogger({
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [isRestDayOverrideDialogOpen, setIsRestDayOverrideDialogOpen] = useState(false);
   const [hasRestDayOverride, setHasRestDayOverride] = useState(false);
-  const formId = useId();
+  const formRef = useRef<HTMLFormElement | null>(null);
   const {
     clearAll,
     clearPendingLookup: clearPendingSuggestionLookup,
@@ -308,7 +308,7 @@ export function WorkoutLogger({
             <h1 className={styles.title}>{pageTitle}</h1>
           </div>
         </header>
-        <form id={formId} className={styles.form} onSubmit={handleSubmit}>
+        <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
           <WorkoutLoggerMetaCard
             title={draft.title}
             performedAt={draft.performedAt}
@@ -382,7 +382,9 @@ export function WorkoutLogger({
         </form>
 
         <WorkoutLoggerToolsFab
-          formId={formId}
+          // The dial unmounts its own button as it closes, so Save cannot rely
+          // on a submit button's default action. Submit the form directly.
+          onSave={() => formRef.current?.requestSubmit()}
           submitLabel={submitLabel}
           isSaving={isSaving}
           canReorder={draft.exercises.length > 1}

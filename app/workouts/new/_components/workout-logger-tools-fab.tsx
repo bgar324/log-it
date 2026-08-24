@@ -30,7 +30,6 @@ type ToolsFabAction = {
   label: string;
   icon: typeof Plus;
   onClick?: () => void;
-  submit?: boolean;
   primary?: boolean;
   disabled?: boolean;
   busy?: boolean;
@@ -39,7 +38,7 @@ type ToolsFabAction = {
 };
 
 type WorkoutLoggerToolsFabProps = {
-  formId: string;
+  onSave: () => void;
   submitLabel: string;
   isSaving: boolean;
   canReorder: boolean;
@@ -61,7 +60,7 @@ type WorkoutLoggerToolsFabProps = {
  * count varies with what the workout supports.
  */
 export function WorkoutLoggerToolsFab({
-  formId,
+  onSave,
   submitLabel,
   isSaving,
   canReorder,
@@ -197,7 +196,7 @@ export function WorkoutLoggerToolsFab({
             key: "save",
             label: submitLabel,
             icon: Save,
-            submit: true,
+            onClick: onSave,
             primary: true,
             disabled: isSaving,
             busy: isSaving,
@@ -225,8 +224,11 @@ export function WorkoutLoggerToolsFab({
               return (
                 <button
                   key={action.key}
-                  type={action.submit ? "submit" : "button"}
-                  form={action.submit ? formId : undefined}
+                  // Never type="submit". Closing the dial unmounts this button
+                  // during the click, and the browser skips the submit default
+                  // action for a button that is no longer in the document, so
+                  // Save silently did nothing. Save calls requestSubmit itself.
+                  type="button"
                   className={styles.fabAction}
                   data-state={state}
                   data-primary={action.primary ? "true" : undefined}
