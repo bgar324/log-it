@@ -3,12 +3,12 @@
 import {
   Apple,
   CalendarDays,
+  ChartNoAxesColumnIncreasing,
   ClipboardList,
   House,
   LogOut,
   Plus,
   Settings,
-  TrendingUp,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -35,12 +35,14 @@ type NavIcon = ComponentType<{
 // layer underneath, revealed by sliding the app aside.
 const HOME_TAB = { view: "dashboard", label: "Home", icon: House } as const;
 const NUTRITION_TAB = { view: "nutrition", label: "Nutrition", icon: Apple } as const;
-
+// Profile leads: the identity block sits directly above it, so the row that
+// opens that identity belongs next to it rather than buried between Split and
+// the footer.
 const DRAWER_ITEMS: Array<{ view: DashboardView; label: string; icon: NavIcon }> = [
-  { view: "workouts", label: "Workouts", icon: ClipboardList },
-  { view: "progress", label: "Progress", icon: TrendingUp },
-  { view: "split", label: "Split", icon: CalendarDays },
   { view: "profile", label: "Profile", icon: UserRound },
+  { view: "workouts", label: "Workouts", icon: ClipboardList },
+  { view: "progress", label: "Progress", icon: ChartNoAxesColumnIncreasing },
+  { view: "split", label: "Split", icon: CalendarDays },
 ];
 
 // Preferences, not identity: theme and units live here, account actions stay on
@@ -337,6 +339,10 @@ export function AppShell({
         </div>
 
         <AppTabBar activeView={activeView} onNavigate={onNavigate} drawerOpen={drawerOpen} />
+
+        {/* Last and highest: the card has to cover the bar as well as the screen,
+            so it cannot be a child of either. */}
+        <div className={navStyles.appCard} data-drawer={drawerOpen ? "open" : "closed"} />
       </div>
     </AppNavContext.Provider>
   );

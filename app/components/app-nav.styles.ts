@@ -4,7 +4,9 @@
 //            underneath everything as the base layer.
 //   Layer A  the app itself (top bar, view, bottom bar). Opaque, on top.
 //            Opening the drawer slides layer A to the right to reveal layer B
-//            rather than sliding a panel over the app.
+//            rather than sliding a panel over the app, and turns what is left
+//            on screen into a card: lit by a light veil and cropped by
+//            phone-screen corners.
 //
 // Phones only: at min-[900px] the sidebar is the navigation and layer A never
 // moves. Open state rides on a `data-drawer` attribute rather than an appended
@@ -41,20 +43,33 @@ const barRowHeight = "min-h-[var(--bar-row)]";
 const barBandHeight =
   "min-h-[calc(var(--bar-row)+var(--bar-pad)+var(--bar-pad)+1px+env(safe-area-inset-bottom))]";
 
-// Layer A recedes rather than only moving: while the drawer is open, both of its
-// halves — the screen and the tab bar beside it — fog and blur together, so the
-// sliver of app left on screen reads as a layer behind instead of a second
-// column of half-words competing with the nav. Tinted toward `--bg` like the
-// logger's dial scrim, so it fogs in light and smokes in dark.
+// The card frame: one viewport-anchored overlay that turns the exposed part of
+// layer A into a phone screen sitting on the drawer. It does three things at
+// once — veils layer A, crops it to rounded corners, and strokes its edge — and
+// it does them by covering rather than clipping, so layer A's own box, scroll
+// position and sticky header are never touched.
+//
+//   Veil    `--text` at 9%, so the card reads *lighter* than the drawer in dark
+//           and shaded in light. Tinting toward `--bg` instead only smears the
+//           app into the background, which is what the first version did.
+//   Corners `box-shadow` with a spread and no offset paints a ring of `--bg`
+//           outside the rounded rect: it fills the corner wedges and the bands
+//           above and below in the one colour the drawer and stage are already
+//           painted, so the crop is indistinguishable from a real clip.
+//   Bands   Inset by the safe areas plus a hair, so on a notched phone the
+//           bands land in the status-bar and home-indicator dead space (as they
+//           do natively) and in a browser they shrink to a sliver rather than
+//           cropping the top bar or the tab labels.
+//
+// `clip-path` holds the ring at the card's left edge. Without it the spread
+// reaches into the drawer and paints over its divider and nav labels.
 //
 // Always mounted at zero opacity and ramped by the open state, never introduced
-// already dimmed: a transition needs a previous frame to start from, so a dim
+// already lit: a transition needs a previous frame to start from, so a veil
 // that arrives with the open state would snap to full strength across the whole
 // screen on the frame the drawer opens and only then slide away.
-const layerRecede =
-  "after:pointer-events-none after:absolute after:inset-0 after:z-40 after:bg-[color-mix(in_srgb,var(--bg)_65%,transparent)] after:opacity-0 after:transition-opacity after:duration-[280ms] after:ease-[cubic-bezier(0.2,0.7,0.2,1)]";
-const layerRecedeOpen =
-  "data-[drawer=open]:after:opacity-100 data-[drawer=open]:after:backdrop-blur-[7px]";
+const cardFrame =
+  "pointer-events-none fixed inset-x-0 top-[calc(0.55rem+env(safe-area-inset-top))] bottom-[calc(0.55rem+env(safe-area-inset-bottom))] z-40 rounded-[1.5rem] border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[color-mix(in_srgb,var(--text)_9%,transparent)] shadow-[0_0_0_6rem_var(--bg)] [clip-path:inset(-6rem_-6rem_-6rem_0)] opacity-0 transition-[opacity,translate] duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)]";
 // Layer A is pushed aside by exactly the drawer's width, so the two edges meet.
 const layerShiftOpen = "data-[drawer=open]:translate-x-[min(17.5rem,78vw)]";
 
@@ -63,11 +78,13 @@ export const navStyles = {
   // scroll container, so document scrolling and the sticky top bar still work.
   stage: "relative min-h-dvh bg-[var(--bg)] [overflow-x:clip]",
   appLayer:
-    `relative z-10 min-h-dvh bg-[var(--bg)] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] ${layerRecede} ${layerRecedeOpen} ${layerShiftOpen} min-[900px]:!translate-x-0 min-[900px]:after:hidden`,
-  // Purely a hit target now that the layer owns its own dim: tap anywhere on the
-  // app to put it back.
+    `relative z-10 min-h-dvh bg-[var(--bg)] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] ${layerShiftOpen} min-[900px]:!translate-x-0`,
+  // The veil and the crop belong to `appCard`, which is a stage sibling because
+  // it has to cover the tab bar too. This is only the hit target: tap anywhere
+  // on the card to put the app back.
   appLayerScrim:
     "absolute inset-0 z-40 cursor-default border-0 bg-transparent p-0 min-[900px]:hidden",
+  appCard: `${cardFrame} ${layerShiftOpen} data-[drawer=open]:opacity-100 min-[900px]:hidden`,
 
   // `invisible` is functional, not cosmetic: the closed drawer sits at the left
   // edge underneath layer A, and `visibility: hidden` is what keeps an edge tap
@@ -76,15 +93,8 @@ export const navStyles = {
   // the slide, and layer A covers it until the slide starts anyway.
   // No bottom padding: the footer row is a flush bottom band that owns the
   // safe-area inset itself, so it can line up with the tab bar beside it.
-  //
-  // The right border is the seam between the layers. Both surfaces are painted
-  // `--bg`, so with the app dimmed to the same colour this hairline is the only
-  // thing that separates them. It belongs to the drawer rather than to layer A's
-  // overlay because the drawer's edge is the one place the line runs unbroken
-  // from the status bar to the bottom of the screen: layer A's overlay stops at
-  // the tab bar, which is a stage sibling painted above it.
   drawerLayer:
-    "fixed inset-y-0 left-0 z-0 flex w-[min(17.5rem,78vw)] flex-col gap-[1rem] border-r border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)] px-[1.05rem] pt-[calc(1.15rem+env(safe-area-inset-top))] invisible -translate-x-[9%] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] data-[drawer=open]:visible data-[drawer=open]:translate-x-0 min-[900px]:hidden",
+    "fixed inset-y-0 left-0 z-0 flex w-[min(17.5rem,78vw)] flex-col gap-[1rem] bg-[var(--bg)] px-[1.05rem] pt-[calc(1.15rem+env(safe-area-inset-top))] invisible -translate-x-[9%] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] data-[drawer=open]:visible data-[drawer=open]:translate-x-0 min-[900px]:hidden",
 
   // Tighter left inset than right: the avatar is a circle, so its optical edge
   // sits inside its box and a symmetric gutter reads as too much space.
@@ -104,13 +114,12 @@ export const navStyles = {
   // `bottom: 0` against the full page height and push the bar off-screen while
   // the drawer is open. It stays viewport-anchored and translates in sync.
   //
-  // Being a sibling also puts it above layer A's overlay, so it carries its own
-  // copy: same tint, same blur, same ramp. The overlay is an absolutely
-  // positioned pseudo-element, so it covers the padding box and not the bar's
-  // top hairline — which is what keeps that hairline continuous with the drawer
-  // footer's beside it while the bar's contents fade back.
+  // It needs no veil of its own: `appCard` is a later sibling at a higher
+  // z-index, so the one card covers the bar and the screen together. That is why
+  // the veil lives on a stage-level overlay at all — a pseudo-element on layer A
+  // paints underneath the bar and leaves it bright.
   tabBar:
-    `fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 items-center ${barMetrics} ${barHairline} bg-[var(--bg)] px-[0.5rem] ${barBlockPadding} transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] ${layerRecede} ${layerRecedeOpen} ${layerShiftOpen} data-[drawer=open]:pointer-events-none min-[900px]:hidden`,
+    `fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 items-center ${barMetrics} ${barHairline} bg-[var(--bg)] px-[0.5rem] ${barBlockPadding} transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] ${layerShiftOpen} data-[drawer=open]:pointer-events-none min-[900px]:hidden`,
   // The bar is a fixed-height surface, so the tab keeps the band's own row
   // height and its small label; only the radius joins the canon, since a 0.6rem
   // corner here was the app's one-off.

@@ -3,12 +3,12 @@
 import {
   Apple,
   CalendarDays,
+  ChartNoAxesColumnIncreasing,
   ClipboardList,
   House,
   PanelLeft,
   Plus,
   Settings,
-  TrendingUp,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -33,7 +33,7 @@ const SIDEBAR_ITEMS: Array<{
 }> = [
   { view: "dashboard", label: "Home", icon: House },
   { view: "workouts", label: "Workouts", icon: ClipboardList },
-  { view: "progress", label: "Progress", icon: TrendingUp },
+  { view: "progress", label: "Progress", icon: ChartNoAxesColumnIncreasing },
   { view: "nutrition", label: "Nutrition", icon: Apple },
   { view: "split", label: "Split", icon: CalendarDays },
 ];
