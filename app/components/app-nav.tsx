@@ -340,9 +340,9 @@ export function AppShell({
 
         <AppTabBar activeView={activeView} onNavigate={onNavigate} drawerOpen={drawerOpen} />
 
-        {/* Last and highest: the card has to cover the bar as well as the screen,
+        {/* Last and highest: the veil has to cover the bar as well as the screen,
             so it cannot be a child of either. */}
-        <div className={navStyles.appCard} data-drawer={drawerOpen ? "open" : "closed"} />
+        <div className={navStyles.appVeil} data-drawer={drawerOpen ? "open" : "closed"} />
       </div>
     </AppNavContext.Provider>
   );

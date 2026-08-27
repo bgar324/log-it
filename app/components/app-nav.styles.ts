@@ -43,33 +43,30 @@ const barRowHeight = "min-h-[var(--bar-row)]";
 const barBandHeight =
   "min-h-[calc(var(--bar-row)+var(--bar-pad)+var(--bar-pad)+1px+env(safe-area-inset-bottom))]";
 
-// The card frame: one viewport-anchored overlay that turns the exposed part of
-// layer A into a phone screen sitting on the drawer. It does three things at
-// once — veils layer A, crops it to rounded corners, and strokes its edge — and
-// it does them by covering rather than clipping, so layer A's own box, scroll
-// position and sticky header are never touched.
+// The veil: one viewport-anchored overlay over the exposed part of layer A. It
+// does two things — lifts layer A and draws the seam — and it is a stage sibling
+// rather than a pseudo-element on layer A because the bottom bar is a stage
+// sibling too: a pseudo-element on the layer paints underneath the bar and
+// leaves it bright.
 //
-//   Veil    `--text` at 9%, so the card reads *lighter* than the drawer in dark
-//           and shaded in light. Tinting toward `--bg` instead only smears the
-//           app into the background, which is what the first version did.
-//   Corners `box-shadow` with a spread and no offset paints a ring of `--bg`
-//           outside the rounded rect: it fills the corner wedges and the bands
-//           above and below in the one colour the drawer and stage are already
-//           painted, so the crop is indistinguishable from a real clip.
-//   Bands   Inset by the safe areas plus a hair, so on a notched phone the
-//           bands land in the status-bar and home-indicator dead space (as they
-//           do natively) and in a browser they shrink to a sliver rather than
-//           cropping the top bar or the tab labels.
+//   Veil  `--text` at 9%, so the exposed strip reads *lighter* than the drawer
+//         in dark and shaded in light. Tinting toward `--bg` instead only smears
+//         the app into the background.
+//   Seam  A `border-l` at the canon hairline, on the overlay rather than on the
+//         drawer's right edge, so it travels with layer A, fades in with the
+//         veil, and runs the full height of the viewport — including across the
+//         bottom band, which the bar would otherwise paint over.
 //
-// `clip-path` holds the ring at the card's left edge. Without it the spread
-// reaches into the drawer and paints over its divider and nav labels.
+// Full-bleed on purpose: rounding the exposed edge and insetting it into a card
+// was tried and rejected. It cost bands that crop the chrome and a corner curve
+// that eats the bottom hairline where it meets the drawer's footer.
 //
 // Always mounted at zero opacity and ramped by the open state, never introduced
 // already lit: a transition needs a previous frame to start from, so a veil
 // that arrives with the open state would snap to full strength across the whole
 // screen on the frame the drawer opens and only then slide away.
-const cardFrame =
-  "pointer-events-none fixed inset-x-0 top-[calc(0.55rem+env(safe-area-inset-top))] bottom-[calc(0.55rem+env(safe-area-inset-bottom))] z-40 rounded-[1.5rem] border border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[color-mix(in_srgb,var(--text)_9%,transparent)] shadow-[0_0_0_6rem_var(--bg)] [clip-path:inset(-6rem_-6rem_-6rem_0)] opacity-0 transition-[opacity,translate] duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)]";
+const layerVeil =
+  "pointer-events-none fixed inset-0 z-40 border-l border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[color-mix(in_srgb,var(--text)_9%,transparent)] opacity-0 transition-[opacity,translate] duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)]";
 // Layer A is pushed aside by exactly the drawer's width, so the two edges meet.
 const layerShiftOpen = "data-[drawer=open]:translate-x-[min(17.5rem,78vw)]";
 
@@ -79,12 +76,12 @@ export const navStyles = {
   stage: "relative min-h-dvh bg-[var(--bg)] [overflow-x:clip]",
   appLayer:
     `relative z-10 min-h-dvh bg-[var(--bg)] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] ${layerShiftOpen} min-[900px]:!translate-x-0`,
-  // The veil and the crop belong to `appCard`, which is a stage sibling because
+  // The veil and the seam belong to `appVeil`, which is a stage sibling because
   // it has to cover the tab bar too. This is only the hit target: tap anywhere
-  // on the card to put the app back.
+  // on the exposed app to put it back.
   appLayerScrim:
     "absolute inset-0 z-40 cursor-default border-0 bg-transparent p-0 min-[900px]:hidden",
-  appCard: `${cardFrame} ${layerShiftOpen} data-[drawer=open]:opacity-100 min-[900px]:hidden`,
+  appVeil: `${layerVeil} ${layerShiftOpen} data-[drawer=open]:opacity-100 min-[900px]:hidden`,
 
   // `invisible` is functional, not cosmetic: the closed drawer sits at the left
   // edge underneath layer A, and `visibility: hidden` is what keeps an edge tap
