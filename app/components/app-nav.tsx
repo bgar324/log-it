@@ -166,15 +166,16 @@ export function AppTopBar({
 export function AppTabBar({
   activeView,
   onNavigate,
-  shifted = false,
+  drawerOpen = false,
 }: {
   activeView?: DashboardView | null;
   onNavigate?: (view: DashboardView) => void;
-  shifted?: boolean;
+  drawerOpen?: boolean;
 }) {
   return (
     <nav
-      className={`${navStyles.tabBar} ${shifted ? navStyles.tabBarShifted : ""}`}
+      className={navStyles.tabBar}
+      data-drawer={drawerOpen ? "open" : "closed"}
       data-app-nav="tabbar"
     >
       <Link
@@ -255,7 +256,8 @@ export function AppShell({
     <AppNavContext.Provider value={{ openDrawer: () => setDrawerOpen(true) }}>
       <div className={navStyles.stage}>
         <div
-          className={`${navStyles.drawerLayer} ${drawerOpen ? navStyles.drawerLayerOpen : ""}`}
+          className={navStyles.drawerLayer}
+          data-drawer={drawerOpen ? "open" : "closed"}
         >
           <div className={navStyles.drawerIdentity}>
             <Avatar
@@ -322,7 +324,7 @@ export function AppShell({
           </div>
         </div>
 
-        <div className={`${navStyles.appLayer} ${drawerOpen ? navStyles.appLayerOpen : ""}`}>
+        <div className={navStyles.appLayer} data-drawer={drawerOpen ? "open" : "closed"}>
           {children}
 
           {drawerOpen ? (
@@ -334,7 +336,7 @@ export function AppShell({
           ) : null}
         </div>
 
-        <AppTabBar activeView={activeView} onNavigate={onNavigate} shifted={drawerOpen} />
+        <AppTabBar activeView={activeView} onNavigate={onNavigate} drawerOpen={drawerOpen} />
       </div>
     </AppNavContext.Provider>
   );
