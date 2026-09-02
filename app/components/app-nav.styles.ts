@@ -93,19 +93,16 @@ export const navStyles = {
   drawerLayer:
     "fixed inset-y-0 left-0 z-0 flex w-[min(17.5rem,78vw)] flex-col gap-[1rem] bg-[var(--bg)] px-[1.05rem] pt-[calc(1.15rem+env(safe-area-inset-top))] invisible -translate-x-[9%] transition-transform duration-[280ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] data-[drawer=open]:visible data-[drawer=open]:translate-x-0 min-[900px]:hidden",
 
-  // Tighter left inset than right: the avatar is a circle, so its optical edge
-  // sits inside its box and a symmetric gutter reads as too much space.
+  // The trigger owns a 44px target; the tight leading inset keeps its glyph
+  // aligned with the rest of the phone chrome.
   topBar:
     "sticky top-0 z-30 flex min-h-[3.5rem] items-center gap-[0.5rem] border-b border-[color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)] pl-[0.5rem] pr-[0.82rem] min-[900px]:min-h-[3.75rem] min-[900px]:pl-[0.85rem] min-[900px]:pr-[1.18rem]",
   topBarTitle:
     "min-w-0 flex-1 truncate text-[1.0625rem] font-[540] tracking-[-0.02em] text-[var(--text)] min-[900px]:text-[1.35rem]",
   topBarAccessory: "flex shrink-0 items-center gap-[0.375rem]",
 
-  avatarButton: `${actionIconQuiet} p-0 active:opacity-70 min-[900px]:hidden`,
-  avatarImage:
-    "h-[2.05rem] w-[2.05rem] rounded-[999px] border border-[color-mix(in_srgb,var(--text)_12%,transparent)] object-cover",
-  avatarFallback:
-    "inline-flex h-[2.05rem] w-[2.05rem] items-center justify-center rounded-[999px] bg-[color-mix(in_srgb,var(--text)_7%,transparent)] text-[0.8125rem] font-[540] text-[var(--text)]",
+  drawerTrigger: `${actionIconQuiet} active:opacity-70 min-[900px]:hidden`,
+  drawerTriggerIcon: "h-[1.25rem] w-[1.25rem]",
   // The bar is a stage sibling, not a layer-A child: a translated ancestor
   // becomes the containing block for fixed descendants, which would resolve
   // `bottom: 0` against the full page height and push the bar off-screen while
@@ -121,7 +118,7 @@ export const navStyles = {
   // height and its small label; only the radius joins the canon, since a 0.6rem
   // corner here was the app's one-off.
   tabItem:
-    `relative mx-auto inline-flex ${barRowHeight} w-full max-w-[6.5rem] cursor-pointer flex-col items-center justify-center gap-[0.14rem] rounded-[999px] border-0 bg-transparent text-[var(--muted)] no-underline [touch-action:manipulation] transition-colors duration-150 active:bg-[color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)]`,
+    `relative mx-auto inline-flex ${barRowHeight} w-full max-w-[6.5rem] cursor-pointer flex-col items-center justify-center gap-[0.14rem] rounded-[999px] border-0 bg-transparent text-[var(--muted)] no-underline [touch-action:manipulation] transition-colors duration-150 data-[active=true]:text-[var(--text)]`,
   tabIcon: "h-[1.3rem] w-[1.3rem]",
   tabLabel: "text-[0.6875rem] leading-none tracking-[-0.01em]",
   tabAction:

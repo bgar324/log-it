@@ -32,6 +32,7 @@ export function ExerciseTemplateRow({
       <div className={splitStyles.exerciseMain}>
         <label className={splitStyles.editorField}>
           <input
+            aria-label="Exercise name"
             className={splitStyles.editorInput}
             value={exercise.exerciseDisplayName}
             onChange={(event) => onNameChange(event.target.value)}
@@ -67,6 +68,9 @@ export function ExerciseTemplateRow({
 
         <label className={splitStyles.editorField}>
           <input
+            aria-label={`Sets for ${
+              exercise.exerciseDisplayName.trim() || "exercise"
+            }`}
             className={`${splitStyles.editorInput} ${splitStyles.setsInput}`}
             type="number"
             min={1}
@@ -84,6 +88,9 @@ export function ExerciseTemplateRow({
       {isEditing ? (
         <button
           type="button"
+          aria-label={`Remove ${
+            exercise.exerciseDisplayName.trim() || "exercise"
+          }`}
           className={splitStyles.dangerIconButton}
           onClick={onRemove}
         >

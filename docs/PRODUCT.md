@@ -11,7 +11,7 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 - Sign out lives in the drawer footer beside Settings, not on the profile view.
 - A chosen profile photo applies immediately rather than waiting for a separate save.
 - Signed-in users land on `/dashboard`.
-- The dashboard has seven views: overview, workouts, progress, nutrition, split, profile, and settings. On phones the bottom bar reaches overview, the workout logger, and nutrition; the avatar drawer reaches workouts, progress, split, profile, and settings. Desktop lists every view in the sidebar.
+- The dashboard has seven views: overview, workouts, progress, nutrition, split, profile, and settings. On phones the bottom bar reaches overview, the workout logger, and nutrition; a top-left sidebar control opens the drawer for workouts, progress, split, profile, and settings. Desktop lists every view in the sidebar.
 - Dashboard view switching updates the query string, lazily loads missing view data, and reuses loaded views until an authoritative server refresh.
 - The overview greets the user by first name and states today's plan as a sentence derived from the active split, followed by one action: log the planned workout, log an unscheduled workout on a rest day, or set up a split when none exists. The note under the plan counts both planned exercises and the sets they add up to, since ten exercises at two sets is a different session from seven at five. When today's split workout type is already logged for the current Pacific date it reads `Logged for today.` beside a quiet link to log another workout.
 - Settings holds preferences only: theme and weight unit. Both apply on selection with no save button, and the unit write sends the saved profile values plus the chosen unit, so it can never commit unsaved Profile edits or a pending avatar. Account actions (email, password, sign out, delete) stay on the profile view, which is also the only place sign-out lives.
@@ -52,8 +52,10 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 - Split days cover Monday through Sunday.
 - Missing days normalize to `Rest`.
 - Duplicate weekdays are rejected by split payload normalization.
-- The split view has no separate library panel. Its header is a selector listing every saved split (the active one marked `· Active`) plus a tools menu; `Rename split` swaps the selector for an input and persists the new name on commit (Escape restores the previous name), and `New split` creates one. One muted line under the selector states training days and exercises.
-- Split exercise rows are borderless name/sets pairs. Per-row delete appears only after `Edit exercises` in the day's tools menu, and removes the exercise immediately without a confirmation dialog.
+- The split view has no separate library panel. Its header is a selector listing every saved split (the active one marked `· Active`) plus a tools menu; `Rename split` swaps the selector for an input and persists the new name on commit (Escape restores the previous name), and `New split` creates one. One muted line states training days and exercises.
+- Below `981px` the split itself is a one-screen weekly agenda: a `Week` header owns visible `Reorder` and filled `Save` actions, followed by seven compact weekday rows with the current Pacific weekday marked `Today`. Tapping a row opens an instant full-viewport day editor with its own Save action and a seven-day switcher, so editing never requires scrolling past the rest of the week. At `981px` and wider, the week and selected-day editor stay side by side.
+- Reordering uses fixed weekday slots and shifts the other workout assignments around the dragged workout. The dragged card follows the finger; no up/down arrow controls exist.
+- Split exercise rows are borderless name/sets pairs with visible column labels. `Add exercise` is visible in the day editor. Reordering and the explicit delete mode live in the day tools menu; delete removes the exercise immediately because entering that mode is the confirmation.
 - Split exercises have display names, slugs, set targets, and one-based ordering.
 - Saving a split replaces existing split days/exercises for that split.
 - Deleting the active split activates the most recently updated remaining split when one exists.

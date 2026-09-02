@@ -25,7 +25,7 @@ type SidebarIcon = ComponentType<{
 }>;
 
 // Desktop lists every section; phones get Home/Log/Nutrition in the tab bar and
-// the rest behind the avatar drawer.
+// the rest behind the navigation drawer.
 const SIDEBAR_ITEMS: Array<{
   view: DashboardView;
   label: string;
@@ -183,7 +183,7 @@ export function DashboardShell({
       </aside>
 
       <section className={styles.main}>
-        <AppTopBar title={title} user={user} accessory={renderHeaderAccessory?.()} />
+        <AppTopBar title={title} accessory={renderHeaderAccessory?.()} />
         <div className={styles.mainContent}>{children}</div>
       </section>
     </main>

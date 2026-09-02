@@ -10,20 +10,29 @@ import { splitStyles } from "./split-system.styles";
 type SplitDayCardProps = {
   day: WorkoutSplitDayTemplate;
   isSelected: boolean;
+  isToday: boolean;
   onSelect: () => void;
 };
 
 export function SplitDayCard({
   day,
   isSelected,
+  isToday,
   onSelect,
 }: SplitDayCardProps) {
   const isRestDay = isRestDayWorkoutTypeSlug(day.workoutTypeSlug);
   const totalSets = day.exercises.reduce((sum, exercise) => sum + exercise.sets, 0);
 
+  const weekdayLabel = getSplitWeekdayLabel(day.weekday);
+  const stats = isRestDay ? "Recovery day" : `${totalSets} planned sets`;
+
   return (
     <button
       type="button"
+      data-split-day={day.weekday}
+      aria-label={`${weekdayLabel}${isToday ? ", today" : ""}: ${
+        day.workoutType
+      }, ${stats}`}
       className={`${splitStyles.splitDayCard} ${
         isRestDay
           ? splitStyles.splitDayCardRest
@@ -33,21 +42,24 @@ export function SplitDayCard({
       } ${isRestDay && isSelected ? splitStyles.splitDayCardRestActive : ""}`}
       onClick={onSelect}
     >
-      <div className={splitStyles.splitDayHeader}>
-        <div>
-          <span className={splitStyles.splitDayWeekday}>
-            {getSplitWeekdayLabel(day.weekday)}
-          </span>
-        </div>
-        <span className={splitStyles.splitDayMeta}>
-          <span className="min-[701px]:hidden">{day.exercises.length} ex</span>
-          <span className="max-[700px]:hidden">{day.exercises.length} exercises</span>
+      <span className={splitStyles.splitDayIdentity}>
+        <span className={splitStyles.splitDayWeekdayMobile}>
+          {weekdayLabel.slice(0, 3)}
         </span>
-      </div>
-      <strong className={splitStyles.splitDayTitle}>{day.workoutType}</strong>
-      <p className={splitStyles.splitDayStats}>
-        {isRestDay ? "Recovery day" : `${totalSets} planned sets`}
-      </p>
+        <span className={splitStyles.splitDayWeekdayDesktop}>
+          {weekdayLabel}
+        </span>
+        {isToday ? (
+          <span className={splitStyles.splitDayToday}>Today</span>
+        ) : null}
+      </span>
+      <span className={splitStyles.splitDayMain}>
+        <strong className={splitStyles.splitDayTitle}>{day.workoutType}</strong>
+        <span className={splitStyles.splitDayStats}>{stats}</span>
+      </span>
+      <span className={splitStyles.splitDayMeta}>
+        {day.exercises.length} {day.exercises.length === 1 ? "exercise" : "exercises"}
+      </span>
     </button>
   );
 }

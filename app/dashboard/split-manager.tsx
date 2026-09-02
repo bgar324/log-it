@@ -4,16 +4,16 @@ import {
   CheckCircle2,
   Circle,
   Copy,
-  ListOrdered,
+  GripVertical,
   Pencil,
   Plus,
-  Save,
   Trash2,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   isRestDayWorkoutTypeSlug,
+  type SplitWeekdayValue,
   type WorkoutSplitTemplate,
 } from "@/lib/workout-splits/shared";
 import { SplitDayReorderDialog } from "./split-day-reorder-dialog";
@@ -22,6 +22,7 @@ import { SplitActionMenu } from "./split-action-menu";
 import { splitStyles } from "./split-system.styles";
 import { SplitDayCard } from "./split-day-card";
 import { useSplitManagerState } from "./_hooks/use-split-manager-state";
+import { getInitialSelectedWeekday } from "./split-manager.shared";
 
 type SplitManagerProps = {
   initialSplit: WorkoutSplitTemplate;
@@ -38,6 +39,27 @@ export function SplitManager({
     persistChanges,
   });
   const [isReorderDaysOpen, setIsReorderDaysOpen] = useState(false);
+  const [isMobileEditorOpen, setIsMobileEditorOpen] = useState(false);
+  const [todayWeekday] = useState<SplitWeekdayValue>(getInitialSelectedWeekday);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const narrowLayout = window.matchMedia("(max-width: 980px)");
+
+    function closeEditorInWideLayout(event: MediaQueryListEvent) {
+      if (!event.matches) {
+        setIsMobileEditorOpen(false);
+      }
+    }
+
+    narrowLayout.addEventListener("change", closeEditorInWideLayout);
+    return () => {
+      narrowLayout.removeEventListener("change", closeEditorInWideLayout);
+    };
+  }, []);
   // Holds the name as it was when rename started. Typing mutates the selected
   // split in local state, so cancelling has to restore this snapshot or the
   // discarded name stays visible and can be persisted by a later save.
@@ -56,7 +78,7 @@ export function SplitManager({
   }
 
   // Renaming reuses the split save path, so a new name persists immediately
-  // instead of waiting for an unrelated "Save split".
+  // instead of waiting for the page-level Save action.
   function commitRename() {
     if (renameDraftRef.current === null) {
       return;
@@ -114,9 +136,17 @@ export function SplitManager({
     }`;
   })();
 
+  function selectDay(weekday: SplitWeekdayValue) {
+    state.selectWeekday(weekday);
+
+    if (window.matchMedia("(max-width: 980px)").matches) {
+      setIsMobileEditorOpen(true);
+    }
+  }
+
   return (
     <div className={splitStyles.splitLayout}>
-      <section className={splitStyles.splitSummary}>
+      <section aria-label="Weekly split" className={splitStyles.splitSummary}>
         <div>
           <div className={splitStyles.splitSummaryHead}>
             {isRenaming ? (
@@ -144,9 +174,12 @@ export function SplitManager({
                 <select
                   className={splitStyles.splitSelect}
                   value={state.split.id ?? ""}
-                  onChange={(event) =>
-                    state.selectSplit(event.target.value === "" ? null : event.target.value)
-                  }
+                  onChange={(event) => {
+                    state.selectSplit(
+                      event.target.value === "" ? null : event.target.value,
+                    );
+                    setIsMobileEditorOpen(false);
+                  }}
                 >
                   {state.splits.map((split) => (
                     <option key={split.id ?? "draft-split"} value={split.id ?? ""}>
@@ -158,7 +191,7 @@ export function SplitManager({
                 </select>
               </div>
             )}
-            <SplitActionMenu>
+            <SplitActionMenu label="Split options">
               {(close) => (
                 <>
                   <button
@@ -221,21 +254,6 @@ export function SplitManager({
                     type="button"
                     className={splitStyles.actionMenuItem}
                     onClick={() => {
-                      setIsReorderDaysOpen(true);
-                      close();
-                    }}
-                    disabled={state.split.days.length < 2}
-                  >
-                    <ListOrdered
-                      className={splitStyles.inlineIcon}
-                      strokeWidth={1.9}
-                    />
-                    Reorder days
-                  </button>
-                  <button
-                    type="button"
-                    className={splitStyles.actionMenuItem}
-                    onClick={() => {
                       void state.handleCopySplit();
                       close();
                     }}
@@ -243,18 +261,6 @@ export function SplitManager({
                   >
                     <Copy className={splitStyles.inlineIcon} strokeWidth={1.9} />
                     Copy split
-                  </button>
-                  <button
-                    type="button"
-                    className={splitStyles.actionMenuItem}
-                    onClick={() => {
-                      void state.handleSave();
-                      close();
-                    }}
-                    disabled={state.saveState.kind === "saving"}
-                  >
-                    <Save className={splitStyles.inlineIcon} strokeWidth={1.9} />
-                    Save split
                   </button>
                   {state.split.id ? (
                     <>
@@ -283,21 +289,58 @@ export function SplitManager({
           <p className={splitStyles.splitSelectMeta}>{selectedSplitMeta}</p>
         </div>
 
+        <div className={splitStyles.splitWeekHeader}>
+          <h2 className={splitStyles.splitWeekTitle}>Week</h2>
+          <div className={splitStyles.splitWeekActions}>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              className={splitStyles.splitReorderOpenButton}
+              onClick={() => setIsReorderDaysOpen(true)}
+              disabled={state.split.days.length < 2}
+            >
+              <GripVertical
+                className={splitStyles.inlineIcon}
+                strokeWidth={1.9}
+              />
+              Reorder
+            </button>
+            {!isRenaming ? (
+              <button
+                type="button"
+                className={splitStyles.splitSaveButton}
+                onClick={() => void state.handleSave()}
+                disabled={state.saveState.kind === "saving"}
+              >
+                {state.saveState.kind === "saving" ? "Saving..." : "Save"}
+              </button>
+            ) : null}
+          </div>
+        </div>
+
         <div className={splitStyles.splitGrid}>
           {state.split.days.map((day) => (
             <SplitDayCard
               key={day.weekday}
               day={day}
               isSelected={day.weekday === state.selectedWeekday}
-              onSelect={() => state.selectWeekday(day.weekday)}
+              isToday={day.weekday === todayWeekday}
+              onSelect={() => selectDay(day.weekday)}
             />
           ))}
         </div>
       </section>
 
       <SplitEditor
+        key={state.selectedDay.weekday}
         day={state.selectedDay}
+        days={state.split.days}
         exerciseSearchResults={state.selectedDayExerciseSearchResults}
+        isMobileOpen={isMobileEditorOpen}
+        isSaving={state.saveState.kind === "saving"}
+        onMobileClose={() => setIsMobileEditorOpen(false)}
+        onSelectWeekday={state.selectWeekday}
+        onSave={() => void state.handleSave()}
         onWorkoutTypeChange={state.setWorkoutType}
         onExerciseNameChange={state.handleExerciseNameChange}
         onExerciseNameFocus={state.handleExerciseNameFocus}

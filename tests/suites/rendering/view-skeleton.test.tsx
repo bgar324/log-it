@@ -6,6 +6,7 @@ import { render } from "./render";
 import { DashboardViewSkeleton } from "@/app/dashboard/_components/dashboard-view-skeleton";
 import { EXERCISES_PER_PAGE } from "@/app/dashboard/_hooks/use-dashboard-progress";
 import { styles } from "@/app/dashboard/dashboard.styles";
+import { splitStyles } from "@/app/dashboard/split-system.styles";
 
 // A skeleton that shows a shape the view no longer has is worse than no
 // skeleton: the page visibly rearranges itself on arrival. These lock the
@@ -77,6 +78,20 @@ test("the nutrition skeleton puts the recall rows above the fields", async () =>
   assert.ok(
     recallAt < formAt,
     "recall rows sit above the fields in the real panel, so the skeleton must agree",
+  );
+
+  mounted.unmount();
+});
+
+test("the split skeleton keeps the phone week compact and the editor closed", async () => {
+  const mounted = await render(createElement(DashboardViewSkeleton, { kind: "split" }));
+  const html = mounted.html();
+
+  assert.ok(html.includes(splitStyles.splitWeekHeader));
+  assert.equal(countByClass(html, splitStyles.splitDayCard), 7);
+  assert.ok(
+    html.includes(splitStyles.splitEditorMobileClosed),
+    "the loading state must not cover the phone week with an editor",
   );
 
   mounted.unmount();

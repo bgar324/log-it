@@ -7,6 +7,7 @@ import {
   ClipboardList,
   House,
   LogOut,
+  PanelLeft,
   Plus,
   Settings,
   UserRound,
@@ -118,21 +119,22 @@ function Avatar({
   );
 }
 
-/** The avatar button that reveals the drawer. Phones only. */
-export function AppDrawerTrigger({ user }: { user: AppNavUser }) {
+/** The sidebar button that reveals the drawer. Phones only. */
+export function AppDrawerTrigger() {
   const nav = useContext(AppNavContext);
 
   return (
     <button
       type="button"
-      className={navStyles.avatarButton}
+      aria-label="Open navigation"
+      className={navStyles.drawerTrigger}
       onClick={() => nav?.openDrawer()}
       data-app-drawer-trigger="true"
     >
-      <Avatar
-        user={user}
-        imageClassName={navStyles.avatarImage}
-        fallbackClassName={navStyles.avatarFallback}
+      <PanelLeft
+        aria-hidden="true"
+        className={navStyles.drawerTriggerIcon}
+        strokeWidth={1.9}
       />
     </button>
   );
@@ -145,16 +147,14 @@ export function AppDrawerTrigger({ user }: { user: AppNavUser }) {
  */
 export function AppTopBar({
   title,
-  user,
   accessory,
 }: {
   title: string;
-  user: AppNavUser;
   accessory?: ReactNode;
 }) {
   return (
     <header className={navStyles.topBar}>
-      <AppDrawerTrigger user={user} />
+      <AppDrawerTrigger />
 
       <h1 className={navStyles.topBarTitle}>{title}</h1>
 

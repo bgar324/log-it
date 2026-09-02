@@ -117,7 +117,7 @@ export default async function WorkoutDetailPage({
       <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
           <div className={styles.topLead}>
-            <AppDrawerTrigger user={appNavUserFromSession(user)} />
+            <AppDrawerTrigger />
             <BackButton
               fallbackHref="/dashboard?view=workouts"
               label="Back"

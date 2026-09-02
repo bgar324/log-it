@@ -266,50 +266,64 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
 
   if (kind === "split") {
     return (
-      <>
-        <div className={splitStyles.splitLayout}>
-          <section className={splitStyles.splitSummary}>
-            <div>
-              <div className={splitStyles.splitSummaryHead}>
-                <SkeletonLine className="h-[2.75rem] min-w-0 flex-1 rounded-[0.52rem]" />
-                <SkeletonLine className="h-[2.75rem] w-[2.75rem] shrink-0 rounded-[0.52rem]" />
+      <div className={splitStyles.splitLayout}>
+        <section className={splitStyles.splitSummary}>
+          <div>
+            <div className={splitStyles.splitSummaryHead}>
+              <SkeletonLine className="h-[2.75rem] min-w-0 flex-1 rounded-[0.52rem]" />
+              <SkeletonLine className="h-[2.75rem] w-[2.75rem] shrink-0 rounded-[999px]" />
+            </div>
+            <SkeletonLine className="mt-[0.45rem] h-[0.8rem] w-[12rem]" />
+          </div>
+
+          <div className={splitStyles.splitWeekHeader}>
+            <SkeletonLine className="h-[1rem] w-[3rem]" />
+            <div className={splitStyles.splitWeekActions}>
+              <SkeletonLine className="h-[2.75rem] w-[5.8rem] rounded-[999px]" />
+              <SkeletonLine className="h-[2.75rem] w-[4.6rem] rounded-[999px]" />
+            </div>
+          </div>
+
+          <div className={splitStyles.splitGrid}>
+            {Array.from({ length: 7 }, (_, index) => (
+              <div key={index} className={splitStyles.splitDayCard}>
+                <span className={splitStyles.splitDayIdentity}>
+                  <SkeletonLine className="h-[0.72rem] w-[2.2rem]" />
+                </span>
+                <span className={splitStyles.splitDayMain}>
+                  <SkeletonLine className="h-[0.9rem] w-[5.6rem]" />
+                  <SkeletonLine className="h-[0.72rem] w-[6.2rem]" />
+                </span>
+                <SkeletonLine className="h-[0.72rem] w-[3.4rem]" />
               </div>
-              <SkeletonLine className="mt-[0.45rem] h-[1.05rem] w-[15rem] max-[520px]:w-[12rem]" />
-            </div>
+            ))}
+          </div>
+        </section>
 
-            <div className={splitStyles.splitGrid}>
-              {Array.from({ length: 7 }, (_, index) => (
-                <div key={index} className={splitStyles.splitDayCard}>
-                  <div className={splitStyles.splitDayHeader}>
-                    <SkeletonLine className="h-[1.05rem] w-[4.8rem]" />
-                    <SkeletonLine className="h-[1.05rem] w-[2.2rem]" />
-                  </div>
-                  <SkeletonLine className="h-[1.1rem] w-[5.6rem]" />
-                  <SkeletonLine className="mt-auto h-[1.15rem] w-[6.2rem]" />
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className={splitStyles.splitEditor}>
-            <div className={splitStyles.editorHeader}>
-              <SkeletonLine className="mb-[0.5rem] h-[1.05rem] w-[7.4rem]" />
-            </div>
+        <section
+          className={`${splitStyles.splitEditor} ${splitStyles.splitEditorMobileClosed}`}
+        >
+          <div className={splitStyles.editorHeader}>
+            <SkeletonLine className="h-[1.05rem] w-[7.4rem]" />
+          </div>
+          <div className={splitStyles.editorBody}>
             <div className={splitStyles.editorField}>
               <SkeletonLine className="h-[2.75rem] w-full rounded-[0.52rem]" />
             </div>
             <div className={splitStyles.editorSectionHead}>
-              <SkeletonLine className="mb-[0.4rem] h-[1.05rem] w-[5.2rem]" />
+              <SkeletonLine className="h-[1.05rem] w-[5.2rem]" />
             </div>
             <div className={splitStyles.editorExerciseList}>
-              {/* Rows are one field tall; seven is the median day's length. */}
               {Array.from({ length: 7 }, (_, index) => (
-                <SkeletonLine key={index} className="h-[2.75rem] w-full rounded-[0.52rem]" />
+                <SkeletonLine
+                  key={index}
+                  className="h-[2.75rem] w-full rounded-[0.52rem]"
+                />
               ))}
             </div>
-          </section>
-        </div>
-      </>
+          </div>
+        </section>
+      </div>
     );
   }
 
