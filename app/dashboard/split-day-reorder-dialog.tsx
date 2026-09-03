@@ -1,14 +1,6 @@
 "use client";
 
-import { GripVertical } from "lucide-react";
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   SPLIT_WEEKDAYS,
@@ -26,17 +18,6 @@ type SplitDayReorderDialogProps = {
   days: WorkoutSplitDayTemplate[];
   onCancel: () => void;
   onSave: (orderedWeekdays: SplitWeekdayValue[]) => void;
-};
-
-type DayDragState = {
-  weekday: SplitWeekdayValue;
-  pointerId: number;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  startClientY: number;
-  clientY: number;
 };
 
 function getDayTitle(day: WorkoutSplitDayTemplate, index: number) {
@@ -70,11 +51,9 @@ export function SplitDayReorderDialog({
   const [orderedWeekdays, setOrderedWeekdays] = useState<SplitWeekdayValue[]>(() =>
     sortedDays.map((day) => day.weekday),
   );
-  const [drag, setDrag] = useState<DayDragState | null>(null);
+  const [selectedWeekday, setSelectedWeekday] =
+    useState<SplitWeekdayValue | null>(null);
   const [todayWeekday] = useState<SplitWeekdayValue>(getInitialSelectedWeekday);
-  const dragRef = useRef<DayDragState | null>(null);
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const previousCardTopsRef = useRef(new Map<SplitWeekdayValue, number>());
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -101,144 +80,40 @@ export function SplitDayReorderDialog({
   const orderedDays = orderedWeekdays
     .map((weekday) => dayByWeekday.get(weekday))
     .filter((day): day is WorkoutSplitDayTemplate => Boolean(day));
-  const draggingWeekday = drag?.weekday ?? null;
-  const draggingDay = draggingWeekday
-    ? dayByWeekday.get(draggingWeekday) ?? null
+  const selectedDay = selectedWeekday
+    ? dayByWeekday.get(selectedWeekday) ?? null
     : null;
-  const draggingIndex = draggingWeekday
-    ? orderedWeekdays.indexOf(draggingWeekday)
+  const selectedIndex = selectedWeekday
+    ? orderedWeekdays.indexOf(selectedWeekday)
     : -1;
+  const selectedTitle = selectedDay
+    ? getDayTitle(selectedDay, Math.max(selectedIndex, 0))
+    : null;
 
-  useLayoutEffect(() => {
-    if (!listRef.current) {
-      return;
-    }
-
-    const cards = Array.from(
-      listRef.current.querySelectorAll<HTMLElement>("[data-reorder-card]"),
-    );
-    const nextCardTops = new Map<SplitWeekdayValue, number>();
-
-    cards.forEach((card, index) => {
-      const weekday = orderedWeekdays[index];
-      if (!weekday) {
-        return;
-      }
-
-      const nextTop = card.getBoundingClientRect().top;
-      const previousTop = previousCardTopsRef.current.get(weekday);
-      nextCardTops.set(weekday, nextTop);
-
-      if (
-        weekday !== draggingWeekday &&
-        previousTop !== undefined &&
-        previousTop !== nextTop &&
-        typeof card.animate === "function"
-      ) {
-        card.animate(
-          [
-            { transform: `translateY(${previousTop - nextTop}px)` },
-            { transform: "translateY(0)" },
-          ],
-          {
-            duration: 160,
-            easing: "cubic-bezier(0.2, 0.7, 0.2, 1)",
-          },
-        );
-      }
-    });
-
-    previousCardTopsRef.current = nextCardTops;
-  }, [draggingWeekday, orderedWeekdays]);
-
-  function startDragging(
-    event: ReactPointerEvent<HTMLButtonElement>,
+  function selectWorkoutOrDestination(
     weekday: SplitWeekdayValue,
+    destinationIndex: number,
   ) {
-    if (event.pointerType === "mouse" && event.button !== 0) {
+    if (!selectedWeekday) {
+      setSelectedWeekday(weekday);
       return;
     }
 
-    const card = event.currentTarget.closest<HTMLElement>("[data-reorder-card]");
-    if (!card) {
+    if (selectedWeekday === weekday) {
+      setSelectedWeekday(null);
       return;
     }
-
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const rect = card.getBoundingClientRect();
-    const nextDrag = {
-      weekday,
-      pointerId: event.pointerId,
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
-      startClientY: event.clientY,
-      clientY: event.clientY,
-    };
-
-    dragRef.current = nextDrag;
-    setDrag(nextDrag);
-  }
-
-  function moveDraggingItem(event: ReactPointerEvent<HTMLDivElement>) {
-    const currentDrag = dragRef.current;
-    if (
-      !currentDrag ||
-      currentDrag.pointerId !== event.pointerId ||
-      !listRef.current
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    const nextDrag = {
-      ...currentDrag,
-      clientY: event.clientY,
-    };
-    dragRef.current = nextDrag;
-    setDrag(nextDrag);
-
-    const slots = Array.from(
-      listRef.current.querySelectorAll<HTMLElement>("[data-reorder-index]"),
-    );
-    let toIndex = -1;
-    let closestDistance = Number.POSITIVE_INFINITY;
-
-    slots.forEach((slot, index) => {
-      const rect = slot.getBoundingClientRect();
-      const distance =
-        event.clientY < rect.top
-          ? rect.top - event.clientY
-          : event.clientY > rect.bottom
-            ? event.clientY - rect.bottom
-            : 0;
-
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        toIndex = index;
-      }
-    });
 
     setOrderedWeekdays((current) => {
-      const fromIndex = current.indexOf(currentDrag.weekday);
+      const sourceIndex = current.indexOf(selectedWeekday);
 
-      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) {
+      if (sourceIndex === -1 || sourceIndex === destinationIndex) {
         return current;
       }
 
-      return reorderItems(current, fromIndex, toIndex);
+      return reorderItems(current, sourceIndex, destinationIndex);
     });
-  }
-
-  function stopDragging(event: ReactPointerEvent) {
-    if (dragRef.current?.pointerId !== event.pointerId) {
-      return;
-    }
-
-    dragRef.current = null;
-    setDrag(null);
+    setSelectedWeekday(null);
   }
 
   if (typeof document === "undefined") {
@@ -250,32 +125,43 @@ export function SplitDayReorderDialog({
       <button
         type="button"
         tabIndex={-1}
-        aria-label="Close reorder week"
+        aria-label="Close move workouts"
         className={splitStyles.splitDialogBackdrop}
         onClick={onCancel}
       />
       <section
         role="dialog"
         aria-modal="true"
-        aria-label="Reorder week"
+        aria-label="Move workouts"
         className={splitStyles.splitDialog}
       >
-        <h2 className={splitStyles.splitDialogTitle}>Reorder week</h2>
+        <h2 className={splitStyles.splitDialogTitle}>Move workouts</h2>
+        <p aria-live="polite" className={splitStyles.splitDialogBody}>
+          {selectedTitle
+            ? `${selectedTitle} selected. Choose a day.`
+            : "Choose a workout to move."}
+        </p>
 
         <div
-          ref={listRef}
           aria-label="Weekly workout order"
           className={splitStyles.splitWeekReorderList}
-          onPointerMove={moveDraggingItem}
-          onPointerUp={stopDragging}
-          onPointerCancel={stopDragging}
         >
           {orderedDays.map((day, index) => {
             const slotWeekday = SPLIT_WEEKDAYS[index] ?? day.weekday;
             const slotLabel = getSplitWeekdayLabel(slotWeekday);
             const isToday = slotWeekday === todayWeekday;
-            const isDragging = draggingWeekday === day.weekday;
+            const isSelected = selectedWeekday === day.weekday;
             const dayTitle = getDayTitle(day, index);
+            const actionLabel = selectedWeekday
+              ? isSelected
+                ? "Deselect"
+                : "Move here"
+              : "Move";
+            const buttonLabel = selectedTitle
+              ? isSelected
+                ? `Cancel moving ${dayTitle}`
+                : `Move ${selectedTitle} to ${slotLabel}`
+              : `Select ${dayTitle} from ${slotLabel} to move`;
 
             return (
               <div
@@ -296,70 +182,36 @@ export function SplitDayReorderDialog({
                     <span className={splitStyles.splitReorderToday}>Today</span>
                   ) : null}
                 </div>
-                <div
+                <button
+                  type="button"
+                  aria-label={buttonLabel}
+                  aria-pressed={isSelected}
                   data-reorder-card
-                  data-placeholder={isDragging}
-                  className={`${splitStyles.splitReorderCard} ${
-                    isDragging ? splitStyles.splitReorderCardPlaceholder : ""
-                  }`}
+                  data-selected={isSelected}
+                  className={splitStyles.splitReorderCard}
+                  onClick={() =>
+                    selectWorkoutOrDestination(day.weekday, index)
+                  }
                 >
-                  <div className={splitStyles.splitReorderItemText}>
-                    <p className={splitStyles.splitReorderItemTitle}>{dayTitle}</p>
-                    <p className={splitStyles.splitReorderItemMeta}>
+                  <span className={splitStyles.splitReorderItemText}>
+                    <span className={splitStyles.splitReorderItemTitle}>
+                      {dayTitle}
+                    </span>
+                    <span className={splitStyles.splitReorderItemMeta}>
                       {getDayMeta(day)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label={`Drag ${dayTitle} from ${slotLabel}`}
-                    className={splitStyles.splitReorderDragHandle}
-                    onPointerDown={(event) =>
-                      startDragging(event, day.weekday)
-                    }
-                    onLostPointerCapture={stopDragging}
+                    </span>
+                  </span>
+                  <span
+                    data-selected={isSelected}
+                    className={splitStyles.splitReorderItemAction}
                   >
-                    <GripVertical
-                      className={splitStyles.splitReorderGripIcon}
-                      strokeWidth={1.9}
-                    />
-                  </button>
-                </div>
+                    {actionLabel}
+                  </span>
+                </button>
               </div>
             );
           })}
         </div>
-
-        {drag && draggingDay ? (
-          <div
-            aria-hidden="true"
-            data-reorder-preview
-            className={splitStyles.splitReorderDragPreview}
-            style={{
-              left: drag.left,
-              top: drag.top,
-              width: drag.width,
-              height: drag.height,
-              transform: `translate3d(0, ${
-                drag.clientY - drag.startClientY
-              }px, 0)`,
-            }}
-          >
-            <div className={splitStyles.splitReorderItemText}>
-              <p className={splitStyles.splitReorderItemTitle}>
-                {getDayTitle(draggingDay, Math.max(draggingIndex, 0))}
-              </p>
-              <p className={splitStyles.splitReorderItemMeta}>
-                {getDayMeta(draggingDay)}
-              </p>
-            </div>
-            <div className={splitStyles.splitReorderDragHandle}>
-              <GripVertical
-                className={splitStyles.splitReorderGripIcon}
-                strokeWidth={1.9}
-              />
-            </div>
-          </div>
-        ) : null}
 
         <div className={splitStyles.splitDialogActions}>
           <button
@@ -374,7 +226,7 @@ export function SplitDayReorderDialog({
             className={splitStyles.primaryButton}
             onClick={() => onSave(orderedWeekdays)}
           >
-            Save order
+            Done
           </button>
         </div>
       </section>

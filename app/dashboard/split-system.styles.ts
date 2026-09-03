@@ -18,7 +18,7 @@ const splitPanel =
 const buttonMotion =
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]";
 const splitReorderCard =
-  "flex min-h-[3.45rem] min-w-0 items-center justify-between gap-[0.65rem] rounded-[0.56rem] border border-[var(--split-border)] bg-[color-mix(in_srgb,var(--text)_3%,var(--bg))] px-[0.56rem] py-[0.46rem] transition-[border-color,background-color,box-shadow] duration-150";
+  "flex min-h-[3.45rem] w-full min-w-0 cursor-pointer items-center justify-between gap-[0.65rem] rounded-[0.56rem] border border-[var(--split-border)] bg-[color-mix(in_srgb,var(--text)_3%,var(--bg))] px-[0.66rem] py-[0.46rem] text-left text-[var(--text)] [touch-action:manipulation] transition-[border-color,background-color,color] duration-150 data-[selected=true]:border-[var(--split-border-strong)] data-[selected=true]:bg-[color-mix(in_srgb,var(--text)_9%,var(--bg))]";
 const editorColumnLabelBase =
   "grid items-center gap-[0.68rem] text-[0.68rem] leading-none text-[var(--muted)]";
 
@@ -143,17 +143,14 @@ export const splitStyles = {
   splitReorderDayLabelToday: "font-[560] text-[var(--text)]",
   splitReorderToday: "text-[0.65rem] text-[var(--muted)]",
   splitReorderCard,
-  splitReorderCardPlaceholder:
-    "border-dashed border-[var(--split-border-strong)] bg-[color-mix(in_srgb,var(--text)_5%,var(--bg))] [&>*]:opacity-0",
-  splitReorderDragPreview:
-    `${splitReorderCard} pointer-events-none fixed z-[3] border-[var(--split-border-strong)] bg-[var(--bg)] shadow-[0_16px_30px_color-mix(in_srgb,#000_20%,transparent)] will-change-transform`,
-  splitReorderItemText: "min-w-0 flex-1",
+  splitReorderItemText: "flex min-w-0 flex-1 flex-col",
   splitReorderItemTitle:
     "m-0 truncate text-[0.9rem] font-[520] leading-[1.2] text-[var(--text)]",
   splitReorderItemMeta:
     "m-0 mt-[0.14rem] text-[0.72rem] text-[var(--muted)]",
+  splitReorderItemAction:
+    "shrink-0 text-[0.72rem] text-[var(--muted)] data-[selected=true]:text-[var(--text)]",
   splitReorderDragHandle: actionIconDrag,
-  splitReorderGripIcon: "h-[1.08rem] w-[1.08rem]",
   splitReorderList:
     "flex max-h-[min(58dvh,28rem)] flex-col gap-[0.45rem] overflow-y-auto py-[0.1rem]",
   splitReorderItem:

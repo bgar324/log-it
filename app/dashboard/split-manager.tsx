@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   Circle,
   Copy,
-  GripVertical,
   Pencil,
   Plus,
   Trash2,
@@ -299,10 +298,6 @@ export function SplitManager({
               onClick={() => setIsReorderDaysOpen(true)}
               disabled={state.split.days.length < 2}
             >
-              <GripVertical
-                className={splitStyles.inlineIcon}
-                strokeWidth={1.9}
-              />
               Reorder
             </button>
             {!isRenaming ? (
