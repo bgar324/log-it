@@ -84,8 +84,8 @@ The workout logger and the body-weight tracker are wired together through a per-
 
 Individual bodyweight sets keep `weightLb = null`, so every set display still renders "BW"/"Bodyweight" and per-exercise best-weight remains external-load only. The snapshot is resolved at write time (not derived at read), so it fits the precomputed `totalWeightLb`/read-model architecture and stays stable if a later weigh-in is edited. The resolver returns null instead of throwing when the nutrition tables are absent, so workout logging never depends on the tracker.
 
-## Gate Personal UI In PostHog
+## Gate Account-Specific UI In PostHog
 
-Account-specific UI changes use remote PostHog flags instead of hardcoded identity checks. Authenticated client surfaces identify the stable database user ID and current profile properties. The `Ben` flag targets the designated account in PostHog and defaults to the standard interface until evaluation returns true.
+Account-specific UI experiments use remote PostHog flags instead of hardcoded identity checks. Authenticated client surfaces identify the stable database user ID and current profile properties. Surfaces render the standard interface until a targeted evaluation returns true, and auth-free previews never identify their demo users.
 
-The flag changes navigation and logger field visibility only. It does not authorize routes, delete stored reps, or change workout payload rules.
+These flags change presentation only. They do not authorize routes or change persisted data and payload rules.
