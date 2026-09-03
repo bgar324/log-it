@@ -27,7 +27,6 @@ import type { DashboardView } from "@/app/dashboard/dashboard-types";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import {
   type PostHogUser,
-  useBenFeatureFlag,
   useIdentifyPostHogUser,
 } from "@/app/hooks/use-posthog-user";
 import posthog from "posthog-js";
@@ -176,12 +175,13 @@ export function AppTabBar({
   activeView,
   onNavigate,
   drawerOpen = false,
+  benEnabled = false,
 }: {
   activeView?: DashboardView | null;
   onNavigate?: (view: DashboardView) => void;
   drawerOpen?: boolean;
+  benEnabled?: boolean;
 }) {
-  const benEnabled = useBenFeatureFlag();
   const endTab = benEnabled ? SPLIT_TAB : NUTRITION_TAB;
   const EndTabIcon = endTab.icon;
 
@@ -235,16 +235,17 @@ export function AppShell({
   analyticsUser,
   activeView,
   onNavigate,
+  benEnabled = false,
   children,
 }: {
   user: AppNavUser;
   analyticsUser?: PostHogUser;
   activeView?: DashboardView | null;
   onNavigate?: (view: DashboardView) => void;
+  benEnabled?: boolean;
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const benEnabled = useBenFeatureFlag();
   useIdentifyPostHogUser(analyticsUser);
 
   useEffect(() => {
@@ -353,7 +354,12 @@ export function AppShell({
           ) : null}
         </div>
 
-        <AppTabBar activeView={activeView} onNavigate={onNavigate} drawerOpen={drawerOpen} />
+        <AppTabBar
+          activeView={activeView}
+          onNavigate={onNavigate}
+          drawerOpen={drawerOpen}
+          benEnabled={benEnabled}
+        />
 
         {/* Last and highest: the veil has to cover the bar as well as the screen,
             so it cannot be a child of either. */}

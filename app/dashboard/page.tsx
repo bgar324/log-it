@@ -1,4 +1,5 @@
 import { requireSessionUser } from "@/lib/auth";
+import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
 import { getCurrentPacificDate } from "@/lib/workout-utils";
 import { DashboardClient } from "./dashboard-client";
 import {
@@ -22,16 +23,20 @@ export default async function DashboardPage({
   const initialView = normalizeDashboardView(params.view);
   const now = getCurrentPacificDate();
   const data = createEmptyDashboardData(user, now);
-  const viewData = await loadDashboardViewData(
-    initialView,
-    user.id,
-    user.preferredWeightUnit,
-    now,
-  );
+  const [viewData, benEnabled] = await Promise.all([
+    loadDashboardViewData(
+      initialView,
+      user.id,
+      user.preferredWeightUnit,
+      now,
+    ),
+    isBenFeatureEnabled(user),
+  ]);
 
   return (
     <DashboardClient
       userId={user.id}
+      benEnabled={benEnabled}
       initialView={initialView}
       data={
         {

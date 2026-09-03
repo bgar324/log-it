@@ -22,7 +22,7 @@ type WorkoutLoggerSetsEditorProps = {
   weightUnit: WeightUnit;
   weightUnitLabel: string;
   bodyWeightDisplay: number | null;
-  showReps: boolean;
+  showDuration: boolean;
   onAddSet: () => void;
   onRemoveSet: (setId: string) => void;
   onUpdateSet: <K extends keyof ExerciseSetDraft>(
@@ -38,7 +38,7 @@ export function WorkoutLoggerSetsEditor({
   weightUnit,
   weightUnitLabel,
   bodyWeightDisplay,
-  showReps,
+  showDuration,
   onAddSet,
   onRemoveSet,
   onUpdateSet,
@@ -87,7 +87,9 @@ export function WorkoutLoggerSetsEditor({
 
         return (
           <div key={setItem.id} className={styles.setRowGroup}>
-            <div className={showReps ? styles.setRow : styles.setRowWithoutReps}>
+            <div
+              className={showDuration ? styles.setRow : styles.setRowWithoutDuration}
+            >
               <p className={styles.setNumber}>#{setIndex + 1}</p>
               <label
                 className={`${styles.setField} ${styles.setFieldWeight}`}
@@ -139,32 +141,8 @@ export function WorkoutLoggerSetsEditor({
                   </button>
                 </span>
               </label>
-              {showReps ? (
-                <label className={`${styles.setField} ${styles.setFieldReps}`}>
-                  <span className={styles.setFieldLabel}>Reps</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoComplete="off"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    enterKeyHint="done"
-                    className={styles.setInput}
-                    placeholder={repsPlaceholder}
-                    value={setItem.reps}
-                    onChange={(event) =>
-                      onUpdateSet(
-                        setItem.id,
-                        "reps",
-                        sanitizeRepsInput(event.target.value),
-                      )
-                    }
-                  />
-                </label>
-              ) : null}
-              <label className={`${styles.setField} ${styles.setFieldDuration}`}>
-                <span className={styles.setFieldLabel}>Time (sec)</span>
+              <label className={`${styles.setField} ${styles.setFieldReps}`}>
+                <span className={styles.setFieldLabel}>Reps</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -174,17 +152,41 @@ export function WorkoutLoggerSetsEditor({
                   spellCheck={false}
                   enterKeyHint="done"
                   className={styles.setInput}
-                  placeholder="Sec"
-                  value={setItem.durationSeconds}
+                  placeholder={repsPlaceholder}
+                  value={setItem.reps}
                   onChange={(event) =>
                     onUpdateSet(
                       setItem.id,
-                      "durationSeconds",
-                      sanitizeDurationInput(event.target.value),
+                      "reps",
+                      sanitizeRepsInput(event.target.value),
                     )
                   }
                 />
               </label>
+              {showDuration ? (
+                <label className={`${styles.setField} ${styles.setFieldDuration}`}>
+                  <span className={styles.setFieldLabel}>Time (sec)</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    enterKeyHint="done"
+                    className={styles.setInput}
+                    placeholder="Sec"
+                    value={setItem.durationSeconds}
+                    onChange={(event) =>
+                      onUpdateSet(
+                        setItem.id,
+                        "durationSeconds",
+                        sanitizeDurationInput(event.target.value),
+                      )
+                    }
+                  />
+                </label>
+              ) : null}
               <button
                 type="button"
                 className={`${styles.dangerIconButton} ${styles.setRemoveButton}`}

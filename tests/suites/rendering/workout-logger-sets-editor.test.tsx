@@ -7,7 +7,7 @@ import { render } from "./render";
 
 type Props = Parameters<typeof WorkoutLoggerSetsEditor>[0];
 
-function buildProps(showReps: boolean): Props {
+function buildProps(showDuration: boolean): Props {
   return {
     exercise: {
       id: "exercise-1",
@@ -25,7 +25,7 @@ function buildProps(showReps: boolean): Props {
     weightUnit: "LB",
     weightUnitLabel: "lb",
     bodyWeightDisplay: null,
-    showReps,
+    showDuration,
     onAddSet: () => {},
     onRemoveSet: () => {},
     onUpdateSet: () => {},
@@ -42,20 +42,20 @@ test("set rows show reps in the standard logger", async () => {
   mounted.unmount();
 });
 
-test("set rows omit only reps when the personal flag is enabled", async () => {
+test("set rows omit only time when the personal flag is enabled", async () => {
   const mounted = await render(createElement(WorkoutLoggerSetsEditor, buildProps(false)));
 
-  assert.equal(mounted.container.querySelector('input[placeholder="Reps"]'), null);
-  assert.equal(mounted.findByText("span", "Reps"), undefined);
+  assert.equal(mounted.container.querySelector('input[placeholder="Sec"]'), null);
+  assert.ok(mounted.findByText("span", "Reps"));
   assert.equal(
     (mounted.container.querySelector('input[placeholder="lb"]') as HTMLInputElement | null)
       ?.value,
     "185",
   );
   assert.equal(
-    (mounted.container.querySelector('input[placeholder="Sec"]') as HTMLInputElement | null)
+    (mounted.container.querySelector('input[placeholder="Reps"]') as HTMLInputElement | null)
       ?.value,
-    "30",
+    "8",
   );
 
   mounted.unmount();

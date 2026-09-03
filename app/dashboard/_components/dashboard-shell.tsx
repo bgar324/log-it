@@ -17,7 +17,6 @@ import type { DashboardView } from "../dashboard-types";
 import { AppShell, AppTopBar, type AppNavUser } from "@/app/components/app-nav";
 import { AppBrand } from "@/app/components/ui";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
-import { useBenFeatureFlag } from "@/app/hooks/use-posthog-user";
 import { styles } from "../dashboard.styles";
 
 type SidebarIcon = ComponentType<{
@@ -44,6 +43,7 @@ type DashboardShellProps = {
   activeView: DashboardView;
   title: string;
   user: AppNavUser;
+  benEnabled: boolean;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
   onNavigate: (view: DashboardView) => void;
@@ -55,13 +55,13 @@ export function DashboardShell({
   activeView,
   title,
   user,
+  benEnabled,
   sidebarCollapsed,
   onToggleSidebar,
   onNavigate,
   renderHeaderAccessory,
   children,
 }: DashboardShellProps) {
-  const benEnabled = useBenFeatureFlag();
   const appScreen = (
     <main
       className={`${styles.shell} ${sidebarCollapsed ? styles.shellSidebarCollapsed : ""}`}
@@ -193,7 +193,12 @@ export function DashboardShell({
   );
 
   return (
-    <AppShell user={user} activeView={activeView} onNavigate={onNavigate}>
+    <AppShell
+      user={user}
+      activeView={activeView}
+      onNavigate={onNavigate}
+      benEnabled={benEnabled}
+    >
       {appScreen}
     </AppShell>
   );

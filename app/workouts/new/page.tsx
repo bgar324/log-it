@@ -1,6 +1,7 @@
 import { WorkoutLogger } from "./workout-logger";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
 import { resolveBodyWeightLbForDate } from "@/lib/body-weight";
 import { convertStoredWeightToDisplay } from "@/lib/weight-unit";
 import { getWorkoutLoggerInitialDataForDate } from "@/lib/workout-splits/service";
@@ -27,9 +28,10 @@ export default async function NewWorkoutPage({
     requireSessionUser(),
   ]);
   const selectedDate = parseDateKey(params.date ?? "") ?? getCurrentPacificDate();
-  const [splitSeed, bodyWeightLb] = await Promise.all([
+  const [splitSeed, bodyWeightLb, benEnabled] = await Promise.all([
     getWorkoutLoggerInitialDataForDate(user.id, selectedDate),
     resolveBodyWeightLbForDate(prisma, user.id, selectedDate),
+    isBenFeatureEnabled(user),
   ]);
   const bodyWeightDisplay = convertStoredWeightToDisplay(
     bodyWeightLb,
@@ -57,6 +59,7 @@ export default async function NewWorkoutPage({
       bodyWeightDisplay={bodyWeightDisplay}
       isRestDay={Boolean(isRestDay)}
       analyticsUser={user}
+      benEnabled={benEnabled}
       returnHref={returnHref}
     />
   );

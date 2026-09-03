@@ -5,6 +5,7 @@ import { navStyles } from "@/app/components/app-nav.styles";
 import { BackButton } from "@/app/components/back-button";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
 import { formatWorkoutForClipboard } from "@/lib/workout-export";
 import {
   convertStoredWeightToDisplay,
@@ -32,42 +33,45 @@ export default async function WorkoutDetailPage({
   const { workoutId } = await params;
   const user = await requireSessionUser();
 
-  const workout = await prisma.workoutLog.findFirst({
-    where: {
-      id: workoutId,
-      userId: user.id,
-    },
-    select: {
-      id: true,
-      title: true,
-      workoutType: true,
-      performedAt: true,
-      totalWeightLb: true,
-      bodyWeightLb: true,
-      exercises: {
-        orderBy: {
-          order: "asc",
-        },
-        select: {
-          id: true,
-          order: true,
-          name: true,
-          sets: {
-            orderBy: {
-              order: "asc",
-            },
-            select: {
-              id: true,
-              order: true,
-              reps: true,
-              weightLb: true,
-              durationSeconds: true,
+  const [workout, benEnabled] = await Promise.all([
+    prisma.workoutLog.findFirst({
+      where: {
+        id: workoutId,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        title: true,
+        workoutType: true,
+        performedAt: true,
+        totalWeightLb: true,
+        bodyWeightLb: true,
+        exercises: {
+          orderBy: {
+            order: "asc",
+          },
+          select: {
+            id: true,
+            order: true,
+            name: true,
+            sets: {
+              orderBy: {
+                order: "asc",
+              },
+              select: {
+                id: true,
+                order: true,
+                reps: true,
+                weightLb: true,
+                durationSeconds: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    }),
+    isBenFeatureEnabled(user),
+  ]);
 
   if (!workout) {
     notFound();
@@ -210,6 +214,7 @@ export default async function WorkoutDetailPage({
       user={appNavUserFromSession(user)}
       analyticsUser={user}
       activeView="workouts"
+      benEnabled={benEnabled}
     >
       {screen}
     </AppShell>

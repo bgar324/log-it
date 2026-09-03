@@ -1,6 +1,7 @@
 import { AppDrawerTrigger, AppShell } from "@/app/components/app-nav";
 import { appNavUserFromSession } from "@/app/components/app-nav.user";
 import { navStyles } from "@/app/components/app-nav.styles";
+import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
 import { BackButton } from "@/app/components/back-button";
 import { ExerciseDetailChart } from "./exercise-detail-chart";
 import { loadExerciseDetailPageData } from "./exercise-detail.data";
@@ -16,6 +17,7 @@ export default async function ExerciseDetailPage({
 }) {
   const { exerciseKey: rawExerciseKey } = await params;
   const data = await loadExerciseDetailPageData(rawExerciseKey);
+  const benEnabled = await isBenFeatureEnabled(data.user);
 
   const sessionsLabel = `${data.sessionsCount} ${
     data.sessionsCount === 1 ? "session" : "sessions"
@@ -88,6 +90,7 @@ export default async function ExerciseDetailPage({
       user={appNavUserFromSession(data.user)}
       analyticsUser={data.user}
       activeView="progress"
+      benEnabled={benEnabled}
     >
       {screen}
     </AppShell>

@@ -36,6 +36,7 @@ import { useDashboardTodayPlan } from "./_hooks/use-dashboard-today-plan";
 type DashboardClientProps = {
   initialView: DashboardView;
   userId: string;
+  benEnabled: boolean;
   data: DashboardClientData;
 };
 
@@ -100,6 +101,7 @@ export function DashboardClient({
   initialView,
   data,
   userId,
+  benEnabled,
 }: DashboardClientProps) {
   const router = useRouter();
   const [activeView, setActiveView] = useState(initialView);
@@ -430,6 +432,7 @@ export function DashboardClient({
       activeView={activeView}
       title={VIEW_TITLES[activeView]}
       user={navUser}
+      benEnabled={benEnabled}
       sidebarCollapsed={sidebarCollapsed}
       onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
       onNavigate={navigateToView}

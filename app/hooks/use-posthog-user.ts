@@ -2,9 +2,6 @@
 
 import { useEffect } from "react";
 import posthog from "posthog-js";
-import { useFeatureFlagEnabled } from "posthog-js/react";
-
-export const BEN_FLAG_KEY = "Ben";
 
 export type PostHogUser = {
   id: string;
@@ -34,8 +31,4 @@ export function useIdentifyPostHogUser(user?: PostHogUser) {
       ...(name ? { name } : {}),
     });
   }, [email, firstName, id, lastName, username]);
-}
-
-export function useBenFeatureFlag() {
-  return useFeatureFlagEnabled(BEN_FLAG_KEY, false) === true;
 }

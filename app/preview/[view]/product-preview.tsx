@@ -484,6 +484,7 @@ export function ProductPreviewShell({ view }: { view: ProductPreviewView }) {
       activeView={activeView}
       title={VIEW_TITLES[activeView]}
       user={{ displayName: "Benjamin Garcia", username: "benjamin", avatarUrl: null }}
+      benEnabled={false}
       sidebarCollapsed={sidebarCollapsed}
       onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
       onNavigate={setActiveView}

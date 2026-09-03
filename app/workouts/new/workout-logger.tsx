@@ -8,7 +8,6 @@ import { BackButton } from "@/app/components/back-button";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
 import {
   type PostHogUser,
-  useBenFeatureFlag,
   useIdentifyPostHogUser,
 } from "@/app/hooks/use-posthog-user";
 import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
@@ -52,6 +51,7 @@ type WorkoutLoggerProps = {
   isRestDay?: boolean;
   returnHref?: string;
   analyticsUser: PostHogUser;
+  benEnabled: boolean;
 };
 
 export function WorkoutLogger({
@@ -65,11 +65,11 @@ export function WorkoutLogger({
   isRestDay = false,
   returnHref = "/dashboard",
   analyticsUser,
+  benEnabled,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const router = useRouter();
   const weightUnitLabel = getWeightUnitLabel(weightUnit);
-  const benEnabled = useBenFeatureFlag();
   useIdentifyPostHogUser(analyticsUser);
   const [isSaving, setIsSaving] = useState(false);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
@@ -351,7 +351,7 @@ export function WorkoutLogger({
                 weightUnit={weightUnit}
                 weightUnitLabel={weightUnitLabel}
                 bodyWeightDisplay={bodyWeightDisplay}
-                showReps={!benEnabled}
+                showDuration={!benEnabled}
                 onAddSet={() => draft.addSet(exercise.id)}
                 onApplySearchResult={(suggestion) => {
                   clearPendingSuggestionLookup(exercise.id);

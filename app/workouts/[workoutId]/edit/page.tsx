@@ -3,6 +3,7 @@ import { WorkoutLogger } from "@/app/workouts/new/workout-logger";
 import type { WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger.utils";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
 import { resolveBodyWeightLbForDate } from "@/lib/body-weight";
 import {
   convertStoredWeightToDisplay,
@@ -48,7 +49,7 @@ export default async function EditWorkoutPage({
   const { workoutId } = await params;
   const user = await requireSessionUser();
 
-  const [workout, split] = await Promise.all([
+  const [workout, split, benEnabled] = await Promise.all([
     prisma.workoutLog.findFirst({
       where: {
         id: workoutId,
@@ -80,6 +81,7 @@ export default async function EditWorkoutPage({
       },
     }),
     getUserWorkoutSplit(user.id),
+    isBenFeatureEnabled(user),
   ]);
 
   if (!workout) {
@@ -123,6 +125,7 @@ export default async function EditWorkoutPage({
       weightUnit={user.preferredWeightUnit}
       bodyWeightDisplay={bodyWeightDisplay}
       analyticsUser={user}
+      benEnabled={benEnabled}
     />
   );
 }
