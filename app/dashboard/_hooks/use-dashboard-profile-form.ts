@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import type { WeightUnit } from "@/lib/weight-unit";
 import type { DashboardClientData } from "../dashboard-types";
 
@@ -216,6 +217,9 @@ export function useDashboardProfileForm(
       setFirstNameInput(payload.user.firstName ?? "");
       setLastNameInput(payload.user.lastName ?? "");
       setPublicProfileEnabledInput(payload.user.publicProfileEnabled);
+      posthog.capture("profile_updated", {
+        public_profile_enabled: payload.user.publicProfileEnabled,
+      });
       toast.success("Profile updated.", { id: toastId });
       onProfileSaved();
       return true;

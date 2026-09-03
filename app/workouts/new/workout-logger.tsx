@@ -3,8 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import { BackButton } from "@/app/components/back-button";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
+import {
+  type PostHogUser,
+  useBenFeatureFlag,
+  useIdentifyPostHogUser,
+} from "@/app/hooks/use-posthog-user";
 import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
 import {
   convertStoredWeightToDisplay,
@@ -45,6 +51,7 @@ type WorkoutLoggerProps = {
   bodyWeightDisplay?: number | null;
   isRestDay?: boolean;
   returnHref?: string;
+  analyticsUser: PostHogUser;
 };
 
 export function WorkoutLogger({
@@ -57,10 +64,13 @@ export function WorkoutLogger({
   bodyWeightDisplay = null,
   isRestDay = false,
   returnHref = "/dashboard",
+  analyticsUser,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const router = useRouter();
   const weightUnitLabel = getWeightUnitLabel(weightUnit);
+  const benEnabled = useBenFeatureFlag();
+  useIdentifyPostHogUser(analyticsUser);
   const [isSaving, setIsSaving] = useState(false);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
@@ -248,6 +258,15 @@ export function WorkoutLogger({
       }
 
       const resolvedWorkoutId = data.id ?? workoutId;
+      posthog.capture(isEditMode ? "workout_updated" : "workout_created", {
+        exercise_count: draft.exercises.length,
+        set_count: draft.exercises.reduce(
+          (total, exercise) => total + exercise.sets.length,
+          0,
+        ),
+        personal_record_count: data.personalRecords?.length ?? 0,
+        used_rest_day_override: hasRestDayOverride,
+      });
       toast.success(isEditMode ? "Workout updated." : "Workout saved.", {
         id: toastId,
       });
@@ -332,6 +351,7 @@ export function WorkoutLogger({
                 weightUnit={weightUnit}
                 weightUnitLabel={weightUnitLabel}
                 bodyWeightDisplay={bodyWeightDisplay}
+                showReps={!benEnabled}
                 onAddSet={() => draft.addSet(exercise.id)}
                 onApplySearchResult={(suggestion) => {
                   clearPendingSuggestionLookup(exercise.id);

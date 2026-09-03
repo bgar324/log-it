@@ -84,7 +84,11 @@ export default async function ExerciseDetailPage({
   );
 
   return (
-    <AppShell user={appNavUserFromSession(data.user)} activeView="progress">
+    <AppShell
+      user={appNavUserFromSession(data.user)}
+      analyticsUser={data.user}
+      activeView="progress"
+    >
       {screen}
     </AppShell>
   );

@@ -3,6 +3,7 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
 import {
   copyWorkoutSplit,
@@ -46,6 +47,13 @@ export function useSplitManagerPersistence({
         current.map((item) => (item.id === split.id ? savedSplit : item)),
       );
       clearAllExerciseSuggestions();
+      posthog.capture("workout_split_updated", {
+        training_day_count: savedSplit.days.filter((day) => day.exercises.length > 0).length,
+        exercise_count: savedSplit.days.reduce(
+          (total, day) => total + day.exercises.length,
+          0,
+        ),
+      });
       toast.success("Workout split saved.", {
         id: toastId,
         description: "Calendar and logger autofill are updated.",
@@ -69,7 +77,9 @@ export function useSplitManagerPersistence({
     const toastId = toast.loading("Copying split...");
 
     try {
-      toast.success(await copyWorkoutSplit(split), {
+      const message = await copyWorkoutSplit(split);
+      posthog.capture("workout_split_copied");
+      toast.success(message, {
         id: toastId,
       });
     } catch (error) {

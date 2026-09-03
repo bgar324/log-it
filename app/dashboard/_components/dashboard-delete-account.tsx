@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X } from "lucide-react";
+import posthog from "posthog-js";
 import { styles } from "../dashboard.styles";
 
 type DashboardDeleteAccountProps = {
@@ -62,6 +63,8 @@ export function DashboardDeleteAccount({
         throw new Error(payload?.error ?? "Unable to delete account.");
       }
 
+      posthog.capture("account_deleted");
+      posthog.reset();
       toast.success("Account deleted.", { id: toastId });
       router.replace("/");
       router.refresh();

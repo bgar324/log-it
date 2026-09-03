@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
 import {
   createUnsavedWorkoutSplitDraft,
@@ -153,6 +154,7 @@ export function useSplitManagerState(
       const created = await createWorkoutSplit();
       setSplits((current) => [created, ...current]);
       setSelectedSplitId(created.id);
+      posthog.capture("workout_split_created");
       toast.success("Split created.", { id: toastId });
       router.refresh();
     } catch (error) {
@@ -194,6 +196,7 @@ export function useSplitManagerState(
           ? remaining
           : [createUnsavedWorkoutSplitDraft(initialSplit)];
       });
+      posthog.capture("workout_split_deleted");
       toast.success("Split deleted.", { id: toastId });
       router.refresh();
     } catch (error) {
@@ -231,6 +234,7 @@ export function useSplitManagerState(
         ),
       );
       setSelectedSplitId(activated.id);
+      posthog.capture("workout_split_activated");
       toast.success("Active split updated.", {
         id: toastId,
         description: "The logger will use this split.",

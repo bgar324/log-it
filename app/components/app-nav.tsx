@@ -25,6 +25,12 @@ import {
 import { toViewHref } from "@/app/dashboard/dashboard-client.shared";
 import type { DashboardView } from "@/app/dashboard/dashboard-types";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
+import {
+  type PostHogUser,
+  useBenFeatureFlag,
+  useIdentifyPostHogUser,
+} from "@/app/hooks/use-posthog-user";
+import posthog from "posthog-js";
 import { navStyles } from "./app-nav.styles";
 
 type NavIcon = ComponentType<{
@@ -36,6 +42,7 @@ type NavIcon = ComponentType<{
 // layer underneath, revealed by sliding the app aside.
 const HOME_TAB = { view: "dashboard", label: "Home", icon: House } as const;
 const NUTRITION_TAB = { view: "nutrition", label: "Nutrition", icon: Apple } as const;
+const SPLIT_TAB = { view: "split", label: "Split", icon: CalendarDays } as const;
 // Profile leads: the identity block sits directly above it, so the row that
 // opens that identity belongs next to it rather than buried between Split and
 // the footer.
@@ -45,6 +52,7 @@ const DRAWER_ITEMS: Array<{ view: DashboardView; label: string; icon: NavIcon }>
   { view: "progress", label: "Progress", icon: ChartNoAxesColumnIncreasing },
   { view: "split", label: "Split", icon: CalendarDays },
 ];
+const BEN_DRAWER_ITEMS = DRAWER_ITEMS.filter((item) => item.view !== "split");
 
 // Preferences, not identity: theme and units live here, account actions stay on
 // the profile view.
@@ -163,7 +171,6 @@ export function AppTopBar({
   );
 }
 
-
 /** Exported for route-loading skeletons, which have no session user to render. */
 export function AppTabBar({
   activeView,
@@ -174,6 +181,10 @@ export function AppTabBar({
   onNavigate?: (view: DashboardView) => void;
   drawerOpen?: boolean;
 }) {
+  const benEnabled = useBenFeatureFlag();
+  const endTab = benEnabled ? SPLIT_TAB : NUTRITION_TAB;
+  const EndTabIcon = endTab.icon;
+
   return (
     <nav
       className={navStyles.tabBar}
@@ -200,13 +211,13 @@ export function AppTabBar({
       </Link>
 
       <Link
-        href={toViewHref(NUTRITION_TAB.view)}
+        href={toViewHref(endTab.view)}
         className={navStyles.tabItem}
-        data-active={activeView === NUTRITION_TAB.view}
-        onClick={viewClickHandler(onNavigate, NUTRITION_TAB.view)}
+        data-active={activeView === endTab.view}
+        onClick={viewClickHandler(onNavigate, endTab.view)}
       >
-        <Apple className={navStyles.tabIcon} strokeWidth={1.9} />
-        <span className={navStyles.tabLabel}>{NUTRITION_TAB.label}</span>
+        <EndTabIcon className={navStyles.tabIcon} strokeWidth={1.9} />
+        <span className={navStyles.tabLabel}>{endTab.label}</span>
         <LinkPendingOverlay />
       </Link>
     </nav>
@@ -221,16 +232,20 @@ export function AppTabBar({
  */
 export function AppShell({
   user,
+  analyticsUser,
   activeView,
   onNavigate,
   children,
 }: {
   user: AppNavUser;
+  analyticsUser?: PostHogUser;
   activeView?: DashboardView | null;
   onNavigate?: (view: DashboardView) => void;
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const benEnabled = useBenFeatureFlag();
+  useIdentifyPostHogUser(analyticsUser);
 
   useEffect(() => {
     if (!drawerOpen) {
@@ -276,7 +291,7 @@ export function AppShell({
           <div className={navStyles.drawerDivider} />
 
           <nav className={navStyles.drawerNav} data-app-nav="sections">
-            {DRAWER_ITEMS.map((item) => {
+            {(benEnabled ? BEN_DRAWER_ITEMS : DRAWER_ITEMS).map((item) => {
               const Icon = item.icon;
 
               return (
@@ -314,7 +329,7 @@ export function AppShell({
               <Settings className={navStyles.drawerItemIcon} strokeWidth={1.9} />
               <span>{DRAWER_FOOTER_ITEM.label}</span>
             </Link>
-            <form method="post" action="/auth/signout">
+            <form method="post" action="/auth/signout" onSubmit={() => posthog.reset()}>
               <button
                 type="submit"
                 className={navStyles.drawerIconAction}

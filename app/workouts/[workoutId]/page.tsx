@@ -206,7 +206,11 @@ export default async function WorkoutDetailPage({
   );
 
   return (
-    <AppShell user={appNavUserFromSession(user)} activeView="workouts">
+    <AppShell
+      user={appNavUserFromSession(user)}
+      analyticsUser={user}
+      activeView="workouts"
+    >
       {screen}
     </AppShell>
   );

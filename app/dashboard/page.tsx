@@ -31,6 +31,7 @@ export default async function DashboardPage({
 
   return (
     <DashboardClient
+      userId={user.id}
       initialView={initialView}
       data={
         {

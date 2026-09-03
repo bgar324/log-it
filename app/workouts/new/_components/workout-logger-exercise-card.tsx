@@ -27,6 +27,7 @@ type WorkoutLoggerExerciseCardProps = {
   weightUnit: WeightUnit;
   weightUnitLabel: string;
   bodyWeightDisplay: number | null;
+  showReps: boolean;
   onAddSet: () => void;
   onApplySearchResult: (suggestion: string) => void;
   onExerciseNameBlur: (value: string) => Promise<void> | void;
@@ -50,6 +51,7 @@ export function WorkoutLoggerExerciseCard({
   weightUnit,
   weightUnitLabel,
   bodyWeightDisplay,
+  showReps,
   onAddSet,
   onApplySearchResult,
   onExerciseNameBlur,
@@ -157,6 +159,7 @@ export function WorkoutLoggerExerciseCard({
           weightUnit={weightUnit}
           weightUnitLabel={weightUnitLabel}
           bodyWeightDisplay={bodyWeightDisplay}
+          showReps={showReps}
           onAddSet={onAddSet}
           onRemoveSet={onRemoveSet}
           onUpdateSet={onUpdateSet}

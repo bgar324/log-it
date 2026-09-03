@@ -83,3 +83,9 @@ Nutrition tracking uses one `NutritionEntry` per user and date for calorie/prote
 The workout logger and the body-weight tracker are wired together through a per-workout snapshot. On create/update/duplicate, `resolveBodyWeightLbForDate()` (`lib/body-weight.ts`) resolves the user's tracked body weight for the workout's `performedAt` — the entry on or before that date, then the nearest later entry, then null — and stores it on `WorkoutLog.bodyWeightLb`. `computeWorkoutTotalWeightLb()` credits bodyweight sets (`weightLb` null with reps) as `bodyWeightLb * reps`, so total workout volume reflects bodyweight training.
 
 Individual bodyweight sets keep `weightLb = null`, so every set display still renders "BW"/"Bodyweight" and per-exercise best-weight remains external-load only. The snapshot is resolved at write time (not derived at read), so it fits the precomputed `totalWeightLb`/read-model architecture and stays stable if a later weigh-in is edited. The resolver returns null instead of throwing when the nutrition tables are absent, so workout logging never depends on the tracker.
+
+## Gate Personal UI In PostHog
+
+Account-specific UI changes use remote PostHog flags instead of hardcoded identity checks. Authenticated client surfaces identify the stable database user ID and current profile properties. The `Ben` flag targets the designated account in PostHog and defaults to the standard interface until evaluation returns true.
+
+The flag changes navigation and logger field visibility only. It does not authorize routes, delete stored reps, or change workout payload rules.

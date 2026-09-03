@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { Loader2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import {
   formatWeightWithUnit,
   getWeightUnitLabel,
@@ -233,6 +234,7 @@ export function DashboardNutritionPanel({
       }
 
       onNutritionChange(payload.nutrition);
+      posthog.capture("nutrition_targets_updated");
       toast.success("Nutrition saved.", { id: toastId });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to save nutrition.", {

@@ -122,6 +122,7 @@ export default async function EditWorkoutPage({
       workoutTypeOptions={createWorkoutTypeOptions(split, workout.workoutType)}
       weightUnit={user.preferredWeightUnit}
       bodyWeightDisplay={bodyWeightDisplay}
+      analyticsUser={user}
     />
   );
 }

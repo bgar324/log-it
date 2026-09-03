@@ -22,6 +22,7 @@ type WorkoutLoggerSetsEditorProps = {
   weightUnit: WeightUnit;
   weightUnitLabel: string;
   bodyWeightDisplay: number | null;
+  showReps: boolean;
   onAddSet: () => void;
   onRemoveSet: (setId: string) => void;
   onUpdateSet: <K extends keyof ExerciseSetDraft>(
@@ -37,6 +38,7 @@ export function WorkoutLoggerSetsEditor({
   weightUnit,
   weightUnitLabel,
   bodyWeightDisplay,
+  showReps,
   onAddSet,
   onRemoveSet,
   onUpdateSet,
@@ -85,7 +87,7 @@ export function WorkoutLoggerSetsEditor({
 
         return (
           <div key={setItem.id} className={styles.setRowGroup}>
-            <div className={styles.setRow}>
+            <div className={showReps ? styles.setRow : styles.setRowWithoutReps}>
               <p className={styles.setNumber}>#{setIndex + 1}</p>
               <label
                 className={`${styles.setField} ${styles.setFieldWeight}`}
@@ -137,28 +139,30 @@ export function WorkoutLoggerSetsEditor({
                   </button>
                 </span>
               </label>
-              <label className={`${styles.setField} ${styles.setFieldReps}`}>
-                <span className={styles.setFieldLabel}>Reps</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  enterKeyHint="done"
-                  className={styles.setInput}
-                  placeholder={repsPlaceholder}
-                  value={setItem.reps}
-                  onChange={(event) =>
-                    onUpdateSet(
-                      setItem.id,
-                      "reps",
-                      sanitizeRepsInput(event.target.value),
-                    )
-                  }
-                />
-              </label>
+              {showReps ? (
+                <label className={`${styles.setField} ${styles.setFieldReps}`}>
+                  <span className={styles.setFieldLabel}>Reps</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    enterKeyHint="done"
+                    className={styles.setInput}
+                    placeholder={repsPlaceholder}
+                    value={setItem.reps}
+                    onChange={(event) =>
+                      onUpdateSet(
+                        setItem.id,
+                        "reps",
+                        sanitizeRepsInput(event.target.value),
+                      )
+                    }
+                  />
+                </label>
+              ) : null}
               <label className={`${styles.setField} ${styles.setFieldDuration}`}>
                 <span className={styles.setFieldLabel}>Time (sec)</span>
                 <input

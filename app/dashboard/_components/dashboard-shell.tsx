@@ -17,6 +17,7 @@ import type { DashboardView } from "../dashboard-types";
 import { AppShell, AppTopBar, type AppNavUser } from "@/app/components/app-nav";
 import { AppBrand } from "@/app/components/ui";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
+import { useBenFeatureFlag } from "@/app/hooks/use-posthog-user";
 import { styles } from "../dashboard.styles";
 
 type SidebarIcon = ComponentType<{
@@ -37,6 +38,7 @@ const SIDEBAR_ITEMS: Array<{
   { view: "nutrition", label: "Nutrition", icon: Apple },
   { view: "split", label: "Split", icon: CalendarDays },
 ];
+const BEN_SIDEBAR_ITEMS = SIDEBAR_ITEMS.filter((item) => item.view !== "nutrition");
 
 type DashboardShellProps = {
   activeView: DashboardView;
@@ -59,6 +61,7 @@ export function DashboardShell({
   renderHeaderAccessory,
   children,
 }: DashboardShellProps) {
+  const benEnabled = useBenFeatureFlag();
   const appScreen = (
     <main
       className={`${styles.shell} ${sidebarCollapsed ? styles.shellSidebarCollapsed : ""}`}
@@ -115,7 +118,7 @@ export function DashboardShell({
         </div>
 
         <nav className={`${styles.sideNav} ${sidebarCollapsed ? styles.sideNavCollapsed : ""}`}>
-          {SIDEBAR_ITEMS.map((item) => {
+          {(benEnabled ? BEN_SIDEBAR_ITEMS : SIDEBAR_ITEMS).map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.view;
 

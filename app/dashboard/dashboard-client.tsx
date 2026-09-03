@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AppNavUser } from "@/app/components/app-nav";
+import { useIdentifyPostHogUser } from "@/app/hooks/use-posthog-user";
 import { SplitManager } from "./split-manager";
 import { VIEW_TITLES, toViewHref } from "./dashboard-client.shared";
 import { styles } from "./dashboard.styles";
@@ -34,6 +35,7 @@ import { useDashboardTodayPlan } from "./_hooks/use-dashboard-today-plan";
 
 type DashboardClientProps = {
   initialView: DashboardView;
+  userId: string;
   data: DashboardClientData;
 };
 
@@ -94,7 +96,11 @@ function mergeWorkoutMonthPages(
   return Array.from(entriesByMonth, ([month, entries]) => ({ month, entries }));
 }
 
-export function DashboardClient({ initialView, data }: DashboardClientProps) {
+export function DashboardClient({
+  initialView,
+  data,
+  userId,
+}: DashboardClientProps) {
   const router = useRouter();
   const [activeView, setActiveView] = useState(initialView);
   const [dashboardData, setDashboardData] = useState(data);
@@ -117,6 +123,14 @@ export function DashboardClient({ initialView, data }: DashboardClientProps) {
   const [workoutHistoryLoading, setWorkoutHistoryLoading] = useState(false);
   const profileFormState = useDashboardProfileForm(dashboardData.user, () => {
     router.refresh();
+  });
+
+  useIdentifyPostHogUser({
+    id: userId,
+    email: profileFormState.profile.email,
+    username: profileFormState.profile.username,
+    firstName: profileFormState.profile.firstName,
+    lastName: profileFormState.profile.lastName,
   });
   const progressState = useDashboardProgress(dashboardData.exercises);
   const todayPlan = useDashboardTodayPlan(dashboardData.overview.todayPlan);

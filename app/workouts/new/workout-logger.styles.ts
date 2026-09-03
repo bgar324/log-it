@@ -135,6 +135,12 @@ export const styles = {
     "min-[620px]:grid-cols-[auto_minmax(5.8rem,0.95fr)_minmax(4.8rem,0.72fr)_minmax(4.8rem,0.72fr)_auto]",
     "min-[620px]:items-center min-[620px]:gap-[0.5rem]",
   ),
+  setRowWithoutReps: cn(
+    "grid grid-cols-[1.4rem_minmax(0,1fr)_3.25rem_2.75rem] items-center gap-[0.34rem] bg-transparent",
+    "max-[380px]:grid-cols-[1.25rem_minmax(0,1fr)_3.05rem_2.75rem] max-[380px]:gap-[0.26rem]",
+    "min-[620px]:grid-cols-[auto_minmax(5.8rem,0.95fr)_minmax(4.8rem,0.72fr)_auto]",
+    "min-[620px]:items-center min-[620px]:gap-[0.5rem]",
+  ),
   // What this set was last time. Ghost text, never interactive, fixed height so
   // typing above it never shifts the inputs.
   setGhostLine: cn(

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { styles } from "./workout-detail.styles";
@@ -52,10 +53,11 @@ export function WorkoutDetailActions({
     try {
       setIsMenuOpen(false);
       const result = await copyTextToClipboard(workoutExport);
+      posthog.capture("workout_exported");
       toast.success(
-          result === "clipboard"
-            ? "Copied workout to clipboard."
-            : "Clipboard blocked. Workout text opened for manual copy.",
+        result === "clipboard"
+          ? "Copied workout to clipboard."
+          : "Clipboard blocked. Workout text opened for manual copy.",
         { id: toastId },
       );
     } catch (caughtError) {
@@ -87,6 +89,7 @@ export function WorkoutDetailActions({
         throw new Error(payload.error ?? "Unable to delete workout.");
       }
 
+      posthog.capture("workout_deleted");
       toast.success("Workout deleted.", { id: toastId });
       router.push("/dashboard?view=workouts");
       router.refresh();

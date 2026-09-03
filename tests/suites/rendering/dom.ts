@@ -14,7 +14,7 @@ const globalAny = globalThis as unknown as Record<string, unknown>;
 
 // Node 24 defines `navigator` as a getter-only global, so it has to be
 // redefined rather than assigned.
-for (const name of ["window", "document", "navigator"] as const) {
+for (const name of ["window", "document", "navigator", "location"] as const) {
   Object.defineProperty(globalThis, name, {
     value: name === "window" ? dom.window : dom.window[name],
     configurable: true,

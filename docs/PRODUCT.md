@@ -11,7 +11,7 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 - Sign out lives in the drawer footer beside Settings, not on the profile view.
 - A chosen profile photo applies immediately rather than waiting for a separate save.
 - Signed-in users land on `/dashboard`.
-- The dashboard has seven views: overview, workouts, progress, nutrition, split, profile, and settings. On phones the bottom bar reaches overview, the workout logger, and nutrition; a top-left sidebar control opens the drawer for workouts, progress, split, profile, and settings. Desktop lists every view in the sidebar.
+- The dashboard has seven views: overview, workouts, progress, nutrition, split, profile, and settings. On phones the default bottom bar reaches overview, the workout logger, and nutrition; a top-left sidebar control opens the drawer for workouts, progress, split, profile, and settings. Desktop lists every view in the sidebar. The account targeted by the PostHog `Ben` flag gets Split instead of Nutrition in the phone bar, no duplicate Split drawer item, and no Nutrition item in the desktop sidebar.
 - Dashboard view switching updates the query string, lazily loads missing view data, and reuses loaded views until an authoritative server refresh.
 - The overview greets the user by first name and states today's plan as a sentence derived from the active split, followed by one action: log the planned workout, log an unscheduled workout on a rest day, or set up a split when none exists. The note under the plan counts both planned exercises and the sets they add up to, since ten exercises at two sets is a different session from seven at five. When today's split workout type is already logged for the current Pacific date it reads `Logged for today.` beside a quiet link to log another workout.
 - Settings holds preferences only: theme and weight unit. Both apply on selection with no save button, and the unit write sends the saved profile values plus the chosen unit, so it can never commit unsaved Profile edits or a pending avatar. Account actions (email, password, sign out, delete) stay on the profile view, which is also the only place sign-out lives.
@@ -39,6 +39,7 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 - The logger accepts the user's preferred unit, but the database stores weights in pounds.
 - New workout drafts are autosaved client-side in create mode, and the logger shows a quiet `Draft saved` indicator when a save flushes.
 - Each exercise card states its history in one line (`Last hit May 15 · best 140 lb`, or `First time logging this.`), and each set row shows what that set was last time as muted ghost text with the predicted target as its input placeholder. Comparison is per set, inline; there is no comparison panel.
+- When the PostHog `Ben` flag is true, set rows omit the Reps field and keep Weight and Time. Existing reps remain in workout data; the flag changes only the editor presentation.
 - Adding a set never refetches the comparison, and editing an existing workout never compares it against itself.
 - Workout logs cannot be dated in the future.
 - Duplicate workout creates a new workout dated to the current Pacific date and the API returns the new workout id.

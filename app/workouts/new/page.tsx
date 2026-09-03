@@ -56,6 +56,7 @@ export default async function NewWorkoutPage({
       weightUnit={user.preferredWeightUnit}
       bodyWeightDisplay={bodyWeightDisplay}
       isRestDay={Boolean(isRestDay)}
+      analyticsUser={user}
       returnHref={returnHref}
     />
   );

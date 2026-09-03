@@ -28,6 +28,7 @@
     "katex": "^0.16.45",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
+    "posthog-js": "^1.426.1",
     "react": "19.2.3",
     "react-datepicker": "^9.1.0",
     "react-dom": "19.2.3",
