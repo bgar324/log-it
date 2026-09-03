@@ -40,7 +40,7 @@ The authenticated app is navigated by frequency of the trip, not by importance o
 - **Task surfaces** (`/workouts/new`, `/workouts/[workoutId]/edit`) carry no nav chrome. They get one quiet 44px Back control at the top. Save and every other logger action live in the bottom-right tools dial.
 - **One drawer control, no dropdown nav, and no width without navigation.** The `PanelLeft` control opens the drawer below `900px`; the sidebar covers `900px` and up.
 - **Icon set (Lucide):** Navigation `PanelLeft` · Home `House` · Log `Plus` · Nutrition `Apple` · Workouts `ClipboardList` · Progress `ChartNoAxesColumnIncreasing` · Split `CalendarDays` · Profile `UserRound` · Settings `Settings`. Pick the icon that names the *thing* (a split is a week, so it is a calendar; workouts are a log, so they are a clipboard) rather than a domain mascot; `Dumbbell`, `ChartLine`, `Blocks` and `Utensils` read as noise at 1.2rem. Progress is the bare ascending bars rather than `TrendingUp`, whose arrow reads as a stock ticker.
-- Settings and sign-out share the drawer footer. Settings holds preferences only (theme, units); the profile view owns email, password, and account deletion.
+- Settings and sign-out share the phone drawer footer and the desktop sidebar utility stack. Settings holds preferences only (theme, units); the profile view owns email, password, and account deletion.
 - A control that saves on selection must not reuse a form's unsaved input state. Write the persisted values plus the one field being changed, or the toggle silently commits whatever the user left half-typed on another view.
 
 ### Sentences, not tiles

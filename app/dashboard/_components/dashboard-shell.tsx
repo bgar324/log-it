@@ -6,12 +6,14 @@ import {
   ChartNoAxesColumnIncreasing,
   ClipboardList,
   House,
+  LogOut,
   PanelLeft,
   Plus,
   Settings,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
+import posthog from "posthog-js";
 import { type ComponentType, type ReactNode } from "react";
 import type { DashboardView } from "../dashboard-types";
 import { AppShell, AppTopBar, type AppNavUser } from "@/app/components/app-nav";
@@ -182,6 +184,17 @@ export function DashboardShell({
             <Settings className={styles.navIcon} strokeWidth={1.9} />
             <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Settings</span>
           </button>
+
+          <form method="post" action="/auth/signout" onSubmit={() => posthog.reset()}>
+            <button
+              type="submit"
+              className={sidebarCollapsed ? styles.navButtonCollapsed : styles.navButton}
+              title={sidebarCollapsed ? "Sign out" : undefined}
+            >
+              <LogOut className={styles.navIcon} strokeWidth={1.9} />
+              <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Sign out</span>
+            </button>
+          </form>
         </div>
       </aside>
 
