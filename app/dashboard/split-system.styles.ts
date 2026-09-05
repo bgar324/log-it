@@ -3,11 +3,9 @@ import {
   actionFilled,
   actionIcon,
   actionIconDanger,
-  actionIconDrag,
   actionIconQuiet,
   actionMenuRow,
   actionMenuRowDanger,
-  actionOutline,
   actionQuiet,
 } from "@/app/components/action.styles";
 
@@ -17,8 +15,6 @@ const splitPanel =
   `${splitBorderTokens} rounded-[0.54rem] border border-[var(--split-border)] shadow-none`;
 const buttonMotion =
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]";
-const splitReorderCard =
-  "flex min-h-[3.45rem] w-full min-w-0 cursor-pointer items-center justify-between gap-[0.65rem] rounded-[0.56rem] border border-[var(--split-border)] bg-[color-mix(in_srgb,var(--text)_3%,var(--bg))] px-[0.66rem] py-[0.46rem] text-left text-[var(--text)] [touch-action:manipulation] transition-[border-color,background-color,color] duration-150 data-[selected=true]:border-[var(--split-border-strong)] data-[selected=true]:bg-[color-mix(in_srgb,var(--text)_9%,var(--bg))]";
 const editorColumnLabelBase =
   "grid items-center gap-[0.68rem] text-[0.68rem] leading-none text-[var(--muted)]";
 
@@ -111,7 +107,6 @@ export const splitStyles = {
   exerciseMain:
     "grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_4.75rem] gap-[0.68rem] min-[620px]:grid-cols-[minmax(0,1fr)_6rem]",
   setsInput: "text-center",
-  primaryButton: `${actionFilled} w-full`,
   dangerIconButton: actionIconDanger,
 
   actionMenu: "relative shrink-0",
@@ -122,39 +117,12 @@ export const splitStyles = {
   actionMenuDangerItem: actionMenuRowDanger,
   actionMenuDivider: "my-[0.1rem] h-px bg-[var(--split-border)]",
 
-  splitDialogOverlay:
-    `${splitBorderTokens} fixed inset-0 z-[90] flex items-end justify-center p-[0.78rem] pb-[calc(0.78rem+env(safe-area-inset-bottom))] min-[620px]:items-center min-[620px]:p-[1rem]`,
-  splitDialogBackdrop:
-    "absolute inset-0 cursor-default border-0 bg-[color-mix(in_srgb,#000_28%,transparent)] p-0 backdrop-blur-[8px]",
-  splitDialog:
-    "relative z-[1] flex w-full max-w-[28rem] flex-col gap-[0.68rem] rounded-[0.68rem] border border-[var(--split-border)] bg-[var(--bg)] p-[0.82rem] shadow-[0_18px_42px_color-mix(in_srgb,#000_20%,transparent)]",
-  splitDialogTitle:
-    "m-0 text-[1rem] font-[560] leading-[1.15] tracking-[-0.03em] text-[var(--text)]",
-  splitDialogBody:
-    "m-0 text-[0.84rem] leading-[1.45] text-[var(--muted)]",
-  splitDialogActions: "grid grid-cols-2 gap-[0.5rem] pt-[0.1rem]",
-  splitDialogSecondaryButton: `${actionOutline} w-full`,
-  splitWeekReorderList:
-    "flex max-h-[min(66dvh,28rem)] flex-col gap-[0.35rem] overflow-y-auto overscroll-contain py-[0.1rem]",
   splitReorderSlot:
     "grid min-h-[3.45rem] grid-cols-[3.25rem_minmax(0,1fr)] items-center gap-[0.35rem]",
   splitReorderDayLabel:
     "flex flex-col gap-[0.16rem] pl-[0.15rem] text-[0.78rem] leading-none text-[var(--muted)]",
   splitReorderDayLabelToday: "font-[560] text-[var(--text)]",
   splitReorderToday: "text-[0.65rem] text-[var(--muted)]",
-  splitReorderCard,
-  splitReorderItemText: "flex min-w-0 flex-1 flex-col",
-  splitReorderItemTitle:
-    "m-0 truncate text-[0.9rem] font-[520] leading-[1.2] text-[var(--text)]",
-  splitReorderItemMeta:
-    "m-0 mt-[0.14rem] text-[0.72rem] text-[var(--muted)]",
-  splitReorderItemAction:
-    "shrink-0 text-[0.72rem] text-[var(--muted)] data-[selected=true]:text-[var(--text)]",
-  splitReorderDragHandle: actionIconDrag,
-  splitReorderList:
-    "flex max-h-[min(58dvh,28rem)] flex-col gap-[0.45rem] overflow-y-auto py-[0.1rem]",
-  splitReorderItem:
-    "flex min-h-[3.2rem] items-center justify-between gap-[0.65rem] rounded-[0.56rem] border border-[var(--split-border)] bg-[color-mix(in_srgb,var(--text)_3%,var(--bg))] px-[0.66rem] py-[0.52rem] transition-[transform,border-color,background-color,box-shadow] duration-150 data-[dragging=true]:scale-[0.99] data-[dragging=true]:border-[var(--split-border-strong)] data-[dragging=true]:bg-[var(--bg)] data-[dragging=true]:shadow-[0_12px_24px_color-mix(in_srgb,#000_14%,transparent)]",
   inlineIcon: "h-[0.92rem] w-[0.92rem]",
   searchResults:
     "mt-[0.42rem] flex flex-col gap-[0.42rem] rounded-[0.52rem] border border-[var(--split-border)] bg-[color-mix(in_srgb,var(--bg)_86%,transparent)] p-[0.48rem]",

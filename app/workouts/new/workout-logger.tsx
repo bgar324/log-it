@@ -351,7 +351,7 @@ export function WorkoutLogger({
                 weightUnit={weightUnit}
                 weightUnitLabel={weightUnitLabel}
                 bodyWeightDisplay={bodyWeightDisplay}
-                showDuration={!benEnabled}
+                showOptionalSetControls={!benEnabled}
                 onAddSet={() => draft.addSet(exercise.id)}
                 onApplySearchResult={(suggestion) => {
                   clearPendingSuggestionLookup(exercise.id);

@@ -7,8 +7,8 @@ const skeleton =
 
 /**
  * One exercise card: name field and its overflow control, the "last hit" line,
- * then two set rows and Add set. Sized from the shipped card at 390px, where a
- * two-set card is 302px tall.
+ * then two set rows. Add set lives in the overflow menu, so it does not reserve
+ * a visible row while the logger loads.
  */
 function ExerciseCardSkeleton() {
   return (
@@ -28,9 +28,6 @@ function ExerciseCardSkeleton() {
             <span className={`${skeleton} h-[1rem] w-[7.5rem] rounded-[0.42rem]`} />
           </div>
         ))}
-        <div className="flex w-full min-[620px]:justify-end">
-          <span className={`${skeleton} h-[2.75rem] w-full rounded-full min-[620px]:w-[7rem]`} />
-        </div>
       </div>
     </article>
   );

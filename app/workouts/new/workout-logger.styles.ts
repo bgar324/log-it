@@ -2,9 +2,7 @@ import {
   actionChip,
   actionDanger,
   actionFilled,
-  actionIcon,
   actionIconDanger,
-  actionIconDrag,
   actionIconQuiet,
   actionMenuRow,
   actionMenuRowDanger,
@@ -27,8 +25,8 @@ const inputBase = cn(
 );
 
 export const styles = {
-  // Bottom padding clears the dial, so the last exercise's "Add set" is never
-  // sitting under it. 5.6rem = the 3.25rem trigger + its inset + breathing room.
+  // Bottom padding clears the dial, so the last set row stays fully tappable.
+  // 5.6rem = the 3.25rem trigger + its inset + breathing room.
   loggerShell: cn(
     "flex min-h-dvh justify-center px-[0.95rem] pt-[0.95rem]",
     "pb-[calc(5.6rem+env(safe-area-inset-bottom))]",
@@ -110,6 +108,9 @@ export const styles = {
     "shadow-[0_14px_32px_color-mix(in_srgb,#000_28%,transparent)]",
   ),
   exerciseMenuDangerItem: actionMenuRowDanger,
+  exerciseMenuItem: actionMenuRow,
+  exerciseMenuDivider:
+    "my-[0.1rem] h-px bg-[color-mix(in_srgb,var(--text)_12%,transparent)]",
   dangerIconButton: actionIconDanger,
   icon: "h-4 w-4 shrink-0 stroke-current",
   inlineRow: "block",
@@ -123,8 +124,6 @@ export const styles = {
     "flex max-h-[12rem] flex-wrap gap-[0.42rem] overflow-y-auto max-[420px]:max-h-[14rem] max-[420px]:flex-col max-[420px]:flex-nowrap",
   searchResultButton: `${actionChip} text-left max-[420px]:w-full max-[420px]:justify-start`,
   compareHint: "mt-[-0.1rem] text-[0.8rem] text-[var(--muted)]",
-  actionButton: actionOutline,
-  actionButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
   spinningIcon:
     "h-[0.85rem] w-[0.85rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
   setsStack: "flex flex-col gap-[0.5rem] overflow-x-visible py-[6px]",
@@ -165,7 +164,7 @@ export const styles = {
     "px-[0.5rem] disabled:opacity-100 max-[380px]:px-[0.42rem] min-[620px]:px-[0.55rem]",
   ),
   setWeightControl: "relative block min-w-0",
-  setWeightInput: "pr-[2.95rem] min-[620px]:pr-[2.6rem]",
+  setWeightInputWithBodyweight: "pr-[2.95rem] min-[620px]:pr-[2.6rem]",
   bodyweightButton: cn(
     "absolute bottom-0 right-0 top-0 inline-flex w-[2.75rem] cursor-pointer items-center justify-center rounded-r-[0.52rem] border-l bg-transparent",
     "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
@@ -176,8 +175,6 @@ export const styles = {
     "min-[620px]:w-[2.4rem] min-[620px]:text-[0.64rem]",
   ),
   setRemoveButton: "order-5 self-center justify-self-end",
-  setActions: "flex w-full min-[620px]:justify-end [&>button]:w-full",
-  secondaryButton: actionOutline,
 
   // Thumb-reachable tools dial, low in the corner where the thumb rests.
   // The trigger is separated from the actions by more than the actions are from
@@ -227,30 +224,4 @@ export const styles = {
   ),
   fabTriggerIcon: "h-[1.25rem] w-[1.25rem] shrink-0 stroke-current",
   saveButton: `${actionFilled} w-full`,
-  reorderOverlay:
-    "fixed inset-0 z-[90] flex items-end justify-center p-[0.78rem] pb-[calc(0.78rem+env(safe-area-inset-bottom))] min-[620px]:items-center min-[620px]:p-[1rem]",
-  reorderBackdrop:
-    "absolute inset-0 cursor-default border-0 bg-[color:color-mix(in_srgb,#000_28%,transparent)] p-0 backdrop-blur-[8px]",
-  reorderDialog: cn(
-    "relative z-[1] flex w-full max-w-[28rem] flex-col gap-[0.68rem] rounded-[0.68rem] border bg-[var(--bg)] p-[0.82rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "shadow-[0_18px_42px_color-mix(in_srgb,#000_20%,transparent)]",
-  ),
-  reorderHeader: "flex items-start justify-between gap-[0.7rem]",
-  reorderList:
-    "flex max-h-[min(58dvh,28rem)] flex-col gap-[0.45rem] overflow-y-auto py-[0.1rem]",
-  reorderItem: cn(
-    "flex min-h-[3.5rem] items-center justify-between gap-[0.5rem] rounded-[0.56rem] border bg-[var(--field-bg)] px-[0.55rem] py-[0.42rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
-    "transition-[transform,border-color,background-color,box-shadow] duration-150",
-    "data-[dragging=true]:scale-[0.99] data-[dragging=true]:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)] data-[dragging=true]:bg-[var(--bg)] data-[dragging=true]:shadow-[0_12px_24px_color-mix(in_srgb,#000_14%,transparent)]",
-  ),
-  reorderItemText: "min-w-0 flex-1",
-  reorderItemTitle:
-    "m-0 truncate text-[0.9rem] font-[520] leading-[1.2] text-[var(--text)]",
-  reorderItemMeta: "m-0 mt-[0.14rem] text-[0.72rem] text-[var(--muted)]",
-  reorderItemActions: "flex shrink-0 items-center gap-[0.28rem]",
-  // Muted to match the drag handle beside them: one reorder row, one colour.
-  reorderDragHandle: actionIconDrag,
-  reorderActions: "grid grid-cols-2 gap-[0.5rem]",
 } as const;

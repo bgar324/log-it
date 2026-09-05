@@ -1,12 +1,12 @@
 "use client";
 
-import { Ellipsis, Trash2 } from "lucide-react";
+import { Ellipsis, Plus, Trash2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/app/components/ui/popover";
-import { useState } from "react";
+import { useState, type PointerEvent } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../workout-logger.styles";
 import {
@@ -18,6 +18,10 @@ import {
 import { WorkoutLoggerSetsEditor } from "./workout-logger-sets-editor";
 import { WorkoutLoggerConfirmDialog } from "./workout-logger-confirm-dialog";
 
+function keepCurrentFocus(event: PointerEvent<HTMLElement>) {
+  event.preventDefault();
+}
+
 type WorkoutLoggerExerciseCardProps = {
   exercise: ExerciseDraft;
   exerciseIndex: number;
@@ -27,7 +31,7 @@ type WorkoutLoggerExerciseCardProps = {
   weightUnit: WeightUnit;
   weightUnitLabel: string;
   bodyWeightDisplay: number | null;
-  showDuration: boolean;
+  showOptionalSetControls: boolean;
   onAddSet: () => void;
   onApplySearchResult: (suggestion: string) => void;
   onExerciseNameBlur: (value: string) => Promise<void> | void;
@@ -51,7 +55,7 @@ export function WorkoutLoggerExerciseCard({
   weightUnit,
   weightUnitLabel,
   bodyWeightDisplay,
-  showDuration,
+  showOptionalSetControls,
   onAddSet,
   onApplySearchResult,
   onExerciseNameBlur,
@@ -61,6 +65,7 @@ export function WorkoutLoggerExerciseCard({
   onRemoveSet,
   onUpdateSet,
 }: WorkoutLoggerExerciseCardProps) {
+  const [isExerciseMenuOpen, setIsExerciseMenuOpen] = useState(false);
   const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
 
   function handleConfirmRemoveExercise() {
@@ -132,15 +137,44 @@ export function WorkoutLoggerExerciseCard({
             {/* On the name's row, not below it: the menu acts on the exercise
                 this field names, so it belongs beside it. The comparison keeps
                 the line underneath to itself. */}
-            <Popover>
-              <PopoverTrigger className={styles.exerciseMenuToggle}>
+            <Popover
+              open={isExerciseMenuOpen}
+              onOpenChange={setIsExerciseMenuOpen}
+            >
+              <PopoverTrigger
+                aria-label={`${exerciseTitle} options`}
+                className={styles.exerciseMenuToggle}
+                onPointerDown={keepCurrentFocus}
+              >
                 <Ellipsis className={styles.icon} strokeWidth={1.9} />
               </PopoverTrigger>
-              <PopoverContent align="end" className={styles.exerciseMenu}>
+              <PopoverContent
+                align="end"
+                className={styles.exerciseMenu}
+                onOpenAutoFocus={(event) => event.preventDefault()}
+                onCloseAutoFocus={(event) => event.preventDefault()}
+              >
+                <button
+                  type="button"
+                  className={styles.exerciseMenuItem}
+                  onPointerDown={keepCurrentFocus}
+                  onClick={() => {
+                    onAddSet();
+                    setIsExerciseMenuOpen(false);
+                  }}
+                >
+                  <Plus className={styles.icon} strokeWidth={1.9} />
+                  Add set
+                </button>
+                <div className={styles.exerciseMenuDivider} />
                 <button
                   type="button"
                   className={styles.exerciseMenuDangerItem}
-                  onClick={() => setIsRemoveConfirmOpen(true)}
+                  onPointerDown={keepCurrentFocus}
+                  onClick={() => {
+                    setIsExerciseMenuOpen(false);
+                    setIsRemoveConfirmOpen(true);
+                  }}
                   disabled={!canRemoveExercise}
                 >
                   <Trash2 className={styles.icon} strokeWidth={1.9} />
@@ -159,8 +193,7 @@ export function WorkoutLoggerExerciseCard({
           weightUnit={weightUnit}
           weightUnitLabel={weightUnitLabel}
           bodyWeightDisplay={bodyWeightDisplay}
-          showDuration={showDuration}
-          onAddSet={onAddSet}
+          showOptionalSetControls={showOptionalSetControls}
           onRemoveSet={onRemoveSet}
           onUpdateSet={onUpdateSet}
         />

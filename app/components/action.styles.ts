@@ -14,20 +14,17 @@
  *
  * # The ordering rule that shapes this file
  *
- * Tailwind emits utilities grouped by family, in ITS order, not in the order
- * they appear in a class string. Appending a utility from a family the base
- * already set does not override it — the one Tailwind emits later wins, whoever
- * wrote it. Measured in this repo's generated stylesheet: `.border` at 1462
- * loses to `.border-0` at 1466; `.bg-[color-mix(…)]` at 1672 loses to
- * `.bg-transparent` at 1723; `.text-[#b13d48]` at 2341 loses to
- * `.text-[var(--text)]` at 2404; `.cursor-grab` loses to `.cursor-pointer`.
+ * Tailwind emits utilities by family, in its own order rather than their order
+ * in a class string. Appending a utility from a family the base already sets
+ * therefore does not guarantee an override. Measured here, `.border` loses to
+ * `.border-0`, `.bg-[color-mix(…)]` loses to `.bg-transparent`, and danger text
+ * can lose to a later neutral text utility.
  *
- * So a shared base states a family only if every variant built on it wants that
- * exact value. Border, background, colour, cursor and touch-action are all
- * therefore owned by the variants — see `actionPointer` vs `actionDrag`. Each
- * export states its families exactly once, which also leaves consumers free to
- * add `hover:` or `data-[active]:` tints: variant-prefixed utilities are emitted
- * after unprefixed ones, so those always win.
+ * A shared base therefore states a family only if every variant built on it
+ * wants that exact value. Border, background, and colour live on the variants.
+ * Each export states those families once, which leaves consumers free to add
+ * `hover:` or `data-[active]:` tints; variant-prefixed utilities carry the
+ * specificity needed to win.
  */
 
 const actionMotion =
@@ -51,13 +48,6 @@ const actionGeometry = `inline-flex shrink-0 min-h-[2.75rem] items-center justif
 
 /** Tap interaction for anything you press once. */
 const actionPointer = "cursor-pointer [touch-action:manipulation]";
-
-/**
- * Drag interaction. `touch-action: none` is functional, not cosmetic: the drag
- * handles use pointer capture, and without it a touch drag scrolls the page
- * instead of reordering the list.
- */
-const actionDrag = "cursor-grab active:cursor-grabbing [touch-action:none]";
 
 const actionBase = `${actionGeometry} ${actionPointer}`;
 
@@ -87,9 +77,6 @@ export const actionIconDanger = `${actionIconBase} text-[#b13d48] hover:bg-[colo
 
 /** Icon-only and filled: the collapsed-sidebar twin of the phone tab bar's `+`. */
 export const actionIconFilled = `${actionIconBase} app-filled-action`;
-
-/** Icon-only drag handle: same circle, drag cursor, no touch scrolling. */
-export const actionIconDrag = `${actionIconShape} ${actionDrag} text-[var(--muted)]`;
 
 /**
  * Chip rows (rest-timer presets, filter chips) keep the pill and the 44px

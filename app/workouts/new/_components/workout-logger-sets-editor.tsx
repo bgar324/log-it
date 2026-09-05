@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../workout-logger.styles";
@@ -22,8 +22,7 @@ type WorkoutLoggerSetsEditorProps = {
   weightUnit: WeightUnit;
   weightUnitLabel: string;
   bodyWeightDisplay: number | null;
-  showDuration: boolean;
-  onAddSet: () => void;
+  showOptionalSetControls: boolean;
   onRemoveSet: (setId: string) => void;
   onUpdateSet: <K extends keyof ExerciseSetDraft>(
     setId: string,
@@ -38,8 +37,7 @@ export function WorkoutLoggerSetsEditor({
   weightUnit,
   weightUnitLabel,
   bodyWeightDisplay,
-  showDuration,
-  onAddSet,
+  showOptionalSetControls,
   onRemoveSet,
   onUpdateSet,
 }: WorkoutLoggerSetsEditorProps) {
@@ -88,7 +86,7 @@ export function WorkoutLoggerSetsEditor({
         return (
           <div key={setItem.id} className={styles.setRowGroup}>
             <div
-              className={showDuration ? styles.setRow : styles.setRowWithoutDuration}
+              className={showOptionalSetControls ? styles.setRow : styles.setRowWithoutDuration}
             >
               <p className={styles.setNumber}>#{setIndex + 1}</p>
               <label
@@ -108,12 +106,16 @@ export function WorkoutLoggerSetsEditor({
                     autoCapitalize="none"
                     spellCheck={false}
                     enterKeyHint="next"
-                    className={`${styles.setInput} ${styles.setWeightInput}`}
+                    className={`${styles.setInput} ${
+                      showOptionalSetControls
+                        ? styles.setWeightInputWithBodyweight
+                        : ""
+                    }`}
                     placeholder={
                       isBodyweight ? bodyweightPlaceholder : weightPlaceholder
                     }
                     value={setItem.weightLb}
-                    disabled={isBodyweight}
+                    disabled={showOptionalSetControls && isBodyweight}
                     onChange={(event) => {
                       onUpdateSet(setItem.id, "usesBodyweight", false);
                       onUpdateSet(
@@ -123,22 +125,24 @@ export function WorkoutLoggerSetsEditor({
                       );
                     }}
                   />
-                  <button
-                    type="button"
-                    className={styles.bodyweightButton}
-                    data-active={isBodyweight}
-                    onClick={() => {
-                      if (isBodyweight) {
-                        onUpdateSet(setItem.id, "usesBodyweight", false);
-                        return;
-                      }
+                  {showOptionalSetControls ? (
+                    <button
+                      type="button"
+                      className={styles.bodyweightButton}
+                      data-active={isBodyweight}
+                      onClick={() => {
+                        if (isBodyweight) {
+                          onUpdateSet(setItem.id, "usesBodyweight", false);
+                          return;
+                        }
 
-                      onUpdateSet(setItem.id, "weightLb", "");
-                      onUpdateSet(setItem.id, "usesBodyweight", true);
-                    }}
-                  >
-                    BW
-                  </button>
+                        onUpdateSet(setItem.id, "weightLb", "");
+                        onUpdateSet(setItem.id, "usesBodyweight", true);
+                      }}
+                    >
+                      BW
+                    </button>
+                  ) : null}
                 </span>
               </label>
               <label className={`${styles.setField} ${styles.setFieldReps}`}>
@@ -163,7 +167,7 @@ export function WorkoutLoggerSetsEditor({
                   }
                 />
               </label>
-              {showDuration ? (
+              {showOptionalSetControls ? (
                 <label className={`${styles.setField} ${styles.setFieldDuration}`}>
                   <span className={styles.setFieldLabel}>Time (sec)</span>
                   <input
@@ -221,12 +225,6 @@ export function WorkoutLoggerSetsEditor({
         />
       ) : null}
 
-      <div className={styles.setActions}>
-        <button type="button" className={styles.actionButton} onClick={onAddSet}>
-          <Plus className={styles.actionButtonIcon} strokeWidth={1.9} />
-          Add set
-        </button>
-      </div>
     </div>
   );
 }

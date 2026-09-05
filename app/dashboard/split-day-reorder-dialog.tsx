@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { moveReorderStyles } from "@/app/components/move-reorder-dialog.styles";
 import {
   SPLIT_WEEKDAYS,
   getSplitWeekdayIndex,
@@ -121,22 +122,22 @@ export function SplitDayReorderDialog({
   }
 
   return createPortal(
-    <div className={splitStyles.splitDialogOverlay}>
+    <div className={moveReorderStyles.overlay}>
       <button
         type="button"
         tabIndex={-1}
         aria-label="Close move workouts"
-        className={splitStyles.splitDialogBackdrop}
+        className={moveReorderStyles.backdrop}
         onClick={onCancel}
       />
       <section
         role="dialog"
         aria-modal="true"
         aria-label="Move workouts"
-        className={splitStyles.splitDialog}
+        className={moveReorderStyles.dialog}
       >
-        <h2 className={splitStyles.splitDialogTitle}>Move workouts</h2>
-        <p aria-live="polite" className={splitStyles.splitDialogBody}>
+        <h2 className={moveReorderStyles.title}>Move workouts</h2>
+        <p aria-live="polite" className={moveReorderStyles.body}>
           {selectedTitle
             ? `${selectedTitle} selected. Choose a day.`
             : "Choose a workout to move."}
@@ -144,7 +145,7 @@ export function SplitDayReorderDialog({
 
         <div
           aria-label="Weekly workout order"
-          className={splitStyles.splitWeekReorderList}
+          className={moveReorderStyles.list}
         >
           {orderedDays.map((day, index) => {
             const slotWeekday = SPLIT_WEEKDAYS[index] ?? day.weekday;
@@ -188,22 +189,22 @@ export function SplitDayReorderDialog({
                   aria-pressed={isSelected}
                   data-reorder-card
                   data-selected={isSelected}
-                  className={splitStyles.splitReorderCard}
+                  className={moveReorderStyles.card}
                   onClick={() =>
                     selectWorkoutOrDestination(day.weekday, index)
                   }
                 >
-                  <span className={splitStyles.splitReorderItemText}>
-                    <span className={splitStyles.splitReorderItemTitle}>
+                  <span className={moveReorderStyles.itemText}>
+                    <span className={moveReorderStyles.itemTitle}>
                       {dayTitle}
                     </span>
-                    <span className={splitStyles.splitReorderItemMeta}>
+                    <span className={moveReorderStyles.itemMeta}>
                       {getDayMeta(day)}
                     </span>
                   </span>
                   <span
                     data-selected={isSelected}
-                    className={splitStyles.splitReorderItemAction}
+                    className={moveReorderStyles.itemAction}
                   >
                     {actionLabel}
                   </span>
@@ -213,17 +214,17 @@ export function SplitDayReorderDialog({
           })}
         </div>
 
-        <div className={splitStyles.splitDialogActions}>
+        <div className={moveReorderStyles.actions}>
           <button
             type="button"
-            className={splitStyles.splitDialogSecondaryButton}
+            className={moveReorderStyles.secondaryButton}
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
             type="button"
-            className={splitStyles.primaryButton}
+            className={moveReorderStyles.primaryButton}
             onClick={() => onSave(orderedWeekdays)}
           >
             Done

@@ -88,4 +88,4 @@ Individual bodyweight sets keep `weightLb = null`, so every set display still re
 
 Account-specific UI experiments use remote PostHog flags instead of hardcoded identity checks. Protected server pages evaluate the flag with the stable database user ID and current profile properties, then pass the result across the client-component boundary. This keeps required presentation independent of browser content blockers and prevents auth-free previews from identifying their demo users. Failed evaluations keep the standard interface.
 
-These flags change presentation only. They do not authorize routes or change persisted data and payload rules.
+These flags change presentation only. They do not authorize routes or change persisted data and payload rules. The current personal logger variant removes Time and the explicit `BW` button, but blank weights and existing bodyweight sets still submit as `weightLb = null`.
