@@ -21,10 +21,10 @@
  * can lose to a later neutral text utility.
  *
  * A shared base therefore states a family only if every variant built on it
- * wants that exact value. Border, background, and colour live on the variants.
- * Each export states those families once, which leaves consumers free to add
- * `hover:` or `data-[active]:` tints; variant-prefixed utilities carry the
- * specificity needed to win.
+ * wants that exact value. Border, background, colour, cursor, and touch action
+ * live on the variants. Each export states those families once, which leaves
+ * consumers free to add `hover:` or `data-[active]:` tints; variant-prefixed
+ * utilities carry the specificity needed to win.
  */
 
 const actionMotion =
@@ -48,6 +48,9 @@ const actionGeometry = `inline-flex shrink-0 min-h-[2.75rem] items-center justif
 
 /** Tap interaction for anything you press once. */
 const actionPointer = "cursor-pointer [touch-action:manipulation]";
+
+/** Drag interaction: pointer capture owns the gesture instead of page scroll. */
+const actionDrag = "cursor-grab active:cursor-grabbing [touch-action:none]";
 
 const actionBase = `${actionGeometry} ${actionPointer}`;
 
@@ -77,6 +80,9 @@ export const actionIconDanger = `${actionIconBase} text-[#b13d48] hover:bg-[colo
 
 /** Icon-only and filled: the collapsed-sidebar twin of the phone tab bar's `+`. */
 export const actionIconFilled = `${actionIconBase} app-filled-action`;
+
+/** Icon-only drag handle: the same circle with drag-specific pointer behavior. */
+export const actionIconDrag = `${actionIconShape} ${actionDrag} text-[var(--muted)]`;
 
 /**
  * Chip rows (rest-timer presets, filter chips) keep the pill and the 44px

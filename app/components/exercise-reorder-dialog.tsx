@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { GripVertical } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { reorderItems } from "@/lib/workout-utils";
 import { moveReorderStyles } from "./move-reorder-dialog.styles";
@@ -27,7 +28,8 @@ export function ExerciseReorderDialog<Id extends ExerciseReorderId>({
   const [orderedIds, setOrderedIds] = useState<Id[]>(() =>
     items.map((item) => item.id),
   );
-  const [selectedId, setSelectedId] = useState<Id | null>(null);
+  const [draggingId, setDraggingId] = useState<Id | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -57,29 +59,34 @@ export function ExerciseReorderDialog<Id extends ExerciseReorderId>({
   const orderedItems = orderedIds
     .map((id) => itemById.get(id))
     .filter((item): item is ExerciseReorderItem<Id> => Boolean(item));
-  const selectedItem = selectedId === null ? null : itemById.get(selectedId) ?? null;
 
-  function selectExerciseOrDestination(id: Id, destinationIndex: number) {
-    if (selectedId === null) {
-      setSelectedId(id);
+  function moveDraggingItem(clientY: number) {
+    if (draggingId === null || !listRef.current) {
       return;
     }
 
-    if (selectedId === id) {
-      setSelectedId(null);
+    const rows = Array.from(
+      listRef.current.querySelectorAll<HTMLElement>("[data-reorder-index]"),
+    );
+    const targetRow = rows.find((row) => {
+      const rect = row.getBoundingClientRect();
+      return clientY >= rect.top && clientY <= rect.bottom;
+    });
+    const targetIndex = Number(targetRow?.dataset.reorderIndex);
+
+    if (!Number.isInteger(targetIndex)) {
       return;
     }
 
     setOrderedIds((current) => {
-      const sourceIndex = current.indexOf(selectedId);
+      const sourceIndex = current.indexOf(draggingId);
 
-      if (sourceIndex === -1 || sourceIndex === destinationIndex) {
+      if (sourceIndex === -1 || sourceIndex === targetIndex) {
         return current;
       }
 
-      return reorderItems(current, sourceIndex, destinationIndex);
+      return reorderItems(current, sourceIndex, targetIndex);
     });
-    setSelectedId(null);
   }
 
   if (typeof document === "undefined") {
@@ -91,62 +98,61 @@ export function ExerciseReorderDialog<Id extends ExerciseReorderId>({
       <button
         type="button"
         tabIndex={-1}
-        aria-label="Close move exercises"
+        aria-label="Close reorder exercises"
         className={moveReorderStyles.backdrop}
         onClick={onCancel}
       />
       <section
         role="dialog"
         aria-modal="true"
-        aria-label="Move exercises"
+        aria-label="Reorder exercises"
         className={moveReorderStyles.dialog}
       >
-        <h2 className={moveReorderStyles.title}>Move exercises</h2>
-        <p aria-live="polite" className={moveReorderStyles.body}>
-          {selectedItem
-            ? `${selectedItem.title} selected. Choose a position.`
-            : "Choose an exercise to move."}
-        </p>
+        <h2 className={moveReorderStyles.title}>Reorder exercises</h2>
 
-        <div aria-label="Exercise order" className={moveReorderStyles.list}>
-          {orderedItems.map((item, index) => {
-            const isSelected = selectedId === item.id;
-            const actionLabel = selectedItem
-              ? isSelected
-                ? "Deselect"
-                : "Move here"
-              : "Move";
-            const buttonLabel = selectedItem
-              ? isSelected
-                ? `Cancel moving ${item.title}`
-                : `Move ${selectedItem.title} to position ${index + 1}`
-              : `Select ${item.title} at position ${index + 1} to move`;
+        <div
+          ref={listRef}
+          aria-label="Exercise order"
+          className={moveReorderStyles.exerciseList}
+          onPointerMove={(event) => {
+            if (draggingId === null) {
+              return;
+            }
 
-            return (
+            event.preventDefault();
+            moveDraggingItem(event.clientY);
+          }}
+          onPointerUp={() => setDraggingId(null)}
+          onPointerCancel={() => setDraggingId(null)}
+        >
+          {orderedItems.map((item, index) => (
+            <div
+              key={item.id}
+              data-reorder-id={item.id}
+              data-reorder-index={index}
+              data-dragging={draggingId === item.id}
+              className={moveReorderStyles.exerciseItem}
+            >
+              <div className={moveReorderStyles.itemText}>
+                <p className={moveReorderStyles.itemTitle}>{item.title}</p>
+                <p className={moveReorderStyles.itemMeta}>{item.meta}</p>
+              </div>
               <button
-                key={item.id}
                 type="button"
-                aria-label={buttonLabel}
-                aria-pressed={isSelected}
-                data-reorder-card
-                data-reorder-id={item.id}
-                data-selected={isSelected}
-                className={moveReorderStyles.card}
-                onClick={() => selectExerciseOrDestination(item.id, index)}
+                aria-label={`Drag ${item.title}`}
+                className={moveReorderStyles.dragHandle}
+                onPointerDown={(event) => {
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  setDraggingId(item.id);
+                }}
               >
-                <span className={moveReorderStyles.itemText}>
-                  <span className={moveReorderStyles.itemTitle}>{item.title}</span>
-                  <span className={moveReorderStyles.itemMeta}>{item.meta}</span>
-                </span>
-                <span
-                  data-selected={isSelected}
-                  className={moveReorderStyles.itemAction}
-                >
-                  {actionLabel}
-                </span>
+                <GripVertical
+                  className={moveReorderStyles.inlineIcon}
+                  strokeWidth={1.9}
+                />
               </button>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
         <div className={moveReorderStyles.actions}>
@@ -162,7 +168,7 @@ export function ExerciseReorderDialog<Id extends ExerciseReorderId>({
             className={moveReorderStyles.primaryButton}
             onClick={() => onSave(orderedIds)}
           >
-            Done
+            Save order
           </button>
         </div>
       </section>

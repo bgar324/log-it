@@ -53,13 +53,7 @@ export function DashboardOverviewView({
 
         <div className={styles.todayActionRow}>
           {todayPlan.isLoggedToday ? (
-            <>
-              <p className={styles.todayLogged}>Logged for today.</p>
-              <Link href="/workouts/new?from=dashboard" className={styles.todayQuietAction}>
-                Log another workout
-                <LinkPendingOverlay />
-              </Link>
-            </>
+            <p className={styles.todayLogged}>Logged for today.</p>
           ) : todayPlan.isRestDay ? (
             <Link href="/workouts/new?from=dashboard" className={styles.todayQuietAction}>
               Log an unscheduled workout

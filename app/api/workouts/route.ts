@@ -19,6 +19,7 @@ import {
 import {
   createWorkout,
   updateWorkout,
+  WORKOUT_ALREADY_LOGGED_ERROR,
   WORKOUT_NOT_FOUND_ERROR,
 } from "@/lib/workouts/service";
 
@@ -31,6 +32,16 @@ async function isRestDayForUser(userId: string, date: Date) {
 }
 
 function toWorkoutWriteErrorResponse(error: unknown, fallbackMessage: string) {
+  if (
+    error instanceof Error &&
+    error.message === WORKOUT_ALREADY_LOGGED_ERROR
+  ) {
+    return NextResponse.json(
+      { error: "This workout is already logged for that day." },
+      { status: 409 },
+    );
+  }
+
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002"

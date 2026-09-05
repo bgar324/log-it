@@ -22,9 +22,9 @@ Workout payload parsing lives in `lib/workouts/payload.ts`; create/update/delete
 
 The data model allows multiple `WorkoutSplit` rows per user, with a PostgreSQL partial unique index enforcing zero or one active split per user. Service code maintains that invariant; the active split drives dashboard planning, rest-day blocking, and workout logger preload. Split saves replace nested days/exercises, normalize all weekdays, and default missing days to `Rest`.
 
-## Logged Today Means Date Plus Split Type
+## Logged Today And Duplicate Guard Use Date Plus Split Type
 
-The dashboard `Logged!` state is based on today's Pacific date and normalized workout type matching the active split day assignment. It does not treat any workout on the same date as sufficient unless the workout type matches.
+The dashboard `Logged!` state and the workout-create guard use the same identity: the user's selected date plus normalized workout type. A completed matching workout removes the dashboard's second log action, `/workouts/new` redirects to that workout when the active split seeds the same type, and `createWorkout()` rejects a duplicate inside its transaction. A different workout type on the same date remains valid.
 
 ## Rest Days Require An Explicit Workout Override
 

@@ -10,15 +10,57 @@ import {
   toWeightLbString,
   TRANSACTION_OPTIONS,
   WORKOUT_NOT_FOUND_ERROR,
+  type WorkoutDbClient,
 } from "./service.shared";
 
 export { WORKOUT_NOT_FOUND_ERROR } from "./service.shared";
+export const WORKOUT_ALREADY_LOGGED_ERROR = "WORKOUT_ALREADY_LOGGED";
+
+async function findLoggedWorkout(
+  db: WorkoutDbClient,
+  userId: string,
+  performedAt: Date,
+  workoutTypeSlug: string | null,
+) {
+  return db.workoutLog.findFirst({
+    where: {
+      userId,
+      performedAt,
+      workoutTypeSlug,
+      status: "COMPLETED",
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    select: {
+      id: true,
+    },
+  });
+}
+
+export async function findLoggedWorkoutForDateAndType(
+  userId: string,
+  performedAt: Date,
+  workoutTypeSlug: string | null,
+) {
+  return findLoggedWorkout(prisma, userId, performedAt, workoutTypeSlug);
+}
 
 export async function createWorkout(userId: string, payload: ParsedWorkout) {
-  return prisma.$transaction(
-    (tx) => createWorkoutRecord(tx, userId, payload),
-    TRANSACTION_OPTIONS,
-  );
+  return prisma.$transaction(async (tx) => {
+    const existingWorkout = await findLoggedWorkout(
+      tx,
+      userId,
+      payload.performedAt,
+      payload.workoutTypeSlug,
+    );
+
+    if (existingWorkout) {
+      throw new Error(WORKOUT_ALREADY_LOGGED_ERROR);
+    }
+
+    return createWorkoutRecord(tx, userId, payload);
+  }, TRANSACTION_OPTIONS);
 }
 
 export async function updateWorkout(

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { WorkoutLogger } from "./workout-logger";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -5,6 +6,7 @@ import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
 import { resolveBodyWeightLbForDate } from "@/lib/body-weight";
 import { convertStoredWeightToDisplay } from "@/lib/weight-unit";
 import { getWorkoutLoggerInitialDataForDate } from "@/lib/workout-splits/service";
+import { findLoggedWorkoutForDateAndType } from "@/lib/workouts/service";
 import {
   isRestDayWorkoutTypeSlug,
   parseDateKey,
@@ -37,8 +39,22 @@ export default async function NewWorkoutPage({
     bodyWeightLb,
     user.preferredWeightUnit,
   );
-  const isRestDay =
-    splitSeed.split.id && isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug);
+  const isRestDay = Boolean(
+    splitSeed.split.id &&
+      isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug),
+  );
+  const existingWorkout =
+    splitSeed.split.id && !isRestDay
+      ? await findLoggedWorkoutForDateAndType(
+          user.id,
+          selectedDate,
+          splitSeed.day.workoutTypeSlug,
+        )
+      : null;
+
+  if (existingWorkout) {
+    redirect(`/workouts/${existingWorkout.id}`);
+  }
   const initialData =
     splitSeed.split.id &&
     (splitSeed.day.exercises.length > 0 ||
@@ -57,7 +73,7 @@ export default async function NewWorkoutPage({
       splitTemplateData={splitSeed.split.id ? splitSeed.initialData : undefined}
       weightUnit={user.preferredWeightUnit}
       bodyWeightDisplay={bodyWeightDisplay}
-      isRestDay={Boolean(isRestDay)}
+      isRestDay={isRestDay}
       analyticsUser={user}
       benEnabled={benEnabled}
       returnHref={returnHref}

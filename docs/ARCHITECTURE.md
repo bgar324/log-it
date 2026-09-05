@@ -99,7 +99,7 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 5. `lib/workouts/service.ts` creates, updates, deletes, or duplicates workouts inside Prisma transactions.
 6. Mutation routes synchronize `syncWorkoutReadModels()` and revalidate `getWorkoutDataTag(user.id)` before returning success.
 
-`createWorkout()` blocks logging on a split rest day when the user has an active split and the selected date maps to `workoutTypeSlug === "rest"`.
+`createWorkout()` rejects a completed workout with the same user, date, and normalized workout type before creating nested records. The API maps that condition to `409`, and `/workouts/new` redirects to the existing workout when the active split seeds the same date/type. Different workout types may share a date. The API separately blocks logging on a split rest day when the selected date maps to `workoutTypeSlug === "rest"`.
 
 ## Workout Logger Compare
 
@@ -107,7 +107,7 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 
 The UI consumes it inline rather than as a panel: each draft set row shows the matching past set as muted ghost text (`lastSession.sets[index]`) and takes its weight/reps placeholders from `prediction.predictedSets[index]`. The exercise card carries one sentence — `Last hit May 15 · best 140 lb`, or `First time logging this.` Refetches carry the previous payload forward so the card never blanks or shifts, and edit mode passes `excludeWorkoutId` so a workout is never compared against itself.
 
-`app/components/exercise-reorder-dialog.tsx` owns exercise ordering for both the split editor and the workout logger. It follows the split week's two-tap model: select an exercise, then select a destination position. The dialog holds the draft order locally; `Done` sends the ordered identifiers to the owning editor, while `Cancel`, the backdrop, and Escape discard it.
+`app/components/exercise-reorder-dialog.tsx` owns exercise ordering for both the split editor and the workout logger. One grab handle per row starts a pointer-captured drag; crossing another row updates only the dialog's draft order. `Save order` sends the ordered identifiers to the owning editor, while `Cancel`, the backdrop, and Escape discard the draft.
 
 ## Read Models And Caching
 

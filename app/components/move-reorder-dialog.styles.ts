@@ -1,5 +1,6 @@
 import {
   actionFilled,
+  actionIconDrag,
   actionOutline,
 } from "@/app/components/action.styles";
 
@@ -17,6 +18,10 @@ export const moveReorderStyles = {
   body: "m-0 text-[0.84rem] leading-[1.45] text-[var(--muted)]",
   list:
     "flex max-h-[min(66dvh,28rem)] flex-col gap-[0.35rem] overflow-y-auto overscroll-contain py-[0.1rem]",
+  exerciseList:
+    "flex max-h-[min(58dvh,28rem)] flex-col gap-[0.45rem] overflow-y-auto overscroll-contain py-[0.1rem]",
+  exerciseItem:
+    "flex min-h-[3.2rem] items-center justify-between gap-[0.65rem] rounded-[0.56rem] border border-[var(--move-border)] bg-[color-mix(in_srgb,var(--text)_3%,var(--bg))] px-[0.66rem] py-[0.52rem] transition-[transform,border-color,background-color,box-shadow] duration-150 data-[dragging=true]:scale-[0.99] data-[dragging=true]:border-[var(--move-border-strong)] data-[dragging=true]:bg-[var(--bg)] data-[dragging=true]:shadow-[0_12px_24px_color-mix(in_srgb,#000_14%,transparent)]",
   card:
     "flex min-h-[3.45rem] w-full min-w-0 cursor-pointer items-center justify-between gap-[0.65rem] rounded-[0.56rem] border border-[var(--move-border)] bg-[color-mix(in_srgb,var(--text)_3%,var(--bg))] px-[0.66rem] py-[0.46rem] text-left text-[var(--text)] [touch-action:manipulation] transition-[border-color,background-color,color] duration-150 data-[selected=true]:border-[var(--move-border-strong)] data-[selected=true]:bg-[color-mix(in_srgb,var(--text)_9%,var(--bg))]",
   itemText: "flex min-w-0 flex-1 flex-col",
@@ -25,6 +30,8 @@ export const moveReorderStyles = {
   itemMeta: "m-0 mt-[0.14rem] text-[0.72rem] text-[var(--muted)]",
   itemAction:
     "shrink-0 text-[0.72rem] text-[var(--muted)] data-[selected=true]:text-[var(--text)]",
+  dragHandle: actionIconDrag,
+  inlineIcon: "h-[0.92rem] w-[0.92rem]",
   actions: "grid grid-cols-2 gap-[0.5rem] pt-[0.1rem]",
   secondaryButton: `${actionOutline} w-full`,
   primaryButton: `${actionFilled} w-full`,

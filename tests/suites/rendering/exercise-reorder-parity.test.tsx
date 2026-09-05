@@ -44,15 +44,21 @@ const LOGGER_EXERCISES: ExerciseDraft[] = SPLIT_EXERCISES.map((exercise) => ({
   })),
 }));
 
-function getMoveDialog() {
+function getReorderDialog() {
   const dialog = document.body.querySelector<HTMLElement>(
-    'section[aria-label="Move exercises"]',
+    'section[aria-label="Reorder exercises"]',
   );
   assert.ok(dialog);
   return dialog;
 }
 
-test("split exercise reordering uses the two-tap move flow", async () => {
+function getDragLabels(dialog: HTMLElement) {
+  return Array.from(
+    dialog.querySelectorAll<HTMLButtonElement>('button[aria-label^="Drag "]'),
+  ).map((button) => button.getAttribute("aria-label"));
+}
+
+test("split exercise reordering exposes the grab-handle flow", async () => {
   let savedOrder: number[] = [];
   const mounted = await render(
     createElement(SplitExerciseReorderDialog, {
@@ -65,33 +71,26 @@ test("split exercise reordering uses the two-tap move flow", async () => {
   );
 
   try {
-    const dialog = getMoveDialog();
-    const source = dialog.querySelector<HTMLElement>(
-      'button[aria-label="Select Bench press at position 1 to move"]',
-    );
-    assert.ok(source);
-    await mounted.click(source);
-    assert.match(dialog.textContent ?? "", /Bench press selected\. Choose a position\./);
+    const dialog = getReorderDialog();
+    assert.deepEqual(getDragLabels(dialog), [
+      "Drag Bench press",
+      "Drag Barbell row",
+      "Drag Lateral raise",
+    ]);
+    assert.equal(dialog.textContent?.includes("Move here"), false);
 
-    const destination = dialog.querySelector<HTMLElement>(
-      'button[aria-label="Move Bench press to position 3"]',
+    const save = Array.from(dialog.querySelectorAll<HTMLElement>("button")).find(
+      (button) => button.textContent?.trim() === "Save order",
     );
-    assert.ok(destination);
-    await mounted.click(destination);
-
-    const done = Array.from(dialog.querySelectorAll<HTMLElement>("button")).find(
-      (button) => button.textContent?.trim() === "Done",
-    );
-    assert.ok(done);
-    await mounted.click(done);
-
-    assert.deepEqual(savedOrder, [2, 3, 1]);
+    assert.ok(save);
+    await mounted.click(save);
+    assert.deepEqual(savedOrder, [1, 2, 3]);
   } finally {
     mounted.unmount();
   }
 });
 
-test("logger exercise reordering matches the split two-tap move flow", async () => {
+test("logger exercise reordering matches the split grab-handle flow", async () => {
   let savedOrder: string[] = [];
   const mounted = await render(
     createElement(WorkoutLoggerReorderDialog, {
@@ -105,26 +104,20 @@ test("logger exercise reordering matches the split two-tap move flow", async () 
   );
 
   try {
-    const dialog = getMoveDialog();
-    const source = dialog.querySelector<HTMLElement>(
-      'button[aria-label="Select Bench press at position 1 to move"]',
-    );
-    assert.ok(source);
-    await mounted.click(source);
+    const dialog = getReorderDialog();
+    assert.deepEqual(getDragLabels(dialog), [
+      "Drag Bench press",
+      "Drag Barbell row",
+      "Drag Lateral raise",
+    ]);
+    assert.equal(dialog.textContent?.includes("Move here"), false);
 
-    const destination = dialog.querySelector<HTMLElement>(
-      'button[aria-label="Move Bench press to position 2"]',
+    const save = Array.from(dialog.querySelectorAll<HTMLElement>("button")).find(
+      (button) => button.textContent?.trim() === "Save order",
     );
-    assert.ok(destination);
-    await mounted.click(destination);
-
-    const done = Array.from(dialog.querySelectorAll<HTMLElement>("button")).find(
-      (button) => button.textContent?.trim() === "Done",
-    );
-    assert.ok(done);
-    await mounted.click(done);
-
-    assert.deepEqual(savedOrder, ["row", "bench", "raise"]);
+    assert.ok(save);
+    await mounted.click(save);
+    assert.deepEqual(savedOrder, ["bench", "row", "raise"]);
   } finally {
     mounted.unmount();
   }
