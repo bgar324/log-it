@@ -36,7 +36,7 @@ test("the home skeleton promises one action, not a wall of tiles", async () => {
     "it should mirror the today hero and its single action row",
   );
   assert.equal(
-    countByClass(html, styles.sessionRow),
+    countByClass(html, styles.listRow),
     7,
     "the where-you-left-off list should be represented by real rows",
   );
@@ -57,9 +57,8 @@ test("the progress skeleton draws exactly one page of rows plus a pager", async 
     "the skeleton must reserve the pager row the real list now ends with",
   );
   assert.equal(
-    countByClass(html, styles.exerciseRow),
-    // One header row is drawn with the same class, then one page of exercises.
-    EXERCISES_PER_PAGE + 1,
+    countByClass(html, styles.listRow),
+    EXERCISES_PER_PAGE,
     `the skeleton must draw exactly one page of ${EXERCISES_PER_PAGE}`,
   );
 

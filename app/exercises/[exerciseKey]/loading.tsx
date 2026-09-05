@@ -11,20 +11,19 @@ function SkeletonBlock({
   return <span className={`${styles.skeletonBlock} ${className}`} />;
 }
 
+// The shipped row's own layout keys, so the skeleton cannot drift into a
+// different shape than the list it stands in for.
 function SessionRowSkeleton() {
   return (
-    <div className={styles.sessionRow}>
-      <SkeletonBlock className="h-[0.86rem] w-[4.8rem]" />
-      <div className={styles.sessionMobileWorkout}>
-        <SkeletonBlock className="hidden h-[0.88rem] w-[7.2rem] max-[760px]:block" />
-        <SkeletonBlock className="h-[0.88rem] w-[6.4rem] max-[760px]:hidden" />
-        <SkeletonBlock className="mt-[0.2rem] h-[0.72rem] w-[4.8rem] max-[760px]:hidden" />
+    <div className={styles.listRow}>
+      <div className={styles.listRowMain}>
+        <SkeletonBlock className="h-[1.1rem] w-[6.4rem]" />
+        <SkeletonBlock className="mt-[0.24rem] h-[1rem] w-[7.6rem]" />
       </div>
-      <SkeletonBlock className={`${styles.sessionDesktopValue} h-[0.82rem] w-[2rem]`} />
-      <SkeletonBlock className={`${styles.sessionDesktopValue} h-[0.82rem] w-[2.2rem]`} />
-      <SkeletonBlock className={`${styles.sessionMobileStats} h-[0.82rem] w-[6.4rem]`} />
-      <SkeletonBlock className={`${styles.sessionMobileHidden} h-[0.82rem] w-[3.6rem]`} />
-      <SkeletonBlock className={`${styles.sessionDesktopValue} h-[0.82rem] w-[4.4rem]`} />
+      <div className={styles.listRowStats}>
+        <SkeletonBlock className="h-[1.25rem] w-[4.4rem]" />
+        <SkeletonBlock className="mt-[0.24rem] h-[1rem] w-[8.2rem]" />
+      </div>
     </div>
   );
 }
@@ -43,10 +42,9 @@ export default function ExerciseDetailLoading() {
         </header>
 
         <section className={styles.summaryCard}>
-          <SkeletonBlock className="h-[0.76rem] w-[min(100%,16rem)]" />
-          <SkeletonBlock className="mt-[0.48rem] h-[2rem] w-[min(100%,21rem)]" />
-          <SkeletonBlock className="mt-[0.66rem] h-[0.95rem] w-[min(100%,19rem)]" />
-          <SkeletonBlock className="mt-[0.28rem] h-[0.82rem] w-[min(100%,10rem)]" />
+          <SkeletonBlock className="h-[2rem] w-[min(100%,21rem)]" />
+          <SkeletonBlock className="mt-[0.66rem] h-[0.95rem] w-[min(100%,22rem)]" />
+          <SkeletonBlock className="mt-[0.28rem] h-[0.82rem] w-[min(100%,16rem)]" />
         </section>
 
         <section className={styles.panelGrid}>
@@ -61,26 +59,18 @@ export default function ExerciseDetailLoading() {
 
         <section className={styles.panel}>
           <SkeletonBlock className="h-[1rem] w-[9rem]" />
-          <div className={styles.metricList}>
-            <div className={styles.sessionHeader}>
-              {Array.from({ length: 6 }, (_, index) => (
-                <SkeletonBlock key={index} className="h-[0.62rem] w-[4rem]" />
-              ))}
-            </div>
-            {/* One page of the session table, which pages five at a time. */}
+          <div className={styles.listStack}>
+            {/* One page of the session list, which pages five at a time. */}
             {Array.from({ length: 5 }, (_, index) => (
               <SessionRowSkeleton key={index} />
             ))}
           </div>
-          {/* The table ends in a pager once there is a second page; reserving it
+          {/* The list ends in a pager once there is a second page; reserving it
               keeps the panel from growing a row taller on arrival. */}
-          <div className={styles.paginationRow}>
-            <SkeletonBlock className="h-[0.74rem] w-[7.5rem]" />
-            <div className={styles.paginationControls}>
-              <SkeletonBlock className="h-[2.75rem] w-[4.4rem] rounded-full" />
-              <SkeletonBlock className="h-[0.71rem] w-[3.2rem]" />
-              <SkeletonBlock className="h-[2.75rem] w-[4.4rem] rounded-full" />
-            </div>
+          <div className={styles.pagerRow}>
+            <SkeletonBlock className="h-[2.75rem] w-[2.75rem] rounded-full" />
+            <SkeletonBlock className="h-[1.2rem] w-[4.4rem]" />
+            <SkeletonBlock className="h-[2.75rem] w-[2.75rem] rounded-full" />
           </div>
         </section>
       </section>

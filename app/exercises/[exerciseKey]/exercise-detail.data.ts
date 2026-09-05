@@ -11,7 +11,6 @@ import {
 } from "@/lib/weight-unit";
 import {
   daysBetweenDatabaseDates,
-  formatDatabaseCompactDateLabel,
   formatDatabaseDateLabel,
   getCurrentPacificDate,
   normalizeExerciseName,
@@ -43,6 +42,41 @@ function daysAgoLabel(days: number) {
   }
 
   return `${days} days ago`;
+}
+
+function countLabel(count: number, singular: string) {
+  return `${count.toLocaleString()} ${count === 1 ? singular : `${singular}s`}`;
+}
+
+// What the exercise's whole history says, in one sentence and one muted line —
+// the same shape workout detail uses. Bodyweight-only history has no external
+// load, so it says so instead of quoting a best weight of zero.
+function buildSummaryLines(
+  summary: ReturnType<typeof summarizeExerciseSessions>,
+  lastHit: Date,
+  daysSinceLastHit: number,
+  weightUnit: WeightUnit,
+) {
+  const repsClause =
+    summary.averageRepsPerSet > 0
+      ? `, ${countLabel(summary.averageRepsPerSet, "rep")} a set on average`
+      : "";
+  const bestWeightClause =
+    summary.bestWeight > 0
+      ? `Best weight ${formatWeightWithUnit(summary.bestWeight, weightUnit, {
+          maximumFractionDigits: 0,
+        })}`
+      : "Bodyweight only";
+
+  return {
+    summarySentence: `You have logged ${countLabel(
+      summary.sessions.length,
+      "session",
+    )} and ${countLabel(summary.totalSetCount, "set")}${repsClause}.`,
+    summaryMeta: `${bestWeightClause}, last hit ${formatDate(lastHit)} (${daysAgoLabel(
+      daysSinceLastHit,
+    )}).`,
+  };
 }
 
 function formatDate(value: Date) {
@@ -290,29 +324,41 @@ export async function loadExerciseDetailPageData(rawExerciseKey: string) {
   return {
     user,
     displayName: summary.displayName,
-    subtitle: `Last hit ${formatDate(summary.lastHit)} (${daysAgoLabel(daysSinceLastHit)})`,
     weightUnit,
-    sessionsCount: summary.sessions.length,
-    totalSetCount: summary.totalSetCount,
-    averageRepsPerSet: summary.averageRepsPerSet,
-    bestWeight: summary.bestWeight,
-    bestWeightLabel: formatWeightWithUnit(summary.bestWeight, weightUnit, {
-      maximumFractionDigits: 0,
-    }),
+    ...buildSummaryLines(summary, summary.lastHit, daysSinceLastHit, weightUnit),
     chartSeries,
-    sessionBreakdownRows: summary.sessions.map((session) => ({
-      workoutId: session.workoutId,
-      workoutTitle: session.workoutTitle,
-      workoutType: session.workoutType,
-      performedAtLabel: formatDatabaseCompactDateLabel(session.performedAt),
-      setCount: session.setCount,
-      totalReps: session.totalReps,
-      bestWeightLabel: formatWeightWithUnit(session.bestWeight, weightUnit, {
-        maximumFractionDigits: 0,
-      }),
-      totalLoadLabel: `${formatWeightValue(session.totalLoad, {
-        maximumFractionDigits: 0,
-      })} ${unitLabel}`,
-    })),
+    sessionBreakdownRows: summary.sessions.map((session) => {
+      const workoutTitle = session.workoutTitle.trim() || "Workout";
+      const workoutType = session.workoutType?.trim() ?? "";
+      // The type is only worth printing when it is not already the title;
+      // otherwise every row read "Pull · Pull".
+      const workoutLabel =
+        workoutType && workoutType !== workoutTitle
+          ? `${workoutTitle} · ${workoutType}`
+          : workoutTitle;
+      const topSetWeight =
+        session.bestWeight > 0
+          ? formatWeightWithUnit(session.bestWeight, weightUnit, {
+              maximumFractionDigits: 0,
+            })
+          : "BW";
+      const volumeClause =
+        session.totalLoad > 0
+          ? ` · ${formatWeightValue(session.totalLoad, {
+              maximumFractionDigits: 0,
+            })} ${unitLabel}`
+          : "";
+
+      return {
+        workoutId: session.workoutId,
+        performedAtLabel: formatDate(session.performedAt),
+        workoutLabel,
+        topSetLabel: `${topSetWeight} × ${session.topSetReps || session.totalReps}`,
+        volumeLabel: `${countLabel(session.setCount, "set")} · ${countLabel(
+          session.totalReps,
+          "rep",
+        )}${volumeClause}`,
+      };
+    }),
   };
 }

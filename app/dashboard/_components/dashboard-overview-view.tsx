@@ -86,10 +86,10 @@ export function DashboardOverviewView({
         <section className={styles.panel}>
           <h2 className={styles.panelTitle}>Where you left off</h2>
 
-          <div className={styles.sessionList}>
+          <div className={styles.listStack}>
             {overview.todaySession.map((exercise) => (
-              <div key={exercise.id} className={styles.sessionRow}>
-                <div className={styles.sessionRowMain}>
+              <div key={exercise.id} className={styles.listRow}>
+                <div className={styles.listRowMain}>
                   <p className={styles.metricMain}>{exercise.name}</p>
                   <p className={styles.metricSubtle}>
                     {countLabel(exercise.plannedSets, "set")}
@@ -100,13 +100,13 @@ export function DashboardOverviewView({
                     history alone, never off a missing weight — a bodyweight set
                     has no weight and is still a session you did. The number is
                     the top set of that day, so the date under it says which day. */}
-                <div className={styles.sessionRowStats}>
+                <div className={styles.listRowStats}>
                   {exercise.lastPerformedLabel === null ? (
                     <p className={styles.metricSubtle}>First time</p>
                   ) : (
                     <>
                       {exercise.lastReps !== null ? (
-                        <p className={styles.sessionRowTopSet}>
+                        <p className={styles.listRowValue}>
                           {exercise.lastWeight !== null
                             ? formatWeightWithUnit(exercise.lastWeight, weightUnit)
                             : "BW"}{" "}

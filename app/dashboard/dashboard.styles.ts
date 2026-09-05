@@ -9,6 +9,7 @@ import {
   actionOutline,
   actionQuiet,
 } from "@/app/components/action.styles";
+import { dataListStyles } from "@/app/components/data-list.styles";
 
 // One hairline, one value. The old `--dashboard-border-strong` companion existed
 // only to thicken a border on hover or when active; state now reads as a fill
@@ -86,8 +87,8 @@ export const styles = {
   todayQuietAction: `${actionQuiet} relative`,
   todayLogged:
     "m-0 inline-flex min-h-[2.75rem] items-center text-[1rem] text-[color-mix(in_srgb,#21834d_82%,var(--text))]",
-  statLine: "m-0 text-[0.9375rem] text-[var(--text)]",
-  statLineMuted: "m-[0.1rem_0_0] text-[0.875rem] text-[var(--muted)]",
+  statLine: dataListStyles.statLine,
+  statLineMuted: dataListStyles.statLineMuted,
   sectionHead: "flex items-baseline justify-between gap-[0.6rem]",
   sectionTitle: "m-0 text-[1.0625rem] tracking-[-0.02em] font-[520] text-[var(--text)]",
   settingRow:
@@ -108,28 +109,29 @@ export const styles = {
   exerciseListMeta:
     "mt-[0.6rem] flex flex-wrap items-center justify-between gap-[0.5rem]",
   exerciseCount: "m-0 text-[0.84rem] text-[var(--muted)]",
+  // 16px on phones like every other control a thumb focuses, or iOS Safari
+  // zooms the viewport when the picker opens.
   exerciseSortSelect:
-    "min-h-[2.75rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] pl-[0.7rem] text-[0.9375rem] text-[var(--text)] min-[760px]:min-h-[2.2rem] min-[760px]:text-[0.84rem]",
+    "min-h-[2.75rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] pl-[0.7rem] text-base text-[var(--text)] min-[760px]:min-h-[2.2rem] min-[760px]:text-[0.84rem]",
   // The reveal needs more air than the row gap, or it reads as one more row.
   listRevealButton: actionOutline,
   // Arrows pinned to the edges with the position between them: a thumb reaches
   // either end without moving, and the range says where you are so two bare
   // chevrons are not the only feedback.
-  pagerRow: "mt-[0.72rem] flex items-center justify-between gap-[0.5rem]",
-  pagerButton: `${actionIconQuiet} disabled:opacity-40`,
-  pagerIcon: "h-[1.05rem] w-[1.05rem] shrink-0 stroke-current",
-  pagerRange: "tabular-nums text-[0.8125rem] text-[var(--muted)]",
+  pagerRow: dataListStyles.pagerRow,
+  pagerButton: dataListStyles.pagerButton,
+  pagerIcon: dataListStyles.pagerIcon,
+  pagerRange: dataListStyles.pagerRange,
 
-  // Today's plan, exercise by exercise: what it asks for on the left, what you
-  // hit last time on the right. Borderless with a hairline between, because ten
-  // bordered rows inside a bordered panel is a second frame around every row.
-  sessionList: "mt-[0.5rem] flex flex-col",
-  sessionRow:
-    "flex min-w-0 items-baseline justify-between gap-[0.75rem] border-b border-[var(--dashboard-border)] py-[0.62rem] last:border-b-0 last:pb-0",
-  sessionRowMain: "flex min-w-0 flex-col gap-[0.12rem]",
-  sessionRowStats: "flex shrink-0 flex-col items-end gap-[0.12rem] text-right",
-  sessionRowTopSet:
-    "m-0 text-[0.9375rem] text-[var(--text)] [font-variant-numeric:tabular-nums]",
+  // Today's plan and the exercise index share one list: identity on the left,
+  // the numbers on the right, hairlines between. Borderless, because bordered
+  // rows inside a bordered panel are a second frame around every row.
+  listStack: dataListStyles.list,
+  listRow: dataListStyles.row,
+  listRowLink: dataListStyles.rowLink,
+  listRowMain: dataListStyles.rowMain,
+  listRowStats: dataListStyles.rowStats,
+  listRowValue: dataListStyles.rowValue,
   metricList:
     "mt-[0.66rem] flex flex-col gap-[0.36rem] overflow-x-visible min-[761px]:overflow-x-auto min-[761px]:[scrollbar-width:thin]",
   metricHeader:
@@ -152,20 +154,10 @@ export const styles = {
     "hidden min-w-0 whitespace-nowrap text-right max-[760px]:block",
   workoutDesktopStat:
     "min-w-0 max-[760px]:hidden",
-  exerciseMobileStats:
-    "hidden min-w-0 text-right max-[760px]:flex max-[760px]:flex-col max-[760px]:gap-[0.12rem] max-[760px]:whitespace-nowrap",
-  exerciseMobileStatPrimary:
-    "text-[0.84rem] text-[var(--text)]",
-  exerciseMobileStatSecondary:
-    "text-[0.72rem] text-[var(--muted)]",
-  exerciseDesktopStat:
-    "min-w-0 max-[760px]:hidden",
-  exerciseRow:
-    "grid-cols-[minmax(0,1.95fr)_repeat(4,minmax(0,0.9fr))] min-[761px]:w-[max(100%,36rem)] max-[760px]:grid-cols-[minmax(0,1fr)_auto] max-[760px]:items-center max-[760px]:gap-x-[0.62rem]",
   workoutHistoryRow:
     "grid-cols-[minmax(0,1fr)_minmax(0,1.9fr)_minmax(0,0.9fr)_minmax(0,0.85fr)_minmax(0,1fr)] min-[761px]:w-[max(100%,40rem)] max-[760px]:grid-cols-[4.8rem_minmax(0,1fr)_auto] max-[760px]:[&>*:nth-child(2)]:min-w-0 max-[760px]:[&>*:nth-child(5)]:justify-self-end max-[760px]:[&>*:nth-child(6)]:hidden",
-  metricMain: "m-0 text-[0.84rem] leading-[1.3] font-[520] text-[var(--text)]",
-  metricSubtle: "m-[0.18rem_0_0] text-[0.72rem] text-[var(--muted)]",
+  metricMain: dataListStyles.rowTitle,
+  metricSubtle: dataListStyles.rowMeta,
   // Filters on: a fill tint, not a stronger ring.
   workoutFilterToggle:
     `${actionIcon} data-[active=true]:bg-[color-mix(in_srgb,var(--text)_8%,transparent)]`,

@@ -10,7 +10,6 @@ import type {
   DashboardProgressState,
   ExerciseSortMode,
 } from "../_hooks/use-dashboard-progress";
-import { DashboardMetricHeader } from "./dashboard-metric-header";
 import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
 
 const ProgressCharts = dynamic(
@@ -47,14 +46,10 @@ export function DashboardProgressView({
   error = null,
   onRetry,
 }: DashboardProgressViewProps) {
-  function formatWeight(value: number) {
-    return formatWeightWithUnit(value, weightUnit);
-  }
-
-  function formatRoundedWeight(value: number) {
-    return formatWeightWithUnit(value, weightUnit, {
-      maximumFractionDigits: 0,
-    });
+  function formatBestWeight(value: number) {
+    // Bodyweight-only history has no external load, and "0 lb" reads as a
+    // measurement rather than the absence of one.
+    return value > 0 ? formatWeightWithUnit(value, weightUnit) : "Bodyweight";
   }
 
 
@@ -137,44 +132,30 @@ export function DashboardProgressView({
         </div>
         {state.filteredExercises.length > 0 ? (
           <>
-            <div className={styles.metricList}>
-              <DashboardMetricHeader
-                columns={["Exercise", "Sessions", "Sets", "Reps", "Best weight"]}
-                rowClassName={styles.exerciseRow}
-              />
+            <div className={styles.listStack}>
               {state.visibleExercises.map((exercise) => (
                 <Link
                   key={exercise.key}
                   href={`/exercises/${encodeURIComponent(exercise.routeKey)}`}
-                  className={`relative ${styles.metricRow} ${styles.exerciseRow} ${styles.clickableMetricRow}`}
+                  className={`${styles.listRow} ${styles.listRowLink}`}
                 >
-                  <div>
+                  <div className={styles.listRowMain}>
                     <p className={styles.metricMain}>{exercise.name}</p>
                     <p className={styles.metricSubtle}>
-                      {exercise.lastPerformedAtLabel} · {daysAgoLabel(exercise.daysSinceLastHit)}
+                      {countLabel(exercise.sessionCount, "session")} ·{" "}
+                      {countLabel(exercise.setCount, "set")} ·{" "}
+                      {countLabel(exercise.totalReps, "rep")}
                     </p>
                   </div>
-                  <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Sessions">
-                    {countLabel(exercise.sessionCount, "session")}
-                  </span>
-                  <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Sets">
-                    {countLabel(exercise.setCount, "set")}
-                  </span>
-                  <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Reps">
-                    {countLabel(exercise.totalReps, "rep")}
-                  </span>
-                  <span className={`${styles.metricMobileLabel} ${styles.exerciseDesktopStat}`} data-label="Best weight">
-                    {formatWeight(exercise.bestWeight)}
-                  </span>
-                  <span className={styles.exerciseMobileStats}>
-                    <span className={styles.exerciseMobileStatPrimary}>
-                      {countLabel(exercise.sessionCount, "session")} ·{" "}
-                      {countLabel(exercise.setCount, "set")}
-                    </span>
-                    <span className={styles.exerciseMobileStatSecondary}>
-                      {countLabel(exercise.totalReps, "rep")} · {formatWeight(exercise.bestWeight)}
-                    </span>
-                  </span>
+                  <div className={styles.listRowStats}>
+                    <p className={styles.listRowValue}>
+                      {formatBestWeight(exercise.bestWeight)}
+                    </p>
+                    <p className={styles.metricSubtle}>
+                      last hit {exercise.lastPerformedAtLabel} ·{" "}
+                      {daysAgoLabel(exercise.daysSinceLastHit)}
+                    </p>
+                  </div>
                   <LinkPendingOverlay />
                 </Link>
               ))}

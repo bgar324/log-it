@@ -71,19 +71,15 @@ function WorkoutRowSkeleton() {
 
 function ExerciseRowSkeleton() {
   return (
-    <div className={`${styles.metricRow} ${styles.exerciseRow}`}>
-      <div className="min-w-0">
+    <div className={styles.listRow}>
+      <div className={styles.listRowMain}>
         <SkeletonLine className="h-[1.1rem] w-[8.2rem]" />
-        <SkeletonLine className="mt-[0.18rem] h-[1.1rem] w-[9.6rem] max-[520px]:w-[7.2rem]" />
+        <SkeletonLine className="mt-[0.24rem] h-[1rem] w-[9.6rem] max-[520px]:w-[7.2rem]" />
       </div>
-      <SkeletonLine className={`${styles.exerciseDesktopStat} h-[1.05rem] w-[4.8rem]`} />
-      <SkeletonLine className={`${styles.exerciseDesktopStat} h-[1.05rem] w-[3.8rem]`} />
-      <SkeletonLine className={`${styles.exerciseDesktopStat} h-[1.05rem] w-[4rem]`} />
-      <SkeletonLine className={`${styles.exerciseDesktopStat} h-[1.05rem] w-[4.6rem]`} />
-      <span className={styles.exerciseMobileStats}>
-        <SkeletonLine className="h-[1.1rem] w-[8.2rem]" />
-        <SkeletonLine className="h-[1.05rem] w-[6.7rem]" />
-      </span>
+      <div className={styles.listRowStats}>
+        <SkeletonLine className="h-[1.25rem] w-[3.8rem]" />
+        <SkeletonLine className="mt-[0.24rem] h-[1rem] w-[7.4rem]" />
+      </div>
     </div>
   );
 }
@@ -143,15 +139,14 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
 
         <section className={styles.panel}>
           <SkeletonLine className="mb-[1rem] h-[1.05rem] w-[9.5rem]" />
-          <div className={styles.sessionList}>
-            {/* Seven rows: the median exercise count of a training day. */}
+          <div className={styles.listStack}>
             {Array.from({ length: 7 }, (_, index) => (
-              <div key={index} className={styles.sessionRow}>
-                <div className={styles.sessionRowMain}>
+              <div key={index} className={styles.listRow}>
+                <div className={styles.listRowMain}>
                   <SkeletonLine className="h-[1.05rem] w-[8.5rem]" />
                   <SkeletonLine className="mt-[0.24rem] h-[1.05rem] w-[3.2rem]" />
                 </div>
-                <div className={styles.sessionRowStats}>
+                <div className={styles.listRowStats}>
                   <SkeletonLine className="h-[1.35rem] w-[4.4rem]" />
                   <SkeletonLine className="mt-[0.24rem] h-[1.05rem] w-[3.9rem]" />
                 </div>
@@ -187,8 +182,7 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
             <SkeletonLine className="h-[1.15rem] w-[4.5rem]" />
             <SkeletonLine className="h-[2.75rem] w-[9.8rem] rounded-[0.52rem]" />
           </div>
-          <div className={styles.metricList}>
-            <MetricHeaderSkeleton columns={5} rowClassName={styles.exerciseRow} />
+          <div className={styles.listStack}>
             {/* Exactly one page, derived from the list's own page size. */}
             {Array.from({ length: EXERCISES_PER_PAGE }, (_, index) => (
               <ExerciseRowSkeleton key={index} />
