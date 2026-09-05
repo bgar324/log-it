@@ -288,6 +288,8 @@ export function SplitManager({
           <p className={splitStyles.splitSelectMeta}>{selectedSplitMeta}</p>
         </div>
 
+        {/* The week itself has nothing to save: reordering commits from its own
+            sheet, and day edits commit from the day editor's Save. */}
         <div className={splitStyles.splitWeekHeader}>
           <h2 className={splitStyles.splitWeekTitle}>Week</h2>
           <div className={splitStyles.splitWeekActions}>
@@ -300,16 +302,6 @@ export function SplitManager({
             >
               Reorder
             </button>
-            {!isRenaming ? (
-              <button
-                type="button"
-                className={splitStyles.splitSaveButton}
-                onClick={() => void state.handleSave()}
-                disabled={state.saveState.kind === "saving"}
-              >
-                {state.saveState.kind === "saving" ? "Saving..." : "Save"}
-              </button>
-            ) : null}
           </div>
         </div>
 
@@ -352,7 +344,7 @@ export function SplitManager({
           days={state.split.days}
           onCancel={() => setIsReorderDaysOpen(false)}
           onSave={(orderedWeekdays) => {
-            state.reorderDays(orderedWeekdays);
+            void state.saveDayOrder(orderedWeekdays);
             setIsReorderDaysOpen(false);
           }}
         />

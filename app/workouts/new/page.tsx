@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { WorkoutLogger } from "./workout-logger";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -43,7 +42,10 @@ export default async function NewWorkoutPage({
     splitSeed.split.id &&
       isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug),
   );
-  const existingWorkout =
+  // The planned workout for this date may already be saved. The logger states
+  // that instead of redirecting: a redirect would also strand a recovered
+  // draft, and logging a second workout of a different type stays valid.
+  const loggedWorkout =
     splitSeed.split.id && !isRestDay
       ? await findLoggedWorkoutForDateAndType(
           user.id,
@@ -51,16 +53,16 @@ export default async function NewWorkoutPage({
           splitSeed.day.workoutTypeSlug,
         )
       : null;
-
-  if (existingWorkout) {
-    redirect(`/workouts/${existingWorkout.id}`);
-  }
-  const initialData =
-    splitSeed.split.id &&
-    (splitSeed.day.exercises.length > 0 ||
-      !isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug))
-      ? splitSeed.initialData
-      : undefined;
+  const plannedInitialData =
+    !splitSeed.split.id || (isRestDay && splitSeed.day.exercises.length === 0)
+      ? undefined
+      : splitSeed.initialData;
+  // A logged plan opens blank, because the workout the user can still add is a
+  // different one — but it keeps the selected date rather than falling back to
+  // today.
+  const initialData = loggedWorkout
+    ? { ...splitSeed.initialData, title: "", workoutType: "", exercises: [] }
+    : plannedInitialData;
 
   // Where Back lands. The logger is reachable from every view, so the caller
   // says where it came from; `normalizeDashboardView` collapses anything
@@ -74,6 +76,8 @@ export default async function NewWorkoutPage({
       weightUnit={user.preferredWeightUnit}
       bodyWeightDisplay={bodyWeightDisplay}
       isRestDay={isRestDay}
+      loggedWorkoutId={loggedWorkout?.id ?? null}
+      loggedWorkoutType={splitSeed.day.workoutType}
       analyticsUser={user}
       benEnabled={benEnabled}
       returnHref={returnHref}

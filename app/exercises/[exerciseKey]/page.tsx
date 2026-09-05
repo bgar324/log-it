@@ -1,4 +1,4 @@
-import { AppDrawerTrigger, AppShell } from "@/app/components/app-nav";
+import { AppShell } from "@/app/components/app-nav";
 import { appNavUserFromSession } from "@/app/components/app-nav.user";
 import { navStyles } from "@/app/components/app-nav.styles";
 import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
@@ -31,15 +31,12 @@ export default async function ExerciseDetailPage({
     <main className={styles.shell}>
       <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
-          <div className={styles.topLead}>
-            <AppDrawerTrigger />
-            <BackButton
-              fallbackHref="/dashboard?view=progress"
-              label="Back"
-              className={styles.backLink}
-              iconClassName={styles.backButtonIcon}
-            />
-          </div>
+          <BackButton
+            fallbackHref="/dashboard?view=progress"
+            label="Back"
+            className={styles.backLink}
+            iconClassName={styles.backButtonIcon}
+          />
         </header>
 
         <section className={styles.summaryCard}>

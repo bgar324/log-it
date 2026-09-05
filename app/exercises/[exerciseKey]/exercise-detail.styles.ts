@@ -1,4 +1,4 @@
-import { actionOutline } from "@/app/components/action.styles";
+import { actionOutline, actionQuiet } from "@/app/components/action.styles";
 
 const buttonMotion =
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]";
@@ -9,8 +9,9 @@ export const styles = {
   stage: "flex w-full max-w-[58rem] flex-col gap-[0.75rem]",
   topRow:
     "flex items-center justify-between gap-[0.65rem]",
-  topLead: "inline-flex items-center gap-[0.45rem]",
-  backLink: actionOutline,
+  // Same quiet Back as the logger, pulled left by its own padding so the label
+  // lines up with the summary card below it.
+  backLink: `${actionQuiet} -ml-[1rem]`,
   backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
   summaryCard:
     "rounded-[0.54rem] border border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] bg-transparent px-[0.95rem] py-[0.84rem] min-[760px]:p-[0.95rem]",

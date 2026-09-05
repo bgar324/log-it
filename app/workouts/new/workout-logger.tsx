@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -49,6 +50,8 @@ type WorkoutLoggerProps = {
   weightUnit: WeightUnit;
   bodyWeightDisplay?: number | null;
   isRestDay?: boolean;
+  loggedWorkoutId?: string | null;
+  loggedWorkoutType?: string;
   returnHref?: string;
   analyticsUser: PostHogUser;
   benEnabled: boolean;
@@ -63,6 +66,8 @@ export function WorkoutLogger({
   weightUnit,
   bodyWeightDisplay = null,
   isRestDay = false,
+  loggedWorkoutId = null,
+  loggedWorkoutType = "",
   returnHref = "/dashboard",
   analyticsUser,
   benEnabled,
@@ -77,6 +82,7 @@ export function WorkoutLogger({
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [isRestDayOverrideDialogOpen, setIsRestDayOverrideDialogOpen] = useState(false);
   const [hasRestDayOverride, setHasRestDayOverride] = useState(false);
+  const [isLoggedNoticeDismissed, setIsLoggedNoticeDismissed] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const {
     clearAll,
@@ -153,6 +159,49 @@ export function WorkoutLogger({
             }}
           />
         ) : null}
+      </main>
+    );
+  }
+
+  // The planned workout for this date is already saved. Say so once, and offer
+  // the two things that make sense: open it, or log something else. A recovered
+  // draft skips the notice, because that draft is unfinished work the user
+  // must be able to reach.
+  if (loggedWorkoutId && !draft.hasRecoveredDraft && !isLoggedNoticeDismissed) {
+    const loggedLabel = loggedWorkoutType.trim() || "This workout";
+    const loggedDate = formatWorkoutLoggerDateLabel(draft.performedAt);
+
+    return (
+      <main className={styles.loggerShell}>
+        <section className={styles.loggerStage}>
+          <div className={styles.topRow}>
+            <BackButton
+              fallbackHref={returnHref}
+              label="Back"
+              className={styles.backLink}
+              iconClassName={styles.backButtonIcon}
+            />
+          </div>
+          <section className={styles.card}>
+            <h1 className={styles.title}>Already logged</h1>
+            <p className={styles.compareHint}>
+              {`${loggedLabel} is already saved for ${loggedDate}. Open it to change what you logged, or log a different workout for the same day.`}
+            </p>
+            <Link
+              href={`/workouts/${loggedWorkoutId}`}
+              className={styles.saveButton}
+            >
+              Open workout
+            </Link>
+            <button
+              type="button"
+              className={styles.confirmSecondaryButton}
+              onClick={() => setIsLoggedNoticeDismissed(true)}
+            >
+              Log a different workout
+            </button>
+          </section>
+        </section>
       </main>
     );
   }

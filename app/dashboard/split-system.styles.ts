@@ -35,7 +35,6 @@ export const splitStyles = {
     "m-0 text-[1rem] font-[560] leading-[1.15] tracking-[-0.03em] text-[var(--text)]",
   splitWeekActions: "flex shrink-0 items-center gap-[0.2rem]",
   splitReorderOpenButton: actionQuiet,
-  splitSaveButton: actionFilled,
   splitGrid:
     "flex min-h-0 flex-1 flex-col border-t border-[var(--split-border)] min-[981px]:grid min-[981px]:grid-cols-2 min-[981px]:content-start min-[981px]:gap-[0.65rem] min-[981px]:overflow-y-auto min-[981px]:border-0 min-[981px]:pr-[0.08rem] min-[981px]:[scrollbar-width:thin]",
   splitDayCard:
@@ -71,12 +70,14 @@ export const splitStyles = {
   splitEditorMobileOpen: "max-[980px]:flex",
   splitEditorMobileClosed: "max-[980px]:hidden",
   editorHeader:
-    "grid min-h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 grid-cols-[2.75rem_minmax(0,1fr)_auto] items-end gap-[0.5rem] border-b border-[var(--split-border)] px-[0.5rem] pb-[0.38rem] pt-[env(safe-area-inset-top)] min-[981px]:block min-[981px]:min-h-0 min-[981px]:border-0 min-[981px]:p-0",
+    "grid min-h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 grid-cols-[2.75rem_minmax(0,1fr)_auto] items-end gap-[0.5rem] border-b border-[var(--split-border)] px-[0.5rem] pb-[0.38rem] pt-[env(safe-area-inset-top)] min-[981px]:grid-cols-[minmax(0,1fr)_auto] min-[981px]:items-center min-[981px]:min-h-0 min-[981px]:border-0 min-[981px]:p-0",
   editorMobileClose: `${actionIconQuiet} min-[981px]:hidden`,
   editorHeaderIcon: "h-[1.1rem] w-[1.1rem]",
   editorTitle:
     "m-0 self-center truncate text-[1.15rem] font-[560] leading-[1.15] tracking-[-0.03em] min-[981px]:text-[1.35rem]",
-  editorMobileSave: `${actionFilled} min-[981px]:hidden`,
+  // The day editor is where day edits happen, so its Save is the one that
+  // commits them — at every width, not only on phones.
+  editorSave: actionFilled,
   editorDayTabs:
     "grid shrink-0 grid-cols-7 justify-items-center border-b border-[var(--split-border)] py-[0.28rem] min-[981px]:hidden",
   editorDayTab: `${actionIconQuiet} relative`,

@@ -31,20 +31,24 @@ export function useSplitManagerPersistence({
     kind: "idle",
   });
 
-  async function handleSave() {
+  // Takes an explicit split when the caller already knows the next value:
+  // reordering the week saves immediately, and React state is not readable
+  // until the next render.
+  async function handleSave(nextSplit?: WorkoutSplitTemplate) {
     if (!persistChanges) {
       toast.message("Changes stay in this preview and are not saved.");
       return;
     }
 
+    const splitToSave = nextSplit ?? split;
     const toastId = toast.loading("Saving split...");
     setSaveState({ kind: "saving" });
 
     try {
-      const savedSplit = await saveWorkoutSplit(split);
+      const savedSplit = await saveWorkoutSplit(splitToSave);
       setSplit(savedSplit);
       setSplits((current) =>
-        current.map((item) => (item.id === split.id ? savedSplit : item)),
+        current.map((item) => (item.id === splitToSave.id ? savedSplit : item)),
       );
       clearAllExerciseSuggestions();
       posthog.capture("workout_split_updated", {

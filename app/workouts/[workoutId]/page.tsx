@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { AppDrawerTrigger, AppShell } from "@/app/components/app-nav";
+import { AppShell } from "@/app/components/app-nav";
 import { appNavUserFromSession } from "@/app/components/app-nav.user";
 import { navStyles } from "@/app/components/app-nav.styles";
 import { BackButton } from "@/app/components/back-button";
@@ -121,7 +121,6 @@ export default async function WorkoutDetailPage({
       <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
           <div className={styles.topLead}>
-            <AppDrawerTrigger />
             <BackButton
               fallbackHref="/dashboard?view=workouts"
               label="Back"

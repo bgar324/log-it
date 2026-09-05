@@ -106,7 +106,7 @@ export function SplitEditor({
         </h2>
         <button
           type="button"
-          className={splitStyles.editorMobileSave}
+          className={splitStyles.editorSave}
           onClick={onSave}
           disabled={isSaving}
         >

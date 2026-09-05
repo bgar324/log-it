@@ -11,6 +11,36 @@ import { normalizeExerciseName } from "../workout-utils";
 import { computeWorkoutTotalWeightLb, type ParsedWorkout } from "./payload";
 
 export const WORKOUT_NOT_FOUND_ERROR = "WORKOUT_NOT_FOUND";
+export const WORKOUT_ALREADY_LOGGED_ERROR = "WORKOUT_ALREADY_LOGGED";
+
+/**
+ * A completed workout is identified by user, date, and normalized workout type,
+ * so the same session cannot be recorded twice. Reads inside the caller's
+ * transaction, which closes the create and duplicate paths together. It is a
+ * check, not a database constraint: two genuinely simultaneous requests can
+ * still both pass it under the default isolation level.
+ */
+export async function findLoggedWorkout(
+  db: WorkoutDbClient,
+  userId: string,
+  performedAt: Date,
+  workoutTypeSlug: string | null,
+) {
+  return db.workoutLog.findFirst({
+    where: {
+      userId,
+      performedAt,
+      workoutTypeSlug,
+      status: "COMPLETED",
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    select: {
+      id: true,
+    },
+  });
+}
 
 // A newly-beaten per-exercise estimated one-rep-max, surfaced for celebration.
 export type PersonalRecord = {
@@ -145,6 +175,17 @@ export async function createWorkoutRecord(
   userId: string,
   payload: ParsedWorkout,
 ) {
+  const alreadyLogged = await findLoggedWorkout(
+    db,
+    userId,
+    payload.performedAt,
+    payload.workoutTypeSlug,
+  );
+
+  if (alreadyLogged) {
+    throw new Error(WORKOUT_ALREADY_LOGGED_ERROR);
+  }
+
   const bodyWeightLb = await resolveBodyWeightLbForDate(
     db,
     userId,

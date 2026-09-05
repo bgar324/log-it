@@ -227,7 +227,7 @@ export function SplitDayReorderDialog({
             className={moveReorderStyles.primaryButton}
             onClick={() => onSave(orderedWeekdays)}
           >
-            Done
+            Save
           </button>
         </div>
       </section>

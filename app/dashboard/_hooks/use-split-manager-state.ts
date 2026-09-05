@@ -46,8 +46,8 @@ export type SplitManagerState = {
   addExercise: () => void;
   removeExercise: (exerciseIndex: number) => void;
   reorderExercises: (orderedExerciseOrders: number[]) => void;
-  reorderDays: (orderedWeekdays: SplitWeekdayValue[]) => void;
-  handleSave: () => Promise<void>;
+  saveDayOrder: (orderedWeekdays: SplitWeekdayValue[]) => Promise<void>;
+  handleSave: (nextSplit?: WorkoutSplitTemplate) => Promise<void>;
   handleCopySplit: () => Promise<void>;
 };
 
@@ -253,7 +253,10 @@ export function useSplitManagerState(
     setSelectedWeekday(weekday);
   }
 
-  function reorderDays(orderedWeekdays: SplitWeekdayValue[]) {
+  // The reorder sheet's Save is the commit, so this applies the new weekday
+  // assignments and persists them in one action. The week itself has no
+  // separate Save.
+  async function saveDayOrder(orderedWeekdays: SplitWeekdayValue[]) {
     if (orderedWeekdays.length !== split.days.length) {
       return;
     }
@@ -267,16 +270,19 @@ export function useSplitManagerState(
       return;
     }
 
-    clearAllExerciseSuggestions();
-    setSplit((current) => ({
-      ...current,
+    const nextSplit: WorkoutSplitTemplate = {
+      ...split,
       days: sortSplitDays(
         orderedDays.map((day, index) => ({
           ...day,
           weekday: SPLIT_WEEKDAYS[index] ?? day.weekday,
         })),
       ),
-    }));
+    };
+
+    clearAllExerciseSuggestions();
+    setSplit(nextSplit);
+    await persistence.handleSave(nextSplit);
   }
 
   return {
@@ -303,7 +309,7 @@ export function useSplitManagerState(
     addExercise: exerciseActions.addExercise,
     removeExercise: exerciseActions.removeExercise,
     reorderExercises: exerciseActions.reorderExercises,
-    reorderDays,
+    saveDayOrder,
     handleSave: persistence.handleSave,
     handleCopySplit: persistence.handleCopySplit,
   };

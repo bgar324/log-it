@@ -75,11 +75,11 @@ test("week reordering moves a workout with two taps", async () => {
     await mounted.click(destination);
     assert.match(dialog.textContent ?? "", /Choose a workout to move\./);
 
-    const done = Array.from(dialog.querySelectorAll<HTMLElement>("button")).find(
-      (button) => button.textContent?.trim() === "Done",
+    const save = Array.from(dialog.querySelectorAll<HTMLElement>("button")).find(
+      (button) => button.textContent?.trim() === "Save",
     );
-    assert.ok(done);
-    await mounted.click(done);
+    assert.ok(save);
+    await mounted.click(save);
 
     assert.deepEqual(savedOrder, ["TUESDAY", "MONDAY", "WEDNESDAY"]);
   } finally {

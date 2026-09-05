@@ -4,6 +4,7 @@ import {
   actionMenuRow,
   actionMenuRowDanger,
   actionOutline,
+  actionQuiet,
 } from "@/app/components/action.styles";
 import { cn } from "../classnames";
 
@@ -13,7 +14,9 @@ export const styles = {
   topRow:
     "flex items-center justify-between gap-[0.65rem]",
   topLead: "inline-flex items-center gap-[0.45rem]",
-  backLink: actionOutline,
+  // Same quiet Back as the logger: it is the lightest control on the screen,
+  // pulled left by its own padding so the label lines up with the card below.
+  backLink: `${actionQuiet} -ml-[1rem]`,
   backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
   actionButton: actionOutline,
   topActions:

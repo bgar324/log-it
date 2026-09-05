@@ -4,7 +4,11 @@ import { revalidateTag } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
 import { getWorkoutDataTag } from "@/lib/cache-tags";
 import { syncWorkoutReadModels } from "@/lib/workout-read-models";
-import { duplicateWorkout, WORKOUT_NOT_FOUND_ERROR } from "@/lib/workouts/service";
+import {
+  duplicateWorkout,
+  WORKOUT_ALREADY_LOGGED_ERROR,
+  WORKOUT_NOT_FOUND_ERROR,
+} from "@/lib/workouts/service";
 import {
   getInvalidRequestOriginError,
   isTrustedMutationRequest,
@@ -15,6 +19,16 @@ type RouteContext = {
 };
 
 function toWorkoutDuplicateErrorResponse(error: unknown) {
+  if (
+    error instanceof Error &&
+    error.message === WORKOUT_ALREADY_LOGGED_ERROR
+  ) {
+    return NextResponse.json(
+      { error: "This workout is already logged for today." },
+      { status: 409 },
+    );
+  }
+
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     (error.code === "P2021" || error.code === "P2022")

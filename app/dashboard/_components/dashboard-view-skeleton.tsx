@@ -280,7 +280,6 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
             <SkeletonLine className="h-[1rem] w-[3rem]" />
             <div className={splitStyles.splitWeekActions}>
               <SkeletonLine className="h-[2.75rem] w-[5.8rem] rounded-[999px]" />
-              <SkeletonLine className="h-[2.75rem] w-[4.6rem] rounded-[999px]" />
             </div>
           </div>
 
