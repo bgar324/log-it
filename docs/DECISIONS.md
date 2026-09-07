@@ -26,6 +26,12 @@ The data model allows multiple `WorkoutSplit` rows per user, with a PostgreSQL p
 
 The dashboard `Logged!` state and the workout duplicate guard use the same identity: the user's selected date plus normalized workout type. A completed matching workout removes the dashboard's second log action, `/workouts/new` states it rather than opening a blank form, and `createWorkoutRecord()` rejects the write, which covers create and duplicate together. A different workout type on the same date remains valid. The guard lives in the service rather than in a PostgreSQL unique index because the existing history predates it; it therefore closes the app's paths but is not proof against two simultaneous identical requests.
 
+## A Draft Is Written Only On Intent And Deleted Only Once
+
+The create-mode logger draft exists to protect typing, so it is written only after the user changes something and is deleted the moment the workout is stored. Both the debounced autosave and the `pagehide` flush check the same edit flag, which closes two failures that were live together: opening the logger stamped a draft with that day's date even when the user typed nothing, and the flush during post-save navigation resurrected the draft `markSaved()` had just deleted. A resurrected or unwanted draft pinned the logger to a past date, where every save either collided with that day's workout (`409`) or backdated the new session.
+
+A recovered draft keeps its own date rather than being silently re-dated or discarded — both would destroy or falsify the user's work — and the logger resolves the conflict in the open with `Move to today` and `Discard draft`. That also covers a session that crosses midnight.
+
 ## Rest Days Require An Explicit Workout Override
 
 Rest-day behavior checks the stored split-day slug, not the editable display name. `app/api/workouts/route.ts` blocks creation for a split rest day unless the user has explicitly confirmed the logger&apos;s unscheduled-workout override. The override saves a normal workout and never mutates the weekly split.

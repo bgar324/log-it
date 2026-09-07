@@ -38,23 +38,25 @@ export default async function NewWorkoutPage({
     bodyWeightLb,
     user.preferredWeightUnit,
   );
+  const hasSplit = Boolean(splitSeed.split.id);
   const isRestDay = Boolean(
-    splitSeed.split.id &&
-      isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug),
+    hasSplit && isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug),
   );
-  // The planned workout for this date may already be saved. The logger states
-  // that instead of redirecting: a redirect would also strand a recovered
-  // draft, and logging a second workout of a different type stays valid.
-  const loggedWorkout =
-    splitSeed.split.id && !isRestDay
-      ? await findLoggedWorkoutForDateAndType(
-          user.id,
-          selectedDate,
-          splitSeed.day.workoutTypeSlug,
-        )
-      : null;
+  // The identity a save would collide with: the planned workout type, or none
+  // at all when there is no split, because the create form cannot set one.
+  const plannedWorkoutTypeSlug = hasSplit ? splitSeed.day.workoutTypeSlug : null;
+  // The workout for this date may already be saved. The logger states that
+  // instead of redirecting: a redirect would also strand a recovered draft, and
+  // logging a second workout of a different type stays valid.
+  const loggedWorkout = isRestDay
+    ? null
+    : await findLoggedWorkoutForDateAndType(
+        user.id,
+        selectedDate,
+        plannedWorkoutTypeSlug,
+      );
   const plannedInitialData =
-    !splitSeed.split.id || (isRestDay && splitSeed.day.exercises.length === 0)
+    !hasSplit || (isRestDay && splitSeed.day.exercises.length === 0)
       ? undefined
       : splitSeed.initialData;
   // A logged plan opens blank, because the workout the user can still add is a
@@ -72,12 +74,13 @@ export default async function NewWorkoutPage({
   return (
     <WorkoutLogger
       initialData={initialData}
-      splitTemplateData={splitSeed.split.id ? splitSeed.initialData : undefined}
+      splitTemplateData={hasSplit ? splitSeed.initialData : undefined}
       weightUnit={user.preferredWeightUnit}
       bodyWeightDisplay={bodyWeightDisplay}
       isRestDay={isRestDay}
       loggedWorkoutId={loggedWorkout?.id ?? null}
-      loggedWorkoutType={splitSeed.day.workoutType}
+      loggedWorkoutType={hasSplit ? splitSeed.day.workoutType : ""}
+      canLogAnotherWorkoutType={hasSplit}
       analyticsUser={user}
       benEnabled={benEnabled}
       returnHref={returnHref}

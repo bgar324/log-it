@@ -18,6 +18,7 @@ import {
   getWeightUnitLabel,
   type WeightUnit,
 } from "@/lib/weight-unit";
+import { formatDatabaseDateValue, getCurrentPacificDate } from "@/lib/workout-utils";
 import { WorkoutLoggerExerciseCard } from "./_components/workout-logger-exercise-card";
 import { WorkoutLoggerConfirmDialog } from "./_components/workout-logger-confirm-dialog";
 import { WorkoutLoggerMetaCard } from "./_components/workout-logger-meta-card";
@@ -32,7 +33,6 @@ import {
 } from "./workout-logger.submit";
 import {
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
-  WORKOUT_DRAFT_STORAGE_KEY,
   formatWorkoutLoggerDateLabel,
   type WorkoutLoggerInitialData,
 } from "./workout-logger.utils";
@@ -52,6 +52,7 @@ type WorkoutLoggerProps = {
   isRestDay?: boolean;
   loggedWorkoutId?: string | null;
   loggedWorkoutType?: string;
+  canLogAnotherWorkoutType?: boolean;
   returnHref?: string;
   analyticsUser: PostHogUser;
   benEnabled: boolean;
@@ -68,6 +69,7 @@ export function WorkoutLogger({
   isRestDay = false,
   loggedWorkoutId = null,
   loggedWorkoutType = "",
+  canLogAnotherWorkoutType = true,
   returnHref = "/dashboard",
   analyticsUser,
   benEnabled,
@@ -164,9 +166,12 @@ export function WorkoutLogger({
   }
 
   // The planned workout for this date is already saved. Say so once, and offer
-  // the two things that make sense: open it, or log something else. A recovered
-  // draft skips the notice, because that draft is unfinished work the user
-  // must be able to reach.
+  // what actually works: open it, and — only when a second workout of a
+  // different type is possible — log another. Without a split the create form
+  // has no workout-type field, so a second workout that day would collide with
+  // this one and offering it would be a dead end. A recovered draft skips the
+  // notice, because that draft is unfinished work the user must be able to
+  // reach.
   if (loggedWorkoutId && !draft.hasRecoveredDraft && !isLoggedNoticeDismissed) {
     const loggedLabel = loggedWorkoutType.trim() || "This workout";
     const loggedDate = formatWorkoutLoggerDateLabel(draft.performedAt);
@@ -185,7 +190,9 @@ export function WorkoutLogger({
           <section className={styles.card}>
             <h1 className={styles.title}>Already logged</h1>
             <p className={styles.compareHint}>
-              {`${loggedLabel} is already saved for ${loggedDate}. Open it to change what you logged, or log a different workout for the same day.`}
+              {canLogAnotherWorkoutType
+                ? `${loggedLabel} is already saved for ${loggedDate}. Open it to change what you logged, or log a different workout for the same day.`
+                : `${loggedLabel} is already saved for ${loggedDate}. Open it to change what you logged.`}
             </p>
             <Link
               href={`/workouts/${loggedWorkoutId}`}
@@ -193,13 +200,15 @@ export function WorkoutLogger({
             >
               Open workout
             </Link>
-            <button
-              type="button"
-              className={styles.confirmSecondaryButton}
-              onClick={() => setIsLoggedNoticeDismissed(true)}
-            >
-              Log a different workout
-            </button>
+            {canLogAnotherWorkoutType ? (
+              <button
+                type="button"
+                className={styles.confirmSecondaryButton}
+                onClick={() => setIsLoggedNoticeDismissed(true)}
+              >
+                Log a different workout
+              </button>
+            ) : null}
           </section>
         </section>
       </main>
@@ -258,6 +267,16 @@ export function WorkoutLogger({
     toast.success("Workout reset from split.");
   }
 
+  // The draft is the user's unfinished work, so it is never silently dropped or
+  // silently re-dated. Discarding is a deliberate action, and it returns the
+  // logger to whatever the server seeded for the selected date.
+  function handleDiscardDraft() {
+    clearAll();
+    clearAllExerciseInsights();
+    draft.discardDraft();
+    toast.success("Draft discarded.");
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -290,20 +309,35 @@ export function WorkoutLogger({
       });
 
       if (!response.ok) {
-        toast.error(
+        const message =
           data.error ??
-            (isEditMode
-              ? "Unable to update workout."
-              : "Unable to save workout."),
-          {
+          (isEditMode ? "Unable to update workout." : "Unable to save workout.");
+
+        // That day's workout already exists, so retrying this draft can never
+        // succeed. Offer the way out, and refresh once the draft is actually
+        // discarded so the already-logged notice can take over with a link to
+        // the saved workout. Refreshing before that would re-seed the form
+        // from the server and throw away what the user typed.
+        if (!isEditMode && response.status === 409) {
+          toast.error(message, {
             id: toastId,
-          },
-        );
+            action: {
+              label: "Discard draft",
+              onClick: () => {
+                handleDiscardDraft();
+                router.refresh();
+              },
+            },
+          });
+          return;
+        }
+
+        toast.error(message, { id: toastId });
         return;
       }
 
       if (!isEditMode) {
-        window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+        draft.markSaved();
       }
 
       const resolvedWorkoutId = data.id ?? workoutId;
@@ -351,6 +385,13 @@ export function WorkoutLogger({
   const backLabel = "Back";
   const workoutTypeLabel = draft.workoutType.trim();
   const dateMeta = formatWorkoutLoggerDateLabel(draft.performedAt);
+  const todayDateKey = formatDatabaseDateValue(getCurrentPacificDate());
+  // A recovered draft carrying an older date is the one state the create form
+  // cannot resolve on its own: it has no date field, so saving either collides
+  // with that day's workout or backdates today's session. A deliberately
+  // selected date (`?date=`) is not this case.
+  const isDraftDateStale =
+    !isEditMode && draft.hasRecoveredDraft && draft.performedAt !== todayDateKey;
   const pageTitle = workoutTypeLabel
     ? `${isEditMode ? "Edit" : "Log"} ${workoutTypeLabel} workout`
     : isEditMode
@@ -376,6 +417,30 @@ export function WorkoutLogger({
             <h1 className={styles.title}>{pageTitle}</h1>
           </div>
         </header>
+
+        {isDraftDateStale ? (
+          <section className={styles.card} aria-label="Unfinished draft">
+            <p className={styles.confirmBody}>
+              {`This unfinished draft is dated ${dateMeta}, not today. Move it to today or discard it.`}
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                type="button"
+                className={styles.confirmSecondaryButton}
+                onClick={handleDiscardDraft}
+              >
+                Discard draft
+              </button>
+              <button
+                type="button"
+                className={styles.saveButton}
+                onClick={() => draft.setPerformedAt(todayDateKey)}
+              >
+                Move to today
+              </button>
+            </div>
+          </section>
+        ) : null}
         <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
           <WorkoutLoggerMetaCard
             title={draft.title}

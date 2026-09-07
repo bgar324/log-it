@@ -78,6 +78,13 @@ export function useWorkoutLoggerDraft({
   );
   const idCounterRef = useRef(initialState.counters);
   const autosaveReadyRef = useRef(false);
+  // Two separate questions. `autosaveReadyRef` says recovery has run, so a
+  // write cannot race the restore. `hasUnsavedEditsRef` says the user actually
+  // changed something: without it, merely opening the logger stored a draft
+  // stamped with today's date, and that unwanted draft pinned the logger to a
+  // past day on every later visit.
+  const hasUnsavedEditsRef = useRef(false);
+  const autosaveTimeoutRef = useRef<number | null>(null);
   const [draftState, dispatch] = useReducer(
     draftStateReducer,
     initialState,
@@ -141,11 +148,12 @@ export function useWorkoutLoggerDraft({
 
 
   useEffect(() => {
-    if (isEditMode || !autosaveReadyRef.current) {
+    if (isEditMode || !autosaveReadyRef.current || !hasUnsavedEditsRef.current) {
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
+      autosaveTimeoutRef.current = null;
       const snapshot = createWorkoutDraftSnapshot(
         draftState.title,
         draftState.workoutType,
@@ -154,9 +162,14 @@ export function useWorkoutLoggerDraft({
       );
       persistWorkoutDraft(snapshot, weightUnit);
     }, WORKOUT_AUTOSAVE_DELAY_MS);
+    autosaveTimeoutRef.current = timeoutId;
 
     return () => {
       window.clearTimeout(timeoutId);
+
+      if (autosaveTimeoutRef.current === timeoutId) {
+        autosaveTimeoutRef.current = null;
+      }
     };
   }, [
     draftState.exercises,
@@ -173,10 +186,12 @@ export function useWorkoutLoggerDraft({
     }
 
     function handlePageHide() {
-      if (!autosaveReadyRef.current) {
+      // A saved workout has no draft. Flushing the last in-memory state here
+      // used to resurrect the draft that `markSaved` had just deleted, which
+      // left the logger stuck on the saved workout's date forever.
+      if (!autosaveReadyRef.current || !hasUnsavedEditsRef.current) {
         return;
       }
-
       const latestDraftState = latestDraftStateRef.current;
       persistWorkoutDraft(
         createWorkoutDraftSnapshot(
@@ -196,6 +211,50 @@ export function useWorkoutLoggerDraft({
     };
   }, [isEditMode, weightUnit]);
 
+  // Every user-driven change goes through here. Seeding and recovery use
+  // `dispatch` directly, because neither is an edit the user made.
+  function commitEdit(action: DraftAction) {
+    hasUnsavedEditsRef.current = true;
+    dispatch(action);
+  }
+
+  function cancelPendingAutosave() {
+    if (autosaveTimeoutRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(autosaveTimeoutRef.current);
+    autosaveTimeoutRef.current = null;
+  }
+
+  // Called once the workout is stored server-side: delete the draft and disarm
+  // every writer that could put it back.
+  function markSaved() {
+    hasUnsavedEditsRef.current = false;
+    cancelPendingAutosave();
+    window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+  }
+
+  // Throw the recovered draft away and fall back to what the server seeded for
+  // the selected date. The counters are copied, because `nextExerciseId`
+  // mutates them in place.
+  function discardDraft() {
+    hasUnsavedEditsRef.current = false;
+    cancelPendingAutosave();
+    window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    idCounterRef.current = { ...initialState.counters };
+    dispatch({
+      type: "replace",
+      value: {
+        title: initialState.title,
+        workoutType: initialState.workoutType,
+        performedAt: initialState.performedAt,
+        exercises: initialState.exercises,
+        isRecoveredDraft: false,
+      },
+    });
+  }
+
   function nextExerciseId() {
     idCounterRef.current.exercise += 1;
     return `exercise-${idCounterRef.current.exercise}`;
@@ -210,7 +269,7 @@ export function useWorkoutLoggerDraft({
     id: string,
     updater: (exercise: ExerciseDraft) => ExerciseDraft,
   ) {
-    dispatch({
+    commitEdit({
       type: "update_exercises",
       updater: (current) =>
         current.map((exercise) =>
@@ -227,7 +286,7 @@ export function useWorkoutLoggerDraft({
   }
 
   function addExercise() {
-    dispatch({
+    commitEdit({
       type: "update_exercises",
       updater: (current) => [
         ...current,
@@ -237,7 +296,7 @@ export function useWorkoutLoggerDraft({
   }
 
   function removeExercise(id: string) {
-    dispatch({
+    commitEdit({
       type: "update_exercises",
       updater: (current) => {
         if (current.length === 1) {
@@ -250,7 +309,7 @@ export function useWorkoutLoggerDraft({
   }
 
   function reorderExercisesById(orderedExerciseIds: string[]) {
-    dispatch({
+    commitEdit({
       type: "update_exercises",
       updater: (current) => {
         const exercisesById = new Map(
@@ -311,7 +370,7 @@ export function useWorkoutLoggerDraft({
   ) {
     const hydrated = hydrateExercisesFromSnapshot(exercises);
     idCounterRef.current = hydrated.counters;
-    dispatch({
+    commitEdit({
       type: "update_exercises",
       updater: () => hydrated.exercises,
     });
@@ -320,8 +379,10 @@ export function useWorkoutLoggerDraft({
   return {
     addExercise,
     addSet,
+    discardDraft,
     exercises: draftState.exercises,
     hasRecoveredDraft: draftState.isRecoveredDraft,
+    markSaved,
     performedAt: draftState.performedAt,
     reorderExercisesById,
     removeExercise,
@@ -329,13 +390,13 @@ export function useWorkoutLoggerDraft({
     resetExercisesFromSnapshot,
     setExerciseName,
     setPerformedAt: (value: string) => {
-      dispatch({ type: "set_performed_at", value });
+      commitEdit({ type: "set_performed_at", value });
     },
     setTitle: (value: string) => {
-      dispatch({ type: "set_title", value });
+      commitEdit({ type: "set_title", value });
     },
     setWorkoutType: (value: string) => {
-      dispatch({ type: "set_workout_type", value });
+      commitEdit({ type: "set_workout_type", value });
     },
     title: draftState.title,
     updateSet,
