@@ -424,8 +424,9 @@ export function DashboardClient({
       const view = normalizeDashboardView(
         new URL(window.location.href).searchParams.get("view") ?? undefined,
       );
-      if (workspaceEnabled && (view === "dashboard" || (benEnabled && view === "nutrition"))) {
-        router.replace("/workouts/new");
+      if (workspaceEnabled && benEnabled && view === "nutrition") {
+        setActiveView("dashboard");
+        router.replace("/dashboard");
         return;
       }
 
@@ -439,8 +440,9 @@ export function DashboardClient({
   }, [loadViewData, workspaceEnabled, benEnabled, router]);
 
   function navigateToView(view: DashboardView) {
-    if (workspaceEnabled && (view === "dashboard" || (benEnabled && view === "nutrition"))) {
-      router.push("/workouts/new");
+    if (workspaceEnabled && benEnabled && view === "nutrition") {
+      setActiveView("dashboard");
+      router.push("/dashboard");
       return;
     }
     if (view === activeView) {
@@ -497,6 +499,7 @@ export function DashboardClient({
           ) : (
             <OverviewView
               overview={dashboardData.overview}
+              workouts={dashboardData.workouts}
               todayPlan={todayPlan}
               greetingName={greetingName}
               weightUnit={displayWeightUnit}

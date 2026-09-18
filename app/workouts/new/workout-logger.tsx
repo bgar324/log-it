@@ -72,6 +72,7 @@ type WorkoutLoggerProps = {
   loggedWorkoutId?: string | null;
   loggedWorkoutType?: string;
   canLogAnotherWorkoutType?: boolean;
+  startAnotherWorkout?: boolean;
   returnHref?: string;
   analyticsUser: PostHogUser;
   benEnabled: boolean;
@@ -90,6 +91,7 @@ export function WorkoutLogger({
   loggedWorkoutId = null,
   loggedWorkoutType = "",
   canLogAnotherWorkoutType = true,
+  startAnotherWorkout = false,
   returnHref = "/dashboard",
   analyticsUser,
   benEnabled,
@@ -205,7 +207,7 @@ export function WorkoutLogger({
   // this one and offering it would be a dead end. A recovered draft skips the
   // notice, because that draft is unfinished work the user must be able to
   // reach.
-  if (loggedWorkoutId && !draft.hasRecoveredDraft && !isLoggedNoticeDismissed) {
+  if (loggedWorkoutId && !draft.hasRecoveredDraft && !isLoggedNoticeDismissed && !startAnotherWorkout) {
     const loggedLabel = loggedWorkoutType.trim() || "This workout";
     const loggedDate = formatWorkoutLoggerDateLabel(draft.performedAt);
 
@@ -422,7 +424,7 @@ export function WorkoutLogger({
       if (isEditMode && resolvedWorkoutId) {
         router.replace(`/workouts/${resolvedWorkoutId}`);
       } else {
-        router.push("/workouts");
+        router.push(workspaceEnabled ? returnHref : "/workouts");
       }
       router.refresh();
     } catch {

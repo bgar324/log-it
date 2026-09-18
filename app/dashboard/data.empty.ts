@@ -62,6 +62,7 @@ export function createEmptyDashboardData(
       joinedAtLabel: monthLabel(user.createdAt),
     },
     overview: {
+      loggedWorkoutId: null,
       todayPlan: NO_SPLIT_TODAY_PLAN,
       todaySession: [],
     },
@@ -112,6 +113,7 @@ export function createEmptyOverview(user: DashboardClientData["user"]) {
   return {
     user,
     overview: {
+      loggedWorkoutId: null,
       todayPlan: NO_SPLIT_TODAY_PLAN,
       todaySession: [],
     } satisfies DashboardClientData["overview"],

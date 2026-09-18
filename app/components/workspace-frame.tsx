@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useRef, useTransition } from "react";
 import type { ReactNode } from "react";
-import { Apple, ArrowLeft, CalendarDays, ChartNoAxesCombined, Dumbbell, History, LoaderCircle, LogOut, Settings, UserRound, type LucideIcon } from "lucide-react";
+import { Apple, ArrowLeft, CalendarDays, ChartNoAxesCombined, House, History, LoaderCircle, LogOut, Settings, UserRound, type LucideIcon } from "lucide-react";
 import posthog from "posthog-js";
 import type { DashboardView } from "@/app/dashboard/dashboard-types";
 import type { DashboardShellProps } from "@/app/dashboard/_components/dashboard-shell";
@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./workspace-ui/tabs";
 import { useWorkspaceNavigation } from "./workspace-navigation";
 
 const primaryViews: Array<{ view: DashboardView; label: string; icon: LucideIcon }> = [
-  { view: "dashboard", label: "Workout", icon: Dumbbell },
+  { view: "dashboard", label: "Home", icon: House },
   { view: "workouts", label: "History", icon: History },
   { view: "progress", label: "Progress", icon: ChartNoAxesCombined },
   { view: "split", label: "Plan", icon: CalendarDays },
@@ -48,10 +48,10 @@ export function WorkspaceFrame({ activeView, benEnabled, children, title, backHr
 
   function navigate(view: DashboardView) {
     if (onNavigate && view === activeView) return;
-    const href = view === "dashboard" ? "/workouts/new" : toViewHref(view);
+    const href = toViewHref(view);
     if (href === window.location.pathname + window.location.search) return;
     requestNavigation(() => {
-      if (onNavigate && view !== "dashboard") onNavigate(view);
+      if (onNavigate) onNavigate(view);
       else startTransition(() => router.push(href));
     });
   }
@@ -68,7 +68,7 @@ export function WorkspaceFrame({ activeView, benEnabled, children, title, backHr
   return <Tabs value={activeView} activationMode="manual" className="min-h-svh flex-col gap-0 [--workspace-nav-height:calc(4rem+env(safe-area-inset-bottom))] md:[--workspace-nav-height:0px]">
     <header className={`sticky top-0 z-30 bg-background ${accessory ? "border-b border-border" : "md:border-b md:border-border"}`}>
       <div data-workspace-navigation className="fixed inset-x-0 bottom-0 flex h-[var(--workspace-nav-height)] items-center gap-0 border-t border-border bg-background px-2 pb-[env(safe-area-inset-bottom)] md:static md:mx-auto md:h-auto md:w-full md:max-w-5xl md:gap-5 md:border-t-0 md:px-6 md:py-3">
-        <Link href="/workouts/new" className="hidden text-base font-semibold tracking-tight md:block"
+        <Link href="/dashboard" className="hidden text-base font-semibold tracking-tight md:block"
           onClick={event => {
             if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
             event.preventDefault();

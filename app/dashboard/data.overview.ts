@@ -1,33 +1,19 @@
-import { requireSessionUser } from "@/lib/auth";
+import { convertStoredWeightToDisplay, type WeightUnit } from "@/lib/weight-unit";
 import { loadTodayPlan } from "@/lib/workout-splits/today-plan";
-import { convertStoredWeightToDisplay } from "@/lib/weight-unit";
-import { normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
+import { findLoggedWorkoutForDateAndType } from "@/lib/workouts/service";
 import type { DashboardClientData } from "./dashboard-types";
-import {
-  dateKey,
-  monthDateLabel,
-  monthLabel,
-  timelineDateLabel,
-} from "./data.formatters";
-import {
-  loadExerciseSummaryRows,
-  loadRecentLogs,
-  loadWorkoutCalendarWorkouts,
-  mapWorkoutSummaries,
-} from "./data.queries";
+import { monthDateLabel, monthLabel, timelineDateLabel } from "./data.formatters";
+import { loadRecentLogs, mapWorkoutSummaries } from "./data.queries";
 
 import { loadTodaySession } from "./data.today-session";
 
 export async function loadDashboardOverviewSection(
   userId: string,
-  weightUnit: Awaited<ReturnType<typeof requireSessionUser>>["preferredWeightUnit"],
+  weightUnit: WeightUnit,
   now: Date,
 ) {
-  // Today's workouts are the only calendar rows this view needs: the plan
-  // sentence has to know whether today is already logged.
-  const [recentLogs, todayWorkouts, todayPlan, todaySession] = await Promise.all([
+  const [recentLogs, todayPlan, todaySession] = await Promise.all([
     loadRecentLogs(userId, 5),
-    loadWorkoutCalendarWorkouts(userId, dateKey(now).slice(0, 7)),
     loadTodayPlan(userId, now),
     loadTodaySession(userId, weightUnit, now),
   ]);
@@ -42,30 +28,36 @@ export async function loadDashboardOverviewSection(
     title: log.title,
     workoutType: log.workoutType,
     performedAtDate: log.performedAtDate,
-    performedAtLabel: log.performedAtLabel,
+    performedAtLabel: log.timelineLabel,
     exerciseCount: log.exerciseCount,
     setCount: log.setCount,
     volume: log.volume,
   }));
-  const todayKey = dateKey(now);
-  const todayPlanSlug = todayPlan.workoutTypeSlug;
+  // Scheduled days use the planned identity. On rest days or without a split,
+  // Home can open a completed unscheduled session for today.
+  const loggedWorkoutTypeSlug = todayPlan.isRestDay ? null : todayPlan.workoutTypeSlug;
+  const loggedWorkout = await findLoggedWorkoutForDateAndType(
+    userId,
+    now,
+    loggedWorkoutTypeSlug,
+  );
+  const loggedWorkoutId = loggedWorkout?.id ?? null;
+  // Legacy rendering only calls a planned, non-rest day logged, so it keeps
+  // those conditions instead of reading the identity match alone.
   const isLoggedToday =
     !todayPlan.isRestDay &&
-    todayPlanSlug !== null &&
-    todayWorkouts.some(
-      (workout) =>
-        workout.dateKey === todayKey &&
-        normalizeWorkoutTypeSlug(workout.workoutType ?? "") === todayPlanSlug,
-    );
+    todayPlan.workoutTypeSlug !== null &&
+    loggedWorkoutId !== null;
 
   return {
     overview: {
+      loggedWorkoutId,
       todayPlan: {
         ...todayPlan,
         isLoggedToday,
       },
       todaySession,
-    },
+    } satisfies DashboardClientData["overview"],
     workouts,
   };
 }

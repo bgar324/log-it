@@ -15,7 +15,7 @@ const todayPlan = {
 test("a completed planned workout has no second log action", async () => {
   const mounted = await render(
     <DashboardOverviewView
-      overview={{ todayPlan, todaySession: [] }}
+      overview={{ loggedWorkoutId: "logged-pull", todayPlan, todaySession: [] }}
       todayPlan={todayPlan}
       greetingName="Benjamin"
       weightUnit="LB"

@@ -28,7 +28,7 @@ function loadCachedDashboardOverviewSection(
 
   return unstable_cache(
     async () => loadDashboardOverviewSection(userId, weightUnit, now),
-    ["dashboard-overview", userId, weightUnit, nowKey],
+    ["dashboard-overview", "v2-home-action", userId, weightUnit, nowKey],
     {
       revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
       tags: [getWorkoutDataTag(userId), getSplitDataTag(userId)],

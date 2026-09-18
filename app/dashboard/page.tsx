@@ -26,9 +26,8 @@ export default async function DashboardPage({
   const initialView = normalizeDashboardView(params.view);
   if (await isIonicEnabled(user)) redirect(`/ionic/${initialView}`);
   const workspaceEnabled = isWorkspaceEnabled(user);
-  if (workspaceEnabled && initialView === "dashboard") redirect("/workouts/new");
   const benFlag = isBenFeatureEnabled(user);
-  if (workspaceEnabled && initialView === "nutrition" && await benFlag) redirect("/workouts/new");
+  if (workspaceEnabled && initialView === "nutrition" && await benFlag) redirect("/dashboard");
   const now = getCurrentPacificDate();
   const data = createEmptyDashboardData(user, now);
   const [viewData, benEnabled] = await Promise.all([

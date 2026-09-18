@@ -292,6 +292,7 @@ const PREVIEW_DATA = {
     joinedAtLabel: "July 2025",
   },
   overview: {
+    loggedWorkoutId: null,
     todayPlan: {
       workoutType: "Push",
       workoutTypeSlug: "push",

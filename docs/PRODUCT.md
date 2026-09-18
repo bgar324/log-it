@@ -6,7 +6,7 @@ Logit is a lightweight workout journal. The durable product direction in the rep
 
 The owner rollout covers workout entry/editing, history and details, progress and exercise details, plans, profile, settings, and account management. The homepage and other public pages are unchanged. Unflagged accounts retain the existing app.
 
-Workout is the main workspace. History, Progress, and Plan remain visible in a bottom tab bar on phones and header tabs on desktop. Profile, Settings, and Sign out are in the account menu. Summaries use sentences rather than KPI pills. Reading a history or exercise row opens a sheet and preserves the list behind it. Back from the logger or its Already logged notice defaults to History, never the dashboard entry that redirects into the logger.
+Home is the default app screen. Home, History, Progress, and Plan remain visible in a bottom tab bar on phones and header tabs on desktop. Profile, Settings, and Sign out are in the account menu. Home shows today's plan, recent sessions, and one primary action: resume a recoverable draft, otherwise open today's saved workout, otherwise start a workout. Reading a recent session opens a sheet over Home. Back and successful new-workout saves return to the originating view, defaulting to Home.
 
 All exercises and sets remain visible while logging. Add set, Add exercise, and Save are ordinary controls; no per-set completion or exercise accordion is required. Inline drag handles update exercise order. Week reordering uses a sheet with explicit cancel/save. Metadata and secondary actions use standard sheets and menus.
 

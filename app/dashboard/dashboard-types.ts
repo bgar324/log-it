@@ -74,6 +74,10 @@ export type DashboardClientData = {
   // The overview renders a greeting, today's plan, and a preview of the session
   // that plan asks for. Every other number lives on the view that owns it.
   overview: {
+    // The completed workout that already occupies today's logger identity —
+    // the planned type, or no type at all on a rest day or without a split.
+    // Null means today's session is still unlogged under that identity.
+    loggedWorkoutId: string | null;
     todayPlan: {
       workoutType: string;
       workoutTypeSlug: string | null;

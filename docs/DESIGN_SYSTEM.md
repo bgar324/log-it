@@ -8,6 +8,8 @@ The owner-only workspace uses the reference application's shadcn `radix-nova` sy
 
 On phones, primary navigation is a fixed bottom tab bar with icons and labels. Account actions live at its right edge. Desktop keeps the header tabs. Search stays above the content. The shared `--workspace-nav-height` reserves space for the bar and the home-indicator inset; pinned workout actions sit above it. Feedback appears at the top rather than covering either bottom action area.
 
+Home is the first tab, not the logger. Its hierarchy is today's plan and one contextual workout action, recent sessions, then the planned exercises. Home only reads unfinished drafts; the logger owns restoring, saving, and discarding them. Do not replace this overview with an Already logged notice or add KPI tiles.
+
 The workspace theme is document-scoped by `[data-workspace-design="nova"]`; public and unflagged surfaces keep their warm palette. Radix portals inherit the active workspace tokens. Existing charts need the `workspace-chart-theme` adapter because legacy `--muted` means text while Nova `--muted` means a background.
 
 Every workout exercise and set stays readable in one document. History and progress use sentence-led summaries and compact rows. Normal detail clicks open a right sheet; copied URLs and modifier clicks still open the full page. Keep the invoking row focused after dismissal and retain sheet content through its exit animation.

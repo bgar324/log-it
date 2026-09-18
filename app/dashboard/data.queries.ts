@@ -8,7 +8,6 @@ import {
 import { isPrismaSchemaMismatchError } from "@/lib/schema-compat";
 import { toWeightNumber } from "@/lib/weight-unit";
 import {
-  addMonthsToDatabaseDate,
   formatDatabaseDateValue,
   toDatabaseDateFromInput,
 } from "@/lib/workout-utils";
@@ -300,66 +299,6 @@ export async function loadWorkoutCalendarSummary(userId: string) {
     dateKey: row.dateKey,
     count: row.workoutCount,
   }));
-}
-
-export async function loadWorkoutCalendarWorkouts(userId: string, monthKey?: string) {
-  const monthStart = monthKey ? toDatabaseDateFromInput(`${monthKey}-01`) : null;
-  const where = {
-    userId,
-    ...(monthStart
-      ? {
-          performedAt: {
-            gte: monthStart,
-            lt: addMonthsToDatabaseDate(monthStart, 1),
-          },
-        }
-      : {}),
-  };
-
-  try {
-    const rows = await prisma.workoutLog.findMany({
-      where,
-      orderBy: {
-        performedAt: "asc",
-      },
-      select: {
-        id: true,
-        title: true,
-        workoutType: true,
-        performedAt: true,
-      },
-    });
-
-    return rows.map((row) => ({
-      id: row.id,
-      title: row.title,
-      workoutType: row.workoutType,
-      dateKey: formatDatabaseDateValue(row.performedAt),
-    }));
-  } catch (error) {
-    if (!isPrismaSchemaMismatchError(error)) {
-      throw error;
-    }
-
-    const rows = await prisma.workoutLog.findMany({
-      where,
-      orderBy: {
-        performedAt: "asc",
-      },
-      select: {
-        id: true,
-        title: true,
-        performedAt: true,
-      },
-    });
-
-    return rows.map((row) => ({
-      id: row.id,
-      title: row.title,
-      workoutType: null,
-      dateKey: formatDatabaseDateValue(row.performedAt),
-    }));
-  }
 }
 
 export function mapWorkoutSummaries(

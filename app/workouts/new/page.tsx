@@ -20,6 +20,7 @@ import { normalizeDashboardView } from "@/app/dashboard/data.view-helpers";
 type SearchParams = Promise<{
   date?: string;
   from?: string;
+  another?: string;
 }>;
 
 export default async function NewWorkoutPage({
@@ -75,13 +76,12 @@ export default async function NewWorkoutPage({
     ? { ...splitSeed.initialData, title: "", workoutType: "", exercises: [] }
     : plannedInitialData;
 
-  // The workspace's default dashboard redirects straight back to this logger.
-  // Exit to History unless the caller names another reachable view.
+  // Return to the originating view, with Home as the default task exit.
   const workspaceEnabled = isWorkspaceEnabled(user);
   const returnView = normalizeDashboardView(params.from);
   const returnHref = toViewHref(
-    workspaceEnabled && (returnView === "dashboard" || (returnView === "nutrition" && benEnabled))
-      ? "workouts"
+    workspaceEnabled && returnView === "nutrition" && benEnabled
+      ? "dashboard"
       : returnView,
   );
 
@@ -95,6 +95,7 @@ export default async function NewWorkoutPage({
       loggedWorkoutId={loggedWorkout?.id ?? null}
       loggedWorkoutType={hasSplit ? splitSeed.day.workoutType : ""}
       canLogAnotherWorkoutType={hasSplit}
+      startAnotherWorkout={workspaceEnabled && params.another === "1" && hasSplit && Boolean(loggedWorkout)}
       analyticsUser={user}
       benEnabled={benEnabled}
       workspaceEnabled={workspaceEnabled}
