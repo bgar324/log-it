@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
+import { useMemo, useState } from "react";
 import { moveReorderStyles } from "@/app/components/move-reorder-dialog.styles";
+import { LegacyDialog } from "@/app/components/ui/legacy-dialog";
 import {
   SPLIT_WEEKDAYS,
   getSplitWeekdayIndex,
@@ -17,6 +17,7 @@ import { getInitialSelectedWeekday } from "./split-manager.shared";
 
 type SplitDayReorderDialogProps = {
   days: WorkoutSplitDayTemplate[];
+  open: boolean;
   onCancel: () => void;
   onSave: (orderedWeekdays: SplitWeekdayValue[]) => void;
 };
@@ -38,9 +39,36 @@ function getDayMeta(day: WorkoutSplitDayTemplate) {
 
 export function SplitDayReorderDialog({
   days,
+  open,
   onCancel,
   onSave,
 }: SplitDayReorderDialogProps) {
+  return (
+    <LegacyDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          onCancel();
+        }
+      }}
+      title="Move workouts"
+      overlayClassName={moveReorderStyles.overlay}
+      contentClassName={moveReorderStyles.dialog}
+    >
+      <SplitDayReorderContent days={days} onCancel={onCancel} onSave={onSave} />
+    </LegacyDialog>
+  );
+}
+
+/**
+ * The two-tap selection and the draft week order live inside the panel, so they
+ * survive the exit animation and start clean from the saved split on reopen.
+ */
+function SplitDayReorderContent({
+  days,
+  onCancel,
+  onSave,
+}: Omit<SplitDayReorderDialogProps, "open">) {
   const sortedDays = useMemo(
     () =>
       [...days].sort(
@@ -55,24 +83,6 @@ export function SplitDayReorderDialog({
   const [selectedWeekday, setSelectedWeekday] =
     useState<SplitWeekdayValue | null>(null);
   const [todayWeekday] = useState<SplitWeekdayValue>(getInitialSelectedWeekday);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onCancel();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onCancel]);
 
   const dayByWeekday = useMemo(
     () => new Map(sortedDays.map((day) => [day.weekday, day])),
@@ -117,121 +127,95 @@ export function SplitDayReorderDialog({
     setSelectedWeekday(null);
   }
 
-  if (typeof document === "undefined") {
-    return null;
-  }
+  return (
+    <>
+      <h2 className={moveReorderStyles.title}>Move workouts</h2>
+      <p aria-live="polite" className={moveReorderStyles.body}>
+        {selectedTitle
+          ? `${selectedTitle} selected. Choose a day.`
+          : "Choose a workout to move."}
+      </p>
 
-  return createPortal(
-    <div className={moveReorderStyles.overlay}>
-      <button
-        type="button"
-        tabIndex={-1}
-        aria-label="Close move workouts"
-        className={moveReorderStyles.backdrop}
-        onClick={onCancel}
-      />
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-label="Move workouts"
-        className={moveReorderStyles.dialog}
-      >
-        <h2 className={moveReorderStyles.title}>Move workouts</h2>
-        <p aria-live="polite" className={moveReorderStyles.body}>
-          {selectedTitle
-            ? `${selectedTitle} selected. Choose a day.`
-            : "Choose a workout to move."}
-        </p>
+      <div aria-label="Weekly workout order" className={moveReorderStyles.list}>
+        {orderedDays.map((day, index) => {
+          const slotWeekday = SPLIT_WEEKDAYS[index] ?? day.weekday;
+          const slotLabel = getSplitWeekdayLabel(slotWeekday);
+          const isToday = slotWeekday === todayWeekday;
+          const isSelected = selectedWeekday === day.weekday;
+          const dayTitle = getDayTitle(day, index);
+          const actionLabel = selectedWeekday
+            ? isSelected
+              ? "Deselect"
+              : "Move here"
+            : "Move";
+          const buttonLabel = selectedTitle
+            ? isSelected
+              ? `Cancel moving ${dayTitle}`
+              : `Move ${selectedTitle} to ${slotLabel}`
+            : `Select ${dayTitle} from ${slotLabel} to move`;
 
-        <div
-          aria-label="Weekly workout order"
-          className={moveReorderStyles.list}
-        >
-          {orderedDays.map((day, index) => {
-            const slotWeekday = SPLIT_WEEKDAYS[index] ?? day.weekday;
-            const slotLabel = getSplitWeekdayLabel(slotWeekday);
-            const isToday = slotWeekday === todayWeekday;
-            const isSelected = selectedWeekday === day.weekday;
-            const dayTitle = getDayTitle(day, index);
-            const actionLabel = selectedWeekday
-              ? isSelected
-                ? "Deselect"
-                : "Move here"
-              : "Move";
-            const buttonLabel = selectedTitle
-              ? isSelected
-                ? `Cancel moving ${dayTitle}`
-                : `Move ${selectedTitle} to ${slotLabel}`
-              : `Select ${dayTitle} from ${slotLabel} to move`;
-
-            return (
-              <div
-                key={day.weekday}
-                data-reorder-index={index}
-                data-reorder-weekday={day.weekday}
-                className={splitStyles.splitReorderSlot}
-              >
-                <div className={splitStyles.splitReorderDayLabel}>
-                  <span
-                    className={
-                      isToday ? splitStyles.splitReorderDayLabelToday : undefined
-                    }
-                  >
-                    {slotLabel.slice(0, 3)}
-                  </span>
-                  {isToday ? (
-                    <span className={splitStyles.splitReorderToday}>Today</span>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  aria-label={buttonLabel}
-                  aria-pressed={isSelected}
-                  data-reorder-card
-                  data-selected={isSelected}
-                  className={moveReorderStyles.card}
-                  onClick={() =>
-                    selectWorkoutOrDestination(day.weekday, index)
+          return (
+            <div
+              key={day.weekday}
+              data-reorder-index={index}
+              data-reorder-weekday={day.weekday}
+              className={splitStyles.splitReorderSlot}
+            >
+              <div className={splitStyles.splitReorderDayLabel}>
+                <span
+                  className={
+                    isToday ? splitStyles.splitReorderDayLabelToday : undefined
                   }
                 >
-                  <span className={moveReorderStyles.itemText}>
-                    <span className={moveReorderStyles.itemTitle}>
-                      {dayTitle}
-                    </span>
-                    <span className={moveReorderStyles.itemMeta}>
-                      {getDayMeta(day)}
-                    </span>
-                  </span>
-                  <span
-                    data-selected={isSelected}
-                    className={moveReorderStyles.itemAction}
-                  >
-                    {actionLabel}
-                  </span>
-                </button>
+                  {slotLabel.slice(0, 3)}
+                </span>
+                {isToday ? (
+                  <span className={splitStyles.splitReorderToday}>Today</span>
+                ) : null}
               </div>
-            );
-          })}
-        </div>
+              <button
+                type="button"
+                aria-label={buttonLabel}
+                aria-pressed={isSelected}
+                data-reorder-card
+                data-selected={isSelected}
+                className={moveReorderStyles.card}
+                onClick={() => selectWorkoutOrDestination(day.weekday, index)}
+              >
+                <span className={moveReorderStyles.itemText}>
+                  <span className={moveReorderStyles.itemTitle}>{dayTitle}</span>
+                  <span className={moveReorderStyles.itemMeta}>
+                    {getDayMeta(day)}
+                  </span>
+                </span>
+                <span
+                  data-selected={isSelected}
+                  className={moveReorderStyles.itemAction}
+                >
+                  {actionLabel}
+                </span>
+              </button>
+            </div>
+          );
+        })}
+      </div>
 
-        <div className={moveReorderStyles.actions}>
-          <button
-            type="button"
-            className={moveReorderStyles.secondaryButton}
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={moveReorderStyles.primaryButton}
-            onClick={() => onSave(orderedWeekdays)}
-          >
-            Save
-          </button>
-        </div>
-      </section>
-    </div>,
-    document.body,
+      <div className={moveReorderStyles.actions}>
+        <button
+          type="button"
+          className={moveReorderStyles.secondaryButton}
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className={moveReorderStyles.primaryButton}
+          onClick={() => onSave(orderedWeekdays)}
+        >
+          Save
+        </button>
+      </div>
+    </>
   );
 }

@@ -1,0 +1,49 @@
+:root {
+  --ui-motion-enter: 180ms;
+  --ui-motion-panel: 220ms;
+  --ui-motion-exit: 160ms;
+  --ui-motion-drawer: 280ms;
+  --ui-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ui-motion-ease-out: cubic-bezier(0.4, 0, 1, 1);
+}
+
+.auth-popover-content {
+  transform-origin: var(--radix-popover-content-transform-origin);
+}
+
+.auth-popover-content[data-state="open"] {
+  animation: logit-menu-panel-in var(--ui-motion-enter) var(--ui-motion-ease) both;
+}
+
+.auth-popover-content[data-state="closed"] {
+  animation: logit-menu-panel-out var(--ui-motion-exit) var(--ui-motion-ease-out) both;
+  pointer-events: none;
+}
+
+.auth-dialog-overlay[data-state="open"] {
+  animation: auth-overlay-in var(--ui-motion-enter) var(--ui-motion-ease) both;
+}
+
+.auth-dialog-overlay[data-state="closed"] {
+  animation: auth-overlay-out var(--ui-motion-exit) var(--ui-motion-ease-out) both;
+  pointer-events: none;
+}
+
+.auth-dialog-content[data-state="open"] {
+  animation: dashboard-modal-panel var(--ui-motion-panel) var(--ui-motion-ease) both;
+}
+
+.auth-dialog-content[data-state="closed"] {
+  animation: dashboard-modal-panel-exit var(--ui-motion-exit) var(--ui-motion-ease-out) both;
+  pointer-events: none;
+}
+
+@keyframes auth-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes auth-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

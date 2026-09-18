@@ -339,16 +339,15 @@ export function SplitManager({
         onReorderExercises={state.reorderExercises}
       />
 
-      {isReorderDaysOpen ? (
-        <SplitDayReorderDialog
-          days={state.split.days}
-          onCancel={() => setIsReorderDaysOpen(false)}
-          onSave={(orderedWeekdays) => {
-            void state.saveDayOrder(orderedWeekdays);
-            setIsReorderDaysOpen(false);
-          }}
-        />
-      ) : null}
+      <SplitDayReorderDialog
+        days={state.split.days}
+        open={isReorderDaysOpen}
+        onCancel={() => setIsReorderDaysOpen(false)}
+        onSave={(orderedWeekdays) => {
+          void state.saveDayOrder(orderedWeekdays);
+          setIsReorderDaysOpen(false);
+        }}
+      />
     </div>
   );
 }

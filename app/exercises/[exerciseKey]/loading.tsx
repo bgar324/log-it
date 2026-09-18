@@ -101,7 +101,7 @@ export default function ExerciseDetailLoading() {
           </div>
         </section>
       </section>
-      <AppTabBar activeView="progress" />
+      <AppTabBar activeView="progress" benEnabled={benEnabled} />
     </main>
   );
 }

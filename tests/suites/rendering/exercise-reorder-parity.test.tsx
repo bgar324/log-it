@@ -45,10 +45,9 @@ const LOGGER_EXERCISES: ExerciseDraft[] = SPLIT_EXERCISES.map((exercise) => ({
 }));
 
 function getReorderDialog() {
-  const dialog = document.body.querySelector<HTMLElement>(
-    'section[aria-label="Reorder exercises"]',
-  );
+  const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]');
   assert.ok(dialog);
+  assert.match(dialog.textContent ?? "", /Reorder exercises/);
   return dialog;
 }
 
@@ -63,6 +62,7 @@ test("split exercise reordering exposes the grab-handle flow", async () => {
   const mounted = await render(
     createElement(SplitExerciseReorderDialog, {
       exercises: SPLIT_EXERCISES,
+      open: true,
       onCancel: () => {},
       onSave: (orderedExerciseOrders) => {
         savedOrder = orderedExerciseOrders;
@@ -118,6 +118,53 @@ test("logger exercise reordering matches the split grab-handle flow", async () =
     assert.ok(save);
     await mounted.click(save);
     assert.deepEqual(savedOrder, ["bench", "row", "raise"]);
+  } finally {
+    mounted.unmount();
+  }
+});
+
+test("reopening the reorder dialog reads the current exercises", async () => {
+  const mounted = await render(
+    createElement(WorkoutLoggerReorderDialog, {
+      exercises: LOGGER_EXERCISES,
+      isOpen: true,
+      onCancel: () => {},
+      onSave: () => {},
+    }),
+  );
+
+  try {
+    assert.deepEqual(getDragLabels(getReorderDialog()), [
+      "Drag Bench press",
+      "Drag Barbell row",
+      "Drag Lateral raise",
+    ]);
+
+    await mounted.rerender(
+      createElement(WorkoutLoggerReorderDialog, {
+        exercises: LOGGER_EXERCISES,
+        isOpen: false,
+        onCancel: () => {},
+        onSave: () => {},
+      }),
+    );
+    assert.equal(document.body.querySelector('[role="dialog"]'), null);
+
+    await mounted.rerender(
+      createElement(WorkoutLoggerReorderDialog, {
+        exercises: [LOGGER_EXERCISES[2], LOGGER_EXERCISES[0]],
+        isOpen: true,
+        onCancel: () => {},
+        onSave: () => {},
+      }),
+    );
+
+    // The draft order is rebuilt from the exercises that exist now, not from
+    // the list the dialog was first opened with.
+    assert.deepEqual(getDragLabels(getReorderDialog()), [
+      "Drag Lateral raise",
+      "Drag Bench press",
+    ]);
   } finally {
     mounted.unmount();
   }

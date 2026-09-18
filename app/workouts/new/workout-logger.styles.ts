@@ -7,18 +7,16 @@ import {
   actionOutline,
   actionQuiet,
 } from "@/app/components/action.styles";
+import { fieldBoxed, fieldUnderline } from "@/app/components/field.styles";
 import { cn } from "../classnames";
 
-// Phone text inputs are 1rem (16px) so iOS Safari never zooms the viewport on
-// focus, and desktop keeps the old density through min-[620px] overrides.
-// Button geometry is not declared here: it comes from `action.styles.ts`.
+// Edge, fill and focus come from the shared field canon. What stays here is
+// density: phone text inputs are 1rem (16px) so iOS Safari never zooms the
+// viewport on focus, and desktop keeps the old compact height and size through
+// min-[620px] overrides. Button geometry lives in `action.styles.ts`.
 const inputBase = cn(
-  "w-full min-h-[2.75rem] rounded-[0.52rem] border",
-  "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-  "bg-[var(--field-bg)] py-[0.5rem]",
-  "text-base text-[var(--text)] outline-none",
-  "focus:border-[color:color-mix(in_srgb,var(--text)_24%,transparent)]",
-  "focus:shadow-[0_0_0_3px_var(--focus-ring)]",
+  fieldBoxed,
+  "w-full min-h-[2.75rem] rounded-[0.52rem] py-[0.5rem] text-base",
   "min-[620px]:min-h-[2.4rem] min-[620px]:text-[0.9rem]",
 );
 
@@ -81,11 +79,10 @@ export const styles = {
   confirmPrimaryButton: `${actionDanger} w-full`,
   label: "text-[0.68rem] text-[var(--muted)]",
   input: cn(inputBase, "px-[0.74rem]"),
+  // The identity field: no box, one bottom edge that darkens on focus.
   nameInput: cn(
-    "w-full min-h-[2.75rem] rounded-none border-0 border-b bg-transparent px-0 py-[0.5rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "text-base text-[var(--text)] outline-none",
-    "focus:border-[color:var(--text)]",
+    fieldUnderline,
+    "w-full min-h-[2.75rem] rounded-none px-0 py-[0.5rem] text-base",
   ),
   dateInput: "w-full [font-variant-numeric:tabular-nums]",
   exerciseSection: "flex flex-col gap-[0.62rem]",
@@ -94,8 +91,9 @@ export const styles = {
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
   ),
   // Suggestions anchor to the full name row without moving the sets below it.
-  exerciseNameRow:
-    "relative flex items-start gap-[0.4rem] [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1",
+  // The suggestion component's own wrapper carries `min-w-0 flex-1`, so the
+  // row does not reach into its children to size them.
+  exerciseNameRow: "relative flex items-start gap-[0.4rem]",
   // One quiet sentence per exercise. Fixed height so the card does not jump
   // when the comparison lands.
   exerciseCompareLine:
@@ -113,14 +111,6 @@ export const styles = {
   exerciseMenuDivider:
     "my-[0.1rem] h-px bg-[color-mix(in_srgb,var(--text)_12%,transparent)]",
   icon: "h-4 w-4 shrink-0 stroke-current",
-  inlineRow: "block",
-  searchResults: cn(
-    "absolute inset-x-0 top-full z-40 m-0 mt-[0.3rem] max-h-[12rem] list-none overflow-y-auto overscroll-contain rounded-[0.54rem] border p-[0.25rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)]",
-    "shadow-[0_8px_20px_color-mix(in_srgb,#000_12%,transparent)]",
-    "[&>li+li]:border-t [&>li+li]:border-[color:color-mix(in_srgb,var(--text)_8%,transparent)]",
-  ),
-  searchResultButton: `${actionMenuRow} py-[0.65rem] leading-snug`,
   compareHint: "mt-[-0.1rem] text-[0.8rem] text-[var(--muted)]",
   spinningIcon:
     "h-[0.85rem] w-[0.85rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",

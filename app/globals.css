@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "./components/workspace-theme.css";
+@import "./components/interaction.css";
 
 :root {
   color-scheme: light;
@@ -111,29 +112,6 @@ body {
   }
 }
 
-@keyframes dashboard-modal-backdrop {
-  from {
-    opacity: 0;
-    backdrop-filter: blur(0);
-  }
-
-  to {
-    opacity: 1;
-    backdrop-filter: blur(8px);
-  }
-}
-
-@keyframes dashboard-modal-backdrop-exit {
-  from {
-    opacity: 1;
-    backdrop-filter: blur(8px);
-  }
-
-  to {
-    opacity: 0;
-    backdrop-filter: blur(0);
-  }
-}
 
 @keyframes dashboard-modal-panel {
   from {

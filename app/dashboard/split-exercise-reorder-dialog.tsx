@@ -5,12 +5,14 @@ import type { WorkoutSplitExerciseTemplate } from "@/lib/workout-splits/shared";
 
 type SplitExerciseReorderDialogProps = {
   exercises: WorkoutSplitExerciseTemplate[];
+  open: boolean;
   onCancel: () => void;
   onSave: (orderedExerciseOrders: number[]) => void;
 };
 
 export function SplitExerciseReorderDialog({
   exercises,
+  open,
   onCancel,
   onSave,
 }: SplitExerciseReorderDialogProps) {
@@ -23,6 +25,7 @@ export function SplitExerciseReorderDialog({
   return (
     <ExerciseReorderDialog
       items={items}
+      open={open}
       onCancel={onCancel}
       onSave={onSave}
     />

@@ -66,7 +66,8 @@ export function IonicAvatarEditor({
     handleRemoveAvatar,
     handleZoomChange,
     isAvatarModalOpen,
-    setIsAvatarModalOpen,
+    openAvatarEditor,
+    handleCancelCrop,
   } = useDashboardProfileAvatarCrop({
     displayedAvatarUrl,
     onAvatarDelete,
@@ -96,7 +97,7 @@ export function IonicAvatarEditor({
         onClick={() => {
           if (hasAvatar) {
             setIsImageReady(false);
-            setIsAvatarModalOpen(true);
+            openAvatarEditor();
             return;
           }
 
@@ -136,7 +137,7 @@ export function IonicAvatarEditor({
         isOpen={isAvatarModalOpen}
         canDismiss={!isSaving}
         onIonModalDidDismiss={() => {
-          setIsAvatarModalOpen(false);
+          handleCancelCrop();
           setIsImageReady(false);
         }}
       >
@@ -144,7 +145,7 @@ export function IonicAvatarEditor({
           <IonToolbar>
             <IonTitle>Profile photo</IonTitle>
             <IonButtons slot="end">
-              <IonButton disabled={isSaving} onClick={() => setIsAvatarModalOpen(false)}>
+              <IonButton disabled={isSaving} onClick={handleCancelCrop}>
                 Cancel
               </IonButton>
             </IonButtons>

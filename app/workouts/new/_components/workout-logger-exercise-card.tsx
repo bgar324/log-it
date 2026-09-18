@@ -6,6 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/app/components/ui/popover";
+import { ExerciseSuggestions } from "@/app/components/exercise-suggestions";
 import { useState, type PointerEvent } from "react";
 import type { WorkoutLoggerExerciseEntry } from "../workout-logger.types";
 import { styles } from "../workout-logger.styles";
@@ -71,7 +72,11 @@ export function WorkoutLoggerExerciseCard({
             next to the sets it describes. */}
         <div className={styles.field}>
           <div className={styles.exerciseNameRow}>
-            <div className={styles.inlineRow}>
+            <ExerciseSuggestions
+              suggestions={searchResults}
+              fieldKey={exercise.id}
+              onSelect={onApplySearchResult}
+            >
               <input
                 id={`exercise-name-${exercise.id}`}
                 className={styles.nameInput}
@@ -87,23 +92,7 @@ export function WorkoutLoggerExerciseCard({
                 autoCorrect="on"
                 placeholder="Barbell bench press"
               />
-              {searchResults.length > 0 ? (
-                <ul className={styles.searchResults} aria-label="Exercise suggestions">
-                  {searchResults.map((result) => (
-                    <li key={`${exercise.id}-${result}`}>
-                      <button
-                        type="button"
-                        className={styles.searchResultButton}
-                        onPointerDown={keepCurrentFocus}
-                        onClick={() => onApplySearchResult(result)}
-                      >
-                        {result}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
+            </ExerciseSuggestions>
 
             {/* On the name's row, not below it: the menu acts on the exercise
                 this field names, so it belongs beside it. The comparison keeps
@@ -122,8 +111,7 @@ export function WorkoutLoggerExerciseCard({
               <PopoverContent
                 align="end"
                 className={styles.exerciseMenu}
-                onOpenAutoFocus={(event) => event.preventDefault()}
-                onCloseAutoFocus={(event) => event.preventDefault()}
+                preserveInputFocus
               >
                 <button
                   type="button"
@@ -170,8 +158,8 @@ export function WorkoutLoggerExerciseCard({
         />
       </article>
 
-      {isRemoveConfirmOpen ? (
         <WorkoutLoggerConfirmDialog
+          open={isRemoveConfirmOpen}
           title={`Delete ${exerciseTitle}?`}
           description="This removes the exercise and every set entered under it."
           cancelLabel="Keep exercise"
@@ -179,7 +167,6 @@ export function WorkoutLoggerExerciseCard({
           onCancel={() => setIsRemoveConfirmOpen(false)}
           onConfirm={handleConfirmRemoveExercise}
         />
-      ) : null}
     </>
   );
 }

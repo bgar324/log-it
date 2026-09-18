@@ -3,7 +3,12 @@
 import { Copy, Ellipsis, SquarePen, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/app/components/ui/popover";
 import { toast } from "sonner";
 import posthog from "posthog-js";
 import { copyTextToClipboard } from "@/lib/clipboard";
@@ -22,26 +27,17 @@ export function WorkoutDetailActions({
   workoutExport,
 }: WorkoutDetailActionsProps) {
   const router = useRouter();
-  const menuRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState<"idle" | "deleting">("idle");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
+    const desktop = window.matchMedia("(min-width: 760px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setIsMenuOpen(false);
     };
-  }, [isMenuOpen]);
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
 
   async function handleCopy() {
     if (status !== "idle") {
@@ -150,16 +146,15 @@ export function WorkoutDetailActions({
           <span className={styles.actionButtonLabel}>Delete workout</span>
         </button>
       </div>
-      <div className={styles.mobileActionMenu} ref={menuRef}>
-        <button
-          type="button"
-          className={styles.mobileActionToggle}
-          onClick={() => setIsMenuOpen((open) => !open)}
-        >
-          <Ellipsis className={styles.actionButtonIcon} strokeWidth={1.9} />
-        </button>
-        {isMenuOpen ? (
-          <div className={styles.mobileActionDropdown}>
+      <div className={styles.mobileActionMenu}>
+        <Popover open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <PopoverTrigger
+            aria-label="Workout options"
+            className={styles.mobileActionToggle}
+          >
+            <Ellipsis className={styles.actionButtonIcon} strokeWidth={1.9} />
+          </PopoverTrigger>
+          <PopoverContent align="end" className={styles.mobileActionDropdown} preserveInputFocus>
             <Link
               href={editHref}
               className={`relative ${styles.mobileActionMenuItem}`}
@@ -187,8 +182,8 @@ export function WorkoutDetailActions({
               <Trash2 className={styles.actionButtonIcon} strokeWidth={1.9} />
               <span>Delete workout</span>
             </button>
-          </div>
-        ) : null}
+          </PopoverContent>
+        </Popover>
       </div>
     </>
   );

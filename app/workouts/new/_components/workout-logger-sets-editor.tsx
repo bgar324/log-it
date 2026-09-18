@@ -46,6 +46,7 @@ export function WorkoutLoggerSetsEditor({
   const [pendingRemoval, setPendingRemoval] = useState<{
     id: string;
     index: number;
+    open: boolean;
   } | null>(null);
 
   function handleConfirmRemoveSet() {
@@ -54,7 +55,7 @@ export function WorkoutLoggerSetsEditor({
     }
 
     onRemoveSet(pendingRemoval.id);
-    setPendingRemoval(null);
+    setPendingRemoval({ ...pendingRemoval, open: false });
   }
 
   const insight = insightState?.data;
@@ -203,7 +204,7 @@ export function WorkoutLoggerSetsEditor({
                 className={styles.setRemoveButton}
                 aria-label={`Delete set ${setIndex + 1}`}
                 onClick={() =>
-                  setPendingRemoval({ id: setItem.id, index: setIndex })
+                  setPendingRemoval({ id: setItem.id, index: setIndex, open: true })
                 }
                 disabled={exercise.sets.length === 1}
               >
@@ -224,11 +225,12 @@ export function WorkoutLoggerSetsEditor({
 
       {pendingRemoval ? (
         <WorkoutLoggerConfirmDialog
+          open={pendingRemoval.open}
           title={`Delete set ${pendingRemoval.index + 1}?`}
           description="This removes the reps, weight, and time entered for this set."
           cancelLabel="Keep set"
           confirmLabel="Delete set"
-          onCancel={() => setPendingRemoval(null)}
+          onCancel={() => setPendingRemoval({ ...pendingRemoval, open: false })}
           onConfirm={handleConfirmRemoveSet}
         />
       ) : null}

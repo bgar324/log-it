@@ -257,16 +257,15 @@ export function SplitEditor({
           </div>
         )}
 
-        {isReorderOpen ? (
-          <SplitExerciseReorderDialog
-            exercises={day.exercises}
-            onCancel={() => setIsReorderOpen(false)}
-            onSave={(orderedExerciseOrders) => {
-              onReorderExercises(orderedExerciseOrders);
-              setIsReorderOpen(false);
-            }}
-          />
-        ) : null}
+        <SplitExerciseReorderDialog
+          exercises={day.exercises}
+          open={isReorderOpen}
+          onCancel={() => setIsReorderOpen(false)}
+          onSave={(orderedExerciseOrders) => {
+            onReorderExercises(orderedExerciseOrders);
+            setIsReorderOpen(false);
+          }}
+        />
       </div>
     </section>
   );

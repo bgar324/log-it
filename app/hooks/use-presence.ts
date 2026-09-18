@@ -1,32 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type RefObject } from "react";
 
-/**
- * Keeps a component mounted while it plays an exit animation.
- *
- * Returns `true` as soon as `open` becomes true, and stays `true` for
- * `exitMs` after `open` flips back to false so the element can animate out
- * before it unmounts. Pair with a `data-state="open" | "closed"` attribute
- * that drives the enter/exit keyframes.
- */
-export function usePresence(open: boolean, exitMs: number) {
-  const [mounted, setMounted] = useState(open);
+/** Retain a closing surface until its actual motion finishes, not a second timer. */
+export function usePresence(open: boolean, motionRef: RefObject<HTMLElement | null>) {
+  const [present, setPresent] = useState(open);
 
-  // Adjust state during render (React's sanctioned pattern) so opening mounts
-  // synchronously without an extra frame. The effect only schedules unmount.
-  if (open && !mounted) {
-    setMounted(true);
+  if (open && !present) {
+    setPresent(true);
   }
 
   useEffect(() => {
-    if (open) {
-      return;
-    }
+    if (open || !present) return;
 
-    const timer = window.setTimeout(() => setMounted(false), exitMs);
-    return () => window.clearTimeout(timer);
-  }, [open, exitMs]);
+    let cancelled = false;
+    const frame = window.requestAnimationFrame(() => {
+      const animations = motionRef.current?.getAnimations() ?? [];
+      void Promise.allSettled(animations.map((animation) => animation.finished)).then(() => {
+        if (!cancelled) setPresent(false);
+      });
+    });
 
-  return mounted;
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [open, present, motionRef]);
+
+  return present;
 }

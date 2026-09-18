@@ -8,6 +8,7 @@ import {
   actionMenuRowDanger,
   actionQuiet,
 } from "@/app/components/action.styles";
+import { fieldBoxed } from "@/app/components/field.styles";
 
 const splitBorderTokens =
   "[--split-border:color-mix(in_srgb,var(--text)_12%,transparent)] [--split-border-strong:color-mix(in_srgb,var(--text)_18%,transparent)]";
@@ -21,7 +22,7 @@ const editorColumnLabelBase =
 export const splitStyles = {
   splitSelectWrap: "relative min-w-0 flex-1",
   splitSelect:
-    "min-h-[2.75rem] w-full min-w-0 cursor-pointer rounded-[0.52rem] border border-[var(--split-border)] bg-[var(--bg)] py-[0.4rem] pl-[0.9rem] text-[1rem] text-[var(--text)]",
+    `${fieldBoxed} min-h-[2.75rem] w-full min-w-0 cursor-pointer rounded-[0.52rem] py-[0.4rem] pl-[0.9rem] text-[1rem]`,
   splitSelectMeta:
     "m-[0.34rem_0_0] min-w-0 text-[0.8125rem] text-[var(--muted)]",
   splitLayout:
@@ -92,7 +93,7 @@ export const splitStyles = {
     "flex min-w-0 items-end gap-[0.55rem]",
   editorLabel: "text-[0.72rem] text-[var(--muted)]",
   editorInput:
-    "min-h-[2.75rem] rounded-[0.52rem] border border-[var(--split-border)] bg-[var(--bg)] px-[0.9rem] text-[0.84rem] text-[var(--text)] max-[980px]:text-base",
+    `${fieldBoxed} min-h-[2.75rem] rounded-[0.52rem] px-[0.9rem] text-[0.84rem] max-[980px]:text-base`,
   editorSectionHead:
     "flex min-h-[2.75rem] items-center justify-between gap-[0.75rem]",
   editorSectionTitle:
@@ -110,10 +111,15 @@ export const splitStyles = {
   setsInput: "text-center",
   dangerIconButton: actionIconDanger,
 
-  actionMenu: "relative shrink-0",
   actionMenuToggle: actionIcon,
+  // The panel is portalled to the body, so Radix owns its placement and the
+  // shared popover CSS owns its motion: no absolute anchoring, no transform
+  // origin, no per-page keyframes. It carries its own `--split-border` because
+  // the token is declared on split panels and this surface is no longer inside
+  // one; without it the divider below painted nothing. The stack order clears
+  // the phone editor and the logger dial, both at 70.
   actionMenuPanel:
-    "absolute right-0 top-[calc(100%+0.36rem)] z-30 flex w-[13rem] flex-col gap-[0.18rem] rounded-[0.56rem] border border-[var(--split-border)] bg-[var(--bg)] p-[0.28rem] shadow-[0_14px_32px_color-mix(in_srgb,#000_14%,transparent)] origin-top-right data-[state=open]:animate-[logit-menu-panel-in_180ms_cubic-bezier(0.2,0.8,0.2,1)_both] data-[state=closed]:animate-[logit-menu-panel-out_150ms_cubic-bezier(0.4,0,1,1)_both]",
+    `${splitBorderTokens} z-[75] flex w-[13rem] flex-col gap-[0.18rem] rounded-[0.56rem] border border-[var(--split-border)] bg-[var(--bg)] p-[0.28rem] shadow-[0_14px_32px_color-mix(in_srgb,#000_14%,transparent)] outline-none`,
   actionMenuItem: actionMenuRow,
   actionMenuDangerItem: actionMenuRowDanger,
   actionMenuDivider: "my-[0.1rem] h-px bg-[var(--split-border)]",
@@ -125,13 +131,6 @@ export const splitStyles = {
   splitReorderDayLabelToday: "font-[560] text-[var(--text)]",
   splitReorderToday: "text-[0.65rem] text-[var(--muted)]",
   inlineIcon: "h-[0.92rem] w-[0.92rem]",
-  searchResults:
-    "mt-[0.42rem] flex flex-col gap-[0.42rem] rounded-[0.52rem] border border-[var(--split-border)] bg-[color-mix(in_srgb,var(--bg)_86%,transparent)] p-[0.48rem]",
-  searchResultsLabel: "m-0 text-[0.65rem] text-[var(--muted)]",
-  searchResultsList:
-    "flex max-h-[11rem] flex-wrap gap-[0.4rem] overflow-y-auto max-[700px]:flex-col max-[700px]:flex-nowrap",
-  searchResultButton:
-    `${actionChip} max-[700px]:w-full max-[700px]:justify-start`,
   emptyState:
     "flex flex-col gap-[0.22rem] rounded-[0.52rem] border border-dashed border-[var(--split-border-strong)] p-[1rem] text-[0.84rem] text-[var(--muted)] max-[980px]:rounded-none max-[980px]:border-0 max-[980px]:p-0",
 } as const;

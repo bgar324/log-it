@@ -93,7 +93,7 @@ export default function WorkoutDetailLoading() {
           ))}
         </section>
       </section>
-      <AppTabBar activeView="workouts" />
+      <AppTabBar activeView="workouts" benEnabled={benEnabled} />
     </main>
   );
 }

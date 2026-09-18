@@ -43,6 +43,7 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
             <p className={styles.profileName}>{displayName}</p>
             <button
               type="button"
+              aria-label="Edit profile"
               className={styles.profileEditButton}
               onClick={() => setIsEditOpen(true)}
             >
@@ -77,9 +78,11 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
         />
       </section>
 
-      {isEditOpen ? (
-        <DashboardProfileEditDialog state={state} onClose={() => setIsEditOpen(false)} />
-      ) : null}
+      <DashboardProfileEditDialog
+        state={state}
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+      />
     </>
   );
 }

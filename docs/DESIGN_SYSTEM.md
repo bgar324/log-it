@@ -2,7 +2,22 @@
 
 Logit uses a restrained monochrome UI. Authenticated screens are calm and sentence-led at the top of each view, dense where the user is scanning rows of workout data.
 
+## Shared authenticated behavior
+
+The active interface remains the warm legacy app. The owner uses Home, Logger, and Split as first-class destinations, with secondary pages in the drawer. Logging is plan-first: splits supply exercises and sets, while exceptional adjustments and protected Save remain in the tools dial. The shared-behavior pass does not change this hierarchy or introduce the reference-image revamp.
+
+- `app/components/action.styles.ts` remains the button authority. `field.styles.ts` owns boxed and underlined field feedback; callers retain current density and geometry.
+- `ui/popover.tsx` owns anchored disclosure presence and dismissal. `ui/legacy-dialog.tsx` owns dialog presence, scroll locking, and busy-dismissal protection. Both prevent automatic focus transfer on open and close. Closing content is inert.
+- `interaction.css` owns menu/dialog motion and drawer timing. The tools dial keeps its deliberate staggered entry and immediate action commitment. Do not add another per-page exit timer.
+- Logger and Split use `exercise-suggestions.tsx`. Its portalled results flip within available space without scrolling the focused input or expanding the form.
+- The drawer retains its revealed layer and interaction shield until the foreground finishes returning. Reduced motion finishes the same lifecycle without an extra timeout.
+- Loading and loaded views use the same navigation capability. Progress reserves chart geometry while its chart module loads.
+
+The visual revamp is a separate, not-yet-approved implementation. New reference images and exploratory calendar, graph, KPI, navigation, and focused-logger ideas must not be silently folded into this release.
+
 ## Authenticated Nova workspace
+
+Status: disabled in production at the owner's request. These rules describe the retained experiment, not the active owner's interface.
 
 The owner-only workspace uses the reference application's shadcn `radix-nova` system: neutral tokens, Geist, standard buttons and fields, visible tabs, and ordinary sheets, dialogs, and menus. `app/components/workspace-ui/` is the control source of truth. Do not mix legacy pill controls into these screens.
 
@@ -88,9 +103,9 @@ The authenticated app is navigated by frequency of the trip, not by importance o
 - **Tailwind v4 composition rule, learned the hard way:** utilities are emitted by family in Tailwind's order, not in their order inside a class string. Appending a utility from a family the base already sets does not guarantee an override. Measured here, `.border-0` beats `.border`, `.bg-transparent` beats `.bg-[color-mix(…)]`, `.text-[var(--text)]` beats `.text-[#b13d48]`, `.px-[1.2rem]` beats `.px-0`, and `.w-full` beats `.w-[2.75rem]`. A shared base states a family only if every variant wants the same value; contested values live on the variants. Prefixed `hover:`, `data-[]:`, and `min-[]:` utilities carry enough specificity to win. Add a canon variant instead of `!important`.
 - Unlayered CSS outranks every Tailwind utility. `a { color: inherit }` in `app/globals.css` sat outside `@layer base` and silently killed every `text-*` class on every `<Link>` in the app — quiet actions rendered at full `--text` while the identical class on a `<button>` rendered muted. Any global element rule belongs in `@layer base`.
 - Occasional workout-level tools belong in a dial, not a column. Save, add another exercise, reorder exercises, reset from split, and the rest timer live in one fixed bottom-right circle (`workout-logger-tools-fab.tsx`). `Add set` and `Delete exercise` stay in each exercise's overflow menu because they act on that exercise. Opening the dial blurs the page rather than drawing a panel: the actions are label-plus-circle rows on the blurred content, revealed with a per-row `transition-delay` that runs up from the trigger. Only transform and opacity animate, so the stagger never reflows the column.
-- **Never move focus programmatically on a dashboard surface.** No `.focus()` on open or close, no focus traps. This is the one hard rule, and it is a measured one: seven such calls fired when overlays opened, and on iOS that dismisses the keyboard and jumps the viewport — in the logger it happened every time the dial opened mid-set. Overlays here dismiss by scrim tap or `Escape`, and focus stays wherever the user put it. Verified: focusing a set input and opening the dial leaves `document.activeElement` on the input with `scrollY` unchanged.
+- **Preserve focus when a disclosure opens or closes.** Automatic focus transfer dismissed the iOS keyboard and jumped the viewport mid-set. Shared popovers and dialogs prevent open/close autofocus; the drawer does not transfer focus automatically. Keyboard Tab navigation may move focus in response to the user's action. Editing-menu pointer presses preserve the focused input.
 - A CSS transition needs a frame to start from. An element that mounts already in its final state jumps there instantly — the animation exists in the stylesheet and is never seen. Mount in the closed state and flip to open in a `requestAnimationFrame`, which is how the tools dial's stagger became visible.
-- Motion is asymmetric on purpose: entering animates, leaving does not. The tools dial cascades in and unmounts the instant it closes, because a staggered exit reads as the menu hesitating after you have already committed to an action. Only add an exit animation when the thing leaving still needs to be read.
+- The tools dial has a deliberate staggered entry and immediate close on action commitment. Other menus and dialogs share retained entry/exit behavior through `interaction.css` and Radix presence. Their outgoing content becomes inert immediately; visual lifetime is not another opportunity to act.
 - A seven-day plan must read as one week below `981px`. Use compact agenda rows for the overview, not desktop cards stacked into a 1,400px page. Tapping a day opens one full-viewport, keyboard-safe editor with a seven-day switcher; it renders through a body portal so it covers the app tab bar or narrow desktop shell, and it opens instantly with no segment transition. At `981px` and wider the same editor remains an in-flow side panel. Never mount separate narrow and wide copies of the form.
 - Week reordering is a two-tap move flow because weekdays are fixed destination slots: select a workout, then choose its day. Exercise reordering is a separate grab-handle drag flow. The split editor and workout logger share one exercise-reorder component, so their handles, row treatment, `Cancel`, and `Save order` behavior stay identical.
 - **One Back control, and it is the quiet one.** `actionQuiet` pulled left by its own padding (`-ml-[1rem]`) is the canon on every authenticated surface that has a Back: logger, workout detail, exercise detail. It is the one deliberate exception to "secondary actions get a hairline" — a bordered pill in the top-left competes with the content and reads heavier than the page title under it.
@@ -176,15 +191,15 @@ Public tokens (`--landing-*`) live on the shared `.publicRoot` class at the top 
 
 ## Accessibility In The Authenticated App
 
-The authenticated app (`app/dashboard/**`, `app/workouts/**`, `app/exercises/**`, and app chrome) does not enforce a comprehensive accessibility layer. Local surfaces may carry names and roles, but the app has no programmatic focus transfer, focus traps, keyboard drag path, or global `focus-visible` system. This records the owner's preference on a personal project, not a standard to defend.
+Shared authenticated menus and dialogs carry names and roles, use consistent Escape/outside dismissal, and prevent automatic open/close focus transfer. The drawer contains keyboard Tab navigation without moving focus on opening. Exercise reordering remains pointer-driven; this is not a claim of comprehensive accessibility coverage.
 
 Two of those are different in kind, and the distinction matters when changing this code:
 
 - **Focus transfer is a hard rule, because it was measured.** Programmatic focus is what broke phone interaction: `.focus()` on open dismissed the iOS keyboard and jumped the viewport mid-set. Do not add it back. See the rule in Foundations.
-- **Names, roles, and `focus-visible` are a preference, not a constraint.** They never affected touch behaviour. Nothing in the design system depends on their absence, no style selects on `aria-*`, and no test uses a role selector — so re-adding them to any surface is a free, local change if it ever becomes wanted. Doing so does **not** license re-adding focus transfer with them; a dialog can carry `role="dialog"` and still leave focus alone.
+- Names and roles do not cause the phone keyboard problem. They belong on shared interaction boundaries, and rendering tests use their observable semantics. Adding them does not license automatic focus transfer.
 
 Other facts worth knowing before editing here:
 
-- **Public surfaces were never stripped.** Landing, research, papers, legal, changelog, auth, and public profiles are unchanged, along with `app/components/ui/**`, `public-site.tsx`, and `password-field.tsx`. `app/globals.css` retains its public `focus-visible` and reduced-motion rules.
+- Public appearance and navigation remain separate from this authenticated interaction layer. `app/globals.css` retains public focus-visible and reduced-motion rules.
 - **What remains because it is interaction rather than semantics:** `[touch-action:manipulation]`, pointer capture where direct manipulation still requires it, body scroll locks, `Escape`-to-close, scrim click-to-dismiss, `tabIndex={-1}` on invisible scrim buttons, and the 44px/16px phone minimums.
 - **Week and exercise reordering stay distinct.** Week moves use ordinary source and destination buttons. Exercise ordering remains pointer-only on one grab handle per row, with pointer capture and no directional arrows.

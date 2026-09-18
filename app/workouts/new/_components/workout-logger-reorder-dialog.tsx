@@ -16,10 +16,6 @@ export function WorkoutLoggerReorderDialog({
   onCancel,
   onSave,
 }: WorkoutLoggerReorderDialogProps) {
-  if (!isOpen) {
-    return null;
-  }
-
   const items = exercises.map((exercise, index) => ({
     id: exercise.id,
     title: exercise.name.trim() || `Exercise ${index + 1}`,
@@ -28,8 +24,8 @@ export function WorkoutLoggerReorderDialog({
 
   return (
     <ExerciseReorderDialog
-      key={items.map((item) => item.id).join("-")}
       items={items}
+      open={isOpen}
       onCancel={onCancel}
       onSave={onSave}
     />

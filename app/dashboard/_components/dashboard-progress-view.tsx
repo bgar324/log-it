@@ -10,10 +10,11 @@ import type {
   DashboardProgressState,
   ExerciseSortMode,
 } from "../_hooks/use-dashboard-progress";
-import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
+import { DashboardViewSkeleton, ProgressChartsSkeleton } from "./dashboard-view-skeleton";
 
 const ProgressCharts = dynamic(
   () => import("../progress-charts").then((module) => module.ProgressCharts),
+  { loading: () => <ProgressChartsSkeleton /> },
 );
 
 // Four named orderings in one control. The old pair of chevron toggles carried

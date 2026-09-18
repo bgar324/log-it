@@ -32,6 +32,8 @@ Protected product pages use `requireSessionUser()`:
 
 ## Owner-only authenticated workspace
 
+Status: production rollout disabled at the owner's request. The following section describes dormant code, not the active owner UI.
+
 `WORKSPACE_ENABLED_USER_IDS` enables the Nova workspace across authenticated routes. `lib/workspace-feature-flag.ts` checks immutable account IDs on the server. Public pages and unflagged accounts keep the existing interface. The retired focused-logger flag is no longer read; Ionic remains separately disabled.
 
 Protected layouts await `loadAuthenticatedDesign()` and render `WorkspaceDesignProvider` directly, supplying rollout and `Ben` capabilities to loading and error states. The theme wrapper stays outside the interactive navigation provider; the frame supplies post-commit navigation synchronization without a route/search subscription suspending that provider during streamed hydration. Session and capability reads use request-local React caching. Next.js remains the only routing owner. `/dashboard` renders Home; the visible tabs are Home, History, Progress, and Plan. Profile, Settings, and POST signout live in the account menu. Nutrition remains capability-gated.
@@ -66,9 +68,9 @@ The Ionic screens reuse existing secured mutation endpoints and business service
 
 ## Legacy App Chrome
 
-`app/components/app-nav.tsx` owns every navigation surface of the authenticated app and is built as two layers:
+`app/components/app-nav.tsx` owns the phone navigation and shared task/detail shell. `DashboardShell` separately owns the desktop sidebar. The phone shell has two layers:
 
-- **Layer B — the drawer** is the base layer: always mounted, pinned to the left edge, `z-0`, `visibility: hidden` while closed. It holds the second-class sections (Profile, Workouts, Progress, Split), the shared three-segment theme control, and sign out.
+- **Layer B — the drawer** is always mounted at the left edge. It holds secondary destinations and account utilities. The Ben capability puts Split in the bottom bar and removes its drawer duplicate.
 - **Layer A — the app screen** sits on top at `z-10` with an opaque background. Opening the drawer translates layer A right by `min(17.5rem,78vw)` to reveal layer B underneath, rather than sliding a panel over the app. Dismissed by tapping the exposed app surface or pressing Escape; there is no gesture trigger.
 - **The veil** (`navStyles.appVeil`) is what separates the layers: a viewport-anchored, full-bleed overlay, the last stage child at `z-40`, `pointer-events-none`, translating with layer A and ramping from `opacity: 0` over the same 280ms. It tints layer A with `--text` at 9% — so the exposed strip reads *lighter* than the drawer in dark and shaded in light — and draws the seam as a `border-l` at the canon 12% hairline.
 
@@ -76,7 +78,7 @@ Two placement decisions matter. The overlay is a stage sibling rather than a pse
 
 Open state rides on a `data-drawer="open" | "closed"` attribute set on all four moving parts (drawer, layer A, bottom bar, veil) rather than an appended open class. The open utilities override base values rather than only adding to them, and two utilities from the same family win by emission order in the generated stylesheet, not by attribute order — an appended `opacity-100` cannot be relied on to beat a base `opacity-0`, while a `data-[drawer=open]:` variant wins on specificity.
 
-`AppShell` provides both layers plus the bottom bar, owns the open state, and locks body scroll. It never moves focus — see the accessibility note in `docs/DESIGN_SYSTEM.md`. The stage uses `overflow-x: clip` — not `hidden`, which would turn it into a scroll container and break document scrolling and the sticky header.
+`AppShell` retains drawer presence through the foreground's actual closing animation with `usePresence(open, motionRef)`. The hook waits for Web Animations completion rather than duplicating a duration in a timer. The drawer becomes inert on close, while the foreground and bottom bar remain inert until the return finishes. Body scroll remains locked over that interval. Opening/closing does not transfer focus; keyboard Tab stays within the open navigation. Crossing into the desktop breakpoint closes the drawer. The stage uses `overflow-x: clip` so document scrolling and the sticky header still work.
 
 The bottom bar is a stage sibling rather than a layer-A child, and translates by the same distance in sync. A translated ancestor becomes the containing block for `position: fixed` descendants, so a bar nested inside layer A resolves `bottom: 0` against the full page height and slides off-screen while the drawer is open; measured at 390px it dropped from `y=781` to `y=1126`. Keeping it viewport-anchored and translating it separately produces the same "whole foreground slides" effect without that artifact, and it becomes `pointer-events-none` while open so the close target stays the exposed app surface.
 
@@ -85,6 +87,16 @@ Inside layer A, each surface places the pieces it needs: `AppTopBar` (sticky hea
 `DashboardShell` composes `AppShell` around the desktop sidebar and the content column. The bottom bar and drawer cover every width below 900px; the sidebar, which exposes every section plus sign out, covers 900px and up, so no viewport is left without navigation and layer A never translates on desktop. `/workouts/[workoutId]` and `/exercises/[exerciseKey]` render the same `AppShell` for its bottom bar, but their own header is one quiet Back control: they are reached from a list, and Back is the trip a user makes from them. They add `navStyles.mainInset` so the fixed bar never covers content. Route-loading skeletons render `AppTabBar` alone, since they have no session user. `/workouts/new` and `/workouts/[workoutId]/edit` are task surfaces: no nav chrome, only a quiet top Back control and the tools dial.
 
 `instrumentation-client.ts` initializes PostHog analytics, and authenticated client surfaces call `useIdentifyPostHogUser()` with the stable database user ID and current profile properties. Protected server pages use `isBenFeatureEnabled()` from `lib/posthog-feature-flags.ts` and pass its result into navigation and logger components. The personalized interface therefore does not depend on a browser analytics request that a content blocker can stop. Failed evaluations keep the standard interface; the auth-free preview passes `false` and never identifies its demo profile.
+
+## Shared authenticated interactions
+
+`app/components/interaction.css` supplies menu/dialog entry and exit recipes plus drawer timing. Existing `action.styles.ts` and `data-list.styles.ts` still own control and list geometry. `field.styles.ts` centralizes field edge, fill, and focus feedback without changing per-screen density.
+
+`ui/popover.tsx` wraps the installed Radix popover for legacy anchored disclosures. Controlled or uncontrolled open state also makes closing content inert. All callers prevent open/close autofocus; editing action rows additionally preserve input focus on pointer presses. `exercise-suggestions.tsx` composes the same anchor/portal positioning to share collision-aware results between logger and Split without scrolling the form.
+
+`ui/legacy-dialog.tsx` supplies controlled Radix dialog presence, Escape/outside dismissal, scroll locking, no automatic focus transfer, and pending-request dismissal guards. Form and reorder drafts live inside the mounted content, surviving exit and resetting on the next complete opening. Callers keep the boundary mounted and pass `open`; they do not conditionally remove it at the start of exit. Close buttons also honor busy state.
+
+Detail fallbacks pass the same Ben capability to `AppTabBar` as the loaded page. `ProgressChartsSkeleton` is shared between the data-loading skeleton and the lazy chart-module fallback.
 
 API routes:
 
@@ -188,3 +200,5 @@ Useful suites:
 - `tests/*.test.ts`: focused helper and parser tests.
 
 `scripts/verify-ionic.mjs` and `scripts/verify-ionic-logger.mjs` export no-write browser walkthroughs. They accept an isolated Puppeteer page, origin, short-lived session cookies, and artifact directory; the logger walkthrough also needs an existing workout ID for its intercepted success navigation. They intercept server mutations rather than creating test records. Use a dedicated headless browser, never the user's browser profile. The suite covers rollout isolation, phone/desktop themes, completion recovery, failure/retry, and post-save draft cleanup. Browser emulation does not prove physical iPhone keyboard or lock-screen behavior.
+
+`scripts/verify-authenticated-interactions.mjs` exports `verifyAuthenticatedInteractions(page, { origin, sessionToken, workoutId, artifactDir })`. Supply a dedicated headless Puppeteer page and an existing owned workout. It intercepts mutations for the entire walkthrough, verifies drawer/menu/dialog lifecycle and responsive geometry, restores its browser draft storage, and records screenshots. Tokens are supplied at runtime, never committed.

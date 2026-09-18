@@ -10,6 +10,7 @@ import {
   actionQuiet,
 } from "@/app/components/action.styles";
 import { dataListStyles } from "@/app/components/data-list.styles";
+import { fieldBoxed } from "@/app/components/field.styles";
 
 // One hairline, one value. The old `--dashboard-border-strong` companion existed
 // only to thicken a border on hover or when active; state now reads as a fill
@@ -95,7 +96,7 @@ export const styles = {
     "m-0 flex min-h-[3.25rem] flex-wrap items-center justify-between gap-[0.75rem] [&_.theme-toggle-option]:min-h-[2.75rem] [&_.theme-toggle-option]:min-w-[2.75rem]",
   settingLabel: "text-[1rem] text-[var(--text)]",
   settingSelect:
-    "min-h-[2.75rem] min-w-[10rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.8rem] text-[1rem] text-[var(--text)] disabled:cursor-progress",
+    `${fieldBoxed} min-h-[2.75rem] min-w-[10rem] cursor-pointer rounded-[0.52rem] px-[0.8rem] text-[1rem] disabled:cursor-progress`,
   panel: `${dashboardSurface} p-[0.82rem]`,
   plainSection: "min-h-0 p-0",
   panelHead:
@@ -105,14 +106,14 @@ export const styles = {
   // Search owns the panel's full width; the sort select and the count share the
   // line directly above the list so the ordering names what you are looking at.
   searchInput:
-    "mt-[0.6rem] h-[2.75rem] w-full rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.74rem] text-base text-[var(--text)] placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)]",
+    `${fieldBoxed} mt-[0.6rem] h-[2.75rem] w-full rounded-[0.52rem] px-[0.74rem] text-base placeholder:text-[color-mix(in_srgb,var(--muted)_82%,transparent)]`,
   exerciseListMeta:
     "mt-[0.6rem] flex flex-wrap items-center justify-between gap-[0.5rem]",
   exerciseCount: "m-0 text-[0.84rem] text-[var(--muted)]",
   // 16px on phones like every other control a thumb focuses, or iOS Safari
   // zooms the viewport when the picker opens.
   exerciseSortSelect:
-    "min-h-[2.75rem] cursor-pointer rounded-[0.52rem] border border-[var(--dashboard-border)] bg-[var(--bg)] pl-[0.7rem] text-base text-[var(--text)] min-[760px]:min-h-[2.2rem] min-[760px]:text-[0.84rem]",
+    `${fieldBoxed} min-h-[2.75rem] cursor-pointer rounded-[0.52rem] pl-[0.7rem] text-base min-[760px]:min-h-[2.2rem] min-[760px]:text-[0.84rem]`,
   // The reveal needs more air than the row gap, or it reads as one more row.
   listRevealButton: actionOutline,
   // Arrows pinned to the edges with the position between them: a thumb reaches
@@ -162,14 +163,16 @@ export const styles = {
   workoutFilterToggle:
     `${actionIcon} data-[active=true]:bg-[color-mix(in_srgb,var(--text)_8%,transparent)]`,
   workoutFilterToggleIcon: "h-[0.92rem] w-[0.92rem]",
+  // Motion comes from the shared popover CSS, so no `animate-in`/`animate-out`
+  // here: two recipes on one surface fought over the same open/close frames.
   workoutFilterPopover:
-    `${dashboardBorder} ${dashboardSurface} z-50 flex w-[min(35rem,calc(100vw-1.64rem))] max-w-[calc(100vw-1.64rem)] flex-col gap-[0.72rem] !bg-[var(--bg)] p-[0.82rem] shadow-[0_14px_32px_color-mix(in_srgb,#000_12%,transparent)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out max-[760px]:max-h-[min(34rem,calc(100dvh-1.64rem))] max-[760px]:overflow-y-auto`,
+    `${dashboardBorder} ${dashboardSurface} z-50 flex w-[min(35rem,calc(100vw-1.64rem))] max-w-[calc(100vw-1.64rem)] flex-col gap-[0.72rem] !bg-[var(--bg)] p-[0.82rem] shadow-[0_14px_32px_color-mix(in_srgb,#000_12%,transparent)] outline-none max-[760px]:max-h-[min(34rem,calc(100dvh-1.64rem))] max-[760px]:overflow-y-auto`,
   workoutFilterGrid:
     "grid grid-cols-1 gap-[0.62rem] min-[620px]:grid-cols-2 min-[1080px]:grid-cols-4",
   workoutFilterField:
     "flex min-w-0 flex-col gap-[0.28rem] text-[0.72rem] text-[var(--muted)]",
   workoutFilterInput:
-    "min-h-[2.5rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.84rem] text-[var(--text)] outline-none max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
+    `${fieldBoxed} min-h-[2.5rem] min-w-0 rounded-[0.42rem] px-[0.72rem] text-[0.84rem] max-[760px]:min-h-[2.75rem] max-[760px]:text-base`,
   workoutFilterFooter:
     "flex flex-wrap items-center justify-between gap-[0.55rem] border-t border-[var(--dashboard-border)] pt-[0.68rem] max-[420px]:items-stretch",
   workoutFilterMeta:
@@ -189,7 +192,7 @@ export const styles = {
   nutritionField:
     "flex min-w-0 flex-col gap-[0.28rem] text-[0.7rem] text-[var(--muted)]",
   nutritionInput:
-    "min-h-[2.6rem] min-w-0 rounded-[0.42rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.72rem] text-[0.9rem] text-[var(--text)] outline-none max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
+    `${fieldBoxed} min-h-[2.6rem] min-w-0 rounded-[0.42rem] px-[0.72rem] text-[0.9rem] max-[760px]:min-h-[2.75rem] max-[760px]:text-base`,
   nutritionFormActions:
     "mt-[0.72rem] flex justify-end max-[520px]:mt-[0.62rem]",
   nutritionSaveButton: `${actionFilled} max-[520px]:w-full`,
@@ -246,7 +249,7 @@ export const styles = {
   profileField:
     "flex flex-col gap-[0.32rem] [&>span]:text-[0.72rem] [&>span]:leading-none [&>span]:text-[var(--muted)]",
   profileInput:
-    "min-h-[2.78rem] rounded-[0.38rem] border border-[var(--dashboard-border)] bg-[var(--bg)] px-[0.78rem] text-[0.84rem] text-[var(--text)] max-[760px]:min-h-[2.75rem] max-[760px]:text-base",
+    `${fieldBoxed} min-h-[2.78rem] rounded-[0.38rem] px-[0.78rem] text-[0.84rem] max-[760px]:min-h-[2.75rem] max-[760px]:text-base`,
   profileFileInput: "hidden",
   buttonInlineIcon: "h-[0.88rem] w-[0.88rem] shrink-0",
   profileSaveButton: actionFilled,
@@ -266,12 +269,19 @@ export const styles = {
   deleteModalText: "m-0 text-[0.82rem] leading-[1.5] text-[var(--muted)]",
   deleteModalStrong: "text-[var(--text)] font-[560]",
   dangerButton: actionDanger,
+  // Entry and exit motion is the shared dialog CSS Main owns; this key is the
+  // backdrop's appearance only.
   avatarModalOverlay:
-    `dashboard-theme-scope fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-[color-mix(in_srgb,var(--bg)_12%,transparent)] px-[0.78rem] py-[calc(0.78rem+env(safe-area-inset-bottom))] backdrop-blur-[8px] animate-[dashboard-modal-backdrop_180ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-backdrop-exit_160ms_cubic-bezier(0.4,0,1,1)_both] min-[720px]:p-[1rem] ${dashboardBorder}`,
+    `dashboard-theme-scope fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-[color-mix(in_srgb,var(--bg)_12%,transparent)] px-[0.78rem] py-[calc(0.78rem+env(safe-area-inset-bottom))] backdrop-blur-[8px] min-[720px]:p-[1rem] ${dashboardBorder}`,
   // On a phone every child stacks into one column with the buttons, so the
   // panel gap is the same 0.5rem step; roomier only once there is width for it.
+  //
+  // It declares the hairline token itself: under Radix the panel may be a
+  // SIBLING of the overlay rather than its child, and an undeclared
+  // `--dashboard-border` resolves to `currentColor` — an opaque frame instead
+  // of a hairline.
   avatarModal:
-    "my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-[46rem] flex-col gap-[1rem] overflow-y-auto rounded-[0.56rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[1.1rem] shadow-[0_14px_32px_color-mix(in_srgb,var(--text)_10%,transparent)] animate-[dashboard-modal-panel_220ms_cubic-bezier(0.2,0.7,0.2,1)_both] data-[closing=true]:animate-[dashboard-modal-panel-exit_160ms_cubic-bezier(0.4,0,1,1)_both] max-[520px]:gap-[0.5rem] max-[520px]:p-[0.82rem]",
+    `${dashboardBorder} my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-[46rem] flex-col gap-[1rem] overflow-y-auto rounded-[0.56rem] border border-[var(--dashboard-border)] bg-[var(--bg)] p-[1.1rem] shadow-[0_14px_32px_color-mix(in_srgb,var(--text)_10%,transparent)] max-[520px]:gap-[0.5rem] max-[520px]:p-[0.82rem]`,
   avatarModalHead:
     "flex items-center justify-between gap-[0.75rem]",
   avatarModalTitle:

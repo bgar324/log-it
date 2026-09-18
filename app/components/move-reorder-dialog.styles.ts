@@ -8,9 +8,9 @@ const borderTokens =
   "[--move-border:color-mix(in_srgb,var(--text)_12%,transparent)] [--move-border-strong:color-mix(in_srgb,var(--text)_18%,transparent)]";
 
 export const moveReorderStyles = {
-  overlay: `${borderTokens} fixed inset-0 z-[90] flex items-end justify-center p-[0.78rem] pb-[calc(0.78rem+env(safe-area-inset-bottom))] min-[620px]:items-center min-[620px]:p-[1rem]`,
-  backdrop:
-    "absolute inset-0 cursor-default border-0 bg-[color-mix(in_srgb,#000_28%,transparent)] p-0 backdrop-blur-[8px]",
+  // The overlay carries the scrim itself: the shared dialog boundary owns the
+  // panel, so there is no separate backdrop element to click through any more.
+  overlay: `${borderTokens} fixed inset-0 z-[90] flex items-end justify-center bg-[color-mix(in_srgb,#000_28%,transparent)] p-[0.78rem] pb-[calc(0.78rem+env(safe-area-inset-bottom))] backdrop-blur-[8px] min-[620px]:items-center min-[620px]:p-[1rem]`,
   dialog:
     "relative z-[1] flex w-full max-w-[28rem] flex-col gap-[0.68rem] rounded-[0.68rem] border border-[var(--move-border)] bg-[var(--bg)] p-[0.82rem] shadow-[0_18px_42px_color-mix(in_srgb,#000_20%,transparent)]",
   title:

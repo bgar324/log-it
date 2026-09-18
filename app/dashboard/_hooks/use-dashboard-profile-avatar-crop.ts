@@ -21,14 +21,12 @@ type CropSize = {
 
 type UseDashboardProfileAvatarCropArgs = {
   displayedAvatarUrl: string | null;
-  onAvatarModalClose?: () => void;
   onAvatarDelete: () => void;
   onAvatarFileChange: (file: File | null) => void;
 };
 
 export function useDashboardProfileAvatarCrop({
   displayedAvatarUrl,
-  onAvatarModalClose,
   onAvatarDelete,
   onAvatarFileChange,
 }: UseDashboardProfileAvatarCropArgs) {
@@ -97,9 +95,23 @@ export function useDashboardProfileAvatarCrop({
     setCropImageSize({ height: 0, width: 0 });
   }
 
-  function closeAvatarModal() {
-    onAvatarModalClose?.();
-    setIsAvatarModalOpen(false);
+  function clearEditorSource() {
+    if (avatarEditorObjectUrlRef.current) {
+      URL.revokeObjectURL(avatarEditorObjectUrlRef.current);
+      avatarEditorObjectUrlRef.current = null;
+    }
+
+    setAvatarEditorSourceUrl(null);
+  }
+
+  // Opening is where the editor starts over: the crop resets and any file from
+  // an earlier session is dropped, so the frame shows the photo that is on the
+  // profile right now. Closing changes nothing, which is what keeps the image
+  // painted while the panel animates away.
+  function openAvatarEditor() {
+    clearEditorSource();
+    resetCrop();
+    setIsAvatarModalOpen(true);
   }
 
   function getCropMetrics(
@@ -219,8 +231,7 @@ export function useDashboardProfileAvatarCrop({
       const blob = await createCroppedAvatarBlob();
       const file = new File([blob], "profile-photo.jpg", { type: "image/jpeg" });
       onAvatarFileChange(file);
-      closeAvatarModal();
-      resetCrop();
+      setIsAvatarModalOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to crop this profile photo.");
     }
@@ -305,24 +316,12 @@ export function useDashboardProfileAvatarCrop({
   }
 
   function handleCancelCrop() {
-    closeAvatarModal();
-    if (avatarEditorObjectUrlRef.current) {
-      URL.revokeObjectURL(avatarEditorObjectUrlRef.current);
-      avatarEditorObjectUrlRef.current = null;
-    }
-    setAvatarEditorSourceUrl(null);
-    resetCrop();
+    setIsAvatarModalOpen(false);
   }
 
   function handleRemoveAvatar() {
-    if (avatarEditorObjectUrlRef.current) {
-      URL.revokeObjectURL(avatarEditorObjectUrlRef.current);
-      avatarEditorObjectUrlRef.current = null;
-    }
-    setAvatarEditorSourceUrl(null);
     onAvatarDelete();
-    closeAvatarModal();
-    resetCrop();
+    setIsAvatarModalOpen(false);
   }
 
   const cropMetrics = getCropMetrics();
@@ -345,6 +344,6 @@ export function useDashboardProfileAvatarCrop({
     handleRemoveAvatar,
     handleZoomChange,
     isAvatarModalOpen,
-    setIsAvatarModalOpen,
+    openAvatarEditor,
   };
 }

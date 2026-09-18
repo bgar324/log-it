@@ -11,6 +11,25 @@ export default function ChangelogPage() {
       title="changelog"
     >
           <article className="changelog-entry">
+            <h2 className="changelog-date">September 18, 2026</h2>
+            <div className="changelog-group">
+              <h3 className="changelog-group-title">Improved</h3>
+              <ul className="legal-list">
+                <li>
+                  Menus and dialogs now share opening, closing, and dismissal
+                  behavior. Closing panels stop accepting input while their
+                  exit animation finishes.
+                </li>
+                <li>
+                  Logger and split exercise search share a dropdown that fits
+                  around the focused field. Inputs use consistent focus feedback,
+                  and loading screens preserve the app&apos;s navigation.
+                </li>
+              </ul>
+            </div>
+          </article>
+
+          <article className="changelog-entry">
             <h2 className="changelog-date">August 12, 2026</h2>
 
             <div className="changelog-group">

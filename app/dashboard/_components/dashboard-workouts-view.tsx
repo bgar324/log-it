@@ -136,6 +136,7 @@ export function DashboardWorkoutFiltersControl({
       <PopoverTrigger asChild>
         <button
           type="button"
+          aria-label="Filter workouts"
           className={styles.workoutFilterToggle}
           data-active={open || hasFilters}
         >

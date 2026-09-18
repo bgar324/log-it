@@ -1,8 +1,8 @@
 "use client";
 
 import { Download, ImagePlus, Trash2, Upload, X } from "lucide-react";
-import { createPortal } from "react-dom";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
+import { LegacyDialog } from "@/app/components/ui/legacy-dialog";
 import { useDashboardProfileAvatarCrop } from "../_hooks/use-dashboard-profile-avatar-crop";
 import { styles } from "../dashboard.styles";
 
@@ -23,28 +23,6 @@ export function DashboardProfileAvatarEditor({
 }: DashboardProfileAvatarEditorProps) {
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const modalAvatarInputRef = useRef<HTMLInputElement | null>(null);
-  const closeTimerRef = useRef<number | null>(null);
-  const [isAvatarModalClosing, setIsAvatarModalClosing] = useState(false);
-
-  function startAvatarModalExit() {
-    if (closeTimerRef.current) {
-      window.clearTimeout(closeTimerRef.current);
-    }
-
-    setIsAvatarModalClosing(true);
-    closeTimerRef.current = window.setTimeout(() => {
-      setIsAvatarModalClosing(false);
-      closeTimerRef.current = null;
-    }, 160);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) {
-        window.clearTimeout(closeTimerRef.current);
-      }
-    };
-  }, []);
 
   const {
     cropFrameRef,
@@ -63,41 +41,65 @@ export function DashboardProfileAvatarEditor({
     handleRemoveAvatar,
     handleZoomChange,
     isAvatarModalOpen,
-    setIsAvatarModalOpen,
+    openAvatarEditor,
+    handleCancelCrop,
   } = useDashboardProfileAvatarCrop({
     displayedAvatarUrl,
-    onAvatarModalClose: startAvatarModalExit,
     onAvatarDelete,
     onAvatarFileChange,
   });
 
-  function openAvatarModal() {
-    if (closeTimerRef.current) {
-      window.clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
+  return (
+    <>
+      <input
+        ref={avatarInputRef}
+        id="profileAvatarImage"
+        className={styles.profileFileInput}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        disabled={isSaving}
+        onChange={(event) => {
+          const nextFile = event.currentTarget.files?.[0] ?? null;
+          event.currentTarget.value = "";
+          handleAvatarFile(nextFile);
+        }}
+      />
+      {/* One round, tappable avatar carrying its own label. A caption sitting
+          underneath read as a second control; on the photo it reads as part of
+          the picture, which is what every social app does. */}
+      <button
+        type="button"
+        aria-label={hasAvatar ? "Edit profile photo" : "Upload profile photo"}
+        className={styles.profilePhotoButton}
+        data-has-image={hasAvatar}
+        disabled={isSaving}
+        onClick={() => {
+          if (hasAvatar) {
+            openAvatarEditor();
+          } else {
+            avatarInputRef.current?.click();
+          }
+        }}
+        style={
+          displayedAvatarUrl
+            ? { backgroundImage: `url(${displayedAvatarUrl})` }
+            : undefined
+        }
+      >
+        {displayedAvatarUrl ? null : <ImagePlus strokeWidth={1.9} />}
+        <span className={styles.profilePhotoSliver}>
+          {hasAvatar ? "Edit" : "Upload"}
+        </span>
+      </button>
 
-    setIsAvatarModalClosing(false);
-    setIsAvatarModalOpen(true);
-  }
-
-  function closeAvatarModal() {
-    startAvatarModalExit();
-    setIsAvatarModalOpen(false);
-  }
-
-  const shouldRenderAvatarModal = isAvatarModalOpen || isAvatarModalClosing;
-  const shouldAnimateAvatarModalExit = isAvatarModalClosing && !isAvatarModalOpen;
-  const avatarModal = shouldRenderAvatarModal ? (
-    <div
-      className={styles.avatarModalOverlay}
-      data-closing={shouldAnimateAvatarModalExit}
-      onClick={closeAvatarModal}
-    >
-      <div
-        className={styles.avatarModal}
-        data-closing={shouldAnimateAvatarModalExit}
-        onClick={(event) => event.stopPropagation()}
+      <LegacyDialog
+        open={isAvatarModalOpen}
+        onOpenChange={(next) => next ? openAvatarEditor() : handleCancelCrop()}
+        title="Edit profile photo"
+        overlayClassName={styles.avatarModalOverlay}
+        contentClassName={styles.avatarModal}
+        // An editor that is still open cannot be dismissed during a save.
+        busy={isSaving}
       >
         <div className={styles.avatarModalHead}>
           <h2 className={styles.avatarModalTitle}>
@@ -105,8 +107,10 @@ export function DashboardProfileAvatarEditor({
           </h2>
           <button
             type="button"
+            aria-label="Close profile photo editor"
             className={styles.avatarModalClose}
-            onClick={closeAvatarModal}
+            disabled={isSaving}
+            onClick={handleCancelCrop}
           >
             <X className={styles.buttonInlineIcon} strokeWidth={1.9} />
           </button>
@@ -208,55 +212,7 @@ export function DashboardProfileAvatarEditor({
             Apply photo
           </button>
         </div>
-      </div>
-    </div>
-  ) : null;
-
-  return (
-    <>
-      <input
-        ref={avatarInputRef}
-        id="profileAvatarImage"
-        className={styles.profileFileInput}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-          disabled={isSaving}
-          onChange={(event) => {
-            const nextFile = event.currentTarget.files?.[0] ?? null;
-            event.currentTarget.value = "";
-            handleAvatarFile(nextFile);
-          }}
-      />
-      {/* One round, tappable avatar carrying its own label. A caption sitting
-          underneath read as a second control; on the photo it reads as part of
-          the picture, which is what every social app does. */}
-      <button
-        type="button"
-        className={styles.profilePhotoButton}
-        data-has-image={hasAvatar}
-        disabled={isSaving}
-        onClick={() => {
-          if (hasAvatar) {
-            openAvatarModal();
-          } else {
-            avatarInputRef.current?.click();
-          }
-        }}
-        style={
-          displayedAvatarUrl
-            ? { backgroundImage: `url(${displayedAvatarUrl})` }
-            : undefined
-        }
-      >
-        {displayedAvatarUrl ? null : <ImagePlus strokeWidth={1.9} />}
-        <span className={styles.profilePhotoSliver}>
-          {hasAvatar ? "Edit" : "Upload"}
-        </span>
-      </button>
-
-      {avatarModal && typeof document !== "undefined"
-        ? createPortal(avatarModal, document.body)
-        : null}
+      </LegacyDialog>
     </>
   );
 }

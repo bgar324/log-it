@@ -3,6 +3,7 @@
 import { Trash2 } from "lucide-react";
 import type { WorkoutSplitExerciseTemplate } from "@/lib/workout-splits/shared";
 import { splitStyles } from "./split-system.styles";
+import { ExerciseSuggestions } from "@/app/components/exercise-suggestions";
 
 type ExerciseTemplateRowProps = {
   exercise: WorkoutSplitExerciseTemplate;
@@ -30,41 +31,27 @@ export function ExerciseTemplateRow({
   return (
     <div className={splitStyles.exerciseRow}>
       <div className={splitStyles.exerciseMain}>
-        <label className={splitStyles.editorField}>
-          <input
-            aria-label="Exercise name"
-            className={splitStyles.editorInput}
-            value={exercise.exerciseDisplayName}
-            onChange={(event) => onNameChange(event.target.value)}
-            onFocus={(event) => onNameFocus(event.target.value)}
-            onBlur={(event) => onNameBlur(event.target.value)}
-            autoComplete="off"
-            spellCheck={true}
-            autoCapitalize="words"
-            autoCorrect="on"
-            placeholder="Bench Press"
-          />
-          {searchResults.length > 0 ? (
-            <div className={splitStyles.searchResults}>
-              <p className={splitStyles.searchResultsLabel}>Matches</p>
-              <div className={splitStyles.searchResultsList}>
-                {searchResults.map((result) => (
-                  <button
-                    key={`${exercise.id ?? exercise.order}-${result}`}
-                    type="button"
-                    className={splitStyles.searchResultButton}
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                    }}
-                    onClick={() => onApplySearchResult(result)}
-                  >
-                    {result}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </label>
+        <ExerciseSuggestions
+          suggestions={searchResults}
+          fieldKey={`${exercise.id ?? exercise.order}`}
+          onSelect={onApplySearchResult}
+        >
+          <label className={splitStyles.editorField}>
+            <input
+              aria-label="Exercise name"
+              className={splitStyles.editorInput}
+              value={exercise.exerciseDisplayName}
+              onChange={(event) => onNameChange(event.target.value)}
+              onFocus={(event) => onNameFocus(event.target.value)}
+              onBlur={(event) => onNameBlur(event.target.value)}
+              autoComplete="off"
+              spellCheck={true}
+              autoCapitalize="words"
+              autoCorrect="on"
+              placeholder="Bench Press"
+            />
+          </label>
+        </ExerciseSuggestions>
 
         <label className={splitStyles.editorField}>
           <input

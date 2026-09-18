@@ -47,6 +47,7 @@ test("week reordering moves a workout with two taps", async () => {
   const mounted = await render(
     createElement(SplitDayReorderDialog, {
       days: DAYS,
+      open: true,
       onCancel: () => {},
       onSave: (orderedWeekdays) => {
         savedOrder = orderedWeekdays;
@@ -55,10 +56,9 @@ test("week reordering moves a workout with two taps", async () => {
   );
 
   try {
-    const dialog = document.body.querySelector<HTMLElement>(
-      'section[aria-label="Move workouts"]',
-    );
+    const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]');
     assert.ok(dialog);
+    assert.match(dialog.textContent ?? "", /Move workouts/);
     assert.equal(dialog.querySelectorAll('button[aria-label^="Drag "]').length, 0);
 
     const source = dialog.querySelector<HTMLElement>(

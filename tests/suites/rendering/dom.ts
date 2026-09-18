@@ -27,7 +27,25 @@ globalAny.Element = dom.window.Element;
 globalAny.Node = dom.window.Node;
 globalAny.Event = dom.window.Event;
 globalAny.MouseEvent = dom.window.MouseEvent;
+// Radix must receive constructors from the same DOM realm as its elements.
+for (const name of [
+  "CustomEvent", "KeyboardEvent", "FocusEvent", "NodeFilter", "NodeIterator",
+  "HTMLInputElement", "HTMLTextAreaElement", "HTMLSelectElement",
+  "HTMLButtonElement", "HTMLAnchorElement", "DocumentFragment", "MutationObserver",
+] as const) {
+  globalAny[name] = dom.window[name];
+}
 globalAny.getComputedStyle = dom.window.getComputedStyle;
+// jsdom has no media-query engine. Real resize/reduced-motion behavior is
+// exercised by the headless interaction walkthrough.
+Object.defineProperty(dom.window, "matchMedia", {
+  configurable: true,
+  value: (media: string) => Object.assign(new dom.window.EventTarget(), {
+    media,
+    matches: false,
+    onchange: null,
+  }),
+});
 globalAny.requestAnimationFrame = (cb: FrameRequestCallback) =>
   dom.window.setTimeout(() => cb(Date.now()), 0) as unknown as number;
 globalAny.cancelAnimationFrame = (id: number) => dom.window.clearTimeout(id);

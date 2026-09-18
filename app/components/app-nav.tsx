@@ -17,6 +17,8 @@ import {
   createContext,
   useContext,
   useEffect,
+  useId,
+  useRef,
   useState,
   type ComponentType,
   type MouseEvent as ReactMouseEvent,
@@ -31,6 +33,7 @@ import {
 } from "@/app/hooks/use-posthog-user";
 import posthog from "posthog-js";
 import { navStyles } from "./app-nav.styles";
+import { usePresence } from "@/app/hooks/use-presence";
 
 type NavIcon = ComponentType<{
   className?: string;
@@ -65,6 +68,8 @@ export type AppNavUser = {
 
 const AppNavContext = createContext<{
   openDrawer: () => void;
+  drawerOpen: boolean;
+  drawerId: string;
 } | null>(null);
 
 function initialsFor(displayName: string, username: string) {
@@ -134,6 +139,8 @@ export function AppDrawerTrigger() {
     <button
       type="button"
       aria-label="Open navigation"
+      aria-expanded={nav?.drawerOpen ?? false}
+      aria-controls={nav?.drawerId}
       className={navStyles.drawerTrigger}
       onClick={() => nav?.openDrawer()}
       data-app-drawer-trigger="true"
@@ -175,11 +182,13 @@ export function AppTabBar({
   activeView,
   onNavigate,
   drawerOpen = false,
+  drawerPresent = drawerOpen,
   benEnabled = false,
 }: {
   activeView?: DashboardView | null;
   onNavigate?: (view: DashboardView) => void;
   drawerOpen?: boolean;
+  drawerPresent?: boolean;
   benEnabled?: boolean;
 }) {
   const endTab = benEnabled ? SPLIT_TAB : NUTRITION_TAB;
@@ -190,11 +199,13 @@ export function AppTabBar({
       className={navStyles.tabBar}
       data-drawer={drawerOpen ? "open" : "closed"}
       data-app-nav="tabbar"
+      inert={drawerPresent}
     >
       <Link
         href={toViewHref(HOME_TAB.view)}
         className={navStyles.tabItem}
         data-active={activeView === HOME_TAB.view}
+        aria-current={activeView === HOME_TAB.view ? "page" : undefined}
         onClick={viewClickHandler(onNavigate, HOME_TAB.view)}
       >
         <House className={navStyles.tabIcon} strokeWidth={1.9} />
@@ -205,6 +216,7 @@ export function AppTabBar({
       <Link
         href={`/workouts/new?from=${activeView}`}
         className={navStyles.tabAction}
+        aria-label="Log workout"
       >
         <Plus className={navStyles.tabActionIcon} strokeWidth={2} />
         <LinkPendingOverlay />
@@ -214,6 +226,7 @@ export function AppTabBar({
         href={toViewHref(endTab.view)}
         className={navStyles.tabItem}
         data-active={activeView === endTab.view}
+        aria-current={activeView === endTab.view ? "page" : undefined}
         onClick={viewClickHandler(onNavigate, endTab.view)}
       >
         <EndTabIcon className={navStyles.tabIcon} strokeWidth={1.9} />
@@ -246,36 +259,74 @@ export function AppShell({
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerId = useId();
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const appLayerRef = useRef<HTMLDivElement>(null);
+  const drawerPresent = usePresence(drawerOpen, appLayerRef);
   useIdentifyPostHogUser(analyticsUser);
 
   useEffect(() => {
-    if (!drawerOpen) {
-      return;
-    }
+    if (!drawerOpen) return;
+
+    const drawer = drawerRef.current;
+    const controls = () => Array.from(
+      drawer?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])') ?? [],
+    );
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.preventDefault();
         setDrawerOpen(false);
+      } else if (event.key === "Tab") {
+        const items = controls();
+        const first = items[0];
+        const last = items[items.length - 1];
+        const active = document.activeElement;
+        if (!drawer?.contains(active) || (event.shiftKey ? active === first : active === last)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first)?.focus({ preventScroll: true });
+        }
       }
     }
 
-    const { body } = document;
-    const previousOverflow = body.style.overflow;
-    body.style.overflow = "hidden";
     document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      body.style.overflow = previousOverflow;
-    };
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [drawerOpen]);
 
+  useEffect(() => {
+    if (!drawerPresent) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [drawerPresent]);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 900px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setDrawerOpen(false);
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
+
   return (
-    <AppNavContext.Provider value={{ openDrawer: () => setDrawerOpen(true) }}>
+    <AppNavContext.Provider value={{
+      drawerOpen,
+      drawerId,
+      openDrawer: () => setDrawerOpen(true),
+    }}>
       <div className={navStyles.stage}>
         <div
+          ref={drawerRef}
+          id={drawerId}
+          role="dialog"
+          aria-label="Navigation"
+          aria-modal={drawerOpen || undefined}
+          aria-hidden={!drawerOpen}
+          inert={!drawerOpen}
           className={navStyles.drawerLayer}
           data-drawer={drawerOpen ? "open" : "closed"}
+          data-present={drawerPresent}
         >
           <div className={navStyles.drawerIdentity}>
             <Avatar
@@ -301,6 +352,7 @@ export function AppShell({
                   href={toViewHref(item.view)}
                   className={navStyles.drawerItem}
                   data-active={activeView === item.view}
+                  aria-current={activeView === item.view ? "page" : undefined}
                   onClick={(event) => {
                     viewClickHandler(onNavigate, item.view)(event);
                     setDrawerOpen(false);
@@ -322,6 +374,7 @@ export function AppShell({
               href={toViewHref(DRAWER_FOOTER_ITEM.view)}
               className={navStyles.drawerItem}
               data-active={activeView === DRAWER_FOOTER_ITEM.view}
+              aria-current={activeView === DRAWER_FOOTER_ITEM.view ? "page" : undefined}
               onClick={(event) => {
                 viewClickHandler(onNavigate, DRAWER_FOOTER_ITEM.view)(event);
                 setDrawerOpen(false);
@@ -342,12 +395,14 @@ export function AppShell({
           </div>
         </div>
 
-        <div className={navStyles.appLayer} data-drawer={drawerOpen ? "open" : "closed"}>
-          {children}
+        <div ref={appLayerRef} className={navStyles.appLayer} data-drawer={drawerOpen ? "open" : "closed"}>
+          <div inert={drawerPresent}>{children}</div>
 
-          {drawerOpen ? (
+          {drawerPresent ? (
             <button
               type="button"
+              aria-label="Close navigation"
+              tabIndex={-1}
               className={navStyles.appLayerScrim}
               onClick={() => setDrawerOpen(false)}
             />
@@ -358,6 +413,7 @@ export function AppShell({
           activeView={activeView}
           onNavigate={onNavigate}
           drawerOpen={drawerOpen}
+          drawerPresent={drawerPresent}
           benEnabled={benEnabled}
         />
 

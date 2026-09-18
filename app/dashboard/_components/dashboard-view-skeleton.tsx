@@ -35,6 +35,25 @@ function SkeletonLine({
   );
 }
 
+export function ProgressChartsSkeleton() {
+  return (
+    <section className={styles.chartGrid} aria-hidden="true">
+      {[
+        ["Workout frequency", "Sessions started per week."],
+        ["Volume trend", "Total weekly load."],
+      ].map(([title, subtitle]) => (
+        <article key={title} className={styles.chartPanel}>
+          <h2 className={styles.panelTitle}>{title}</h2>
+          <p className={styles.panelSubtitle}>{subtitle}</p>
+          <div className={styles.chartFrame}>
+            <SkeletonLine className="h-full w-full" />
+          </div>
+        </article>
+      ))}
+    </section>
+  );
+}
+
 /** The column header the real lists render; hidden below 760px, as there. */
 function MetricHeaderSkeleton({
   columns,
@@ -163,17 +182,7 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
       <>
         <StatLinesSkeleton leadWidth="w-full" leadWraps followWidth="w-[16.5rem]" />
 
-        <section className={styles.chartGrid}>
-          {Array.from({ length: 2 }, (_, index) => (
-            <article key={index} className={styles.chartPanel}>
-              <SkeletonLine className="h-[1.05rem] w-[8.5rem]" />
-              <SkeletonLine className="mt-[0.5rem] mb-[0.85rem] h-[1.05rem] w-[11rem]" />
-              <div className={styles.chartFrame}>
-                <SkeletonLine className="h-full w-full" />
-              </div>
-            </article>
-          ))}
-        </section>
+        <ProgressChartsSkeleton />
 
         <section className={styles.panel}>
           <SkeletonLine className="mb-[1rem] h-[1.05rem] w-[6.2rem]" />

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
+import { LegacyDialog } from "@/app/components/ui/legacy-dialog";
 import { styles } from "../workout-logger.styles";
 
 type WorkoutLoggerConfirmDialogProps = {
+  open: boolean;
   title: string;
   description: string;
   cancelLabel: string;
@@ -14,6 +14,7 @@ type WorkoutLoggerConfirmDialogProps = {
 };
 
 export function WorkoutLoggerConfirmDialog({
+  open,
   title,
   description,
   cancelLabel,
@@ -21,58 +22,25 @@ export function WorkoutLoggerConfirmDialog({
   onCancel,
   onConfirm,
 }: WorkoutLoggerConfirmDialogProps) {
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onCancel();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onCancel]);
-
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  return createPortal(
-    <div className={styles.confirmOverlay} onClick={onCancel}>
-      <div
-        className={styles.confirmDialog}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 className={styles.confirmTitle}>
-          {title}
-        </h2>
-        <p className={styles.confirmBody}>
-          {description}
-        </p>
-        <div className={styles.confirmActions}>
-          <button
-            type="button"
-            className={styles.confirmSecondaryButton}
-            onClick={onCancel}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            className={styles.confirmPrimaryButton}
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </button>
-        </div>
+  return (
+    <LegacyDialog
+      open={open}
+      onOpenChange={(next) => { if (!next) onCancel(); }}
+      title={title}
+      description={description}
+      overlayClassName={styles.confirmOverlay}
+      contentClassName={styles.confirmDialog}
+    >
+      <h2 className={styles.confirmTitle}>{title}</h2>
+      <p className={styles.confirmBody}>{description}</p>
+      <div className={styles.confirmActions}>
+        <button type="button" className={styles.confirmSecondaryButton} onClick={onCancel}>
+          {cancelLabel}
+        </button>
+        <button type="button" className={styles.confirmPrimaryButton} onClick={onConfirm}>
+          {confirmLabel}
+        </button>
       </div>
-    </div>,
-    document.body,
+    </LegacyDialog>
   );
 }

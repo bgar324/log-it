@@ -23,10 +23,12 @@ export const styles = {
     "inline-flex items-center justify-end gap-[0.45rem]",
   detailActionsGroup:
     "inline-flex flex-wrap items-center gap-[0.45rem] max-[759px]:hidden",
-  mobileActionMenu: "relative hidden max-[759px]:inline-flex",
+  // The phone-only twin of the desktop action row. The shared popover portals
+  // and positions the panel, so this owns the surface only.
+  mobileActionMenu: "hidden max-[759px]:inline-flex",
   mobileActionToggle: actionIcon,
   mobileActionDropdown:
-    "absolute right-0 top-[calc(100%+0.36rem)] z-20 flex w-[12rem] flex-col gap-[0.22rem] rounded-[0.56rem] border border-[color:color-mix(in_srgb,var(--text)_14%,transparent)] bg-[var(--bg)] p-[0.28rem]",
+    "z-50 flex w-[12rem] flex-col gap-[0.22rem] rounded-[0.56rem] border border-[color:color-mix(in_srgb,var(--text)_14%,transparent)] bg-[var(--bg)] p-[0.28rem] outline-none",
   mobileActionMenuItem: actionMenuRow,
   mobileActionDangerItem: actionMenuRowDanger,
   dangerActionButton: actionDanger,

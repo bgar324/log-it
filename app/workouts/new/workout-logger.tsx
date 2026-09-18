@@ -183,8 +183,8 @@ export function WorkoutLogger({
             </button>
           </section>
         </section>
-        {isRestDayOverrideDialogOpen ? (
           <WorkoutLoggerConfirmDialog
+            open={isRestDayOverrideDialogOpen}
             title="Log on a rest day?"
             description="This workout will be saved as an unscheduled session and will not change your weekly split."
             cancelLabel="Keep rest day"
@@ -195,7 +195,6 @@ export function WorkoutLogger({
               setIsRestDayOverrideDialogOpen(false);
             }}
           />
-        ) : null}
       </main>
     );
   }
@@ -609,8 +608,8 @@ export function WorkoutLogger({
             {exerciseEntries.map(entry => <WorkoutLoggerExerciseCard key={entry.exercise.id} {...entry} />)}
           </section>
 
-          {isResetConfirmOpen ? (
             <WorkoutLoggerConfirmDialog
+              open={isResetConfirmOpen}
               title="Replace the current exercises?"
               description="This will replace every current exercise and set in this logger with the exercises and set counts from your split for today."
               cancelLabel="Keep current log"
@@ -621,7 +620,6 @@ export function WorkoutLogger({
                 setIsResetConfirmOpen(false);
               }}
             />
-          ) : null}
 
           <WorkoutLoggerReorderDialog
             exercises={draft.exercises}

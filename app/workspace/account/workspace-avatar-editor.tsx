@@ -63,7 +63,7 @@ export function WorkspaceAvatarEditor({
     handleZoomChange,
     handleCancelCrop,
     isAvatarModalOpen,
-    setIsAvatarModalOpen,
+    openAvatarEditor,
   } = useDashboardProfileAvatarCrop({
     displayedAvatarUrl,
     onAvatarDelete,
@@ -135,7 +135,7 @@ export function WorkspaceAvatarEditor({
         disabled={isSaving}
         onClick={() => {
           if (hasAvatar) {
-            setIsAvatarModalOpen(true);
+            openAvatarEditor();
             return;
           }
 
@@ -155,7 +155,7 @@ export function WorkspaceAvatarEditor({
           locked here. Every action still disables while a request is in flight. */}
       <Dialog
         open={isAvatarModalOpen}
-        onOpenChange={(next) => next ? setIsAvatarModalOpen(true) : closeDialog()}
+        onOpenChange={(next) => next ? openAvatarEditor() : closeDialog()}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
