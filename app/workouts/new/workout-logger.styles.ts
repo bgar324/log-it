@@ -2,7 +2,6 @@ import {
   actionChip,
   actionDanger,
   actionFilled,
-  actionIconDanger,
   actionIconQuiet,
   actionMenuRow,
   actionMenuRowDanger,
@@ -83,13 +82,15 @@ export const styles = {
   confirmPrimaryButton: `${actionDanger} w-full`,
   label: "text-[0.68rem] text-[var(--muted)]",
   input: cn(inputBase, "px-[0.74rem]"),
-  dateInput: "w-full [font-variant-numeric:tabular-nums]",
-  exerciseSection: "flex flex-col gap-[0.62rem]",
-  exerciseCard: cn(
-    "flex flex-col gap-[0.58rem] rounded-[0.54rem] border bg-transparent p-[0.78rem]",
+  nameInput: cn(
+    "w-full min-h-[2.75rem] rounded-none border-0 border-b bg-transparent px-0 py-[0.5rem]",
     "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
-    "transition-[border-color,background-color,transform,box-shadow]",
+    "text-base text-[var(--text)] outline-none",
+    "focus:border-[color:var(--text)]",
   ),
+  dateInput: "w-full [font-variant-numeric:tabular-nums]",
+  exerciseSection: "flex flex-col gap-[1.25rem]",
+  exerciseCard: "flex flex-col gap-[0.58rem] bg-transparent py-[0.5rem]",
   // Name field plus its options menu. `items-start` because the search-match
   // panel grows out of the input's wrapper and the menu must stay level with
   // the field, not with the panel.
@@ -111,7 +112,6 @@ export const styles = {
   exerciseMenuItem: actionMenuRow,
   exerciseMenuDivider:
     "my-[0.1rem] h-px bg-[color-mix(in_srgb,var(--text)_12%,transparent)]",
-  dangerIconButton: actionIconDanger,
   icon: "h-4 w-4 shrink-0 stroke-current",
   inlineRow: "block",
   searchResults: cn(
@@ -174,7 +174,7 @@ export const styles = {
     "data-[active=true]:bg-[color:color-mix(in_srgb,var(--text)_7%,transparent)] data-[active=true]:text-[var(--text)]",
     "min-[620px]:w-[2.4rem] min-[620px]:text-[0.64rem]",
   ),
-  setRemoveButton: "order-5 self-center justify-self-end",
+  setRemoveButton: `${actionIconQuiet} order-5 self-center justify-self-end`,
 
   // Thumb-reachable tools dial, low in the corner where the thumb rests.
   // The trigger is separated from the actions by more than the actions are from

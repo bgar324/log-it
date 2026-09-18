@@ -25,7 +25,7 @@ export function WorkoutLoggerMetaCard({
   showEditFields = false,
 }: WorkoutLoggerMetaCardProps) {
   const latestAllowedDate = formatDatabaseDateValue(getCurrentPacificDate());
-  const sectionClassName = `${styles.card} ${!showEditFields ? styles.mobileHiddenCard : ""}`;
+  const sectionClassName = !showEditFields ? styles.mobileHiddenCard : undefined;
   const fieldsClassName = showEditFields ? styles.metaGrid : styles.singleMetaField;
   return (
     <>
@@ -39,7 +39,7 @@ export function WorkoutLoggerMetaCard({
                 place. This icon beside the field was the second copy. */}
             <input
               id="workout-title"
-              className={styles.input}
+              className={styles.nameInput}
               value={title}
               onChange={(event) => onTitleChange(event.target.value)}
               placeholder="Push day"

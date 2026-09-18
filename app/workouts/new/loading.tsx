@@ -19,7 +19,9 @@ function ExerciseCardSkeleton() {
     <article className={styles.exerciseCard}>
       <div className="flex flex-col gap-[0.22rem]">
         <div className="flex items-start gap-[0.4rem]">
-          <span className={`${skeleton} h-[2.75rem] min-w-0 flex-1 rounded-[0.52rem]`} />
+          <div className={`${styles.nameInput} flex min-w-0 flex-1 items-center`}>
+            <span className={`${skeleton} h-[1.25rem] w-1/2 rounded-[0.2rem]`} />
+          </div>
           <span className={`${skeleton} h-[2.75rem] w-[2.75rem] shrink-0 rounded-full`} />
         </div>
         <span className={`${skeleton} mt-[0.3rem] h-[1.1rem] w-[8.5rem] rounded-[0.42rem]`} />
@@ -65,13 +67,14 @@ export default function NewWorkoutLoading() {
         </header>
 
         <div className={styles.form}>
-          {/* The title card is desktop-only on a new workout, exactly as the
-              logger renders it. On a phone the exercise cards start here. */}
-          <section className={`${styles.card} ${styles.mobileHiddenCard}`}>
+          {/* Workout metadata is desktop-only on a new workout. */}
+          <section className={styles.mobileHiddenCard}>
             <div className={styles.singleMetaField}>
               <div className={styles.field}>
                 <span className={`${skeleton} h-[0.9rem] w-[6rem] rounded-[0.42rem]`} />
-                <span className={`${skeleton} h-[2.75rem] w-full rounded-[0.52rem]`} />
+                <div className={`${styles.nameInput} flex items-center`}>
+                  <span className={`${skeleton} h-[1.25rem] w-1/3 rounded-[0.2rem]`} />
+                </div>
               </div>
             </div>
           </section>

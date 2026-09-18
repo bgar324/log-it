@@ -74,7 +74,7 @@ export function WorkoutLoggerExerciseCard({
             <div className={styles.inlineRow}>
               <input
                 id={`exercise-name-${exercise.id}`}
-                className={styles.input}
+                className={styles.nameInput}
                 value={exercise.name}
                 onChange={(event) => onExerciseNameChange(event.target.value)}
                 onFocus={(event) => onExerciseNameFocus(event.target.value)}

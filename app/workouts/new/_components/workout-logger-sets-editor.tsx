@@ -200,7 +200,7 @@ export function WorkoutLoggerSetsEditor({
               ) : null}
               <button
                 type="button"
-                className={`${styles.dangerIconButton} ${styles.setRemoveButton}`}
+                className={styles.setRemoveButton}
                 aria-label={`Delete set ${setIndex + 1}`}
                 onClick={() =>
                   setPendingRemoval({ id: setItem.id, index: setIndex })
