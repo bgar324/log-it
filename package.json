@@ -20,6 +20,10 @@
     "db:status": "prisma migrate status"
   },
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@ionic/react": "^9.0.4",
     "@ionic/react-router": "^9.0.4",
     "@prisma/client": "^6.15.0",

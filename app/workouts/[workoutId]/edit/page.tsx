@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { isIonicEnabled } from "@/lib/ionic-feature-flag";
+import { isFocusedLoggerEnabled } from "@/lib/focused-logger-feature-flag";
 import { WorkoutLogger } from "@/app/workouts/new/workout-logger";
 import type { WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger.utils";
 import { requireSessionUser } from "@/lib/auth";
@@ -120,6 +121,7 @@ export default async function EditWorkoutPage({
 
   return (
     <WorkoutLogger
+      key={workout.id}
       mode="edit"
       workoutId={workout.id}
       initialData={initialData}
@@ -128,6 +130,7 @@ export default async function EditWorkoutPage({
       bodyWeightDisplay={bodyWeightDisplay}
       analyticsUser={user}
       benEnabled={benEnabled}
+      focusedEnabled={isFocusedLoggerEnabled(user)}
     />
   );
 }

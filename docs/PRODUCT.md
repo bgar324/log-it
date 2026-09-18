@@ -2,7 +2,19 @@
 
 Logit is a lightweight workout journal. The durable product direction in the repo is fast workout entry, exercise history, split planning, profile preferences, and progress views without a full social network or coaching platform.
 
-## Owner-only Ionic experience
+## Owner-only focused logger
+
+The current experiment changes only workout entry and editing. It keeps Logit's appearance and Next.js navigation; other authenticated sections and unflagged accounts retain the existing interface.
+
+One exercise opens with all its sets. Other exercises remain compact rows that can be opened with one tap. Switching, reordering, and closing tools never discard entered values. Add set and Add exercise are visible; Save stays in the bottom action bar. History and predicted placeholders remain beside the actual inputs.
+
+This prototype uses direct entry, not mandatory per-set completion. Save follows the existing workout payload rules. Tools opens a standard sheet for metadata, rest timing, reset, discard, and ordering. Dragging changes a temporary order; Cancel leaves the workout untouched, and Save order applies it.
+
+The rest timer uses elapsed wall time, including time spent with browser callbacks suspended. It pauses only when the user pauses it. The app does not promise background alarms or a timer surviving a full page reload.
+
+## Ionic experiment, disabled
+
+The owner rejected the Ionic design. Its production flag is off and its code remains dormant. The behavior below applies only if that separate experiment is explicitly re-enabled.
 
 Accounts enabled by the server-side Ionic flag use an Ionic shell with adaptive platform controls. Everyone else retains the interface described below. The experiment covers all authenticated sections, with public pages unchanged.
 

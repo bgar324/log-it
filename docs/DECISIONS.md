@@ -98,6 +98,8 @@ These flags change presentation only. They do not authorize routes or change per
 
 ## Replace the authenticated shell behind an owner-only flag
 
+Status: rejected by the owner and disabled in production on September 17, 2026. The code stays dormant for reference; this is not the current design direction.
+
 The Ionic experiment replaces the authenticated shell and logger rather than adding isolated Ionic controls to the existing navigation. `/ionic` is a client application with one routing owner, `IonReactRouter`; Next remains responsible for authenticated entry, public pages, and server endpoints. The legacy UI remains available only because other accounts must not receive the experiment.
 
 The owner chose platform-default appearance and explicit set-by-set completion. Completed draft sets are the sole source for Finish; predictions remain suggestions. Editing a completed result invalidates its completion, and every retry repeats the unfinished-set check. This changes entry behavior without changing the database model.
@@ -105,3 +107,15 @@ The owner chose platform-default appearance and explicit set-by-set completion. 
 This rollout uses `IONIC_ENABLED_USER_IDS`, an exact server-side allowlist of immutable account IDs. Available PostHog credentials could evaluate but not create flags, so the rollout does not depend on an unconfigured remote flag or repurpose `Ben`. Empty configuration fails closed. No browser override, username check, or public query parameter enables it.
 
 Draft cleanup has ownership. A scoped Ionic draft must not delete an unrelated global legacy draft from another account or tab. Adoption stores the original legacy payload through reloads; cleanup compares that payload before deleting it.
+
+## Keep Logit's appearance and replace interaction mechanics
+
+After trying Ionic, the owner chose the alternative: retain Next.js and Logit's visual identity, use Base UI for shared controls and overlays, and use dnd-kit for reordering. The first deliverable is an owner-only logger prototype, not another whole-app migration.
+
+The logger organizes editing by exercise. One exercise shows every set, others collapse to rows, and switching never changes the draft. Direct-entry save semantics remain; per-set completion is not required in this experiment. Add set, Add exercise, and Save remain visible instead of sharing the old tools dial.
+
+`FOCUSED_LOGGER_USER_IDS` targets the prototype independently from the rejected Ionic rollout. The new layout shares the existing logger controller, draft, prediction, and API code. This avoids maintaining two implementations of workout behavior while the owner evaluates the layout.
+
+Use Base UI Dialog for the bottom sheet rather than Drawer, because vertical swipe dismissal conflicts with vertical sorting. Let the library own overlay lifecycle and dnd-kit own dragging. Bridge their documented keyboard event APIs rather than adding a second keyboard listener.
+
+Draft recovery must be replay-safe. The reducer already contains the initial seed, so a mount effect must not reapply it after recovery during StrictMode replay. Rest timers must be clock-based; browser interval callbacks are a display refresh mechanism, not elapsed time.

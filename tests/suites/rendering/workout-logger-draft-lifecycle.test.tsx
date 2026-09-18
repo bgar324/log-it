@@ -1,8 +1,9 @@
 import "./dom";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { useWorkoutLoggerDraft } from "@/app/workouts/new/_hooks/use-workout-logger-draft";
+import type { WeightUnit } from "@/lib/weight-unit";
 import {
   WORKOUT_DRAFT_STORAGE_KEY,
   type WorkoutLoggerInitialData,
@@ -17,11 +18,11 @@ const TODAY = formatDatabaseDateValue(getCurrentPacificDate());
 // Long enough for the 350ms autosave debounce to fire, or to prove it never does.
 const PAST_AUTOSAVE_MS = 500;
 
-function DraftProbe({ initialData }: { initialData?: WorkoutLoggerInitialData }) {
+function DraftProbe({ initialData, weightUnit = "LB" }: { initialData?: WorkoutLoggerInitialData; weightUnit?: WeightUnit }) {
   const draft = useWorkoutLoggerDraft({
     initialData,
     isEditMode: false,
-    weightUnit: "LB",
+    weightUnit,
   });
 
   return (
@@ -166,6 +167,66 @@ test("moving a recovered draft to today keeps its exercises and is persisted", a
       (stored?.exercises as Array<{ name: string }>).map((exercise) => exercise.name),
       ["Triceps Extension On Machine"],
     );
+  } finally {
+    mounted.unmount();
+    window.localStorage.clear();
+  }
+});
+
+test("leaving before the autosave debounce preserves the latest edit", async () => {
+  window.localStorage.clear();
+  const mounted = await render(<DraftProbe />);
+  await mounted.click(button(mounted, "edit"));
+  mounted.unmount();
+  try {
+    assert.ok(window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY)?.includes("Plank"));
+  } finally {
+    window.localStorage.clear();
+  }
+});
+
+test("a server refresh cannot replace an unsaved workout", async () => {
+  window.localStorage.clear();
+  const mounted = await render(<DraftProbe />);
+  try {
+    await mounted.click(button(mounted, "edit"));
+    await mounted.rerender(<DraftProbe initialData={{ title: "Fresh server seed", workoutType: "", performedAt: TODAY, exercises: [] }} />);
+    assert.equal(mounted.container.querySelector("#exercises")?.textContent, "Plank");
+  } finally {
+    mounted.unmount();
+    window.localStorage.clear();
+  }
+});
+
+test("changing units during a recovered session preserves the entered load", async () => {
+  window.localStorage.clear();
+  seedStaleDraft();
+  const mounted = await render(<DraftProbe />);
+  try {
+    await mounted.rerender(<DraftProbe weightUnit="KG" />);
+    await wait(PAST_AUTOSAVE_MS);
+    const stored = storedDraft();
+    assert.equal(stored?.weightUnit, "KG");
+    const exercises = stored?.exercises as Array<{ sets: Array<{ weightLb: string }> }>;
+    const pounds = Number(exercises[0]?.sets[0]?.weightLb) * 2.20462262185;
+    assert.ok(Math.abs(pounds - 70) < 0.15, "conversion must preserve load, not reinterpret 70 lb as 70 kg");
+    assert.equal(mounted.container.querySelector("#date")?.textContent, "2026-01-02");
+  } finally {
+    mounted.unmount();
+    window.localStorage.clear();
+  }
+});
+
+test("StrictMode effect replay cannot replace a recovered draft", async () => {
+  window.localStorage.clear();
+  seedStaleDraft();
+  const mounted = await render(<StrictMode><DraftProbe /></StrictMode>);
+  try {
+    assert.equal(mounted.container.querySelector("#date")?.textContent, "2026-01-02");
+    assert.equal(mounted.container.querySelector("#exercises")?.textContent, "Triceps Extension On Machine");
+    await mounted.click(button(mounted, "edit"));
+    await wait(PAST_AUTOSAVE_MS);
+    assert.equal(storedDraft()?.performedAt, "2026-01-02");
   } finally {
     mounted.unmount();
     window.localStorage.clear();

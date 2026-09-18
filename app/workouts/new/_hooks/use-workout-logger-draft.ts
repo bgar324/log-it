@@ -6,9 +6,9 @@ import {
   useMemo,
   useReducer,
   useRef,
-  useState,
 } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
+import { displayWeightToPounds, formatWeightInputValueFromPounds } from "@/lib/weight-unit";
 import { recoverWorkoutDraft } from "@/lib/workouts/draft-recovery";
 import {
   WORKOUT_AUTOSAVE_DELAY_MS,
@@ -77,6 +77,8 @@ export function useWorkoutLoggerDraft({
     [initialData],
   );
   const idCounterRef = useRef(initialState.counters);
+  const appliedSeedRef = useRef(initialState);
+  const draftWeightUnitRef = useRef(weightUnit);
   const autosaveReadyRef = useRef(false);
   // Two separate questions. `autosaveReadyRef` says recovery has run, so a
   // write cannot race the restore. `hasUnsavedEditsRef` says the user actually
@@ -101,6 +103,29 @@ export function useWorkoutLoggerDraft({
     latestDraftStateRef.current = draftState;
   }, [draftState]);
   useEffect(() => {
+    if (appliedSeedRef.current === initialState && draftWeightUnitRef.current === weightUnit) return;
+    appliedSeedRef.current = initialState;
+    const previousUnit = draftWeightUnitRef.current;
+    draftWeightUnitRef.current = weightUnit;
+    if (hasUnsavedEditsRef.current || latestDraftStateRef.current.isRecoveredDraft) {
+      if (previousUnit !== weightUnit) {
+        hasUnsavedEditsRef.current = true;
+        const current = latestDraftStateRef.current;
+        dispatch({ type: "replace", value: {
+          ...current,
+          exercises: current.exercises.map(exercise => ({
+            ...exercise,
+            sets: exercise.sets.map(set => ({
+              ...set,
+              weightLb: set.weightLb.trim() && Number.isFinite(Number(set.weightLb))
+                ? formatWeightInputValueFromPounds(displayWeightToPounds(Number(set.weightLb), previousUnit), weightUnit)
+                : set.weightLb,
+            })),
+          })),
+        } });
+      }
+      return;
+    }
     dispatch({
       type: "replace",
       value: {
@@ -112,9 +137,10 @@ export function useWorkoutLoggerDraft({
       },
     });
     idCounterRef.current = initialState.counters;
-  }, [initialState]);
+  }, [initialState, weightUnit]);
 
   useEffect(() => {
+    if (autosaveReadyRef.current) return;
     if (isEditMode) {
       autosaveReadyRef.current = true;
       return;
@@ -208,6 +234,7 @@ export function useWorkoutLoggerDraft({
 
     return () => {
       window.removeEventListener("pagehide", handlePageHide);
+      handlePageHide();
     };
   }, [isEditMode, weightUnit]);
 

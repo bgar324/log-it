@@ -22,7 +22,7 @@ function keepCurrentFocus(event: PointerEvent<HTMLElement>) {
   event.preventDefault();
 }
 
-type WorkoutLoggerExerciseCardProps = {
+export type WorkoutLoggerExerciseCardProps = {
   exercise: ExerciseDraft;
   exerciseIndex: number;
   canRemoveExercise: boolean;

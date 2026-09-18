@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import type { FocusedWorkoutLoggerProps } from "./_components/focused-workout-logger";
+import type { WorkoutLoggerExerciseCardProps } from "./_components/workout-logger-exercise-card";
 import { toast } from "sonner";
 import posthog from "posthog-js";
 import { BackButton } from "@/app/components/back-button";
@@ -39,6 +42,10 @@ import {
 
 export type { WorkoutLoggerInitialData } from "./workout-logger.utils";
 
+const FocusedWorkoutLogger = dynamic<FocusedWorkoutLoggerProps>(
+  () => import("./_components/focused-workout-logger").then(module => module.FocusedWorkoutLogger),
+);
+
 type WorkoutLoggerMode = "create" | "edit";
 
 type WorkoutLoggerProps = {
@@ -56,6 +63,7 @@ type WorkoutLoggerProps = {
   returnHref?: string;
   analyticsUser: PostHogUser;
   benEnabled: boolean;
+  focusedEnabled?: boolean;
 };
 
 export function WorkoutLogger({
@@ -73,12 +81,15 @@ export function WorkoutLogger({
   returnHref = "/dashboard",
   analyticsUser,
   benEnabled,
+  focusedEnabled = false,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const router = useRouter();
   const weightUnitLabel = getWeightUnitLabel(weightUnit);
   useIdentifyPostHogUser(analyticsUser);
   const [isSaving, setIsSaving] = useState(false);
+  const saveControllerRef = useRef<AbortController | null>(null);
+  useEffect(() => () => saveControllerRef.current?.abort(), []);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
@@ -280,7 +291,7 @@ export function WorkoutLogger({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isSaving) {
+    if (saveControllerRef.current) {
       return;
     }
 
@@ -299,6 +310,8 @@ export function WorkoutLogger({
 
     const toastId = toast.loading(isEditMode ? "Saving changes..." : "Saving workout...");
     setIsSaving(true);
+    const controller = new AbortController();
+    saveControllerRef.current = controller;
 
     try {
       const { response, data } = await submitWorkoutLoggerPayload({
@@ -306,7 +319,9 @@ export function WorkoutLogger({
         isEditMode,
         workoutId,
         payload: payload.value,
+        signal: controller.signal,
       });
+      if (controller.signal.aborted) return;
 
       if (!response.ok) {
         const message =
@@ -370,6 +385,10 @@ export function WorkoutLogger({
       }
       router.refresh();
     } catch {
+      if (controller.signal.aborted) {
+        toast.dismiss(toastId);
+        return;
+      }
       toast.error(
         isEditMode ? "Unable to update workout." : "Unable to save workout.",
         {
@@ -377,6 +396,7 @@ export function WorkoutLogger({
         },
       );
     } finally {
+      saveControllerRef.current = null;
       setIsSaving(false);
     }
   }
@@ -399,8 +419,58 @@ export function WorkoutLogger({
       : "Log workout";
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
+  const exerciseCards: WorkoutLoggerExerciseCardProps[] = draft.exercises.map((exercise, exerciseIndex) => ({
+    exercise,
+    exerciseIndex,
+    canRemoveExercise: draft.exercises.length > 1,
+    searchResults: exerciseSearchResultsById[exercise.id] ?? [],
+    insightState: exerciseInsightById[exercise.id],
+    weightUnit,
+    weightUnitLabel,
+    bodyWeightDisplay,
+    showOptionalSetControls: !benEnabled,
+    onAddSet: () => draft.addSet(exercise.id),
+    onApplySearchResult: suggestion => {
+      clearPendingSuggestionLookup(exercise.id);
+      handleExerciseSearchResult(exercise.id, suggestion);
+    },
+    onExerciseNameBlur: value => handleExerciseNameBlur(exercise.id, value),
+    onExerciseNameChange: value => handleExerciseNameChange(exercise.id, value),
+    onExerciseNameFocus: value => handleExerciseNameFocus(exercise.id, value),
+    onRemoveExercise: () => handleRemoveExercise(exercise.id),
+    onRemoveSet: setId => draft.removeSet(exercise.id, setId),
+    onUpdateSet: (setId, field, value) => draft.updateSet(exercise.id, setId, field, value),
+  }));
+
+  if (focusedEnabled) {
+    return <FocusedWorkoutLogger
+      pageTitle={pageTitle}
+      dateLabel={dateMeta}
+      submitLabel={submitLabel}
+      isSaving={isSaving}
+      backHref={backHref}
+      metadata={{
+        title: draft.title,
+        performedAt: draft.performedAt,
+        workoutType: draft.workoutType,
+        workoutTypeOptions,
+        onTitleChange: draft.setTitle,
+        onPerformedAtChange: draft.setPerformedAt,
+        onWorkoutTypeChange: draft.setWorkoutType,
+        showEditFields: isEditMode,
+      }}
+      exercises={exerciseCards}
+      onSubmit={handleSubmit}
+      onAddExercise={draft.addExercise}
+      onReorder={draft.reorderExercisesById}
+      onResetFromSplit={hasSplitReset ? handleResetFromSplit : undefined}
+      onDiscardDraft={isEditMode ? undefined : handleDiscardDraft}
+      staleDraft={isDraftDateStale ? { dateLabel: dateMeta, onMoveToToday: () => draft.setPerformedAt(todayDateKey) } : undefined}
+    />;
+  }
+
   return (
-    <main className={styles.loggerShell}>
+    <main className={styles.loggerShell} inert={isSaving} aria-busy={isSaving}>
       <section className={styles.loggerStage}>
         <div className={styles.topRow}>
           <BackButton
@@ -454,39 +524,7 @@ export function WorkoutLogger({
           />
 
           <section className={styles.exerciseSection}>
-            {draft.exercises.map((exercise, exerciseIndex) => (
-              <WorkoutLoggerExerciseCard
-                key={exercise.id}
-                exercise={exercise}
-                exerciseIndex={exerciseIndex}
-                canRemoveExercise={draft.exercises.length > 1}
-                searchResults={exerciseSearchResultsById[exercise.id] ?? []}
-                insightState={exerciseInsightById[exercise.id]}
-                weightUnit={weightUnit}
-                weightUnitLabel={weightUnitLabel}
-                bodyWeightDisplay={bodyWeightDisplay}
-                showOptionalSetControls={!benEnabled}
-                onAddSet={() => draft.addSet(exercise.id)}
-                onApplySearchResult={(suggestion) => {
-                  clearPendingSuggestionLookup(exercise.id);
-                  handleExerciseSearchResult(exercise.id, suggestion);
-                }}
-                onExerciseNameBlur={(value) =>
-                  handleExerciseNameBlur(exercise.id, value)
-                }
-                onExerciseNameChange={(value) =>
-                  handleExerciseNameChange(exercise.id, value)
-                }
-                onExerciseNameFocus={(value) =>
-                  handleExerciseNameFocus(exercise.id, value)
-                }
-                onRemoveExercise={() => handleRemoveExercise(exercise.id)}
-                onRemoveSet={(setId) => draft.removeSet(exercise.id, setId)}
-                onUpdateSet={(setId, field, value) =>
-                  draft.updateSet(exercise.id, setId, field, value)
-                }
-              />
-            ))}
+            {exerciseCards.map(card => <WorkoutLoggerExerciseCard key={card.exercise.id} {...card} />)}
 
           </section>
 

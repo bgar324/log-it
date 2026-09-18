@@ -2,7 +2,21 @@
 
 Logit uses a restrained monochrome UI. Authenticated screens are calm and sentence-led at the top of each view, dense where the user is scanning rows of workout data.
 
-## Ionic rollout variant
+## Focused logger prototype
+
+The current owner-only logger keeps the warm palette, Geist typography, sentence-led hierarchy, and control geometry from `action.styles.ts`. Shared Base UI buttons, inputs, sheets, and confirmations provide the interaction behavior. There is no framework theme or global CSS reset.
+
+One expanded exercise shows all its sets; other exercises use compact borderless rows. Add set stays next to those rows, Add exercise stays visible, and Save lives in the bottom bar. The legacy dial is absent in this variant. Layout styles are scoped in `focused-workout-logger.module.css`.
+
+The shared sheet uses Base UI Dialog: bottom-aligned on a phone and centered on desktop. It deliberately has no swipe-dismiss gesture competing with vertical exercise dragging. dnd-kit owns handle activation, keyboard movement, drag overlay, and auto-scroll. While dragging, the sheet calls the supported `preventBaseUIHandler()` event API so Base UI cannot swallow the sensor's arrow or Escape keys.
+
+Controlled sheet opens have no Trigger to report a touch origin. Set `initialFocus` and `finalFocus` to false rather than inferring the input method, or opening Tools steals focus from a set input. Confirmation roots belong inside their owning Sheet's React context so Escape dismisses the top dialog, not the sheet underneath.
+
+The shared primitives are the candidate control system for later adoption. Do not migrate unrelated screens until this logger has been tried. All verification uses an isolated headless browser, never the user's browser profile.
+
+## Dormant Ionic variant
+
+This experiment is disabled in production after owner feedback. The following rules apply only to its retained code.
 
 The owner-only `/ionic` application intentionally uses Ionic's adaptive iOS and Material appearance instead of the legacy monochrome controls documented below. Ionic owns tabs, menus, back navigation, sheets, alerts, lists, numeric fields, segmented controls, and drag handles. Keep summaries sentence-led and data rows operational.
 

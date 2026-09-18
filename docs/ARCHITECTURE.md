@@ -27,10 +27,26 @@ Protected product pages use `requireSessionUser()`:
 - `/exercises`, `/exercises/[exerciseKey]`: exercise index and detail history.
 - `/profile` and `/progress`: redirect to `/dashboard?view=profile` and `/dashboard?view=progress`.
 - `/preview/[view]?shell=1`: verification-only harness (noindex) that renders the real `DashboardShell` with demo data, so app chrome can be checked without a session. Without `shell=1` the same route renders the contained view components used by the landing page previews.
-- `/ionic/[[...path]]`: owner-flagged Ionic React application. Next authenticates its server entry; Ionic owns all navigation below `/ionic`.
+- `/ionic/[[...path]]`: dormant Ionic experiment, disabled in production. Its code remains behind the server flag.
 - `/api/ionic`: private, uncached GET loader for dashboard views, new/edit logger data, workout details, and exercise details. It requires a session and the Ionic rollout flag.
 
+## Focused logger experiment
+
+`FOCUSED_LOGGER_USER_IDS` enables the exercise-focused layout on the existing `/workouts/new` and `/workouts/[workoutId]/edit` routes. `lib/focused-logger-feature-flag.ts` checks immutable account IDs on the server. It is independent of the disabled Ionic flag and the existing PostHog `Ben` flag. Next.js keeps all routing ownership.
+
+`WorkoutLogger` remains the controller for draft state, comparison reads, payloads, and mutations. Enabled users dynamically load `FocusedWorkoutLogger`, which renders one expanded exercise and compact rows for the others. Both layouts share the existing set editor and metadata component; their focused variants use shared Base UI controls. No new workout API or stored completion field is involved.
+
+`app/components/ui/{button,input,sheet,confirm-dialog}.tsx` provides Base UI primitives styled with the existing action canon and theme tokens. `ExerciseOrderSheet` uses dnd-kit inside the shared sheet and commits draft order only through Save order. The legacy reorder component remains unchanged while the owner tries this prototype.
+
+`useWorkoutLoggerDraft` flushes real edits on unmount as well as page hide. Applied-seed tracking makes recovery safe under StrictMode replay; an authoritative refresh cannot replace dirty or recovered work. A live unit change converts the current entered loads instead of reinterpreting their numbers. Pending saves lock the form and abort on unmount, preserving the draft when the client cannot confirm the result.
+
+`useRestTimer` stores a deadline while running and remaining duration while paused. Interval ticks, visibility changes, and page-show events derive the display from the wall clock, so suspended browser callbacks do not extend rest time.
+
+`scripts/verify-focused-logger.mjs` exports a headless Puppeteer walkthrough with service-worker bypass and mutation interception. It checks flag isolation, switching/editing, sheet focus retention, deadline recovery, responsive Save reachability, failed save preservation, and successful-save draft cleanup. It never creates a test workout.
+
 ## Ionic authenticated app
+
+The owner rejected this design experiment on September 17, 2026. `IONIC_ENABLED_USER_IDS` is unset in production; the following describes dormant code, not the current interface.
 
 `app/ionic/ionic-entry.tsx` dynamically loads the Ionic client with SSR disabled. This keeps Ionic's browser APIs out of server rendering. `ionic-app.tsx` owns `IonReactRouter`, `IonRouterOutlet`, tabs, menu, and page lifecycle. Public pages and backend routes remain in Next.js. Existing dashboard, logger, and detail URLs redirect enabled users into the corresponding Ionic route.
 
