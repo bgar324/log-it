@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { requireSessionUser } from "@/lib/auth";
+import { isIonicEnabled } from "@/lib/ionic-feature-flag";
 import { AppShell } from "@/app/components/app-nav";
 import { appNavUserFromSession } from "@/app/components/app-nav.user";
 import { navStyles } from "@/app/components/app-nav.styles";
@@ -16,6 +19,8 @@ export default async function ExerciseDetailPage({
   params: ExerciseDetailParams;
 }) {
   const { exerciseKey: rawExerciseKey } = await params;
+  const user = await requireSessionUser();
+  if (await isIonicEnabled(user)) redirect(`/ionic/exercises/${encodeURIComponent(rawExerciseKey)}`);
   const data = await loadExerciseDetailPageData(rawExerciseKey);
   const benEnabled = await isBenFeatureEnabled(data.user);
 

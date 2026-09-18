@@ -1,0 +1,239 @@
+/* Logger-only styles. Everything else is Ionic's platform default on purpose:
+   the point of this surface is native controls, not a second design system.
+   Scoped under `.ionic-app` so nothing here can reach the existing pages. */
+
+.ionic-app .ionic-logger__content {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 8px;
+  --padding-bottom: 24px;
+}
+
+.ionic-app .ionic-logger__date {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+  color: var(--ion-color-medium, var(--muted));
+}
+
+.ionic-app .ionic-logger__switcher-header ion-toolbar {
+  --min-height: 48px;
+}
+
+.ionic-app .ionic-logger__switcher-name {
+  font-size: 0.8125rem;
+  text-transform: none;
+}
+
+.ionic-app .ionic-logger__switcher-count {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium, var(--muted));
+}
+
+.ionic-app .ionic-logger__banner,
+.ionic-app .ionic-logger__notice,
+.ionic-app .ionic-logger__rest {
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.ionic-app .ionic-logger__banner-body,
+.ionic-app .ionic-logger__notice-body {
+  margin: 0 0 10px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.ionic-app .ionic-logger__banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ionic-app .ionic-logger__notice {
+  margin-top: 24px;
+}
+
+.ionic-app .ionic-logger__notice-title {
+  margin: 0 0 8px;
+  font-size: 1.375rem;
+  font-weight: 650;
+}
+
+.ionic-app .ionic-logger__rest {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ionic-app .ionic-logger__rest-clock {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-right: auto;
+  margin-left: 8px;
+}
+
+.ionic-app .ionic-logger__stage-meta {
+  margin: 0 0 6px;
+  font-size: 0.8125rem;
+  color: var(--ion-color-medium, var(--muted));
+}
+
+.ionic-app .ionic-logger__name-field {
+  position: relative;
+}
+
+/* 16px minimum on every text field: anything smaller makes iOS Safari zoom
+   the page on focus, which is unusable one-handed in a gym. */
+.ionic-app .ionic-logger__name-input,
+.ionic-app .ionic-logger__input {
+  width: 100%;
+  min-height: 44px;
+  font-size: 16px;
+  font-family: inherit;
+  color: inherit;
+}
+
+.ionic-app .ionic-logger__name-input {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+
+.ionic-app .ionic-logger__suggestions {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 10px;
+  background: var(--ion-background-color, var(--surface));
+  overflow: hidden;
+}
+
+
+.ionic-app .ionic-logger__compare-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  margin: 8px 0 4px;
+  font-size: 0.875rem;
+  color: var(--ion-color-medium, var(--muted));
+}
+
+.ionic-app .ionic-logger__compare-spinner {
+  width: 14px;
+  height: 14px;
+}
+
+.ionic-app .ionic-logger__sets {
+  margin: 0 -16px;
+  background: transparent;
+}
+
+.ionic-app .ionic-logger__set-row {
+  --min-height: 56px;
+}
+
+.ionic-app .ionic-logger__active-set {
+  padding: 14px 16px 10px;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+}
+
+.ionic-app .ionic-logger__active-set-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ionic-app .ionic-logger__active-set-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.ionic-app .ionic-logger__last-note {
+  font-size: 0.8125rem;
+}
+
+.ionic-app .ionic-logger__inputs {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.ionic-app .ionic-logger__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+
+.ionic-app .ionic-logger__weight-control {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+
+.ionic-app .ionic-logger__error {
+  margin: 10px 0 0;
+  font-size: 0.875rem;
+  color: var(--ion-color-danger, #c5000f);
+}
+
+.ionic-app .ionic-logger__complete-button {
+  margin-top: 12px;
+}
+
+.ionic-app .ionic-logger__set-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ionic-app .ionic-logger__add-set {
+  margin-top: 16px;
+}
+
+.ionic-app .ionic-logger__footer ion-toolbar {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 4px;
+  --padding-bottom: 8px;
+}
+
+.ionic-app .ionic-logger__progress {
+  margin: 0 0 6px;
+  font-size: 0.8125rem;
+  color: var(--ion-color-medium, var(--muted));
+}
+
+.ionic-app .ionic-logger__modal-content {
+  --padding-top: 8px;
+  --padding-bottom: 24px;
+}
+
+/* Two inputs plus the bodyweight toggle stop fitting one row on the narrowest
+   phones once a time field joins them. */
+@media (max-width: 360px) {
+  .ionic-app .ionic-logger__inputs {
+    flex-wrap: wrap;
+  }
+
+  .ionic-app .ionic-logger__field {
+    flex-basis: 100%;
+  }
+}

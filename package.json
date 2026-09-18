@@ -20,10 +20,13 @@
     "db:status": "prisma migrate status"
   },
   "dependencies": {
+    "@ionic/react": "^9.0.4",
+    "@ionic/react-router": "^9.0.4",
     "@prisma/client": "^6.15.0",
     "@radix-ui/react-popover": "^1.1.15",
     "bcryptjs": "^3.0.3",
     "geist": "^1.7.0",
+    "ionicons": "^8.1.0",
     "jose": "^6.1.3",
     "katex": "^0.16.45",
     "lucide-react": "^0.575.0",
@@ -32,6 +35,8 @@
     "react": "19.2.3",
     "react-datepicker": "^9.1.0",
     "react-dom": "19.2.3",
+    "react-router": "^6.30.6",
+    "react-router-dom": "^6.30.6",
     "recharts": "^3.7.0",
     "sonner": "^2.0.7"
   },

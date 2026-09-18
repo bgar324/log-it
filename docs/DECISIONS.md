@@ -95,3 +95,13 @@ Individual bodyweight sets keep `weightLb = null`, so every set display still re
 Account-specific UI experiments use remote PostHog flags instead of hardcoded identity checks. Protected server pages evaluate the flag with the stable database user ID and current profile properties, then pass the result across the client-component boundary. This keeps required presentation independent of browser content blockers and prevents auth-free previews from identifying their demo users. Failed evaluations keep the standard interface.
 
 These flags change presentation only. They do not authorize routes or change persisted data and payload rules. The current personal logger variant removes Time and the explicit `BW` button, but blank weights and existing bodyweight sets still submit as `weightLb = null`.
+
+## Replace the authenticated shell behind an owner-only flag
+
+The Ionic experiment replaces the authenticated shell and logger rather than adding isolated Ionic controls to the existing navigation. `/ionic` is a client application with one routing owner, `IonReactRouter`; Next remains responsible for authenticated entry, public pages, and server endpoints. The legacy UI remains available only because other accounts must not receive the experiment.
+
+The owner chose platform-default appearance and explicit set-by-set completion. Completed draft sets are the sole source for Finish; predictions remain suggestions. Editing a completed result invalidates its completion, and every retry repeats the unfinished-set check. This changes entry behavior without changing the database model.
+
+This rollout uses `IONIC_ENABLED_USER_IDS`, an exact server-side allowlist of immutable account IDs. Available PostHog credentials could evaluate but not create flags, so the rollout does not depend on an unconfigured remote flag or repurpose `Ben`. Empty configuration fails closed. No browser override, username check, or public query parameter enables it.
+
+Draft cleanup has ownership. A scoped Ionic draft must not delete an unrelated global legacy draft from another account or tab. Adoption stores the original legacy payload through reloads; cleanup compares that payload before deleting it.

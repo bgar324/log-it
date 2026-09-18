@@ -19,7 +19,7 @@ type SessionClaims = {
   exp?: number;
 };
 
-type SessionUser = {
+export type SessionUser = {
   id: string;
   email: string;
   username: string;

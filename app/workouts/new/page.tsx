@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { isIonicEnabled } from "@/lib/ionic-feature-flag";
 import { WorkoutLogger } from "./workout-logger";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -28,6 +30,12 @@ export default async function NewWorkoutPage({
     searchParams,
     requireSessionUser(),
   ]);
+  if (await isIonicEnabled(user)) {
+    const query = new URLSearchParams();
+    if (params.date) query.set("date", params.date);
+    if (params.from) query.set("from", normalizeDashboardView(params.from));
+    redirect(`/ionic/workouts/new${query.size ? `?${query}` : ""}`);
+  }
   const selectedDate = parseDateKey(params.date ?? "") ?? getCurrentPacificDate();
   const [splitSeed, bodyWeightLb, benEnabled] = await Promise.all([
     getWorkoutLoggerInitialDataForDate(user.id, selectedDate),

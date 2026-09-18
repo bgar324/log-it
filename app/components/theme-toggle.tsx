@@ -160,12 +160,12 @@ const THEME_OPTIONS: Array<{
   { preference: "dark", label: "Dark theme", Icon: Moon },
 ];
 
-export function ThemeToggle() {
-  const [preference, setPreference] = useState<ThemePreference>("system");
+export function useThemePreference() {
+  const [preference, setPreferenceState] = useState<ThemePreference>("system");
 
   useLayoutEffect(() => {
     function syncPreference() {
-      setPreference(readStoredPreference());
+      setPreferenceState(readStoredPreference());
     }
 
     function handleThemeChange() {
@@ -188,6 +188,15 @@ export function ThemeToggle() {
       mediaQuery.removeEventListener("change", handleSystemChange);
     };
   }, []);
+  const setPreference = useCallback((value: ThemePreference) => {
+    setPreferenceState(value);
+    applyPreference(value);
+  }, []);
+  return { preference, setPreference };
+}
+
+export function ThemeToggle() {
+  const { preference, setPreference } = useThemePreference();
 
   return (
     <div className="theme-toggle">
@@ -196,10 +205,7 @@ export function ThemeToggle() {
           key={option}
           type="button"
           className="theme-toggle-option"
-          onClick={() => {
-            setPreference(option);
-            applyPreference(option);
-          }}
+          onClick={() => setPreference(option)}
           title={label}
           data-active={preference === option}
         >

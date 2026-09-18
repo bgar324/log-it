@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireSessionUser } from "@/lib/auth";
+import type { SessionUser } from "@/lib/auth";
 import { isUuidLikeKey, toExerciseRouteKey } from "@/lib/exercise-route-key";
 import { prisma } from "@/lib/prisma";
 import {
@@ -15,6 +16,28 @@ import {
   getCurrentPacificDate,
   normalizeExerciseName,
 } from "@/lib/workout-utils";
+
+export type ExerciseDetailData = {
+  user: SessionUser;
+  displayName: string;
+  weightUnit: WeightUnit;
+  summarySentence: string;
+  summaryMeta: string;
+  chartSeries: Array<{
+    label: string;
+    performedAtLabel: string;
+    bestWeight: number;
+    topSetReps: number;
+    estimatedOneRepMax: number;
+  }>;
+  sessionBreakdownRows: Array<{
+    workoutId: string;
+    performedAtLabel: string;
+    workoutLabel: string;
+    topSetLabel: string;
+    volumeLabel: string;
+  }>;
+};
 
 type ExerciseLogRow = {
   id: string;
@@ -286,7 +309,7 @@ function summarizeExerciseSessions(exerciseLogs: ExerciseLogRow[], weightUnit: W
   };
 }
 
-export async function loadExerciseDetailPageData(rawExerciseKey: string) {
+export async function loadExerciseDetailPageData(rawExerciseKey: string): Promise<ExerciseDetailData> {
   const user = await requireSessionUser();
   const normalizedKey = await resolveNormalizedExerciseKey(user.id, rawExerciseKey);
 

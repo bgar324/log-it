@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { isIonicEnabled } from "@/lib/ionic-feature-flag";
 import { AppShell } from "@/app/components/app-nav";
 import { appNavUserFromSession } from "@/app/components/app-nav.user";
 import { navStyles } from "@/app/components/app-nav.styles";
@@ -32,6 +33,7 @@ export default async function WorkoutDetailPage({
 }) {
   const { workoutId } = await params;
   const user = await requireSessionUser();
+  if (await isIonicEnabled(user)) redirect(`/ionic/workouts/${encodeURIComponent(workoutId)}`);
 
   const [workout, benEnabled] = await Promise.all([
     prisma.workoutLog.findFirst({

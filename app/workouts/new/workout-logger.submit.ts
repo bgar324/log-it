@@ -100,6 +100,7 @@ export async function submitWorkoutLoggerPayload(options: {
   isEditMode: boolean;
   workoutId?: string;
   payload: WorkoutLoggerPayload;
+  signal?: AbortSignal;
 }) {
   const requestBody = options.isEditMode
     ? {
@@ -116,6 +117,7 @@ export async function submitWorkoutLoggerPayload(options: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(requestBody),
+    signal: options.signal,
   });
 
   return {

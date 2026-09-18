@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { isIonicEnabled } from "@/lib/ionic-feature-flag";
 import { WorkoutLogger } from "@/app/workouts/new/workout-logger";
 import type { WorkoutLoggerInitialData } from "@/app/workouts/new/workout-logger.utils";
 import { requireSessionUser } from "@/lib/auth";
@@ -48,6 +49,7 @@ export default async function EditWorkoutPage({
 }) {
   const { workoutId } = await params;
   const user = await requireSessionUser();
+  if (await isIonicEnabled(user)) redirect(`/ionic/workouts/${encodeURIComponent(workoutId)}/edit`);
 
   const [workout, split, benEnabled] = await Promise.all([
     prisma.workoutLog.findFirst({

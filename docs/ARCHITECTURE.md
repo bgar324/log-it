@@ -27,6 +27,20 @@ Protected product pages use `requireSessionUser()`:
 - `/exercises`, `/exercises/[exerciseKey]`: exercise index and detail history.
 - `/profile` and `/progress`: redirect to `/dashboard?view=profile` and `/dashboard?view=progress`.
 - `/preview/[view]?shell=1`: verification-only harness (noindex) that renders the real `DashboardShell` with demo data, so app chrome can be checked without a session. Without `shell=1` the same route renders the contained view components used by the landing page previews.
+- `/ionic/[[...path]]`: owner-flagged Ionic React application. Next authenticates its server entry; Ionic owns all navigation below `/ionic`.
+- `/api/ionic`: private, uncached GET loader for dashboard views, new/edit logger data, workout details, and exercise details. It requires a session and the Ionic rollout flag.
+
+## Ionic authenticated app
+
+`app/ionic/ionic-entry.tsx` dynamically loads the Ionic client with SSR disabled. This keeps Ionic's browser APIs out of server rendering. `ionic-app.tsx` owns `IonReactRouter`, `IonRouterOutlet`, tabs, menu, and page lifecycle. Public pages and backend routes remain in Next.js. Existing dashboard, logger, and detail URLs redirect enabled users into the corresponding Ionic route.
+
+`lib/ionic-feature-flag.ts` checks `IONIC_ENABLED_USER_IDS` against the session's immutable user ID. Empty or missing configuration disables the app. Both the server entry and data endpoint check it. This flag is independent of the existing PostHog `Ben` experiment; changing a username or email cannot grant access. Vercel environment changes require a new deployment.
+
+Ionic may retain hidden pages. `use-ionic-resource.ts` reloads active views on entry and after mutation invalidation, aborts obsolete reads, and handles expired sessions. The logger unmounts on leave so hidden pages cannot keep draft writers alive. Pending logger requests are aborted on unmount; an aborted response cannot clear a newer draft or navigate a different session. The server may already have accepted an aborted request, so normal duplicate handling remains authoritative.
+
+`app/ionic/logger/` owns explicit set completion. Its account-scoped `logit-ionic-workout-draft-v1:<userId>` snapshot stores stable exercise/set IDs, completion, and the active set. A real edit arms debounce, page-hide, and unmount persistence. Save/discard disarms those writers. Legacy draft adoption records the exact source payload in the snapshot, so cleanup removes that key only if it still contains the adopted work. Native numeric fields use the existing unit, prediction, and submission helpers.
+
+The Ionic screens reuse existing secured mutation endpoints and business services. No database schema or workout persistence format changes. Completion is draft-only state; only completed sets reach the existing workout payload.
 
 ## App Chrome
 
@@ -139,7 +153,7 @@ The UI consumes it inline rather than as a panel: each draft set row shows the m
 - `app/manifest.ts` is the installable web app manifest (standalone display, `/dashboard` start URL, icons in `public/icons/`).
 - `app/layout.tsx` exports `viewport` (`viewportFit: "cover"`, `themeColor`) and `metadata.appleWebApp`; the inline theme script and `app/components/pwa-client.tsx` keep the `theme-color` meta in sync with the manually chosen theme and register the service worker (production only).
 - `public/sw.js` is a conservative service worker: it never touches `/api`, enables navigation preload so hard navigations do not wait for service-worker startup, keeps navigations network-authoritative with a `public/offline.html` fallback, and stale-while-revalidates static assets.
-- Route transitions use the root `app/template.tsx` (`page-enter` animation); `app/globals.css` also holds view/segment transitions, a `prefers-reduced-motion` guard, and app-like touch defaults (no overscroll bounce, no tap highlight).
+- Ionic owns page-stack transitions under `/ionic`. `app/globals.css` retains the legacy overlay animations, reduced-motion rules, and touch defaults.
 
 ## Tests
 
@@ -151,4 +165,4 @@ Useful suites:
 - `npm run test:integrity`: scheduling, split, date, and data integrity invariants.
 - `tests/*.test.ts`: focused helper and parser tests.
 
-Unknown: there is no browser-driven UI test suite or live test database integration documented in the repo.
+`scripts/verify-ionic.mjs` and `scripts/verify-ionic-logger.mjs` export no-write browser walkthroughs. They accept an isolated Puppeteer page, origin, short-lived session cookies, and artifact directory; the logger walkthrough also needs an existing workout ID for its intercepted success navigation. They intercept server mutations rather than creating test records. Use a dedicated headless browser, never the user's browser profile. The suite covers rollout isolation, phone/desktop themes, completion recovery, failure/retry, and post-save draft cleanup. Browser emulation does not prove physical iPhone keyboard or lock-screen behavior.

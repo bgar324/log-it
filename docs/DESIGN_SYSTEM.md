@@ -2,6 +2,16 @@
 
 Logit uses a restrained monochrome UI. Authenticated screens are calm and sentence-led at the top of each view, dense where the user is scanning rows of workout data.
 
+## Ionic rollout variant
+
+The owner-only `/ionic` application intentionally uses Ionic's adaptive iOS and Material appearance instead of the legacy monochrome controls documented below. Ionic owns tabs, menus, back navigation, sheets, alerts, lists, numeric fields, segmented controls, and drag handles. Keep summaries sentence-led and data rows operational.
+
+`app/ionic/ionic.css` scopes layout and chart-token mappings under `.ionic-app`. Do not import Ionic's global structure reset into the public or legacy app. The shell loads Ionic core styles only with the enabled client and maps the stored theme to `ion-palette-dark`. `useThemePreference()` remains the shared preference writer for both interfaces.
+
+Phone controls retain 44px targets and 16px input text, including Ionic's otherwise shorter iOS segments. Secondary native text uses `--ion-color-medium` for readable contrast. Keep platform control geometry rather than recreating pill or drawer designs on top of Ionic.
+
+The logger has a visible Finish action, an exercise switcher, and an active set editor with native Ionic fields. Its tools use a standard action sheet, not the legacy dial. Save-time interaction locks protect typed values; they do not replace draft recovery. Verify both platform modes headlessly, including real gestures and failed save paths. Physical device keyboard behavior still needs device testing.
+
 ## Platform And Feel
 
 - Logit is a mobile-first product that should feel like a native app, not a responsive website. A dedicated native app costs money we are not spending yet, so the web build stands in for it and must carry the app feel.

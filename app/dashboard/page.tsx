@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { isIonicEnabled } from "@/lib/ionic-feature-flag";
 import { requireSessionUser } from "@/lib/auth";
 import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
 import { getCurrentPacificDate } from "@/lib/workout-utils";
@@ -21,6 +23,7 @@ export default async function DashboardPage({
     requireSessionUser(),
   ]);
   const initialView = normalizeDashboardView(params.view);
+  if (await isIonicEnabled(user)) redirect(`/ionic/${initialView}`);
   const now = getCurrentPacificDate();
   const data = createEmptyDashboardData(user, now);
   const [viewData, benEnabled] = await Promise.all([

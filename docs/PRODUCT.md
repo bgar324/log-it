@@ -2,6 +2,18 @@
 
 Logit is a lightweight workout journal. The durable product direction in the repo is fast workout entry, exercise history, split planning, profile preferences, and progress views without a full social network or coaching platform.
 
+## Owner-only Ionic experience
+
+Accounts enabled by the server-side Ionic flag use an Ionic shell with adaptive platform controls. Everyone else retains the interface described below. The experiment covers all authenticated sections, with public pages unchanged.
+
+The logger works one set at a time. Prior results and predicted placeholders stay beside the active set. `Complete set` validates the entered result, records completion locally, and advances to the next unfinished set. It does not create a server workout. Editing a completed value makes that set incomplete again.
+
+`Finish workout` submits completed sets only. It asks before excluding entered but incomplete sets; Retry follows the same checks. Blank predicted targets never become results by themselves. Bodyweight requires an explicit BW selection. Timed sets remain supported. Existing workouts open with their saved sets completed so unchanged edits preserve them.
+
+Users can switch exercises freely, drag their order, add/remove sets and exercises, edit the title, and reset from the active split. Rest timing is off until selected, with manual start, pause, skip, and extra time controls. Account-scoped drafts preserve completion and position across reloads and navigation. Older recovered dates still require move-to-today or discard.
+
+Ionic account, nutrition, split, history, and progress screens use the existing APIs and product rules. Forms stop accepting edits while saving so the response cannot overwrite newer typing. Split and logger reordering use Ionic's drag handles. History also exposes `Older workouts`, since a short list cannot trigger infinite scrolling.
+
 ## Core Behaviors
 
 - Users register and sign in with username/password credentials.
