@@ -13,6 +13,11 @@ import {
   formatWeightWithUnit,
 } from "@/lib/weight-unit";
 import { formatDatabaseDateLabel } from "@/lib/workout-utils";
+import { isWorkspaceEnabled } from "@/lib/workspace-feature-flag";
+import { WorkspaceFrame } from "@/app/components/workspace-frame";
+import { WorkspaceWorkoutDetail } from "@/app/workspace/details/workspace-workout-detail";
+import { WorkspaceWorkoutDetailActions } from "@/app/workspace/details/workspace-workout-detail-actions";
+import { loadWorkspaceWorkoutDetail } from "@/app/workspace/details/workspace-workout-detail.data";
 import { WorkoutDetailActions } from "./workout-detail-actions";
 import { styles } from "./workout-detail.styles";
 
@@ -34,6 +39,38 @@ export default async function WorkoutDetailPage({
   const { workoutId } = await params;
   const user = await requireSessionUser();
   if (await isIonicEnabled(user)) redirect(`/ionic/workouts/${encodeURIComponent(workoutId)}`);
+
+  // The workspace design owns the whole authenticated frame, so it returns
+  // before the legacy screen is built rather than being swapped inside it. It
+  // also reads the same projection the detail sheet's GET handler returns, so
+  // a preview and the page it previews cannot disagree.
+  if (isWorkspaceEnabled(user)) {
+    const [detail, benEnabled] = await Promise.all([
+      loadWorkspaceWorkoutDetail(user.id, workoutId, user.preferredWeightUnit),
+      isBenFeatureEnabled(user),
+    ]);
+
+    if (!detail) {
+      notFound();
+    }
+
+    return (
+      <WorkspaceFrame
+        activeView="workouts"
+        benEnabled={benEnabled}
+        backHref="/dashboard?view=workouts"
+        accessory={
+          <WorkspaceWorkoutDetailActions
+            editHref={detail.editHref}
+            workoutId={detail.id}
+            workoutExport={detail.exportText}
+          />
+        }
+      >
+        <WorkspaceWorkoutDetail detail={detail} />
+      </WorkspaceFrame>
+    );
+  }
 
   const [workout, benEnabled] = await Promise.all([
     prisma.workoutLog.findFirst({

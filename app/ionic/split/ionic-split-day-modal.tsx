@@ -26,16 +26,16 @@ import {
 import { addOutline, swapVerticalOutline, trashOutline } from "ionicons/icons";
 import { useState } from "react";
 import { exerciseSuggestionKey } from "@/app/dashboard/split-manager.shared";
+import type { SplitLibraryState } from "@/app/hooks/use-split-library-state";
 import {
   getSplitWeekdayLabel,
   isRestDayWorkoutTypeSlug,
   isSplitWeekday,
 } from "@/lib/workout-splits/shared";
-import type { IonicSplitState } from "./use-ionic-split-state";
 
 type IonicSplitDayModalProps = {
   isOpen: boolean;
-  state: IonicSplitState;
+  state: SplitLibraryState;
   onClose: () => void;
 };
 

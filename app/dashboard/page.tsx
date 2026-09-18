@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { isIonicEnabled } from "@/lib/ionic-feature-flag";
+import { isWorkspaceEnabled } from "@/lib/workspace-feature-flag";
 import { requireSessionUser } from "@/lib/auth";
 import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
 import { getCurrentPacificDate } from "@/lib/workout-utils";
@@ -24,6 +25,10 @@ export default async function DashboardPage({
   ]);
   const initialView = normalizeDashboardView(params.view);
   if (await isIonicEnabled(user)) redirect(`/ionic/${initialView}`);
+  const workspaceEnabled = isWorkspaceEnabled(user);
+  if (workspaceEnabled && initialView === "dashboard") redirect("/workouts/new");
+  const benFlag = isBenFeatureEnabled(user);
+  if (workspaceEnabled && initialView === "nutrition" && await benFlag) redirect("/workouts/new");
   const now = getCurrentPacificDate();
   const data = createEmptyDashboardData(user, now);
   const [viewData, benEnabled] = await Promise.all([
@@ -33,7 +38,7 @@ export default async function DashboardPage({
       user.preferredWeightUnit,
       now,
     ),
-    isBenFeatureEnabled(user),
+    benFlag,
   ]);
 
   return (

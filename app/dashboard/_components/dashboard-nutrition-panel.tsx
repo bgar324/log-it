@@ -35,7 +35,7 @@ type NutritionResponse =
       error?: string;
     };
 
-type DashboardNutritionPanelProps = {
+export type DashboardNutritionPanelProps = {
   nutrition: NutritionData;
   weightUnit: WeightUnit;
   onNutritionChange: (nutrition: NutritionData) => void;

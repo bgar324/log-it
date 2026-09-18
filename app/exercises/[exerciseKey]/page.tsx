@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
 import { requireSessionUser } from "@/lib/auth";
 import { isIonicEnabled } from "@/lib/ionic-feature-flag";
+import { isWorkspaceEnabled } from "@/lib/workspace-feature-flag";
 import { AppShell } from "@/app/components/app-nav";
 import { appNavUserFromSession } from "@/app/components/app-nav.user";
 import { navStyles } from "@/app/components/app-nav.styles";
 import { isBenFeatureEnabled } from "@/lib/posthog-feature-flags";
 import { BackButton } from "@/app/components/back-button";
+import { WorkspaceFrame } from "@/app/components/workspace-frame";
+import { WorkspaceExerciseDetail } from "@/app/workspace/details/workspace-exercise-detail";
+import { toWorkspaceExerciseDetail } from "@/app/workspace/details/workspace-exercise-detail.data";
 import { ExerciseDetailChart } from "./exercise-detail-chart";
 import { loadExerciseDetailPageData } from "./exercise-detail.data";
 import { SessionBreakdownList } from "./session-breakdown-list";
@@ -22,7 +26,22 @@ export default async function ExerciseDetailPage({
   const user = await requireSessionUser();
   if (await isIonicEnabled(user)) redirect(`/ionic/exercises/${encodeURIComponent(rawExerciseKey)}`);
   const data = await loadExerciseDetailPageData(rawExerciseKey);
+  const workspaceEnabled = isWorkspaceEnabled(data.user);
   const benEnabled = await isBenFeatureEnabled(data.user);
+
+  // The workspace design owns the whole authenticated frame, so it returns
+  // before the legacy screen is built rather than being swapped inside it.
+  if (workspaceEnabled) {
+    return (
+      <WorkspaceFrame
+        activeView="progress"
+        benEnabled={benEnabled}
+        backHref="/dashboard?view=progress"
+      >
+        <WorkspaceExerciseDetail detail={toWorkspaceExerciseDetail(data)} />
+      </WorkspaceFrame>
+    );
+  }
 
   const screen = (
     <main className={styles.shell}>

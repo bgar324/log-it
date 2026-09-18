@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "./components/workspace-theme.css";
 
 :root {
   color-scheme: light;

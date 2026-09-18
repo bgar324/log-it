@@ -1,3 +1,5 @@
+import type { WeightUnit } from "@/lib/weight-unit";
+
 export type ExerciseSetDraft = {
   id: string;
   reps: string;
@@ -56,6 +58,34 @@ export type ExerciseInsightState = {
   lookupKey?: string;
   data?: ExerciseInsight;
   error?: string;
+};
+
+// One exercise as the logger hands it to a view: the draft row, the history
+// and prediction that describe it, and every callback that edits it. Both the
+// legacy card and the workspace block render exactly this, so the controller
+// builds one list instead of two shapes that can drift apart.
+export type WorkoutLoggerExerciseEntry = {
+  exercise: ExerciseDraft;
+  exerciseIndex: number;
+  canRemoveExercise: boolean;
+  searchResults: string[];
+  insightState?: ExerciseInsightState;
+  weightUnit: WeightUnit;
+  weightUnitLabel: string;
+  bodyWeightDisplay: number | null;
+  showOptionalSetControls: boolean;
+  onAddSet: () => void;
+  onApplySearchResult: (suggestion: string) => void;
+  onExerciseNameBlur: (value: string) => Promise<void> | void;
+  onExerciseNameChange: (value: string) => void;
+  onExerciseNameFocus: (value: string) => void;
+  onRemoveExercise: () => void;
+  onRemoveSet: (setId: string) => void;
+  onUpdateSet: <K extends keyof ExerciseSetDraft>(
+    setId: string,
+    field: K,
+    value: ExerciseSetDraft[K],
+  ) => void;
 };
 
 export type WorkoutDraftSnapshot = {

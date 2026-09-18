@@ -7,14 +7,9 @@ import {
   PopoverTrigger,
 } from "@/app/components/ui/popover";
 import { useState, type PointerEvent } from "react";
-import type { WeightUnit } from "@/lib/weight-unit";
+import type { WorkoutLoggerExerciseEntry } from "../workout-logger.types";
 import { styles } from "../workout-logger.styles";
-import {
-  formatCompareDayLabel,
-  type ExerciseDraft,
-  type ExerciseInsightState,
-  type ExerciseSetDraft,
-} from "../workout-logger.utils";
+import { formatCompareDayLabel } from "../workout-logger.utils";
 import { WorkoutLoggerSetsEditor } from "./workout-logger-sets-editor";
 import { WorkoutLoggerConfirmDialog } from "./workout-logger-confirm-dialog";
 
@@ -22,29 +17,9 @@ function keepCurrentFocus(event: PointerEvent<HTMLElement>) {
   event.preventDefault();
 }
 
-export type WorkoutLoggerExerciseCardProps = {
-  exercise: ExerciseDraft;
-  exerciseIndex: number;
-  canRemoveExercise: boolean;
-  searchResults: string[];
-  insightState?: ExerciseInsightState;
-  weightUnit: WeightUnit;
-  weightUnitLabel: string;
-  bodyWeightDisplay: number | null;
-  showOptionalSetControls: boolean;
-  onAddSet: () => void;
-  onApplySearchResult: (suggestion: string) => void;
-  onExerciseNameBlur: (value: string) => Promise<void> | void;
-  onExerciseNameChange: (value: string) => void;
-  onExerciseNameFocus: (value: string) => void;
-  onRemoveExercise: () => void;
-  onRemoveSet: (setId: string) => void;
-  onUpdateSet: <K extends keyof ExerciseSetDraft>(
-    setId: string,
-    field: K,
-    value: ExerciseSetDraft[K],
-  ) => void;
-};
+// The legacy card renders exactly what the controller hands every view, so it
+// takes the shared entry rather than a second copy of the same shape.
+export type WorkoutLoggerExerciseCardProps = WorkoutLoggerExerciseEntry;
 
 export function WorkoutLoggerExerciseCard({
   exercise,

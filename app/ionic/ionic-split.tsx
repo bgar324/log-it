@@ -27,12 +27,15 @@ import {
 import { useCallback, useState } from "react";
 import type { DashboardClientData } from "@/app/dashboard/dashboard-types";
 import {
+  useSplitLibraryState,
+  type SplitLibraryNoticeTone,
+} from "@/app/hooks/use-split-library-state";
+import {
   getSplitWeekdayLabel,
   isRestDayWorkoutTypeSlug,
   type SplitWeekdayValue,
 } from "@/lib/workout-splits/shared";
 import { IonicSplitDayModal } from "./split/ionic-split-day-modal";
-import { useIonicSplitState } from "./split/use-ionic-split-state";
 
 export type IonicSplitProps = {
   data: DashboardClientData;
@@ -52,7 +55,7 @@ export function IonicSplit({ data, onRefresh }: IonicSplitProps) {
   const [isReorderingDays, setIsReorderingDays] = useState(false);
 
   const notify = useCallback(
-    (message: string, tone: "success" | "error") => {
+    (message: string, tone: SplitLibraryNoticeTone) => {
       void presentToast({
         buttons: [{ text: "Close", role: "cancel" }],
         color: tone === "error" ? "danger" : undefined,
@@ -64,7 +67,7 @@ export function IonicSplit({ data, onRefresh }: IonicSplitProps) {
     [presentToast],
   );
 
-  const state = useIonicSplitState({
+  const state = useSplitLibraryState({
     initialSplit: data.split,
     initialSplits: data.splits,
     notify,

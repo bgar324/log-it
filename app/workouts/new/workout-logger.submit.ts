@@ -24,13 +24,32 @@ type BuildPayloadResult =
       value: WorkoutLoggerPayload;
     };
 
+// A date the database can store: the logger's own field format, so a cleared
+// or half-typed value is caught before it reaches the API.
+const WORKOUT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 export function buildWorkoutLoggerPayload(options: {
   exercises: ExerciseDraft[];
   title: string;
   workoutType: string;
   performedAt: string;
   weightUnit: WeightUnit;
+  // The date and workout-type fields can live behind a sheet, and a closed
+  // sheet has no DOM — so `required` on those inputs never fires. Every
+  // caller builds its payload here, which makes this the one place the check
+  // cannot be skipped by where a field happens to be rendered. The type is
+  // only demanded when the caller actually has types to choose from:
+  // untyped and bodyweight-only histories are valid workouts.
+  requireWorkoutType?: boolean;
 }): BuildPayloadResult {
+  if (!WORKOUT_DATE_PATTERN.test(options.performedAt.trim())) {
+    return { error: "Choose the date this workout happened." };
+  }
+
+  if (options.requireWorkoutType && options.workoutType.trim() === "") {
+    return { error: "Choose the workout type before saving." };
+  }
+
   const normalizedExercises = options.exercises
     .map((exercise) => {
       const name = normalizeExerciseDisplayName(toSafeString(exercise.name));

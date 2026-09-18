@@ -30,19 +30,21 @@ Protected product pages use `requireSessionUser()`:
 - `/ionic/[[...path]]`: dormant Ionic experiment, disabled in production. Its code remains behind the server flag.
 - `/api/ionic`: private, uncached GET loader for dashboard views, new/edit logger data, workout details, and exercise details. It requires a session and the Ionic rollout flag.
 
-## Focused logger experiment
+## Owner-only authenticated workspace
 
-`FOCUSED_LOGGER_USER_IDS` enables the exercise-focused layout on the existing `/workouts/new` and `/workouts/[workoutId]/edit` routes. `lib/focused-logger-feature-flag.ts` checks immutable account IDs on the server. It is independent of the disabled Ionic flag and the existing PostHog `Ben` flag. Next.js keeps all routing ownership.
+`WORKSPACE_ENABLED_USER_IDS` enables the Nova workspace across authenticated routes. `lib/workspace-feature-flag.ts` checks immutable account IDs on the server. Public pages and unflagged accounts keep the existing interface. The retired focused-logger flag is no longer read; Ionic remains separately disabled.
 
-`WorkoutLogger` remains the controller for draft state, comparison reads, payloads, and mutations. Enabled users dynamically load `FocusedWorkoutLogger`, which renders one expanded exercise and compact rows for the others. Both layouts share the existing set editor and metadata component; their focused variants use shared Base UI controls. No new workout API or stored completion field is involved.
+Protected layouts await `loadAuthenticatedDesign()` and render `WorkspaceDesignProvider` directly, supplying rollout and `Ben` capabilities to loading and error states. The theme wrapper stays outside the interactive navigation provider; the frame supplies post-commit navigation synchronization without a route/search subscription suspending that provider during streamed hydration. Session and capability reads use request-local React caching. Next.js remains the only routing owner. The enabled default dashboard entry opens `/workouts/new`; visible tabs lead to Workout, History, Progress, and Plan. Profile, Settings, and POST signout live in the account menu. Nutrition remains capability-gated.
 
-`app/components/ui/{button,input,sheet,confirm-dialog}.tsx` provides Base UI primitives styled with the existing action canon and theme tokens. `ExerciseOrderSheet` uses dnd-kit inside the shared sheet and commits draft order only through Save order. The legacy reorder component remains unchanged while the owner tries this prototype.
+`app/components/workspace-ui/` contains the shared Radix Nova primitives. `workspace-theme.css` scopes neutral tokens to documents containing `[data-workspace-design="nova"]`, including portalled overlays. Existing charts use `workspace-chart-theme` to adapt the legacy text-token names. `scripts/sync-workspace-ui.mjs` reproduces the primitive import from the reference workspace; its state variants require the matching Tailwind 4.3 compiler.
 
-`useWorkoutLoggerDraft` flushes real edits on unmount as well as page hide. Applied-seed tracking makes recovery safe under StrictMode replay; an authoritative refresh cannot replace dirty or recovered work. A live unit change converts the current entered loads instead of reinterpreting their numbers. Pending saves lock the form and abort on unmount, preserving the draft when the client cannot confirm the result.
+The views in `app/workspace/` reuse existing data loaders, controllers, and mutation services. History and exercise links open detail sheets without replacing the list. Direct URLs remain pages. Both use the same serializable projections through private, user-scoped `/api/workspace/workouts/[workoutId]` and `/api/workspace/exercises/[exerciseKey]` reads.
 
-`useRestTimer` stores a deadline while running and remaining duration while paused. Interval ticks, visibility changes, and page-show events derive the display from the wall clock, so suspended browser callbacks do not extend rest time.
+`WorkoutLogger` still owns draft recovery, predictions, payloads, and saves. Its workspace renderer shows every exercise and set, with inline dnd-kit ordering and no completion state. A create draft is written only after edits and cleared after confirmed success. Edit save/discard never deletes an unrelated create draft. Dirty or recovered work survives server refresh, StrictMode replay, and unit conversion.
 
-`scripts/verify-focused-logger.mjs` exports a headless Puppeteer walkthrough with service-worker bypass and mutation interception. It checks flag isolation, switching/editing, sheet focus retention, deadline recovery, responsive Save reachability, failed save preservation, and successful-save draft cleanup. It never creates a test workout.
+`WorkspaceNavigationProvider` guards dirty workout and plan edits, including account navigation and browser traversal. Confirming discard resets the editor before navigating, rather than relying on unmount. Modern browsers use the Navigation API; older browsers add a dirty-only history sentinel and keep clean navigation client-side. That legacy sentinel replaces forward history when editing begins. Document unload uses the native browser warning. Plan activation requires saved edits.
+
+`use-split-library-state.ts` owns shared split editing and server-confirmed discard snapshots. The dormant Ionic views consume the same hook rather than maintaining a second copy.
 
 ## Ionic authenticated app
 
@@ -58,7 +60,7 @@ Ionic may retain hidden pages. `use-ionic-resource.ts` reloads active views on e
 
 The Ionic screens reuse existing secured mutation endpoints and business services. No database schema or workout persistence format changes. Completion is draft-only state; only completed sets reach the existing workout payload.
 
-## App Chrome
+## Legacy App Chrome
 
 `app/components/app-nav.tsx` owns every navigation surface of the authenticated app and is built as two layers:
 

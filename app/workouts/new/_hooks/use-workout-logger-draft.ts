@@ -38,10 +38,12 @@ type DraftState = {
   performedAt: string;
   exercises: ExerciseDraft[];
   isRecoveredDraft: boolean;
+  hasUnsavedEdits: boolean;
 };
 
 type DraftAction =
   | { type: "replace"; value: DraftState }
+  | { type: "mark_saved" }
   | { type: "set_title"; value: string }
   | { type: "set_workout_type"; value: string }
   | { type: "set_performed_at"; value: string }
@@ -54,14 +56,16 @@ function draftStateReducer(state: DraftState, action: DraftAction): DraftState {
   switch (action.type) {
     case "replace":
       return action.value;
+    case "mark_saved":
+      return { ...state, hasUnsavedEdits: false };
     case "set_title":
-      return { ...state, title: action.value };
+      return { ...state, title: action.value, hasUnsavedEdits: true };
     case "set_workout_type":
-      return { ...state, workoutType: action.value };
+      return { ...state, workoutType: action.value, hasUnsavedEdits: true };
     case "set_performed_at":
-      return { ...state, performedAt: action.value };
+      return { ...state, performedAt: action.value, hasUnsavedEdits: true };
     case "update_exercises":
-      return { ...state, exercises: action.updater(state.exercises) };
+      return { ...state, exercises: action.updater(state.exercises), hasUnsavedEdits: true };
     default:
       return state;
   }
@@ -86,6 +90,11 @@ export function useWorkoutLoggerDraft({
   // stamped with today's date, and that unwanted draft pinned the logger to a
   // past day on every later visit.
   const hasUnsavedEditsRef = useRef(false);
+  // The ref is what the autosave and the `pagehide` flush read, because both
+  // need the answer synchronously. The state is the same fact for rendering:
+  // edit mode has no autosaved draft, so a view has to be able to warn before
+  // the user walks away from typed changes.
+
   const autosaveTimeoutRef = useRef<number | null>(null);
   const [draftState, dispatch] = useReducer(
     draftStateReducer,
@@ -96,6 +105,7 @@ export function useWorkoutLoggerDraft({
       performedAt: state.performedAt,
       exercises: state.exercises,
       isRecoveredDraft: false,
+      hasUnsavedEdits: false,
     }),
   );
   const latestDraftStateRef = useRef(draftState);
@@ -113,6 +123,7 @@ export function useWorkoutLoggerDraft({
         const current = latestDraftStateRef.current;
         dispatch({ type: "replace", value: {
           ...current,
+          hasUnsavedEdits: true,
           exercises: current.exercises.map(exercise => ({
             ...exercise,
             sets: exercise.sets.map(set => ({
@@ -134,6 +145,7 @@ export function useWorkoutLoggerDraft({
         performedAt: initialState.performedAt,
         exercises: initialState.exercises,
         isRecoveredDraft: false,
+        hasUnsavedEdits: false,
       },
     });
     idCounterRef.current = initialState.counters;
@@ -162,6 +174,7 @@ export function useWorkoutLoggerDraft({
           performedAt: recoveredState.performedAt,
           exercises: recoveredState.exercises,
           isRecoveredDraft: true,
+          hasUnsavedEdits: false,
         },
       });
       idCounterRef.current = recoveredState.counters;
@@ -258,8 +271,9 @@ export function useWorkoutLoggerDraft({
   // every writer that could put it back.
   function markSaved() {
     hasUnsavedEditsRef.current = false;
+    dispatch({ type: "mark_saved" });
     cancelPendingAutosave();
-    window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    if (!isEditMode) window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
   }
 
   // Throw the recovered draft away and fall back to what the server seeded for
@@ -268,7 +282,7 @@ export function useWorkoutLoggerDraft({
   function discardDraft() {
     hasUnsavedEditsRef.current = false;
     cancelPendingAutosave();
-    window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    if (!isEditMode) window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
     idCounterRef.current = { ...initialState.counters };
     dispatch({
       type: "replace",
@@ -278,6 +292,7 @@ export function useWorkoutLoggerDraft({
         performedAt: initialState.performedAt,
         exercises: initialState.exercises,
         isRecoveredDraft: false,
+        hasUnsavedEdits: false,
       },
     });
   }
@@ -306,6 +321,8 @@ export function useWorkoutLoggerDraft({
   }
 
   function setExerciseName(exerciseId: string, name: string) {
+    const current = latestDraftStateRef.current.exercises.find(exercise => exercise.id === exerciseId);
+    if (!current || current.name === name) return;
     updateExercise(exerciseId, (exercise) => ({
       ...exercise,
       name,
@@ -409,6 +426,7 @@ export function useWorkoutLoggerDraft({
     discardDraft,
     exercises: draftState.exercises,
     hasRecoveredDraft: draftState.isRecoveredDraft,
+    hasUnsavedEdits: draftState.hasUnsavedEdits,
     markSaved,
     performedAt: draftState.performedAt,
     reorderExercisesById,

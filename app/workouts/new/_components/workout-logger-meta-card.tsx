@@ -12,13 +12,6 @@ export type WorkoutLoggerMetaCardProps = {
   onPerformedAtChange?: (value: string) => void;
   onWorkoutTypeChange?: (value: string) => void;
   showEditFields?: boolean;
-  /**
-   * `focused` drops the card frame and the phone-only hiding, because in the
-   * focused logger these fields live inside the tools sheet, which is already
-   * a surface and is only opened deliberately. Which fields appear is still
-   * `showEditFields`, so create mode keeps having no date field.
-   */
-  variant?: "legacy" | "focused";
 };
 
 export function WorkoutLoggerMetaCard({
@@ -30,22 +23,15 @@ export function WorkoutLoggerMetaCard({
   onPerformedAtChange,
   onWorkoutTypeChange,
   showEditFields = false,
-  variant = "legacy",
 }: WorkoutLoggerMetaCardProps) {
   const latestAllowedDate = formatDatabaseDateValue(getCurrentPacificDate());
-  const isFocused = variant === "focused";
-  const sectionClassName = isFocused
-    ? "flex flex-col gap-[0.55rem]"
-    : `${styles.card} ${!showEditFields ? styles.mobileHiddenCard : ""}`;
-  const fieldsClassName =
-    isFocused || !showEditFields ? styles.singleMetaField : styles.metaGrid;
+  const sectionClassName = `${styles.card} ${!showEditFields ? styles.mobileHiddenCard : ""}`;
+  const fieldsClassName = showEditFields ? styles.metaGrid : styles.singleMetaField;
   return (
     <>
       <section className={sectionClassName}>
         <div className={fieldsClassName}>
-          <div
-            className={`${styles.field} ${isFocused ? "" : styles.workoutTitleField}`}
-          >
+          <div className={`${styles.field} ${styles.workoutTitleField}`}>
             <label className={styles.label} htmlFor="workout-title">
               Workout title
             </label>

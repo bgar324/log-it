@@ -41,7 +41,7 @@ const SIDEBAR_ITEMS: Array<{
 ];
 const BEN_SIDEBAR_ITEMS = SIDEBAR_ITEMS.filter((item) => item.view !== "nutrition");
 
-type DashboardShellProps = {
+export type DashboardShellProps = {
   activeView: DashboardView;
   title: string;
   user: AppNavUser;

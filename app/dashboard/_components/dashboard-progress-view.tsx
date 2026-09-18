@@ -27,7 +27,7 @@ const EXERCISE_SORT_OPTIONS = [
   { value: "sessions-asc", label: "Fewest sessions" },
 ] as const satisfies ReadonlyArray<{ value: ExerciseSortMode; label: string }>;
 
-type DashboardProgressViewProps = {
+export type DashboardProgressViewProps = {
   progress: DashboardClientData["progress"];
   exercises: DashboardClientData["exercises"];
   weightUnit: WeightUnit;

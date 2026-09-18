@@ -32,6 +32,20 @@ import {
 import { useDashboardProfileForm } from "./_hooks/use-dashboard-profile-form";
 import { useDashboardProgress } from "./_hooks/use-dashboard-progress";
 import { useDashboardTodayPlan } from "./_hooks/use-dashboard-today-plan";
+import { useWorkspaceDesign } from "@/app/components/workspace-design-context";
+import { WorkspaceDashboardShell } from "@/app/components/workspace-frame";
+import { WorkspaceViewError, WorkspaceViewSkeleton } from "@/app/components/workspace-view-state";
+import { WorkspaceOverviewView } from "@/app/workspace/views/workspace-overview-view";
+import { WorkspaceWorkoutsView, WorkspaceWorkoutFiltersControl } from "@/app/workspace/views/workspace-workouts-view";
+import { WorkspaceProgressView } from "@/app/workspace/views/workspace-progress-view";
+import { WorkspaceProfileView } from "@/app/workspace/views/workspace-profile-view";
+import { WorkspaceSettingsView } from "@/app/workspace/views/workspace-settings-view";
+import { WorkspaceNutritionPanel } from "@/app/workspace/views/workspace-nutrition-panel";
+import { WorkspaceSplitManager } from "@/app/workspace/split/workspace-split-manager";
+
+function LegacyViewError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return <div className={styles.panel}><p className={styles.empty}>{message}</p><button type="button" className={styles.retryButton} onClick={onRetry}>Retry</button></div>;
+}
 
 type DashboardClientProps = {
   initialView: DashboardView;
@@ -104,6 +118,19 @@ export function DashboardClient({
   benEnabled,
 }: DashboardClientProps) {
   const router = useRouter();
+  const workspaceEnabled = useWorkspaceDesign();
+  const Shell = workspaceEnabled ? WorkspaceDashboardShell : DashboardShell;
+  const OverviewView = workspaceEnabled ? WorkspaceOverviewView : DashboardOverviewView;
+  const WorkoutsView = workspaceEnabled ? WorkspaceWorkoutsView : DashboardWorkoutsView;
+  const FiltersControl = workspaceEnabled ? WorkspaceWorkoutFiltersControl : DashboardWorkoutFiltersControl;
+  const ProgressView = workspaceEnabled ? WorkspaceProgressView : DashboardProgressView;
+  const NutritionPanel = workspaceEnabled ? WorkspaceNutritionPanel : DashboardNutritionPanel;
+  const SplitView = workspaceEnabled ? WorkspaceSplitManager : SplitManager;
+  const ProfileView = workspaceEnabled ? WorkspaceProfileView : DashboardProfileView;
+  const SettingsView = workspaceEnabled ? WorkspaceSettingsView : DashboardSettingsView;
+  const ViewSkeleton = workspaceEnabled ? WorkspaceViewSkeleton : DashboardViewSkeleton;
+  const ViewError = workspaceEnabled ? WorkspaceViewError : LegacyViewError;
+  const viewClassName = workspaceEnabled ? "space-y-6" : "view-transition-shell";
   const [activeView, setActiveView] = useState(initialView);
   const [dashboardData, setDashboardData] = useState(data);
   const [loadedViews, setLoadedViews] = useState<ReadonlySet<DashboardView>>(
@@ -136,8 +163,9 @@ export function DashboardClient({
   });
   const progressState = useDashboardProgress(dashboardData.exercises);
   const todayPlan = useDashboardTodayPlan(dashboardData.overview.todayPlan);
-  const activeViewIsLoading = loadingViews.has(activeView);
   const activeViewError = viewErrors[activeView] ?? null;
+  const activeViewIsLoading = loadingViews.has(activeView) ||
+    (!loadedViews.has(activeView) && activeView !== "profile" && activeView !== "settings" && !activeViewError);
   const navUser = useMemo<AppNavUser>(() => {
     const firstName = (profileFormState.profile.firstName ?? "").trim();
     const lastName = (profileFormState.profile.lastName ?? "").trim();
@@ -396,6 +424,10 @@ export function DashboardClient({
       const view = normalizeDashboardView(
         new URL(window.location.href).searchParams.get("view") ?? undefined,
       );
+      if (workspaceEnabled && (view === "dashboard" || (benEnabled && view === "nutrition"))) {
+        router.replace("/workouts/new");
+        return;
+      }
 
       setActiveView(view);
     }
@@ -404,9 +436,13 @@ export function DashboardClient({
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [loadViewData]);
+  }, [loadViewData, workspaceEnabled, benEnabled, router]);
 
   function navigateToView(view: DashboardView) {
+    if (workspaceEnabled && (view === "dashboard" || (benEnabled && view === "nutrition"))) {
+      router.push("/workouts/new");
+      return;
+    }
     if (view === activeView) {
       return;
     }
@@ -428,7 +464,7 @@ export function DashboardClient({
   }
 
   return (
-    <DashboardShell
+    <Shell
       activeView={activeView}
       title={VIEW_TITLES[activeView]}
       user={navUser}
@@ -438,10 +474,10 @@ export function DashboardClient({
       onNavigate={navigateToView}
       renderHeaderAccessory={() =>
         activeView === "workouts" &&
-        (dashboardData.workoutHistory.totalCount > 0 ||
+        (workspaceEnabled || dashboardData.workoutHistory.totalCount > 0 ||
           workoutTypes.length > 0 ||
           hasWorkoutFilters) ? (
-          <DashboardWorkoutFiltersControl
+          <FiltersControl
             filters={workoutFilters}
             workoutTypes={workoutTypes}
             filteredCount={filteredWorkoutCount}
@@ -453,22 +489,13 @@ export function DashboardClient({
       }
     >
       {activeView === "dashboard" ? (
-        <div key="dashboard" className="view-transition-shell">
+        <div key="dashboard" className={viewClassName}>
           {activeViewError ? (
-            <div className={styles.panel}>
-              <p className={styles.empty}>{activeViewError}</p>
-              <button
-                type="button"
-                className={styles.retryButton}
-                onClick={() => void loadViewData("dashboard", { showError: true, showLoading: true })}
-              >
-                Retry
-              </button>
-            </div>
+            <ViewError message={activeViewError} onRetry={() => void loadViewData("dashboard", { showError: true, showLoading: true })} />
           ) : activeViewIsLoading && !loadedViews.has("dashboard") ? (
-            <DashboardViewSkeleton kind="dashboard" />
+            <ViewSkeleton kind="dashboard" />
           ) : (
-            <DashboardOverviewView
+            <OverviewView
               overview={dashboardData.overview}
               todayPlan={todayPlan}
               greetingName={greetingName}
@@ -480,8 +507,8 @@ export function DashboardClient({
       ) : null}
 
       {activeView === "workouts" ? (
-        <div key="workouts" className="view-transition-shell">
-          <DashboardWorkoutsView
+        <div key="workouts" className={viewClassName}>
+          <WorkoutsView
             workoutMonths={dashboardData.workoutMonths}
             lifetime={dashboardData.workoutHistory.lifetime}
             displayWeightUnit={displayWeightUnit}
@@ -510,8 +537,8 @@ export function DashboardClient({
       ) : null}
 
       {activeView === "progress" ? (
-        <div key="progress" className="view-transition-shell">
-          <DashboardProgressView
+        <div key="progress" className={viewClassName}>
+          <ProgressView
             progress={dashboardData.progress}
             exercises={dashboardData.exercises}
             weightUnit={displayWeightUnit}
@@ -524,22 +551,13 @@ export function DashboardClient({
       ) : null}
 
       {activeView === "nutrition" ? (
-        <div key="nutrition" className="view-transition-shell">
+        <div key="nutrition" className={viewClassName}>
           {activeViewError ? (
-            <div className={styles.panel}>
-              <p className={styles.empty}>{activeViewError}</p>
-              <button
-                type="button"
-                className={styles.retryButton}
-                onClick={() => void loadViewData("nutrition", { showError: true, showLoading: true })}
-              >
-                Retry
-              </button>
-            </div>
+            <ViewError message={activeViewError} onRetry={() => void loadViewData("nutrition", { showError: true, showLoading: true })} />
           ) : activeViewIsLoading && !loadedViews.has("nutrition") ? (
-            <DashboardViewSkeleton kind="nutrition" />
+            <ViewSkeleton kind="nutrition" />
           ) : (
-            <DashboardNutritionPanel
+            <NutritionPanel
               nutrition={dashboardData.nutrition}
               weightUnit={displayWeightUnit}
               onNutritionChange={handleNutritionChange}
@@ -551,24 +569,15 @@ export function DashboardClient({
       {activeView === "split" ? (
         <div
           key="split"
-          className="view-transition-shell min-[900px]:h-[calc(100dvh-5.35rem)] min-[900px]:min-h-0 min-[900px]:overflow-hidden"
+          className={workspaceEnabled ? "space-y-6" : "view-transition-shell min-[900px]:h-[calc(100dvh-5.35rem)] min-[900px]:min-h-0 min-[900px]:overflow-hidden"}
         >
-          <section className={`${styles.plainSection} min-[900px]:h-full`}>
+          <section className={workspaceEnabled ? "min-w-0" : `${styles.plainSection} min-[900px]:h-full`}>
             {activeViewError ? (
-              <div className={styles.panel}>
-                <p className={styles.empty}>{activeViewError}</p>
-                <button
-                  type="button"
-                  className={styles.retryButton}
-                  onClick={() => void loadViewData("split", { showError: true, showLoading: true })}
-                >
-                  Retry
-                </button>
-              </div>
+              <ViewError message={activeViewError} onRetry={() => void loadViewData("split", { showError: true, showLoading: true })} />
             ) : activeViewIsLoading && !loadedViews.has("split") ? (
-              <DashboardViewSkeleton kind="split" />
+              <ViewSkeleton kind="split" />
             ) : (
-              <SplitManager
+              <SplitView
                 initialSplit={dashboardData.split}
                 initialSplits={dashboardData.splits}
               />
@@ -578,16 +587,16 @@ export function DashboardClient({
       ) : null}
 
       {activeView === "profile" ? (
-        <div key="profile" className="view-transition-shell">
-          <DashboardProfileView state={profileFormState} />
+        <div key="profile" className={viewClassName}>
+          <ProfileView state={profileFormState} />
         </div>
       ) : null}
 
       {activeView === "settings" ? (
-        <div key="settings" className="view-transition-shell">
-          <DashboardSettingsView state={profileFormState} />
+        <div key="settings" className={viewClassName}>
+          <SettingsView state={profileFormState} />
         </div>
       ) : null}
-    </DashboardShell>
+    </Shell>
   );
 }

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { isIonicEnabled } from "@/lib/ionic-feature-flag";
-import { isFocusedLoggerEnabled } from "@/lib/focused-logger-feature-flag";
+import { isWorkspaceEnabled } from "@/lib/workspace-feature-flag";
 import { WorkoutLogger } from "./workout-logger";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -92,7 +92,7 @@ export default async function NewWorkoutPage({
       canLogAnotherWorkoutType={hasSplit}
       analyticsUser={user}
       benEnabled={benEnabled}
-      focusedEnabled={isFocusedLoggerEnabled(user)}
+      workspaceEnabled={isWorkspaceEnabled(user)}
       returnHref={returnHref}
     />
   );

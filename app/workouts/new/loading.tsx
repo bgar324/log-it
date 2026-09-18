@@ -1,3 +1,7 @@
+"use client";
+
+import { useWorkspaceDesign } from "@/app/components/workspace-design-context";
+import { WorkspaceLoggerSkeleton } from "@/app/workspace/logger/workspace-logger-skeleton";
 import { styles } from "./workout-logger.styles";
 
 // The app's one skeleton fill, kept verbatim so a logger block and a dashboard
@@ -33,7 +37,19 @@ function ExerciseCardSkeleton() {
   );
 }
 
+/**
+ * The fallback has to agree with the logger that replaces it, and which logger
+ * that is depends on the workspace flag. A Suspense fallback cannot await
+ * anything, so the answer comes from the design context the authenticated
+ * layout already provides rather than from a session lookup here.
+ */
 export default function NewWorkoutLoading() {
+  const isWorkspaceDesign = useWorkspaceDesign();
+
+  if (isWorkspaceDesign) {
+    return <WorkspaceLoggerSkeleton />;
+  }
+
   return (
     <main className={styles.loggerShell}>
       <section className={styles.loggerStage}>

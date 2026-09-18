@@ -23,7 +23,7 @@ import { SplitDayCard } from "./split-day-card";
 import { useSplitManagerState } from "./_hooks/use-split-manager-state";
 import { getInitialSelectedWeekday } from "./split-manager.shared";
 
-type SplitManagerProps = {
+export type SplitManagerProps = {
   initialSplit: WorkoutSplitTemplate;
   initialSplits: WorkoutSplitTemplate[];
   persistChanges?: boolean;

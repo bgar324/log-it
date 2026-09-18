@@ -10,7 +10,7 @@ const WEIGHT_UNITS: Array<{ value: WeightUnit; label: string }> = [
   { value: "KG", label: "Kilograms" },
 ];
 
-type DashboardSettingsViewProps = {
+export type DashboardSettingsViewProps = {
   state: DashboardProfileFormState;
 };
 

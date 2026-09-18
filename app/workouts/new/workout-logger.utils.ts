@@ -31,6 +31,7 @@ export {
   type ExercisePrediction,
   type PredictedSet,
   type WorkoutDraftSnapshot,
+  type WorkoutLoggerExerciseEntry,
   type WorkoutLoggerInitialData,
   type WorkoutSubmitResponse,
 } from "./workout-logger.types";

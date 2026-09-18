@@ -2,8 +2,6 @@
 
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Input } from "@/app/components/ui/input";
-import { ConfirmDialog } from "@/app/components/ui/confirm-dialog";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { styles } from "../workout-logger.styles";
 import {
@@ -25,7 +23,6 @@ export type WorkoutLoggerSetsEditorProps = {
   weightUnitLabel: string;
   bodyWeightDisplay: number | null;
   showOptionalSetControls: boolean;
-  variant?: "legacy" | "focused";
   onRemoveSet: (setId: string) => void;
   onUpdateSet: <K extends keyof ExerciseSetDraft>(
     setId: string,
@@ -41,11 +38,9 @@ export function WorkoutLoggerSetsEditor({
   weightUnitLabel,
   bodyWeightDisplay,
   showOptionalSetControls,
-  variant = "legacy",
   onRemoveSet,
   onUpdateSet,
 }: WorkoutLoggerSetsEditorProps) {
-  const SetInput = variant === "focused" ? Input : "input";
   const bodyWeightLabel =
     bodyWeightDisplay === null ? null : `${Number(bodyWeightDisplay.toFixed(1))}`;
   const [pendingRemoval, setPendingRemoval] = useState<{
@@ -102,7 +97,7 @@ export function WorkoutLoggerSetsEditor({
                   Weight ({weightUnitLabel})
                 </span>
                 <span className={styles.setWeightControl}>
-                  <SetInput
+                  <input
                     id={`${exercise.id}-${setItem.id}-weight`}
                     aria-label={`Set ${setIndex + 1} weight in ${weightUnitLabel}`}
                     type="text"
@@ -155,7 +150,7 @@ export function WorkoutLoggerSetsEditor({
               </label>
               <label className={`${styles.setField} ${styles.setFieldReps}`}>
                 <span className={styles.setFieldLabel}>Reps</span>
-                <SetInput
+                <input
                   id={`${exercise.id}-${setItem.id}-reps`}
                   aria-label={`Set ${setIndex + 1} reps`}
                   type="text"
@@ -180,7 +175,7 @@ export function WorkoutLoggerSetsEditor({
               {showOptionalSetControls ? (
                 <label className={`${styles.setField} ${styles.setFieldDuration}`}>
                   <span className={styles.setFieldLabel}>Time (sec)</span>
-                  <SetInput
+                  <input
                     id={`${exercise.id}-${setItem.id}-duration`}
                     aria-label={`Set ${setIndex + 1} time in seconds`}
                     type="text"
@@ -227,18 +222,7 @@ export function WorkoutLoggerSetsEditor({
         );
       })}
 
-      {pendingRemoval && variant === "focused" ? (
-        <ConfirmDialog
-          open
-          onOpenChange={open => { if (!open) setPendingRemoval(null); }}
-          title={`Delete set ${pendingRemoval.index + 1}?`}
-          description="This removes the reps, weight, and time entered for this set."
-          cancelLabel="Keep set"
-          confirmLabel="Delete set"
-          destructive
-          onConfirm={handleConfirmRemoveSet}
-        />
-      ) : pendingRemoval ? (
+      {pendingRemoval ? (
         <WorkoutLoggerConfirmDialog
           title={`Delete set ${pendingRemoval.index + 1}?`}
           description="This removes the reps, weight, and time entered for this set."
@@ -248,7 +232,6 @@ export function WorkoutLoggerSetsEditor({
           onConfirm={handleConfirmRemoveSet}
         />
       ) : null}
-
     </div>
   );
 }

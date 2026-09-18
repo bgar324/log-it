@@ -1,6 +1,14 @@
+"use client";
+
 import { AppTabBar } from "@/app/components/app-nav";
 import { navStyles } from "@/app/components/app-nav.styles";
 import { BackButton } from "@/app/components/back-button";
+import {
+  useWorkspaceBenEnabled,
+  useWorkspaceDesign,
+} from "@/app/components/workspace-design-context";
+import { WorkspaceFrame } from "@/app/components/workspace-frame";
+import { WorkspaceWorkoutDetailSkeleton } from "@/app/workspace/details/workspace-detail-skeletons";
 import { styles } from "./workout-detail.styles";
 
 function SkeletonBlock({
@@ -21,7 +29,26 @@ function SetRowSkeleton() {
   );
 }
 
+// The fallback has to draw the same chrome the page draws, or the frame the
+// user is looking at disappears for the length of the fetch. Which chrome that
+// is depends on the design flag, so the fallback reads it too — otherwise the
+// legacy tab bar flashes into the workspace on every detail navigation.
 export default function WorkoutDetailLoading() {
+  const workspaceDesign = useWorkspaceDesign();
+  const benEnabled = useWorkspaceBenEnabled();
+
+  if (workspaceDesign) {
+    return (
+      <WorkspaceFrame
+        activeView="workouts"
+        benEnabled={benEnabled}
+        backHref="/dashboard?view=workouts"
+      >
+        <WorkspaceWorkoutDetailSkeleton />
+      </WorkspaceFrame>
+    );
+  }
+
   return (
     <main className={styles.shell}>
       <section className={`${styles.stage} ${navStyles.mainInset}`}>

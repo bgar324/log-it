@@ -304,6 +304,16 @@ export function useDashboardProfileAvatarCrop({
     setCropOffset((current) => clampCropOffset(current, value));
   }
 
+  function handleCancelCrop() {
+    closeAvatarModal();
+    if (avatarEditorObjectUrlRef.current) {
+      URL.revokeObjectURL(avatarEditorObjectUrlRef.current);
+      avatarEditorObjectUrlRef.current = null;
+    }
+    setAvatarEditorSourceUrl(null);
+    resetCrop();
+  }
+
   function handleRemoveAvatar() {
     if (avatarEditorObjectUrlRef.current) {
       URL.revokeObjectURL(avatarEditorObjectUrlRef.current);
@@ -326,6 +336,7 @@ export function useDashboardProfileAvatarCrop({
     cropZoom,
     handleApplyCrop,
     handleAvatarFile,
+    handleCancelCrop,
     handleCropImageLoad,
     handleCropPointerDown,
     handleCropPointerEnd,

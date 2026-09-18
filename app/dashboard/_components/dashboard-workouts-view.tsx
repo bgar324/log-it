@@ -17,7 +17,7 @@ import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
 import { DashboardWorkoutList } from "./dashboard-workout-list";
 
 
-type WorkoutFiltersControlProps = {
+export type WorkoutFiltersControlProps = {
   filters: DashboardWorkoutFilters;
   workoutTypes: string[];
   filteredCount: number;
@@ -26,7 +26,7 @@ type WorkoutFiltersControlProps = {
   onClear: () => void;
 };
 
-type DashboardWorkoutsViewProps = {
+export type DashboardWorkoutsViewProps = {
   workoutMonths: DashboardClientData["workoutMonths"];
   lifetime: DashboardClientData["workoutHistory"]["lifetime"];
   displayWeightUnit: DashboardClientData["user"]["preferredWeightUnit"];

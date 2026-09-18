@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import type { FocusedWorkoutLoggerProps } from "./_components/focused-workout-logger";
-import type { WorkoutLoggerExerciseCardProps } from "./_components/workout-logger-exercise-card";
+import type {
+  WorkspaceLoggedWorkoutNoticeProps,
+  WorkspaceRestDayNoticeProps,
+} from "@/app/workspace/logger/workspace-logger-notices";
+import type { WorkspaceWorkoutLoggerProps } from "@/app/workspace/logger/workspace-workout-logger";
 import { toast } from "sonner";
 import posthog from "posthog-js";
 import { BackButton } from "@/app/components/back-button";
@@ -37,13 +40,22 @@ import {
 import {
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
   formatWorkoutLoggerDateLabel,
+  type WorkoutLoggerExerciseEntry,
   type WorkoutLoggerInitialData,
 } from "./workout-logger.utils";
 
 export type { WorkoutLoggerInitialData } from "./workout-logger.utils";
 
-const FocusedWorkoutLogger = dynamic<FocusedWorkoutLoggerProps>(
-  () => import("./_components/focused-workout-logger").then(module => module.FocusedWorkoutLogger),
+const WorkspaceWorkoutLogger = dynamic<WorkspaceWorkoutLoggerProps>(
+  () => import("@/app/workspace/logger/workspace-workout-logger").then(module => module.WorkspaceWorkoutLogger),
+);
+
+const WorkspaceRestDayNotice = dynamic<WorkspaceRestDayNoticeProps>(
+  () => import("@/app/workspace/logger/workspace-logger-notices").then(module => module.WorkspaceRestDayNotice),
+);
+
+const WorkspaceLoggedWorkoutNotice = dynamic<WorkspaceLoggedWorkoutNoticeProps>(
+  () => import("@/app/workspace/logger/workspace-logger-notices").then(module => module.WorkspaceLoggedWorkoutNotice),
 );
 
 type WorkoutLoggerMode = "create" | "edit";
@@ -63,7 +75,7 @@ type WorkoutLoggerProps = {
   returnHref?: string;
   analyticsUser: PostHogUser;
   benEnabled: boolean;
-  focusedEnabled?: boolean;
+  workspaceEnabled?: boolean;
 };
 
 export function WorkoutLogger({
@@ -81,7 +93,7 @@ export function WorkoutLogger({
   returnHref = "/dashboard",
   analyticsUser,
   benEnabled,
-  focusedEnabled = false,
+  workspaceEnabled = false,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const router = useRouter();
@@ -133,6 +145,16 @@ export function WorkoutLogger({
       splitTemplateData?.exercises.length !== 0);
 
   if (isRestDay && !draft.hasRecoveredDraft && !hasRestDayOverride) {
+    if (workspaceEnabled) {
+      return (
+        <WorkspaceRestDayNotice
+          benEnabled={benEnabled}
+          backHref={returnHref}
+          onLogUnscheduledWorkout={() => setHasRestDayOverride(true)}
+        />
+      );
+    }
+
     return (
       <main className={styles.loggerShell}>
         <section className={styles.loggerStage}>
@@ -186,6 +208,20 @@ export function WorkoutLogger({
   if (loggedWorkoutId && !draft.hasRecoveredDraft && !isLoggedNoticeDismissed) {
     const loggedLabel = loggedWorkoutType.trim() || "This workout";
     const loggedDate = formatWorkoutLoggerDateLabel(draft.performedAt);
+
+    if (workspaceEnabled) {
+      return (
+        <WorkspaceLoggedWorkoutNotice
+          benEnabled={benEnabled}
+          backHref={returnHref}
+          loggedWorkoutId={loggedWorkoutId}
+          loggedLabel={loggedLabel}
+          loggedDateLabel={loggedDate}
+          canLogAnotherWorkoutType={canLogAnotherWorkoutType}
+          onLogAnotherWorkout={() => setIsLoggedNoticeDismissed(true)}
+        />
+      );
+    }
 
     return (
       <main className={styles.loggerShell}>
@@ -281,10 +317,14 @@ export function WorkoutLogger({
   // The draft is the user's unfinished work, so it is never silently dropped or
   // silently re-dated. Discarding is a deliberate action, and it returns the
   // logger to whatever the server seeded for the selected date.
-  function handleDiscardDraft() {
+  function discardUnsavedChanges() {
     clearAll();
     clearAllExerciseInsights();
     draft.discardDraft();
+  }
+
+  function handleDiscardDraft() {
+    discardUnsavedChanges();
     toast.success("Draft discarded.");
   }
 
@@ -301,6 +341,9 @@ export function WorkoutLogger({
       workoutType: draft.workoutType,
       performedAt: draft.performedAt,
       weightUnit,
+      // Only edit mode offers a type, and only when the split has types to
+      // offer: an untyped or bodyweight-only history is a valid workout.
+      requireWorkoutType: isEditMode && workoutTypeOptions.length > 0,
     });
 
     if ("error" in payload) {
@@ -351,9 +394,7 @@ export function WorkoutLogger({
         return;
       }
 
-      if (!isEditMode) {
-        draft.markSaved();
-      }
+      draft.markSaved();
 
       const resolvedWorkoutId = data.id ?? workoutId;
       posthog.capture(isEditMode ? "workout_updated" : "workout_created", {
@@ -419,7 +460,7 @@ export function WorkoutLogger({
       : "Log workout";
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
-  const exerciseCards: WorkoutLoggerExerciseCardProps[] = draft.exercises.map((exercise, exerciseIndex) => ({
+  const exerciseEntries: WorkoutLoggerExerciseEntry[] = draft.exercises.map((exercise, exerciseIndex) => ({
     exercise,
     exerciseIndex,
     canRemoveExercise: draft.exercises.length > 1,
@@ -442,31 +483,70 @@ export function WorkoutLogger({
     onUpdateSet: (setId, field, value) => draft.updateSet(exercise.id, setId, field, value),
   }));
 
-  if (focusedEnabled) {
-    return <FocusedWorkoutLogger
-      pageTitle={pageTitle}
-      dateLabel={dateMeta}
-      submitLabel={submitLabel}
-      isSaving={isSaving}
-      backHref={backHref}
-      metadata={{
-        title: draft.title,
-        performedAt: draft.performedAt,
-        workoutType: draft.workoutType,
-        workoutTypeOptions,
-        onTitleChange: draft.setTitle,
-        onPerformedAtChange: draft.setPerformedAt,
-        onWorkoutTypeChange: draft.setWorkoutType,
-        showEditFields: isEditMode,
-      }}
-      exercises={exerciseCards}
-      onSubmit={handleSubmit}
-      onAddExercise={draft.addExercise}
-      onReorder={draft.reorderExercisesById}
-      onResetFromSplit={hasSplitReset ? handleResetFromSplit : undefined}
-      onDiscardDraft={isEditMode ? undefined : handleDiscardDraft}
-      staleDraft={isDraftDateStale ? { dateLabel: dateMeta, onMoveToToday: () => draft.setPerformedAt(todayDateKey) } : undefined}
-    />;
+  if (workspaceEnabled) {
+    const exerciseCount = draft.exercises.length;
+    const setCount = draft.exercises.reduce(
+      (total, exercise) => total + exercise.sets.length,
+      0,
+    );
+    const countSentence = `${exerciseCount} ${
+      exerciseCount === 1 ? "exercise" : "exercises"
+    } and ${setCount} ${setCount === 1 ? "set" : "sets"}`;
+    // The document's heading is the workout, not the action: the title the
+    // user gave it, else the type being trained, else the day itself.
+    const heading =
+      draft.title.trim() ||
+      (workoutTypeLabel
+        ? `${workoutTypeLabel} workout`
+        : isEditMode
+          ? "Workout"
+          : "Today's workout");
+    const contextSentence = isEditMode
+      ? `Saved for ${dateMeta}${
+          workoutTypeLabel ? ` as ${workoutTypeLabel}` : ""
+        }. ${countSentence}.`
+      : `Logging ${dateMeta}${
+          workoutTypeLabel ? ` from your ${workoutTypeLabel} day` : ""
+        }. ${countSentence} so far.`;
+
+    return (
+      <WorkspaceWorkoutLogger
+        benEnabled={benEnabled}
+        backHref={backHref}
+        heading={heading}
+        contextSentence={contextSentence}
+        submitLabel={submitLabel}
+        isSaving={isSaving}
+        // A new workout autosaves its draft, so only edit mode can lose work
+        // by leaving: nothing there is stored until the save succeeds.
+        hasUnsavedChanges={isEditMode && draft.hasUnsavedEdits}
+        onDiscardChanges={discardUnsavedChanges}
+        exercises={exerciseEntries}
+        details={{
+          title: draft.title,
+          performedAt: draft.performedAt,
+          workoutType: draft.workoutType,
+          workoutTypeOptions,
+          showEditFields: isEditMode,
+          onTitleChange: draft.setTitle,
+          onPerformedAtChange: draft.setPerformedAt,
+          onWorkoutTypeChange: draft.setWorkoutType,
+        }}
+        onSubmit={handleSubmit}
+        onAddExercise={draft.addExercise}
+        onReorderExercises={draft.reorderExercisesById}
+        onResetFromSplit={hasSplitReset ? handleResetFromSplit : undefined}
+        onDiscardDraft={isEditMode ? undefined : handleDiscardDraft}
+        staleDraft={
+          isDraftDateStale
+            ? {
+                dateLabel: dateMeta,
+                onMoveToToday: () => draft.setPerformedAt(todayDateKey),
+              }
+            : undefined
+        }
+      />
+    );
   }
 
   return (
@@ -524,8 +604,7 @@ export function WorkoutLogger({
           />
 
           <section className={styles.exerciseSection}>
-            {exerciseCards.map(card => <WorkoutLoggerExerciseCard key={card.exercise.id} {...card} />)}
-
+            {exerciseEntries.map(entry => <WorkoutLoggerExerciseCard key={entry.exercise.id} {...entry} />)}
           </section>
 
           {isResetConfirmOpen ? (

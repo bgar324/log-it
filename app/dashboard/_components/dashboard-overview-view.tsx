@@ -7,7 +7,7 @@ import { styles } from "../dashboard.styles";
 
 type TodayPlan = DashboardClientData["overview"]["todayPlan"];
 
-type DashboardOverviewViewProps = {
+export type DashboardOverviewViewProps = {
   overview: DashboardClientData["overview"];
   todayPlan: TodayPlan;
   greetingName: string;

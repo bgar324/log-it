@@ -9,7 +9,7 @@ import { DashboardDeleteAccount } from "./dashboard-delete-account";
 import { DashboardProfileAvatarEditor } from "./dashboard-profile-avatar-editor";
 import { DashboardProfileEditDialog } from "./dashboard-profile-edit-dialog";
 
-type DashboardProfileViewProps = {
+export type DashboardProfileViewProps = {
   state: DashboardProfileFormState;
 };
 

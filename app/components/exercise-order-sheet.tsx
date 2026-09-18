@@ -28,8 +28,8 @@ import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { exerciseOrderStyles as styles } from "./exercise-order-sheet.styles";
 import type { ExerciseReorderItem } from "./exercise-reorder-dialog";
-import { Button } from "./ui/button";
-import { Sheet } from "./ui/sheet";
+import { Button } from "./workspace-ui/button";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "./workspace-ui/sheet";
 
 export type ExerciseOrderSheetProps<Id extends string | number> = {
   open: boolean;
@@ -39,6 +39,8 @@ export type ExerciseOrderSheetProps<Id extends string | number> = {
   onCancel: () => void;
   /** The only way an order leaves this sheet. */
   onSave: (orderedIds: Id[]) => void;
+  title?: string;
+  description?: string;
 };
 
 /** Vertical list: sideways movement is noise, so drop the x translation. */
@@ -53,7 +55,7 @@ const restrictToVerticalAxis: Modifier = ({ transform }) => ({
  * Only the handle starts a drag, which is what makes drag safe on a phone:
  * the handle owns the gesture (`touch-action: none`), while the rest of the
  * row and the space around it still scroll the list. The sheet underneath is
- * a Base UI Dialog, not a Drawer, so no swipe-to-dismiss competes with a
+ * a Radix Dialog-backed sheet, so no swipe-to-dismiss competes with a
  * vertical drag.
  */
 export function ExerciseOrderSheet<Id extends string | number>({
@@ -61,12 +63,15 @@ export function ExerciseOrderSheet<Id extends string | number>({
   items,
   onCancel,
   onSave,
+  title = "Reorder exercises",
+  description = "Drag a row by its handle. Save the order to keep your changes.",
 }: ExerciseOrderSheetProps<Id>) {
   const [orderedIds, setOrderedIds] = useState<Id[]>(() =>
     items.map((item) => item.id),
   );
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [wasOpen, setWasOpen] = useState(open);
+  const openerRef = useRef<HTMLElement | null>(null);
 
   // The draft order is re-seeded from the parent the moment the sheet opens,
   // during render rather than in an effect, so a reopened sheet never paints
@@ -187,31 +192,22 @@ export function ExerciseOrderSheet<Id extends string | number>({
           onCancel();
         }
       }}
-      title="Reorder exercises"
-      description="Drag a row by its handle. The new order applies to your workout when you save it."
-      // While a drag is in flight the gesture owns Escape: dnd-kit cancels the
-      // drag, and the sheet stays open so the next Escape closes it.
-      disableDismiss={activeId !== null}
-      footer={
-        <div className={styles.footer}>
-          <Button
-            variant="outline"
-            className={styles.footerAction}
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="filled"
-            className={styles.footerAction}
-            disabled={draftItems.length === 0 || activeId !== null}
-            onClick={() => onSave(draftIds)}
-          >
-            Save order
-          </Button>
-        </div>
-      }
     >
+      <SheetContent side="right" className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-lg"
+        onOpenAutoFocus={() => {
+          openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        }}
+        onCloseAutoFocus={event => {
+          event.preventDefault();
+          if (openerRef.current?.isConnected) openerRef.current.focus({ preventScroll: true });
+        }}
+        onEscapeKeyDown={event => { if (activeId !== null) event.preventDefault(); }}
+        onInteractOutside={event => { if (activeId !== null) event.preventDefault(); }}>
+      <SheetHeader className="px-6 pt-6 pr-14 pb-4">
+        <SheetTitle>{title}</SheetTitle>
+        <SheetDescription>{description}</SheetDescription>
+      </SheetHeader>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-4">
       {draftItems.length === 0 ? (
         <p className={styles.empty}>
           This workout has no exercises to reorder yet.
@@ -277,6 +273,12 @@ export function ExerciseOrderSheet<Id extends string | number>({
               )}
         </DndContext>
       )}
+      </div>
+      <SheetFooter className="grid grid-cols-2 gap-2 border-t border-border bg-background px-6 py-4">
+        <Button variant="outline" onClick={onCancel} disabled={!open}>Cancel</Button>
+        <Button disabled={!open || draftItems.length === 0 || activeId !== null} onClick={() => onSave(draftIds)}>Save order</Button>
+      </SheetFooter>
+      </SheetContent>
     </Sheet>
   );
 }
@@ -311,7 +313,7 @@ function SortableExerciseRow({
         <p className={styles.rowTitle}>{title}</p>
         <p className={styles.rowMeta}>{meta}</p>
       </div>
-      <button
+      <Button variant="ghost" size="icon"
         ref={setActivatorNodeRef}
         type="button"
         aria-label={`Reorder ${title}`}
@@ -320,7 +322,7 @@ function SortableExerciseRow({
         {...listeners}
       >
         <GripVertical className={styles.handleIcon} strokeWidth={1.9} />
-      </button>
+      </Button>
     </li>
   );
 }

@@ -2,15 +2,15 @@
 
 Logit is a lightweight workout journal. The durable product direction in the repo is fast workout entry, exercise history, split planning, profile preferences, and progress views without a full social network or coaching platform.
 
-## Owner-only focused logger
+## Owner-only authenticated workspace
 
-The current experiment changes only workout entry and editing. It keeps Logit's appearance and Next.js navigation; other authenticated sections and unflagged accounts retain the existing interface.
+The owner rollout covers workout entry/editing, history and details, progress and exercise details, plans, profile, settings, and account management. The homepage and other public pages are unchanged. Unflagged accounts retain the existing app.
 
-One exercise opens with all its sets. Other exercises remain compact rows that can be opened with one tap. Switching, reordering, and closing tools never discard entered values. Add set and Add exercise are visible; Save stays in the bottom action bar. History and predicted placeholders remain beside the actual inputs.
+Workout is the main workspace. History, Progress, and Plan remain visible in the navigation instead of living in a drawer. Profile, Settings, and Sign out are in the account menu. Summaries use sentences rather than KPI pills. Reading a history or exercise row opens a sheet and preserves the list behind it.
 
-This prototype uses direct entry, not mandatory per-set completion. Save follows the existing workout payload rules. Tools opens a standard sheet for metadata, rest timing, reset, discard, and ordering. Dragging changes a temporary order; Cancel leaves the workout untouched, and Save order applies it.
+All exercises and sets remain visible while logging. Add set, Add exercise, and Save are ordinary controls; no per-set completion or exercise accordion is required. Inline drag handles update exercise order. Week reordering uses a sheet with explicit cancel/save. Metadata and secondary actions use standard sheets and menus.
 
-The rest timer uses elapsed wall time, including time spent with browser callbacks suspended. It pauses only when the user pauses it. The app does not promise background alarms or a timer surviving a full page reload.
+Create-mode drafts autosave after real edits. Leaving an edited workout or plan requires a save/discard decision; failed saves retain inputs. A dirty plan cannot be activated until saved. The existing `Ben` capability keeps Nutrition and rest timing out of the owner's interface.
 
 ## Ionic experiment, disabled
 

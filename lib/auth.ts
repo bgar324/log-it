@@ -1,5 +1,6 @@
 import { compare, hash } from "bcryptjs";
 import { jwtVerify, SignJWT } from "jose";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextResponse } from "next/server";
@@ -149,7 +150,7 @@ export async function getSessionClaims() {
   }
 }
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const claims = await getSessionClaims();
 
   if (!claims?.sub) {
@@ -170,7 +171,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       createdAt: true,
     },
   });
-}
+});
 
 export async function requireSessionUser() {
   const user = await getSessionUser();

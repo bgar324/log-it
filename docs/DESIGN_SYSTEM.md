@@ -2,17 +2,17 @@
 
 Logit uses a restrained monochrome UI. Authenticated screens are calm and sentence-led at the top of each view, dense where the user is scanning rows of workout data.
 
-## Focused logger prototype
+## Authenticated Nova workspace
 
-The current owner-only logger keeps the warm palette, Geist typography, sentence-led hierarchy, and control geometry from `action.styles.ts`. Shared Base UI buttons, inputs, sheets, and confirmations provide the interaction behavior. There is no framework theme or global CSS reset.
+The owner-only workspace uses the reference application's shadcn `radix-nova` system: neutral tokens, Geist, standard buttons and fields, visible tabs, and ordinary sheets, dialogs, and menus. `app/components/workspace-ui/` is the control source of truth. Do not mix legacy pill controls into these screens.
 
-One expanded exercise shows all its sets; other exercises use compact borderless rows. Add set stays next to those rows, Add exercise stays visible, and Save lives in the bottom bar. The legacy dial is absent in this variant. Layout styles are scoped in `focused-workout-logger.module.css`.
+The workspace theme is document-scoped by `[data-workspace-design="nova"]`; public and unflagged surfaces keep their warm palette. Radix portals inherit the active workspace tokens. Existing charts need the `workspace-chart-theme` adapter because legacy `--muted` means text while Nova `--muted` means a background.
 
-The shared sheet uses Base UI Dialog: bottom-aligned on a phone and centered on desktop. It deliberately has no swipe-dismiss gesture competing with vertical exercise dragging. dnd-kit owns handle activation, keyboard movement, drag overlay, and auto-scroll. While dragging, the sheet calls the supported `preventBaseUIHandler()` event API so Base UI cannot swallow the sensor's arrow or Escape keys.
+Every workout exercise and set stays readable in one document. History and progress use sentence-led summaries and compact rows. Normal detail clicks open a right sheet; copied URLs and modifier clicks still open the full page. Keep the invoking row focused after dismissal and retain sheet content through its exit animation.
 
-Controlled sheet opens have no Trigger to report a touch origin. Set `initialFocus` and `finalFocus` to false rather than inferring the input method, or opening Tools steals focus from a set input. Confirmation roots belong inside their owning Sheet's React context so Escape dismisses the top dialog, not the sheet underneath.
+Use the reference tab indicator and short content/overlay motion, respecting reduced motion. Library focus traps and Escape behavior own overlays; dragging must cancel before Escape dismisses its sheet. Phone inputs use at least 16px text and controls have at least 44px targets, including triggers whose `asChild` composition changes `data-slot`.
 
-The shared primitives are the candidate control system for later adoption. Do not migrate unrelated screens until this logger has been tried. All verification uses an isolated headless browser, never the user's browser profile.
+The legacy and dormant rules below do not override this workspace canon. Verification uses dedicated headless Chromium, never the user's browser profile; emulation is not physical-device testing.
 
 ## Dormant Ionic variant
 

@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 type FeatureFlagUser = {
   id: string;
   email: string;
@@ -11,7 +13,7 @@ type FeatureFlagResponse = {
 const BEN_FLAG_KEY = "Ben";
 const FEATURE_FLAG_TIMEOUT_MS = 2_000;
 
-export async function isBenFeatureEnabled(user: FeatureFlagUser) {
+export const isBenFeatureEnabled = cache(async (user: FeatureFlagUser) => {
   const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
   const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
@@ -47,4 +49,4 @@ export async function isBenFeatureEnabled(user: FeatureFlagUser) {
   } catch {
     return false;
   }
-}
+});

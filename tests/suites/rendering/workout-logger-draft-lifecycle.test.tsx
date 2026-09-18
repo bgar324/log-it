@@ -18,10 +18,10 @@ const TODAY = formatDatabaseDateValue(getCurrentPacificDate());
 // Long enough for the 350ms autosave debounce to fire, or to prove it never does.
 const PAST_AUTOSAVE_MS = 500;
 
-function DraftProbe({ initialData, weightUnit = "LB" }: { initialData?: WorkoutLoggerInitialData; weightUnit?: WeightUnit }) {
+function DraftProbe({ initialData, weightUnit = "LB", isEditMode = false }: { initialData?: WorkoutLoggerInitialData; weightUnit?: WeightUnit; isEditMode?: boolean }) {
   const draft = useWorkoutLoggerDraft({
     initialData,
-    isEditMode: false,
+    isEditMode,
     weightUnit,
   });
 
@@ -29,6 +29,10 @@ function DraftProbe({ initialData, weightUnit = "LB" }: { initialData?: WorkoutL
     <div>
       <p id="date">{draft.performedAt}</p>
       <p id="exercises">{draft.exercises.map((exercise) => exercise.name).join(",")}</p>
+      <p id="dirty">{String(draft.hasUnsavedEdits)}</p>
+      <button type="button" onClick={() => draft.setExerciseName(draft.exercises[0]!.id, draft.exercises[0]!.name)}>
+        unchanged
+      </button>
       <button type="button" onClick={() => draft.setExerciseName(draft.exercises[0]!.id, "Plank")}>
         edit
       </button>
@@ -93,6 +97,37 @@ test("opening the logger stores nothing until the user edits something", async (
     await mounted.click(button(mounted, "edit"));
     await wait(PAST_AUTOSAVE_MS);
     assert.equal(storedDraft()?.performedAt, TODAY);
+  } finally {
+    mounted.unmount();
+    window.localStorage.clear();
+  }
+});
+
+test("blurring an unchanged exercise does not create unsaved work", async () => {
+  window.localStorage.clear();
+  const mounted = await render(<DraftProbe />);
+  try {
+    await mounted.click(button(mounted, "unchanged"));
+    await wait(PAST_AUTOSAVE_MS);
+    assert.equal(mounted.container.querySelector("#dirty")?.textContent, "false");
+    assert.equal(storedDraft(), null);
+  } finally {
+    mounted.unmount();
+    window.localStorage.clear();
+  }
+});
+
+test("saving an edited workout preserves a separate unfinished create draft", async () => {
+  seedStaleDraft();
+  const before = window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY);
+  const mounted = await render(<DraftProbe isEditMode />);
+  try {
+    await mounted.click(button(mounted, "edit"));
+    assert.equal(mounted.container.querySelector("#dirty")?.textContent, "true");
+    await mounted.click(button(mounted, "saved"));
+    assert.equal(mounted.container.querySelector("#dirty")?.textContent, "false");
+    await act(async () => { window.dispatchEvent(new window.Event("pagehide")); });
+    assert.equal(window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY), before);
   } finally {
     mounted.unmount();
     window.localStorage.clear();
