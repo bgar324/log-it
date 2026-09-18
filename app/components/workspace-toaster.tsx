@@ -9,7 +9,7 @@ export function WorkspaceToaster() {
   const enabled = useWorkspaceDesign();
   const { theme } = useThemeToggle();
   if (!enabled) return <Toaster />;
-  return <SonnerToaster theme={theme} position="bottom-center" closeButton toastOptions={{
+  return <SonnerToaster theme={theme} position="top-center" closeButton toastOptions={{
     classNames: {
       toast: "!rounded-lg !border-border !bg-popover !text-popover-foreground !font-sans !text-sm !shadow-lg",
       description: "!text-muted-foreground",

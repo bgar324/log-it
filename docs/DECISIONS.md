@@ -112,10 +112,12 @@ Draft cleanup has ownership. A scoped Ionic draft must not delete an unrelated g
 
 The owner rejected both the Ionic design and the logger-only direction. The accepted reference is the internship-pipeline workspace: shadcn `radix-nova`, neutral colors, Geist, visible tabs, standard overlays, and short consistent motion. This applies to every authenticated surface, not the homepage or other public pages.
 
-Next.js keeps routing ownership. Workout is the default workspace; History, Progress, and Plan remain visible. Account actions use a menu. Detail sheets preserve list position, with direct URLs retained for linking. Summaries stay sentence-led rather than becoming KPI pills.
+Next.js keeps routing ownership. Workout is the default workspace; History, Progress, and Plan remain visible. Phone navigation belongs at the bottom for thumb access, not in a desktop-style top row. Desktop retains header tabs. Account actions use a menu. Detail sheets preserve list position, with direct URLs retained for linking. Summaries stay sentence-led rather than becoming KPI pills.
 
 `WORKSPACE_ENABLED_USER_IDS` replaces the focused-logger rollout flag. Its immutable-ID gate remains independent of the existing `Ben` capability and dormant Ionic flag. Existing controllers, data loaders, APIs, and persistence rules are reused; this is not another workout data model.
 
 All exercise blocks remain open. dnd-kit handles ordering without mandatory completion or a second save step for inline exercise order. Radix owns overlays. Unsaved workout/plan edits are guarded at the shared navigation boundary, and confirmed discard clears local changes before navigation. Edit cleanup must not remove a separate create-mode draft.
+
+The logger's default Back destination is History. Sending an enabled account to the default dashboard would redirect straight back into the logger. Explicit return views remain intact unless that view is disabled and also redirects into the logger.
 
 Draft recovery remains StrictMode-safe and does not replace dirty work on server refresh. Available timer code remains clock-based; it is not reintroduced into the owner's disabled feature set.

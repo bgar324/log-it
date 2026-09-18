@@ -75,10 +75,15 @@ export default async function NewWorkoutPage({
     ? { ...splitSeed.initialData, title: "", workoutType: "", exercises: [] }
     : plannedInitialData;
 
-  // Where Back lands. The logger is reachable from every view, so the caller
-  // says where it came from; `normalizeDashboardView` collapses anything
-  // unexpected to Home rather than trusting the query string with a redirect.
-  const returnHref = toViewHref(normalizeDashboardView(params.from));
+  // The workspace's default dashboard redirects straight back to this logger.
+  // Exit to History unless the caller names another reachable view.
+  const workspaceEnabled = isWorkspaceEnabled(user);
+  const returnView = normalizeDashboardView(params.from);
+  const returnHref = toViewHref(
+    workspaceEnabled && (returnView === "dashboard" || (returnView === "nutrition" && benEnabled))
+      ? "workouts"
+      : returnView,
+  );
 
   return (
     <WorkoutLogger
@@ -92,7 +97,7 @@ export default async function NewWorkoutPage({
       canLogAnotherWorkoutType={hasSplit}
       analyticsUser={user}
       benEnabled={benEnabled}
-      workspaceEnabled={isWorkspaceEnabled(user)}
+      workspaceEnabled={workspaceEnabled}
       returnHref={returnHref}
     />
   );
