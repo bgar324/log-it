@@ -88,24 +88,20 @@ export function WorkoutLoggerExerciseCard({
                 placeholder="Barbell bench press"
               />
               {searchResults.length > 0 ? (
-                <div className={styles.searchResults}>
-                  <p className={styles.searchResultsLabel}>Matches</p>
-                  <div className={styles.searchResultsList}>
-                    {searchResults.map((result) => (
+                <ul className={styles.searchResults} aria-label="Exercise suggestions">
+                  {searchResults.map((result) => (
+                    <li key={`${exercise.id}-${result}`}>
                       <button
-                        key={`${exercise.id}-${result}`}
                         type="button"
                         className={styles.searchResultButton}
-                        onPointerDown={(event) => {
-                          event.preventDefault();
-                        }}
+                        onPointerDown={keepCurrentFocus}
                         onClick={() => onApplySearchResult(result)}
                       >
                         {result}
                       </button>
-                    ))}
-                  </div>
-                </div>
+                    </li>
+                  ))}
+                </ul>
               ) : null}
             </div>
 

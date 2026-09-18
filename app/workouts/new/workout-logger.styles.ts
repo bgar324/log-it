@@ -1,5 +1,4 @@
 import {
-  actionChip,
   actionDanger,
   actionFilled,
   actionIconQuiet,
@@ -89,13 +88,14 @@ export const styles = {
     "focus:border-[color:var(--text)]",
   ),
   dateInput: "w-full [font-variant-numeric:tabular-nums]",
-  exerciseSection: "flex flex-col gap-[1.25rem]",
-  exerciseCard: "flex flex-col gap-[0.58rem] bg-transparent py-[0.5rem]",
-  // Name field plus its options menu. `items-start` because the search-match
-  // panel grows out of the input's wrapper and the menu must stay level with
-  // the field, not with the panel.
+  exerciseSection: "flex flex-col gap-[0.62rem]",
+  exerciseCard: cn(
+    "flex flex-col gap-[0.58rem] rounded-[0.54rem] border bg-transparent p-[0.78rem]",
+    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)]",
+  ),
+  // Suggestions anchor to the full name row without moving the sets below it.
   exerciseNameRow:
-    "flex items-start gap-[0.4rem] [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1",
+    "relative flex items-start gap-[0.4rem] [&>div:first-child]:min-w-0 [&>div:first-child]:flex-1",
   // One quiet sentence per exercise. Fixed height so the card does not jump
   // when the comparison lands.
   exerciseCompareLine:
@@ -115,14 +115,12 @@ export const styles = {
   icon: "h-4 w-4 shrink-0 stroke-current",
   inlineRow: "block",
   searchResults: cn(
-    "mt-[0.48rem] flex flex-col gap-[0.45rem] rounded-[0.56rem] border p-[0.52rem]",
-    "border-[color:color-mix(in_srgb,var(--text)_10%,transparent)]",
-    "bg-[var(--field-bg)]",
+    "absolute inset-x-0 top-full z-40 m-0 mt-[0.3rem] max-h-[12rem] list-none overflow-y-auto overscroll-contain rounded-[0.54rem] border p-[0.25rem]",
+    "border-[color:color-mix(in_srgb,var(--text)_12%,transparent)] bg-[var(--bg)]",
+    "shadow-[0_8px_20px_color-mix(in_srgb,#000_12%,transparent)]",
+    "[&>li+li]:border-t [&>li+li]:border-[color:color-mix(in_srgb,var(--text)_8%,transparent)]",
   ),
-  searchResultsLabel: "m-0 text-[0.7rem] text-[var(--muted)]",
-  searchResultsList:
-    "flex max-h-[12rem] flex-wrap gap-[0.42rem] overflow-y-auto max-[420px]:max-h-[14rem] max-[420px]:flex-col max-[420px]:flex-nowrap",
-  searchResultButton: `${actionChip} text-left max-[420px]:w-full max-[420px]:justify-start`,
+  searchResultButton: `${actionMenuRow} py-[0.65rem] leading-snug`,
   compareHint: "mt-[-0.1rem] text-[0.8rem] text-[var(--muted)]",
   spinningIcon:
     "h-[0.85rem] w-[0.85rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
