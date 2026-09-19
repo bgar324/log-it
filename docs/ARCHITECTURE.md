@@ -84,27 +84,17 @@ Ionic may retain hidden pages. `use-ionic-resource.ts` reloads active views on e
 
 The Ionic screens reuse existing secured mutation endpoints and business services. No database schema or workout persistence format changes. Completion is draft-only state; only completed sets reach the existing workout payload.
 
-## Legacy App Chrome
+## Authenticated navigation
 
-`app/components/app-nav.tsx` owns the phone navigation and shared task/detail shell. `DashboardShell` separately owns the desktop sidebar. The phone shell has two layers:
+`app/components/app-nav.tsx` owns the owner interface's header utilities and direct bottom navigation. There is no drawer, veil, sliding app layer, drawer focus trap, or drawer scroll lock in this interface.
 
-- **Layer B — the drawer** is always mounted at the left edge. It holds secondary destinations and account utilities. The Ben capability puts Split in the bottom bar and removes its drawer duplicate.
-- **Layer A — the app screen** sits on top at `z-10` with an opaque background. Opening the drawer translates layer A right by `min(17.5rem,78vw)` to reveal layer B underneath, rather than sliding a panel over the app. Dismissed by tapping the exposed app surface or pressing Escape; there is no gesture trigger.
-- **The veil** (`navStyles.appVeil`) is what separates the layers: a viewport-anchored, full-bleed overlay, the last stage child at `z-40`, `pointer-events-none`, translating with layer A and ramping from `opacity: 0` over the same 280ms. It tints layer A with `--text` at 9% — so the exposed strip reads *lighter* than the drawer in dark and shaded in light — and draws the seam as a `border-l` at the canon 12% hairline.
+`AppTabBar` exposes Home, History, Log, Split, Analysis, Profile, and Sign out below 900px. Its seven targets fit a 320px phone at a minimum 44px width. Avatar and Settings remain in the header. The desktop sidebar remains available from 900px upward.
 
-Two placement decisions matter. The overlay is a stage sibling rather than a pseudo-element on layer A because the bottom bar is a stage sibling too, and a pseudo-element on the layer paints underneath the bar and leaves it bright. The seam is on the overlay rather than on the drawer's right edge because there it travels with layer A, fades in with the veil, and runs the full height of the viewport including across the bottom band. Both surfaces are otherwise painted `--bg`, so without a seam the two layers meet at an invisible edge.
+Workout and exercise detail pages retain the bottom navigation and their quiet Back link. Loading screens use the same destinations. Logger routes remain task screens without the browsing dock.
 
-Open state rides on a `data-drawer="open" | "closed"` attribute set on all four moving parts (drawer, layer A, bottom bar, veil) rather than an appended open class. The open utilities override base values rather than only adding to them, and two utilities from the same family win by emission order in the generated stylesheet, not by attribute order — an appended `opacity-100` cannot be relied on to beat a base `opacity-0`, while a `data-[drawer=open]:` variant wins on specificity.
+Both bottom-bar and desktop sign-out use the shared unsaved-navigation boundary before resetting PostHog and submitting the native `POST /auth/signout` form. Cancel leaves the session and analytics identity intact; an in-flight editor save prevents sign-out.
 
-`AppShell` retains drawer presence through the foreground's actual closing animation with `usePresence(open, motionRef)`. The hook waits for Web Animations completion rather than duplicating a duration in a timer. The drawer becomes inert on close, while the foreground and bottom bar remain inert until the return finishes. Body scroll remains locked over that interval. Opening/closing does not transfer focus; keyboard Tab stays within the open navigation. Crossing into the desktop breakpoint closes the drawer. The stage uses `overflow-x: clip` so document scrolling and the sticky header still work.
-
-The bottom bar is a stage sibling rather than a layer-A child, and translates by the same distance in sync. A translated ancestor becomes the containing block for `position: fixed` descendants, so a bar nested inside layer A resolves `bottom: 0` against the full page height and slides off-screen while the drawer is open; measured at 390px it dropped from `y=781` to `y=1126`. Keeping it viewport-anchored and translating it separately produces the same "whole foreground slides" effect without that artifact, and it becomes `pointer-events-none` while open so the close target stays the exposed app surface.
-
-`AppTopBar` places Profile and Settings above the view title, with an ellipsis for secondary navigation. `AppTabBar` is a four-slot floating icon pill: Home, Log, owner Split or standard Nutrition, and Analysis. Detail surfaces retain their quiet Back link.
-
-`DashboardShell` composes `AppShell` around the desktop sidebar and the content column. The bottom bar and drawer cover every width below 900px; the sidebar, which exposes every section plus sign out, covers 900px and up, so no viewport is left without navigation and layer A never translates on desktop. `/workouts/[workoutId]` and `/exercises/[exerciseKey]` render the same `AppShell` for its bottom bar, but their own header is one quiet Back control: they are reached from a list, and Back is the trip a user makes from them. They add `navStyles.mainInset` so the fixed bar never covers content. Route-loading skeletons render `AppTabBar` alone, since they have no session user. `/workouts/new` and `/workouts/[workoutId]/edit` are task surfaces: no nav chrome, only a quiet top Back control and the tools dial.
-
-`instrumentation-client.ts` initializes PostHog analytics, and authenticated client surfaces call `useIdentifyPostHogUser()` with the stable database user ID and current profile properties. Protected server pages use `isBenFeatureEnabled()` from `lib/posthog-feature-flags.ts` and pass its result into navigation and logger components. The personalized interface therefore does not depend on a browser analytics request that a content blocker can stop. Failed evaluations keep the standard interface; the auth-free preview passes `false` and never identifies its demo profile.
+Unflagged users retain the original drawer under `app/_legacy/`. Its presence and styling are independent of the owner navigation. PostHog identification and server-evaluated Ben capabilities remain unchanged.
 
 ## Shared authenticated interactions
 

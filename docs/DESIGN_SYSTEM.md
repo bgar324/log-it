@@ -8,7 +8,7 @@ The owner authorized the reference-driven redesign behind the existing PostHog `
 
 `training-theme.css` scopes the new palette to documents containing `[data-training-design="true"]`. Public pages retain their existing warm palette. Portalled controls inherit the authenticated document tokens.
 
-Shared interaction behavior is unchanged: `ui/popover.tsx` owns anchored disclosure presence and dismissal; `ui/legacy-dialog.tsx` owns dialog presence, scroll locking, and busy-dismissal protection. Neither transfers focus automatically. Closing content is inert. The drawer retains its interaction shield until the foreground finishes returning.
+`ui/popover.tsx` owns anchored disclosure presence and dismissal; `ui/legacy-dialog.tsx` owns dialog presence, scroll locking, and busy-dismissal protection. Neither transfers focus automatically. Closing content is inert. The owner interface has no navigation drawer.
 
 ## Authenticated Nova workspace
 
@@ -58,7 +58,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 ## Surfaces
 
 - Public/auth shell: `app/globals.css`, `app/page.tsx`, `app/auth/page.tsx`, `app/components/ui/*`. Public primitives use the same `--bg`, `--text`, `--muted`, `--field-*`, and `--focus-ring` tokens as product surfaces.
-- App chrome: `app/components/app-nav.tsx` and `app/components/app-nav.styles.ts` own the bottom tab bar, the sticky top bar, and the drawer. See "Authenticated App System" below.
+- App chrome: `app/components/app-nav.tsx` and `app/components/app-nav.styles.ts` own direct bottom navigation and header utilities. The original drawer exists only in the unflagged baseline.
 - Data lists: `app/components/data-list.styles.ts` owns the row and pager shape shared by today's plan, the progress exercise index, and an exercise's session history. See the list rule under "Controls".
 - Product dashboard shell: `app/dashboard/dashboard.styles.ts` and dashboard components/hooks. The desktop sidebar lists every section and supports an icon-only collapsed state.
 - Split planner: `app/dashboard/split-system.styles.ts`, `app/dashboard/split-manager.tsx`, and related hooks. Layouts below `981px` render the full week as a compact agenda and open the selected day as a full-viewport task surface; wider layouts keep the weekday grid and editor side by side.
@@ -72,9 +72,9 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 
 ### Navigation and hierarchy
 
-- Phones use one floating icon-only pill: Home, Log, Split for the owner or Nutrition for standard accounts, and Analysis. Every icon has an accessible name and a target of at least 44px.
-- Profile is the avatar in the top utility row. Settings is the gear at the right. The adjacent ellipsis opens secondary navigation, including History and Sign out.
-- The drawer remains a revealed layer: the app moves aside, with a full-height veil and seam. It is not a second modal card. Desktop uses the collapsible sidebar from 900px upward.
+- Phones use one floating icon-only pill with Home, History, Log, Split, Analysis, Profile, and Sign out. All seven controls remain visible at 320px and keep a 44px minimum target.
+- Profile's avatar and the Settings gear remain in the top utility row. There is no header ellipsis or hidden secondary navigation.
+- The owner shell has no drawer layers, scrim, slide animation, or scroll lock. Desktop retains its collapsible sidebar from 900px upward.
 - Logger routes are task surfaces without the main dock. Their Back link retains the originating view; editing returns to the workout detail. Detail and loading screens retain the same return context.
 - The dock reserves `--app-dock-height`, including the safe-area inset. Content can scroll beyond the dock; it must not end underneath it.
 
@@ -159,7 +159,7 @@ Public tokens (`--landing-*`) live on the shared `.publicRoot` class at the top 
 
 ## Accessibility In The Authenticated App
 
-Shared authenticated menus and dialogs carry names and roles, use consistent Escape/outside dismissal, and prevent automatic open/close focus transfer. The drawer contains keyboard Tab navigation without moving focus on opening. Exercise reordering remains pointer-driven; this is not a claim of comprehensive accessibility coverage.
+Shared authenticated menus and dialogs carry names and roles, use consistent Escape/outside dismissal, and prevent automatic open/close focus transfer. Owner navigation uses ordinary links and a sign-out form, with no drawer focus trap. Exercise reordering remains pointer-driven; this is not a claim of comprehensive accessibility coverage.
 
 Two of those are different in kind, and the distinction matters when changing this code:
 

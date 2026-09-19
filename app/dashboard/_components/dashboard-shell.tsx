@@ -169,7 +169,14 @@ export function DashboardShell({
           <div className={styles.sidebarDivider} />
 
 
-          <form method="post" action="/auth/signout" onSubmit={() => posthog.reset()}>
+          <form method="post" action="/auth/signout" onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            requestNavigation(() => {
+              posthog.reset();
+              form.submit();
+            });
+          }}>
             <button
               type="submit"
               className={sidebarCollapsed ? styles.navButtonCollapsed : styles.navButton}

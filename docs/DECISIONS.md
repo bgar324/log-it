@@ -50,7 +50,9 @@ The overview returns calendar aggregates for statistics and month navigation, bu
 
 ## Navigate By Trip Frequency, Not Object Importance
 
-The local reference redesign uses four phone destinations: Home, Log, owner Split or standard Nutrition, and Analysis. Graphs now have first-class reachability. History stays available through Home and secondary navigation; Profile and Settings move to direct controls above the content. This supersedes the earlier three-slot layout without changing capability gates.
+The owner chose direct bottom navigation over the drawer. Home, History, Log, Split, Analysis, Profile, and Sign out are always reachable from the phone bar. Avatar and Settings remain above the content. The header ellipsis and the entire owner drawer implementation are removed, rather than hidden. Sign-out uses the existing unsaved-navigation boundary before clearing analytics identity and posting to the server.
+
+The following layer rationale applies only to the retained unflagged baseline in `app/_legacy/`.
 
 The drawer is modeled as a layer, not a panel. It is the base layer of the app (`z-0`, always mounted, `visibility: hidden` while closed) and the app screen is an opaque layer on top of it; opening translates the app screen right to reveal the drawer underneath. A panel sliding over the app with a dimming scrim was built first and rejected: it reads as a web dropdown, while the reveal reads as an app. Consequences worth keeping: the stage uses `overflow-x: clip` rather than `hidden` so the document still scrolls and the header still sticks, and the trigger ships on surfaces that own a dashboard view. Workout and exercise detail carry Back alone — they are entered from a list, so the drawer would be a second competing control next to the one the user actually wants.
 

@@ -36,13 +36,13 @@ async function html(node: ReactNode) {
   try { return mounted.html(); } finally { mounted.unmount(); }
 }
 
-test("only the owner flag enables the training theme and four-slot dashboard", async () => {
+test("only the owner flag enables the training theme and expanded direct navigation", async () => {
   const data = createEmptyDashboardData(user, new Date("2026-09-18T12:00:00Z"));
   for (const benEnabled of [false, true]) {
     const mounted = await render(shell(benEnabled, <DashboardClient initialView="dashboard" userId={user.id} data={data} benEnabled={benEnabled} />));
     try {
       assert.equal(Boolean(mounted.container.querySelector("[data-training-design]")), benEnabled);
-      assert.equal(mounted.all('[data-app-nav="tabbar"] a').length, benEnabled ? 4 : 3);
+      assert.equal(mounted.all('[data-app-nav="tabbar"] a').length, benEnabled ? 6 : 3);
       assert.equal(Boolean(mounted.container.querySelector('[aria-label="Recorded activity"]')), benEnabled);
     } finally { mounted.unmount(); }
   }
@@ -70,7 +70,7 @@ test("owner detail fallback retains its history day while unflagged chrome remai
   const mounted = await render(shell(true, <WorkoutDetailLoading />));
   try {
     assert.ok(mounted.all("a").some(link => link.getAttribute("href") === "/dashboard?view=workouts&day=2026-09-15"));
-    assert.equal(mounted.all('[data-app-nav="tabbar"] a').length, 4);
+    assert.equal(mounted.all('[data-app-nav="tabbar"] a').length, 6);
   } finally { mounted.unmount(); }
 });
 

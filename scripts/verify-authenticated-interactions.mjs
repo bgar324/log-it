@@ -102,10 +102,13 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     await go("/dashboard");
     assert.ok(await page.$('[data-training-design="true"]'));
     assert.equal(await page.$('[data-workspace-design="nova"]'), null);
-    assert.equal(await page.evaluate(() => document.querySelectorAll('[data-app-nav="tabbar"] a').length), 4);
+    assert.equal(await page.evaluate(() => document.querySelectorAll('[data-app-nav="tabbar"] a').length), 6);
+    assert.ok(await page.$('[data-app-nav="tabbar"] button[aria-label="Sign out"]'));
+    assert.equal(await page.$('[role="dialog"][aria-label="Navigation"]'), null);
+    assert.equal(await page.$('[data-app-drawer-trigger]'), null);
     assert.ok(await page.$('a[aria-label="Profile"]'));
     assert.ok(await page.$('a[aria-label="Settings"]'));
-    record("home-profile-settings-and-four-slot-dock");
+    record("home-utilities-and-direct-bottom-navigation");
 
     await go("/dashboard?view=workouts");
     await page.waitForSelector('[aria-label="Recorded days"] button[aria-pressed="true"]');

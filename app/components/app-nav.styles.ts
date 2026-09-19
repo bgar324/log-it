@@ -1,17 +1,9 @@
-import { actionIconQuiet, actionNavRow } from "./action.styles";
-
-const shift = "data-[drawer=open]:translate-x-[min(17.5rem,78vw)]";
-const motion = "transition-transform duration-[var(--ui-motion-drawer)] ease-[var(--ui-motion-ease)]";
+import { actionIconQuiet } from "./action.styles";
 
 export const navStyles = {
   stage: "relative min-h-dvh bg-[var(--bg)] [overflow-x:clip]",
-  appLayer: `relative z-10 min-h-dvh bg-[var(--bg)] ${motion} ${shift} min-[900px]:!translate-x-0`,
-  appLayerScrim: "absolute inset-0 z-40 cursor-default border-0 bg-transparent p-0 min-[900px]:hidden",
-  appVeil: `pointer-events-none fixed inset-0 z-40 border-l border-[color-mix(in_srgb,var(--text)_8%,transparent)] bg-[color-mix(in_srgb,var(--text)_7%,transparent)] opacity-0 transition-[opacity,translate] duration-[var(--ui-motion-drawer)] ease-[var(--ui-motion-ease)] ${shift} data-[drawer=open]:opacity-100 min-[900px]:hidden`,
-  drawerLayer: `fixed inset-y-0 left-0 z-0 flex w-[min(17.5rem,78vw)] flex-col gap-6 bg-[var(--bg)] px-6 pt-[calc(2rem+env(safe-area-inset-top))] invisible -translate-x-[9%] ${motion} data-[present=true]:visible data-[drawer=open]:translate-x-0 min-[900px]:hidden`,
   topBar: "relative z-30 mx-auto flex w-full max-w-[72rem] flex-col gap-6 px-5 pt-[calc(1rem+env(safe-area-inset-top))] min-[900px]:px-8 min-[900px]:pt-6",
   utilityRow: "flex min-h-11 items-center justify-between gap-4",
-  utilityActions: "flex items-center gap-1",
   identityLink: "inline-flex size-11 shrink-0 items-center justify-center rounded-full [touch-action:manipulation]",
   headerAvatar: "size-10 rounded-full object-cover ring-1 ring-[var(--app-line)]",
   headerAvatarFallback: "inline-flex size-10 items-center justify-center rounded-full bg-[var(--app-surface-raised)] text-sm font-medium",
@@ -20,24 +12,12 @@ export const navStyles = {
   topBarAccessory: "flex shrink-0 items-center gap-2",
   utilityButton: `${actionIconQuiet} bg-[var(--app-surface)]`,
   utilityIcon: "size-[1.25rem]",
-  drawerTrigger: `${actionIconQuiet} min-[900px]:hidden`,
-  drawerTriggerIcon: "size-[1.3rem]",
-  tabBar: `fixed left-[max(1rem,calc((100vw-21rem)/2))] right-[max(1rem,calc((100vw-21rem)/2))] bottom-[calc(1rem+env(safe-area-inset-bottom))] z-30 grid grid-cols-4 items-center gap-1 rounded-full border border-[var(--app-line)] bg-[color-mix(in_srgb,var(--app-surface-raised)_94%,transparent)] p-[0.4rem] shadow-[0_8px_35px_color-mix(in_srgb,#000_14%,transparent)] backdrop-blur-xl ${motion} ${shift} data-[drawer=open]:pointer-events-none min-[900px]:hidden`,
-  tabItem: "relative mx-auto inline-flex h-[3rem] w-full min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-[var(--muted)] no-underline [touch-action:manipulation] transition-[color,background-color,transform] duration-200 active:scale-95 data-[active=true]:bg-[var(--button-bg)] data-[active=true]:text-[var(--button-text)]",
+  // Seven 44px targets plus padding/border fit at 320px without a second row.
+  tabBar: "fixed left-[max(0.25rem,calc((100vw-28rem)/2))] right-[max(0.25rem,calc((100vw-28rem)/2))] bottom-[calc(1rem+env(safe-area-inset-bottom))] z-30 flex items-center overflow-x-auto rounded-full border border-[var(--app-line)] bg-[color-mix(in_srgb,var(--app-surface-raised)_94%,transparent)] p-px shadow-[0_8px_35px_color-mix(in_srgb,#000_14%,transparent)] backdrop-blur-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[900px]:hidden",
+  tabItem: "relative inline-flex h-12 w-full min-w-11 flex-1 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-[var(--muted)] no-underline [touch-action:manipulation] transition-[color,background-color,transform] duration-200 active:scale-95 data-[active=true]:bg-[var(--button-bg)] data-[active=true]:text-[var(--button-text)]",
   tabIcon: "size-[1.35rem]",
-  tabLabel: "sr-only",
-  tabAction: "relative mx-auto inline-flex h-[3rem] w-full min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-[var(--text)] no-underline [touch-action:manipulation] transition-[background-color,transform] duration-200 active:scale-95",
+  tabAction: "relative inline-flex h-12 min-w-11 flex-1 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-[var(--text)] no-underline [touch-action:manipulation] transition-[background-color,transform] duration-200 active:scale-95",
   tabActionIcon: "size-[1.5rem]",
-  drawerIdentity: "flex flex-col gap-3",
-  drawerAvatarImage: "size-14 rounded-full object-cover",
-  drawerAvatarFallback: "inline-flex size-14 items-center justify-center rounded-full bg-[var(--app-surface)] text-xl font-medium",
-  drawerName: "m-0 text-[1.25rem] font-[600] tracking-[-0.03em] text-[var(--text)]",
-  drawerHandle: "m-0 text-sm text-[var(--muted)]",
-  drawerNav: "flex flex-col gap-2",
-  drawerItem: `${actionNavRow} gap-3`,
-  drawerItemIcon: "size-5 shrink-0",
-  drawerDivider: "h-px w-full bg-[var(--app-line)]",
-  drawerFooterRow: "mt-auto flex items-center justify-between gap-3 border-t border-[var(--app-line)] pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-5",
-  drawerIconAction: actionIconQuiet,
+  tabForm: "min-w-11 flex-1",
   mainInset: "pb-[var(--app-dock-height)] min-[900px]:pb-0",
 } as const;
