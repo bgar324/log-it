@@ -76,7 +76,7 @@ test("week reordering moves a workout with two taps", async () => {
     assert.match(dialog.textContent ?? "", /Choose a workout to move\./);
 
     const save = Array.from(dialog.querySelectorAll<HTMLElement>("button")).find(
-      (button) => button.textContent?.trim() === "Save",
+      (button) => button.textContent?.trim() === "Save order",
     );
     assert.ok(save);
     await mounted.click(save);

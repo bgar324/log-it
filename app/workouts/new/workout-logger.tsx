@@ -11,7 +11,6 @@ import type {
 import type { WorkspaceWorkoutLoggerProps } from "@/app/workspace/logger/workspace-workout-logger";
 import { toast } from "sonner";
 import posthog from "posthog-js";
-import { SlidersHorizontal } from "lucide-react";
 import { BackButton } from "@/app/components/back-button";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
 import {
@@ -27,18 +26,14 @@ import {
 } from "@/lib/weight-unit";
 import { formatDatabaseDateValue, getCurrentPacificDate } from "@/lib/workout-utils";
 import { useWorkspaceUnsavedChanges } from "@/app/components/workspace-navigation";
-import { WorkoutLoggerExerciseCard } from "./_components/workout-logger-exercise-card";
 import { WorkoutLoggerConfirmDialog } from "./_components/workout-logger-confirm-dialog";
 import { WorkoutLoggerExercisePager } from "./_components/workout-logger-exercise-pager";
-import { WorkoutLoggerExerciseStage } from "./_components/workout-logger-exercise-stage";
-import {
-  WorkoutLoggerDetailsDialog,
-  WorkoutLoggerMetaCard,
-} from "./_components/workout-logger-meta-card";
+import { WorkoutLoggerExerciseCarousel } from "./_components/workout-logger-exercise-carousel";
+import { WorkoutLoggerHeader } from "./_components/workout-logger-header";
 import { WorkoutLoggerReorderDialog } from "./_components/workout-logger-reorder-dialog";
-import { WorkoutLoggerToolsFab } from "./_components/workout-logger-tools-fab";
+import { WorkoutLoggerActions } from "./_components/workout-logger-actions";
 import { useFocusedExercise } from "./_hooks/use-focused-exercise";
-import { useHorizontalSwipe } from "./_hooks/use-horizontal-swipe";
+import { useRestTimer } from "./_hooks/use-rest-timer";
 import { useWorkoutLoggerDraft } from "./_hooks/use-workout-logger-draft";
 import { useWorkoutLoggerInsights } from "./_hooks/use-workout-logger-insights";
 import { styles } from "./workout-logger.styles";
@@ -52,7 +47,6 @@ import {
   type WorkoutLoggerExerciseEntry,
   type WorkoutLoggerInitialData,
 } from "./workout-logger.utils";
-import { WorkoutLogger as LegacyWorkoutLogger } from "@/app/_legacy/workouts/new/workout-logger";
 
 export type { WorkoutLoggerInitialData } from "./workout-logger.utils";
 
@@ -89,20 +83,7 @@ type WorkoutLoggerProps = {
   workspaceEnabled?: boolean;
 };
 
-/**
- * The redesigned logger is owner-gated. Selecting between whole components —
- * rather than branching inside one — keeps each design's hooks in its own
- * component, so no reader can hit a reordered hook list.
- */
-export function WorkoutLogger(props: WorkoutLoggerProps) {
-  if (!props.workspaceEnabled && !props.benEnabled) {
-    return <LegacyWorkoutLogger {...props} />;
-  }
-
-  return <TrainingWorkoutLogger {...props} />;
-}
-
-function TrainingWorkoutLogger({
+export function WorkoutLogger({
   mode = "create",
   workoutId,
   initialData,
@@ -125,15 +106,17 @@ function TrainingWorkoutLogger({
   const router = useRouter();
   const weightUnitLabel = getWeightUnitLabel(weightUnit);
   useIdentifyPostHogUser(analyticsUser);
+  // One clock for the whole session: it outlives the exercise card that shows
+  // it, so a rest started on bench is still running on rows.
+  const restTimer = useRestTimer();
   const [isSaving, setIsSaving] = useState(false);
   const saveControllerRef = useRef<AbortController | null>(null);
   useEffect(() => () => saveControllerRef.current?.abort(), []);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
-  const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [pendingExerciseRemoval, setPendingExerciseRemoval] = useState<{ id: string; name: string; open: boolean } | null>(null);
   const [isRestDayOverrideDialogOpen, setIsRestDayOverrideDialogOpen] = useState(false);
   const [hasRestDayOverride, setHasRestDayOverride] = useState(false);
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isLoggedNoticeDismissed, setIsLoggedNoticeDismissed] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const {
@@ -169,14 +152,10 @@ function TrainingWorkoutLogger({
   // state. Every value stays in the draft controller above, which is what makes
   // switching, adding and deleting exercises lossless.
   const exerciseFocus = useFocusedExercise(draft.exercises.map((exercise) => exercise.id));
+  useEffect(() => {
+    if (!workspaceEnabled) clearAll();
+  }, [clearAll, exerciseFocus.focusedId, workspaceEnabled]);
 
-  // Swiping the page background is the third way through the session, after
-  // the pager's controls and its jump list. It reads gestures only where
-  // nothing else wants them.
-  const swipe = useHorizontalSwipe({
-    onSwipeLeft: exerciseFocus.goForward,
-    onSwipeRight: exerciseFocus.goBack,
-  });
 
   // Only edit mode can lose work by leaving — a new workout autosaves its draft
   // and recovers it on return, so it must never be handed to a generic "leave
@@ -503,11 +482,6 @@ function TrainingWorkoutLogger({
   // selected date (`?date=`) is not this case.
   const isDraftDateStale =
     !isEditMode && draft.hasRecoveredDraft && draft.performedAt !== todayDateKey;
-  const pageTitle = workoutTypeLabel
-    ? `${isEditMode ? "Edit" : "Log"} ${workoutTypeLabel} workout`
-    : isEditMode
-      ? "Edit workout"
-      : "Log workout";
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
   const exerciseEntries: WorkoutLoggerExerciseEntry[] = draft.exercises.map((exercise, exerciseIndex) => ({
@@ -533,8 +507,6 @@ function TrainingWorkoutLogger({
     onUpdateSet: (setId, field, value) => draft.updateSet(exercise.id, setId, field, value),
   }));
 
-  const focusedEntry =
-    exerciseEntries.find((entry) => entry.exercise.id === exerciseFocus.focusedId) ?? null;
 
   if (workspaceEnabled) {
     const exerciseCount = draft.exercises.length;
@@ -604,7 +576,7 @@ function TrainingWorkoutLogger({
 
   return (
     <main className={styles.loggerShell} inert={isSaving} aria-busy={isSaving}>
-      <section className={styles.loggerStage} {...swipe}>
+      <section className={styles.loggerStage}>
         <div className={styles.topRow}>
           <BackButton
             fallbackHref={backHref}
@@ -614,22 +586,17 @@ function TrainingWorkoutLogger({
           />
         </div>
 
-        <header className={styles.header}>
-          {dateMeta ? <p className={styles.headerMeta}>{dateMeta}</p> : null}
-          <div className={styles.titleRow}>
-            <h1 className={styles.title}>{pageTitle}</h1>
-            {/* The workout's own fields have no room beside the sets on a
-                phone, and the title is not optional information. */}
-            <button
-              type="button"
-              className={styles.headerDetailsButton}
-              aria-label="Workout details"
-              onClick={() => setIsDetailsDialogOpen(true)}
-            >
-              <SlidersHorizontal className={styles.icon} strokeWidth={1.9} />
-            </button>
-          </div>
-        </header>
+        <WorkoutLoggerHeader
+          title={draft.title}
+          performedAt={draft.performedAt}
+          workoutType={draft.workoutType}
+          workoutTypeOptions={workoutTypeOptions}
+          latestAllowedDate={todayDateKey}
+          canEditMetadata={isEditMode}
+          onTitleChange={draft.setTitle}
+          onPerformedAtChange={draft.setPerformedAt}
+          onWorkoutTypeChange={draft.setWorkoutType}
+        />
 
         {isDraftDateStale ? (
           <section className={styles.card} aria-label="Unfinished draft">
@@ -655,20 +622,17 @@ function TrainingWorkoutLogger({
           </section>
         ) : null}
         <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
-          <WorkoutLoggerMetaCard
-            title={draft.title}
-            performedAt={draft.performedAt}
-            workoutType={draft.workoutType}
-            workoutTypeOptions={workoutTypeOptions}
-            onTitleChange={draft.setTitle}
-            onPerformedAtChange={draft.setPerformedAt}
-            onWorkoutTypeChange={draft.setWorkoutType}
-            showEditFields={isEditMode}
-          />
 
-          {/* One exercise, all of its preloaded sets, and no sliver of the next
-              card: position comes from the pager, which also carries the two
-              ways through the session that are not a swipe. */}
+          {/* One editable exercise card, with navigation underneath it. */}
+
+          <WorkoutLoggerExerciseCarousel
+            entries={exerciseEntries}
+            focusedId={exerciseFocus.focusedId}
+            // The approved five-control row replaced the tools dial, and with
+            // it the timer Ben no longer wants; every other account keeps it.
+            restTimer={benEnabled ? undefined : restTimer}
+            onRetryInsight={(id, name) => void fetchExerciseInsight(id, name)}
+          />
           <WorkoutLoggerExercisePager
             exercises={draft.exercises}
             focusedIndex={exerciseFocus.focusedIndex}
@@ -678,14 +642,19 @@ function TrainingWorkoutLogger({
             onGoForward={exerciseFocus.goForward}
             onJumpTo={exerciseFocus.goToId}
           />
-
-          {focusedEntry ? (
-            <WorkoutLoggerExerciseStage
-              key={focusedEntry.exercise.id}
-              direction={exerciseFocus.direction}
-            >
-              <WorkoutLoggerExerciseCard {...focusedEntry} />
-            </WorkoutLoggerExerciseStage>
+          {pendingExerciseRemoval ? (
+            <WorkoutLoggerConfirmDialog
+              open={pendingExerciseRemoval.open}
+              title={`Delete ${pendingExerciseRemoval.name}?`}
+              description="This removes the exercise and every set entered under it."
+              cancelLabel="Keep exercise"
+              confirmLabel="Delete exercise"
+              onCancel={() => setPendingExerciseRemoval({ ...pendingExerciseRemoval, open: false })}
+              onConfirm={() => {
+                handleRemoveExercise(pendingExerciseRemoval.id);
+                setPendingExerciseRemoval({ ...pendingExerciseRemoval, open: false });
+              }}
+            />
           ) : null}
 
             <WorkoutLoggerConfirmDialog
@@ -711,34 +680,23 @@ function TrainingWorkoutLogger({
             }}
           />
         </form>
-        <div className={styles.swipeSpace} aria-hidden="true" />
 
-        <WorkoutLoggerDetailsDialog
-          open={isDetailsDialogOpen}
-          onOpenChange={setIsDetailsDialogOpen}
-          title={draft.title}
-          performedAt={draft.performedAt}
-          workoutType={draft.workoutType}
-          workoutTypeOptions={workoutTypeOptions}
-          onTitleChange={draft.setTitle}
-          onPerformedAtChange={draft.setPerformedAt}
-          onWorkoutTypeChange={draft.setWorkoutType}
-          showEditFields={isEditMode}
-        />
 
-        <WorkoutLoggerToolsFab
-          // The fan unmounts its own button as it closes, so Save cannot rely
-          // on a submit button's default action. Submit the form directly.
+        <WorkoutLoggerActions
           onSave={() => formRef.current?.requestSubmit()}
-          // The rest timer is one of the optional set controls, so it is absent
-          // from the personal interface for the same reason time and BW are.
-          showRestTimer={!benEnabled}
           submitLabel={submitLabel}
           isSaving={isSaving}
           canReorder={draft.exercises.length > 1}
           canResetFromSplit={hasSplitReset}
-          isOpen={isToolsOpen}
-          onToggle={setIsToolsOpen}
+          canRemoveExercise={draft.exercises.length > 1}
+          onRemoveExercise={() => {
+            const exercise = draft.exercises[exerciseFocus.focusedIndex];
+            if (exercise) setPendingExerciseRemoval({
+              id: exercise.id,
+              name: exercise.name.trim() || `Exercise ${exerciseFocus.focusedIndex + 1}`,
+              open: true,
+            });
+          }}
           onAddExercise={draft.addExercise}
           onReorder={() => setIsReorderDialogOpen(true)}
           onResetFromSplit={() => setIsResetConfirmOpen(true)}

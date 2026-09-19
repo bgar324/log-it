@@ -3,34 +3,26 @@
 import {
   Apple,
   CalendarDays,
-  ChartNoAxesColumnIncreasing,
   ClipboardList,
   House,
-  LogOut,
-  Plus,
+  ArrowLeft,
   Settings,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { createContext, useContext, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
-import posthog from "posthog-js";
 import { toViewHref } from "@/app/dashboard/dashboard-client.shared";
 import type { DashboardView } from "@/app/dashboard/dashboard-types";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { type PostHogUser, useIdentifyPostHogUser } from "@/app/hooks/use-posthog-user";
 import { navStyles } from "./app-nav.styles";
-import { useWorkspaceNavigation } from "./workspace-navigation";
 
 const HOME_TAB = { view: "dashboard", label: "Home", icon: House } as const;
-const HISTORY_TAB = { view: "workouts", label: "History", icon: ClipboardList } as const;
-const LOG_TAB = { view: "log", label: "Log workout", icon: Plus } as const;
+const HISTORY_TAB = { view: "workouts", label: "History", icon: CalendarDays } as const;
 const NUTRITION_TAB = { view: "nutrition", label: "Nutrition", icon: Apple } as const;
-const SPLIT_TAB = { view: "split", label: "Split", icon: CalendarDays } as const;
-const ANALYSIS_TAB = { view: "progress", label: "Analysis", icon: ChartNoAxesColumnIncreasing } as const;
-const PROFILE_TAB = { view: "profile", label: "Profile", icon: UserRound } as const;
-const BEN_TABS = [HOME_TAB, HISTORY_TAB, LOG_TAB, SPLIT_TAB, ANALYSIS_TAB, PROFILE_TAB];
-const STANDARD_TABS = [HOME_TAB, HISTORY_TAB, LOG_TAB, NUTRITION_TAB, SPLIT_TAB, ANALYSIS_TAB, PROFILE_TAB];
+const SPLIT_TAB = { view: "split", label: "Split", icon: ClipboardList } as const;
+const BEN_TABS = [HOME_TAB, HISTORY_TAB, SPLIT_TAB];
+const STANDARD_TABS = [HOME_TAB, HISTORY_TAB, NUTRITION_TAB, SPLIT_TAB];
 
 type NavigateHandler = ((view: DashboardView) => void) | undefined;
 
@@ -72,7 +64,7 @@ function Avatar({ user }: { user: AppNavUser }) {
   );
 }
 
-export function AppTopBar({ title, accessory }: { title: string; accessory?: ReactNode }) {
+export function AppTopBar({ title, accessory, onBack }: { title: string; accessory?: ReactNode; onBack?: () => void }) {
   const nav = useContext(AppNavContext);
   return (
     <header className={navStyles.topBar}>
@@ -86,6 +78,11 @@ export function AppTopBar({ title, accessory }: { title: string; accessory?: Rea
       </div>
       {title !== "Home" || accessory ? (
         <div className={navStyles.titleRow}>
+          {onBack ? (
+            <button type="button" className={navStyles.titleBack} aria-label={`Back to ${title.toLowerCase()}`} onPointerDown={event => event.preventDefault()} onClick={onBack}>
+              <ArrowLeft className={navStyles.utilityIcon} strokeWidth={1.9} />
+            </button>
+          ) : null}
           <h1 className={navStyles.topBarTitle}>{title}</h1>
           {accessory ? <div className={navStyles.topBarAccessory}>{accessory}</div> : null}
         </div>
@@ -100,51 +97,38 @@ export function AppTabBar({ activeView, onNavigate, benEnabled = false }: {
   onNavigate?: (view: DashboardView) => void;
   benEnabled?: boolean;
 }) {
-  const router = useRouter();
-  const { requestNavigation } = useWorkspaceNavigation();
   const tabs = benEnabled ? BEN_TABS : STANDARD_TABS;
-  const logHref = `/workouts/new?from=${activeView ?? "dashboard"}`;
+  const activeIndex = tabs.findIndex(item => item.view === activeView);
+  const indicatorIndex = Math.max(0, activeIndex);
 
   return (
     <nav className={navStyles.tabBar} data-app-nav="tabbar" aria-label="Primary">
+      <span
+        aria-hidden="true"
+        data-app-nav-indicator="true"
+        className={navStyles.tabIndicator}
+        style={{
+          clipPath: `inset(2px calc(${100 - ((indicatorIndex + 1) * 100) / tabs.length}% + 2px) 2px calc(${(indicatorIndex * 100) / tabs.length}% + 2px) round 999px)`,
+          opacity: activeIndex < 0 ? 0 : 1,
+        }}
+      />
       {tabs.map((item) => {
         const Icon = item.icon;
         return (
           <Link
             key={item.view}
-            href={item.view === "log" ? logHref : toViewHref(item.view)}
-            className={item.view === "log" ? navStyles.tabAction : navStyles.tabItem}
+            href={toViewHref(item.view)}
+            className={navStyles.tabItem}
             data-active={activeView === item.view}
             aria-current={activeView === item.view ? "page" : undefined}
             aria-label={item.label}
-            onClick={item.view === "log" ? (event) => {
-              if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-              event.preventDefault();
-              requestNavigation(() => router.push(logHref));
-            } : viewClickHandler(onNavigate, item.view)}
+            onClick={viewClickHandler(onNavigate, item.view)}
           >
-            <Icon className={item.view === "log" ? navStyles.tabActionIcon : navStyles.tabIcon} strokeWidth={1.9} />
+            <Icon className={navStyles.tabIcon} strokeWidth={1.9} />
             <LinkPendingOverlay />
           </Link>
         );
       })}
-      <form
-        method="post"
-        action="/auth/signout"
-        className={navStyles.tabForm}
-        onSubmit={(event) => {
-          event.preventDefault();
-          const form = event.currentTarget;
-          requestNavigation(() => {
-            posthog.reset();
-            form.submit();
-          });
-        }}
-      >
-        <button type="submit" className={navStyles.tabItem} aria-label="Sign out" title="Sign out">
-          <LogOut className={navStyles.tabIcon} strokeWidth={1.9} />
-        </button>
-      </form>
     </nav>
   );
 }

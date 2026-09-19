@@ -1,14 +1,8 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
-import { Fragment, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { WorkoutTableRow } from "../dashboard-client.shared";
-import {
-  dayNumberLabel,
-  fullDayLabel,
-  monthShortLabel,
-  weekdayLabel,
-} from "./dashboard-history.dates";
+import { dayNumberLabel, fullDayLabel, weekdayLabel } from "./dashboard-history.dates";
 import { historyStyles } from "./dashboard-history.styles";
 
 export type RecordedDay = {
@@ -16,51 +10,49 @@ export type RecordedDay = {
   workouts: WorkoutTableRow[];
 };
 
-export type DayStripOlderAction = {
-  label: string;
-  busy: boolean;
-  onActivate: () => void;
-};
-
 type DashboardDayStripProps = {
+  /** The selected month's recorded days, ascending: oldest left, newest right. */
   days: readonly RecordedDay[];
   selectedDate: string | null;
   onSelect: (date: string) => void;
-  older: DayStripOlderAction | null;
 };
 
-const MAX_SESSION_DOTS = 3;
-
 /**
- * The history's spine: one card per day that actually has a workout, newest
- * first, scrolled horizontally with a thumb. Days without a session are not
- * drawn at all — an empty grid of a month is not history, and the person
- * browsing is looking for the sessions, not the gaps.
+ * The month's spine: one button per day that actually has a workout, oldest
+ * left and newest right, scrolled horizontally with a thumb. Days without a
+ * session are not drawn at all — an empty grid of a month is not history, and
+ * the person browsing is looking for the sessions, not the gaps.
  *
  * Arrow keys walk the strip so the browser is usable without a touch screen,
- * and the selected card is always scrolled back into view, including when the
+ * and the selected day is always scrolled back into view, including when the
  * selection is restored from the address bar.
  */
 export function DashboardDayStrip({
   days,
   selectedDate,
   onSelect,
-  older,
 }: DashboardDayStripProps) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef(new Map<string, HTMLButtonElement>());
 
   useEffect(() => {
     const scroller = scrollerRef.current;
-    const card = selectedDate ? cardsRef.current.get(selectedDate) : null;
 
-    if (!scroller || !card || typeof scroller.scrollTo !== "function") {
+    if (!scroller || typeof scroller.scrollTo !== "function") {
       return;
     }
 
-    const target =
-      card.offsetLeft - scroller.clientWidth / 2 + card.clientWidth / 2;
-    const left = Math.max(0, Math.min(target, scroller.scrollWidth - scroller.clientWidth));
+    const card = selectedDate ? cardsRef.current.get(selectedDate) : null;
+    // No selection yet: the newest day lives at the right edge, so that is
+    // where the strip should open.
+    const target = card
+      ? card.getBoundingClientRect().left - scroller.getBoundingClientRect().left +
+        scroller.scrollLeft - scroller.clientWidth / 2 + card.clientWidth / 2
+      : scroller.scrollWidth;
+    const left = Math.max(
+      0,
+      Math.min(target, scroller.scrollWidth - scroller.clientWidth),
+    );
 
     if (Math.abs(left - scroller.scrollLeft) < 2) {
       return;
@@ -69,9 +61,11 @@ export function DashboardDayStrip({
     // `scrollTo` on the strip alone: `scrollIntoView` would also drag the page.
     scroller.scrollTo({
       left,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
     });
-  }, [selectedDate]);
+  }, [days, selectedDate]);
 
   function moveSelection(offset: number) {
     if (days.length === 0) {
@@ -81,7 +75,7 @@ export function DashboardDayStrip({
     const current = days.findIndex((day) => day.date === selectedDate);
     const next = Math.max(
       0,
-      Math.min(days.length - 1, (current === -1 ? 0 : current) + offset),
+      Math.min(days.length - 1, (current === -1 ? days.length - 1 : current) + offset),
     );
     const target = days[next];
 
@@ -115,20 +109,13 @@ export function DashboardDayStrip({
         }
       }}
     >
-      {days.map((day, index) => {
-        const previous = days[index - 1];
-        const startsMonth =
-          !previous || previous.date.slice(0, 7) !== day.date.slice(0, 7);
-        const selected = day.date === selectedDate;
+      <div className={historyStyles.stripContent}>
+        {days.map((day, index) => {
+          const selected = day.date === selectedDate;
 
-        return (
-          <Fragment key={day.date}>
-            {startsMonth ? (
-              <span aria-hidden="true" className={historyStyles.stripMonthMark}>
-                {monthShortLabel(day.date)}
-              </span>
-            ) : null}
+          return (
             <button
+              key={day.date}
               ref={(node) => {
                 if (node) {
                   cardsRef.current.set(day.date, node);
@@ -141,11 +128,12 @@ export function DashboardDayStrip({
               data-selected={selected}
               aria-pressed={selected}
               // Roving tab stop: arrow keys walk the strip, so Tab does not
-              // have to step through a season of training to leave it.
-              tabIndex={selected ? 0 : -1}
-              aria-label={`${fullDayLabel(day.date)}, ${day.workouts.length} ${
-                day.workouts.length === 1 ? "workout" : "workouts"
-              }`}
+              // have to step through a month of training to leave it. With no
+              // selection the newest day carries the stop.
+              tabIndex={
+                selected || (!selectedDate && index === days.length - 1) ? 0 : -1
+              }
+              aria-label={fullDayLabel(day.date)}
               onClick={() => onSelect(day.date)}
             >
               <span className={historyStyles.dayWeekday}>
@@ -154,31 +142,10 @@ export function DashboardDayStrip({
               <span className={historyStyles.dayNumber}>
                 {dayNumberLabel(day.date)}
               </span>
-              <span aria-hidden="true" className={historyStyles.daySessions}>
-                {Array.from(
-                  { length: Math.min(day.workouts.length, MAX_SESSION_DOTS) },
-                  (_, dot) => (
-                    <span key={dot} className={historyStyles.daySessionDot} />
-                  ),
-                )}
-              </span>
             </button>
-          </Fragment>
-        );
-      })}
-
-      {older ? (
-        <button
-          type="button"
-          className={historyStyles.dayOlder}
-          aria-label={older.label}
-          disabled={older.busy}
-          onClick={older.onActivate}
-        >
-          <ChevronRight className={historyStyles.dayOlderIcon} strokeWidth={1.9} />
-          <span>{older.busy ? "Loading" : "Older"}</span>
-        </button>
-      ) : null}
+          );
+        })}
+      </div>
     </div>
   );
 }

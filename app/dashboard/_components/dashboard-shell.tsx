@@ -3,7 +3,6 @@
 import {
   Apple,
   CalendarDays,
-  ChartNoAxesColumnIncreasing,
   ClipboardList,
   House,
   LogOut,
@@ -14,7 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useWorkspaceNavigation } from "@/app/components/workspace-navigation";
 import posthog from "posthog-js";
-import { type ComponentType, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
 import type { DashboardView } from "../dashboard-types";
 import { AppShell, AppTopBar, type AppNavUser } from "@/app/components/app-nav";
 import { AppBrand } from "@/app/components/ui";
@@ -26,18 +25,16 @@ type SidebarIcon = ComponentType<{
   strokeWidth?: number;
 }>;
 
-// Desktop lists every section; phones get Home/Log/Nutrition in the tab bar and
-// the rest behind the navigation drawer.
+// Desktop keeps a sidebar; phones use the direct bottom navigation.
 const SIDEBAR_ITEMS: Array<{
   view: DashboardView;
   label: string;
   icon: SidebarIcon;
 }> = [
   { view: "dashboard", label: "Home", icon: House },
-  { view: "workouts", label: "History", icon: ClipboardList },
-  { view: "progress", label: "Analysis", icon: ChartNoAxesColumnIncreasing },
+  { view: "workouts", label: "History", icon: CalendarDays },
   { view: "nutrition", label: "Nutrition", icon: Apple },
-  { view: "split", label: "Splits", icon: CalendarDays },
+  { view: "split", label: "Splits", icon: ClipboardList },
 ];
 const BEN_SIDEBAR_ITEMS = SIDEBAR_ITEMS.filter((item) => item.view !== "nutrition");
 
@@ -50,6 +47,7 @@ export type DashboardShellProps = {
   onToggleSidebar: () => void;
   onNavigate: (view: DashboardView) => void;
   renderHeaderAccessory?: () => ReactNode;
+  onHeaderBack?: () => void;
   children: ReactNode;
 };
 
@@ -62,10 +60,27 @@ export function DashboardShell({
   onToggleSidebar,
   onNavigate,
   renderHeaderAccessory,
+  onHeaderBack,
   children,
 }: DashboardShellProps) {
   const router = useRouter();
   const { requestNavigation } = useWorkspaceNavigation();
+  const contentRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+      contentRef.current.scrollLeft = 0;
+    }
+  }, [activeView]);
+
+  function navigate(view: DashboardView) {
+    if (view === activeView && contentRef.current) {
+      contentRef.current.scrollTop = 0;
+      contentRef.current.scrollLeft = 0;
+    }
+    onNavigate(view);
+  }
   const appScreen = (
     <main
       className={`${styles.shell} ${sidebarCollapsed ? styles.shellSidebarCollapsed : ""}`}
@@ -132,7 +147,7 @@ export function DashboardShell({
                 type="button"
                 className={sidebarCollapsed ? styles.navButtonCollapsed : styles.navButton}
                 data-active={isActive}
-                onClick={() => onNavigate(item.view)}
+                onClick={() => navigate(item.view)}
                 title={sidebarCollapsed ? item.label : undefined}
               >
                 <Icon className={styles.navIcon} strokeWidth={1.9} />
@@ -189,8 +204,8 @@ export function DashboardShell({
         </div>
       </aside>
 
-      <section className={styles.main}>
-        <AppTopBar title={title} accessory={renderHeaderAccessory?.()} />
+      <section ref={contentRef} className={styles.main}>
+        <AppTopBar title={title} accessory={renderHeaderAccessory?.()} onBack={onHeaderBack} />
         <div className={styles.mainContent}>{children}</div>
       </section>
     </main>
@@ -200,7 +215,7 @@ export function DashboardShell({
     <AppShell
       user={user}
       activeView={activeView}
-      onNavigate={onNavigate}
+      onNavigate={navigate}
       benEnabled={benEnabled}
     >
       {appScreen}

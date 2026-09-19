@@ -1,25 +1,20 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
 import { useState } from "react";
-import type { WeightUnit } from "@/lib/weight-unit";
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
+import { WorkoutLoggerSwipeableSet } from "./workout-logger-swipeable-set";
 import { styles } from "../workout-logger.styles";
 import {
-  formatLoggedSetSnapshot,
-  formatPredictedWeightPlaceholder,
   sanitizeDurationInput,
   sanitizeRepsInput,
   sanitizeWeightInput,
   type ExerciseDraft,
-  type ExerciseInsightState,
   type ExerciseSetDraft,
 } from "../workout-logger.utils";
 import { WorkoutLoggerConfirmDialog } from "./workout-logger-confirm-dialog";
 
 export type WorkoutLoggerSetsEditorProps = {
   exercise: ExerciseDraft;
-  insightState?: ExerciseInsightState;
-  weightUnit: WeightUnit;
   weightUnitLabel: string;
   bodyWeightDisplay: number | null;
   showOptionalSetControls: boolean;
@@ -33,8 +28,6 @@ export type WorkoutLoggerSetsEditorProps = {
 
 export function WorkoutLoggerSetsEditor({
   exercise,
-  insightState,
-  weightUnit,
   weightUnitLabel,
   bodyWeightDisplay,
   showOptionalSetControls,
@@ -48,6 +41,7 @@ export function WorkoutLoggerSetsEditor({
     index: number;
     open: boolean;
   } | null>(null);
+  const [revealedSetId, setRevealedSetId] = useState<string | null>(null);
 
   function handleConfirmRemoveSet() {
     if (!pendingRemoval) {
@@ -58,13 +52,6 @@ export function WorkoutLoggerSetsEditor({
     setPendingRemoval({ ...pendingRemoval, open: false });
   }
 
-  const insight = insightState?.data;
-  const lastSets = insight?.lastSession?.sets ?? [];
-  const predictedSets = insight?.prediction?.predictedSets ?? [];
-  // Reserve the ghost line while the comparison is in flight, and keep it once
-  // there is history to show, so the inputs never move under a thumb.
-  const showGhostLine =
-    insightState?.status === "loading" || Boolean(insight?.lastSession);
 
   return (
     <div className={styles.setsStack}>
@@ -73,30 +60,36 @@ export function WorkoutLoggerSetsEditor({
         <span className={styles.setFieldWeight}>Weight ({weightUnitLabel})</span>
         <span className={styles.setFieldReps}>Reps</span>
         {showOptionalSetControls ? <span className={styles.setFieldDuration}>Sec</span> : null}
-        <span className="order-5" />
       </div>
       {exercise.sets.map((setItem, setIndex) => {
         const isBodyweight = setItem.usesBodyweight;
         const bodyweightPlaceholder = bodyWeightLabel
           ? `BW (${bodyWeightLabel})`
           : "BW";
-        const lastSet = lastSets[setIndex];
-        const predictedSet = predictedSets[setIndex];
-        const weightPlaceholder =
-          predictedSet && predictedSet.weightLb !== null
-            ? formatPredictedWeightPlaceholder(predictedSet.weightLb, weightUnit)
-            : weightUnitLabel;
-        const repsPlaceholder =
-          predictedSet && predictedSet.reps !== null
-            ? `${predictedSet.reps}`
-            : "Reps";
 
         return (
           <div key={setItem.id} className={styles.setRowGroup}>
+          <WorkoutLoggerSwipeableSet
+            setNumber={setIndex + 1}
+            canDelete={exercise.sets.length > 1}
+            revealed={revealedSetId === setItem.id}
+            onReveal={revealed => setRevealedSetId(current => revealed ? setItem.id : current === setItem.id ? null : current)}
+            onDelete={() => setPendingRemoval({ id: setItem.id, index: setIndex, open: true })}
+          >
             <div
               className={showOptionalSetControls ? styles.setRow : styles.setRowWithoutDuration}
             >
-              <p className={styles.setNumber}>#{setIndex + 1}</p>
+              <Popover>
+                <PopoverTrigger data-set-menu className={styles.setNumber} aria-label={`Set ${setIndex + 1} actions`} disabled={exercise.sets.length === 1}>
+                  {setIndex + 1}
+                </PopoverTrigger>
+                <PopoverContent className={styles.exerciseMenu} align="start" preserveInputFocus>
+                  <button type="button" className={styles.exerciseMenuDangerItem}
+                    onClick={() => setPendingRemoval({ id: setItem.id, index: setIndex, open: true })}>
+                    Delete set {setIndex + 1}
+                  </button>
+                </PopoverContent>
+              </Popover>
               <label
                 className={`${styles.setField} ${styles.setFieldWeight}`}
                 htmlFor={`${exercise.id}-${setItem.id}-weight`}
@@ -122,7 +115,7 @@ export function WorkoutLoggerSetsEditor({
                         : ""
                     }`}
                     placeholder={
-                      isBodyweight ? bodyweightPlaceholder : weightPlaceholder
+                      isBodyweight ? bodyweightPlaceholder : undefined
                     }
                     value={setItem.weightLb}
                     disabled={showOptionalSetControls && isBodyweight}
@@ -170,7 +163,6 @@ export function WorkoutLoggerSetsEditor({
                   spellCheck={false}
                   enterKeyHint="done"
                   className={styles.setInput}
-                  placeholder={repsPlaceholder}
                   value={setItem.reps}
                   onChange={(event) =>
                     onUpdateSet(
@@ -207,26 +199,9 @@ export function WorkoutLoggerSetsEditor({
                   />
                 </label>
               ) : null}
-              <button
-                type="button"
-                className={styles.setRemoveButton}
-                aria-label={`Delete set ${setIndex + 1}`}
-                onClick={() =>
-                  setPendingRemoval({ id: setItem.id, index: setIndex, open: true })
-                }
-                disabled={exercise.sets.length === 1}
-              >
-                <Trash2 className={styles.icon} strokeWidth={1.9} />
-              </button>
             </div>
+          </WorkoutLoggerSwipeableSet>
 
-            {showGhostLine ? (
-              <p className={styles.setGhostLine}>
-                {lastSet
-                  ? `last: ${formatLoggedSetSnapshot(lastSet, weightUnit)}`
-                  : ""}
-              </p>
-            ) : null}
           </div>
         );
       })}

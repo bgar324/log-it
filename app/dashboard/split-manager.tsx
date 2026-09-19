@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  ArrowLeft,
-  CheckCircle2,
   Circle,
   Copy,
+  ListOrdered,
   Pencil,
   Plus,
+  RotateCcw,
   Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useWorkspaceUnsavedChanges } from "@/app/components/workspace-navigation";
@@ -17,20 +17,12 @@ import {
   useSplitLibraryState,
   type SplitLibraryNoticeTone,
 } from "@/app/hooks/use-split-library-state";
-import {
-  type SplitWeekdayValue,
-  type WorkoutSplitTemplate,
-} from "@/lib/workout-splits/shared";
+import { type WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
 import { SplitActionMenu } from "./split-action-menu";
-import { SplitDayCard } from "./split-day-card";
 import { SplitDayReorderDialog } from "./split-day-reorder-dialog";
 import { SplitEditor } from "./split-editor";
 import { SplitLibrary } from "./split-library";
-import {
-  describeSplitFolder,
-  DRAFT_SPLIT_LIBRARY_KEY,
-  summarizeSplitFolder,
-} from "./split-library.shared";
+import { DRAFT_SPLIT_LIBRARY_KEY } from "./split-library.shared";
 import { splitStyles } from "./split-system.styles";
 
 export type SplitManagerProps = {
@@ -42,10 +34,11 @@ export type SplitManagerProps = {
 type RenameDraft = { key: string; value: string };
 
 /**
- * Split has two surfaces. The library is a shelf of folders, one per saved
- * split; opening one shows its week and the day editor. The manager lands on
- * the split the logger uses, so the working plan costs no navigation, and the
- * library is one labelled control away.
+ * The library is the root view. Opening a folder drops straight into that
+ * split's day editor on every width; Back returns to the library, which never
+ * shows its own Back control. There is no intermediate week page and no
+ * stacked overlay: the page header owns Back, this manager owns the split name,
+ * Save and options, and the editor owns the day.
  *
  * Opening a split and activating one are deliberately different actions. Only
  * the activate controls call the activation endpoint, and the store refuses to
@@ -56,7 +49,9 @@ export function SplitManager({
   initialSplit,
   initialSplits,
   persistChanges = true,
-}: SplitManagerProps) {
+  libraryOpen: isLibraryOpen,
+  onLibraryOpenChange: setIsLibraryOpen,
+}: SplitManagerProps & { libraryOpen: boolean; onLibraryOpenChange: (open: boolean) => void }) {
   const router = useRouter();
   const notify = useCallback((message: string, tone: SplitLibraryNoticeTone) => {
     if (tone === "error") {
@@ -79,8 +74,6 @@ export function SplitManager({
     onRefresh,
     persistChanges,
   });
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
-  const [isDayOpen, setIsDayOpen] = useState(false);
   const [isReorderDaysOpen, setIsReorderDaysOpen] = useState(false);
   // The rename draft never touches the split, so an abandoned rename cannot
   // leave the library dirty or persist a name the person backed out of. The
@@ -89,6 +82,30 @@ export function SplitManager({
   // must not be able to turn Escape into a save.
   const [renameDraft, setRenameDraft] = useState<RenameDraft | null>(null);
   const renameDraftRef = useRef<RenameDraft | null>(null);
+  const layoutRef = useRef<HTMLDivElement>(null);
+
+  if (isLibraryOpen && renameDraft) {
+    setRenameDraft(null);
+  }
+
+  // Whichever element actually scrolls is the one to reset: the shell owns a
+  // scroll container on desktop while the phone scrolls the document. Walking
+  // to the nearest scrollable ancestor covers both without an overlay.
+  useLayoutEffect(() => {
+    if (isLibraryOpen) renameDraftRef.current = null;
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
+    for (
+      let node = layoutRef.current?.parentElement ?? null;
+      node;
+      node = node.parentElement
+    ) {
+      if (node.scrollHeight > node.clientHeight + 1) {
+        node.scrollTop = 0;
+        break;
+      }
+    }
+  }, [isLibraryOpen, state.selectedWeekday]);
 
   useWorkspaceUnsavedChanges(
     state.unsavedSplitIds.length > 0,
@@ -96,25 +113,6 @@ export function SplitManager({
     state.isSaving,
     state.discardAllChanges,
   );
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") {
-      return;
-    }
-
-    const narrowLayout = window.matchMedia("(max-width: 980px)");
-
-    function closeEditorInWideLayout(event: MediaQueryListEvent) {
-      if (!event.matches) {
-        setIsDayOpen(false);
-      }
-    }
-
-    narrowLayout.addEventListener("change", closeEditorInWideLayout);
-    return () => {
-      narrowLayout.removeEventListener("change", closeEditorInWideLayout);
-    };
-  }, []);
 
   if (!state.selectedDay) {
     return null;
@@ -124,7 +122,6 @@ export function SplitManager({
   const selectedName = state.split.name.trim() || "Untitled split";
   const isSelectedActive =
     Boolean(state.split.id) && state.split.id === state.activeSplitId;
-  const summary = summarizeSplitFolder(state.split);
   const canActivateSelected =
     Boolean(state.split.id) &&
     !isSelectedActive &&
@@ -193,24 +190,14 @@ export function SplitManager({
   function openSplit(target: WorkoutSplitTemplate) {
     cancelRename();
     state.selectSplit(target.id);
-    setIsDayOpen(false);
     setIsReorderDaysOpen(false);
     setIsLibraryOpen(false);
   }
 
   function renameFromLibrary(target: WorkoutSplitTemplate) {
     state.selectSplit(target.id);
-    setIsDayOpen(false);
     setIsLibraryOpen(false);
     startRename(target);
-  }
-
-  function selectDay(weekday: SplitWeekdayValue) {
-    state.selectWeekday(weekday);
-
-    if (window.matchMedia("(max-width: 980px)").matches) {
-      setIsDayOpen(true);
-    }
   }
 
   if (isLibraryOpen) {
@@ -220,32 +207,62 @@ export function SplitManager({
         activeSplitId={state.activeSplitId}
         unsavedSplitIds={state.unsavedSplitIds}
         isBusy={state.isSaving}
-        openSplitName={selectedName}
         onOpen={openSplit}
         onActivate={(target) => void state.activateSplit(target.id ?? "")}
         onRename={renameFromLibrary}
         onCopy={(target) => void state.copySplit(target)}
         onDelete={requestDeleteSplit}
         onCreate={() => void state.createSplit()}
-        onClose={() => setIsLibraryOpen(false)}
       />
     );
   }
 
   return (
-    <div className={splitStyles.splitLayout}>
+    <div ref={layoutRef} className={splitStyles.splitLayout}>
       <section aria-label="Weekly split" className={splitStyles.splitSummary}>
-        <div className={splitStyles.planTopRow}>
+        {/* One Save for the whole split: the day editor has none of its own,
+            and the button states double as the only save status there is. */}
+        <div className={splitStyles.splitSummaryHead}>
+          {isRenaming && renameDraft ? (
+            <input
+              aria-label="Split name"
+              className={splitStyles.planTitleInput}
+              disabled={state.isSaving}
+              value={renameDraft.value}
+              onChange={(event) => {
+                const draft = { key: renameDraft.key, value: event.target.value };
+                renameDraftRef.current = draft;
+                setRenameDraft(draft);
+              }}
+              onBlur={commitRename}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  commitRename();
+                }
+
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  cancelRename();
+                }
+              }}
+              placeholder="Split name"
+            />
+          ) : (
+            <h2 className={splitStyles.planTitle}>{selectedName}</h2>
+          )}
           <button
             type="button"
-            className={splitStyles.planBackButton}
-            onClick={() => {
-              cancelRename();
-              setIsLibraryOpen(true);
-            }}
+            aria-label="Save split"
+            className={splitStyles.planSaveButton}
+            onClick={() => void state.saveSplit()}
+            disabled={state.isSaving || isRenaming || !state.hasUnsavedChanges}
           >
-            <ArrowLeft className={splitStyles.planBackIcon} strokeWidth={1.9} />
-            {`All splits · ${state.splits.length}`}
+            {state.isSaving
+              ? "Saving..."
+              : state.hasUnsavedChanges
+                ? "Save"
+                : "Saved"}
           </button>
           <SplitActionMenu label="Split options">
             {(close) => (
@@ -265,6 +282,22 @@ export function SplitManager({
                 <button
                   type="button"
                   className={splitStyles.actionMenuItem}
+                  aria-haspopup="dialog"
+                  onClick={() => {
+                    setIsReorderDaysOpen(true);
+                    close();
+                  }}
+                  disabled={state.split.days.length < 2 || state.isSaving}
+                >
+                  <ListOrdered
+                    className={splitStyles.inlineIcon}
+                    strokeWidth={1.9}
+                  />
+                  Reorder days
+                </button>
+                <button
+                  type="button"
+                  className={splitStyles.actionMenuItem}
                   onClick={() => {
                     void state.createSplit();
                     close();
@@ -275,25 +308,20 @@ export function SplitManager({
                   New split
                 </button>
                 <div className={splitStyles.actionMenuDivider} />
-                <button
-                  type="button"
-                  className={splitStyles.actionMenuItem}
-                  onClick={() => {
-                    void state.activateSplit(state.split.id ?? "");
-                    close();
-                  }}
-                  disabled={!canActivateSelected}
-                >
-                  {isSelectedActive ? (
-                    <CheckCircle2
-                      className={splitStyles.inlineIcon}
-                      strokeWidth={1.9}
-                    />
-                  ) : (
+                {!isSelectedActive ? (
+                  <button
+                    type="button"
+                    className={splitStyles.actionMenuItem}
+                    onClick={() => {
+                      void state.activateSplit(state.split.id ?? "");
+                      close();
+                    }}
+                    disabled={!canActivateSelected}
+                  >
                     <Circle className={splitStyles.inlineIcon} strokeWidth={1.9} />
-                  )}
-                  {isSelectedActive ? "Active split" : "Set active"}
-                </button>
+                    Set active
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className={splitStyles.actionMenuItem}
@@ -305,6 +333,26 @@ export function SplitManager({
                   <Copy className={splitStyles.inlineIcon} strokeWidth={1.9} />
                   Copy as text
                 </button>
+                {state.hasUnsavedChanges ? (
+                  <>
+                    <div className={splitStyles.actionMenuDivider} />
+                    <button
+                      type="button"
+                      className={splitStyles.actionMenuItem}
+                      onClick={() => {
+                        state.discardChanges();
+                        close();
+                      }}
+                      disabled={state.isSaving}
+                    >
+                      <RotateCcw
+                        className={splitStyles.inlineIcon}
+                        strokeWidth={1.9}
+                      />
+                      Discard current changes
+                    </button>
+                  </>
+                ) : null}
                 {state.split.id ? (
                   <>
                     <div className={splitStyles.actionMenuDivider} />
@@ -330,127 +378,20 @@ export function SplitManager({
           </SplitActionMenu>
         </div>
 
-        <div className={splitStyles.splitSummaryHead}>
-          {isRenaming && renameDraft ? (
-            <input
-              autoFocus
-              aria-label="Split name"
-              className={splitStyles.planTitleInput}
-              value={renameDraft.value}
-              onChange={(event) => {
-                const draft = { key: renameDraft.key, value: event.target.value };
-                renameDraftRef.current = draft;
-                setRenameDraft(draft);
-              }}
-              onBlur={commitRename}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  commitRename();
-                }
-
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  cancelRename();
-                }
-              }}
-              placeholder="Split name"
-            />
-          ) : (
-            <h2 className={splitStyles.planTitle}>{selectedName}</h2>
-          )}
-        </div>
-        <p className={splitStyles.planMeta}>
-          {isSelectedActive ? (
-            <span className={splitStyles.planMetaActive}>Active split</span>
-          ) : (
-            "Not active"
-          )}
-          {` · ${describeSplitFolder(summary)}`}
-        </p>
-
-        {!isSelectedActive ? (
-          <div className={splitStyles.planActions}>
-            <button
-              type="button"
-              className={splitStyles.planActivateButton}
-              onClick={() => void state.activateSplit(state.split.id ?? "")}
-              disabled={!canActivateSelected}
-            >
-              Set active
-            </button>
-          </div>
+        {state.hasUnsavedChanges && !isSelectedActive ? (
+          <p className={splitStyles.planDirtyText}>
+            Save these changes before making this split active.
+          </p>
         ) : null}
-
-        {state.hasUnsavedChanges ? (
-          <div className={splitStyles.planDirtyBar}>
-            <span className={splitStyles.planDirtyText}>
-              {isSelectedActive
-                ? "Unsaved changes to this split."
-                : "Unsaved changes. Save them before making this split active."}
-            </span>
-            <span className={splitStyles.planDirtyActions}>
-              <button
-                type="button"
-                className={splitStyles.planSaveButton}
-                onClick={() => void state.saveSplit()}
-                disabled={state.isSaving}
-              >
-                {state.isSaving ? "Saving..." : "Save split"}
-              </button>
-              <button
-                type="button"
-                className={splitStyles.planDiscardButton}
-                onClick={state.discardChanges}
-                disabled={state.isSaving}
-              >
-                Discard
-              </button>
-            </span>
-          </div>
-        ) : null}
-
-        {/* The week itself has nothing to save: reordering commits from its own
-            sheet, and day edits commit from the day editor's Save. */}
-        <div className={splitStyles.splitWeekHeader}>
-          <h3 className={splitStyles.splitWeekTitle}>Week</h3>
-          <div className={splitStyles.splitWeekActions}>
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              className={splitStyles.splitReorderOpenButton}
-              onClick={() => setIsReorderDaysOpen(true)}
-              disabled={state.split.days.length < 2 || state.isSaving}
-            >
-              Reorder
-            </button>
-          </div>
-        </div>
-
-        <div className={splitStyles.splitGrid}>
-          {state.split.days.map((day) => (
-            <SplitDayCard
-              key={day.weekday}
-              day={day}
-              isSelected={day.weekday === state.selectedWeekday}
-              isToday={day.weekday === state.todayWeekday}
-              onSelect={() => selectDay(day.weekday)}
-            />
-          ))}
-        </div>
       </section>
 
       <SplitEditor
-        key={state.selectedDay.weekday}
+        key={`${selectedKey}:${state.selectedDay.weekday}`}
         day={state.selectedDay}
         days={state.split.days}
         exerciseSearchResults={state.exerciseSearchResults}
-        hasUnsavedChanges={state.hasUnsavedChanges}
-        isMobileOpen={isDayOpen}
         isSaving={state.isSaving}
-        onMobileClose={() => setIsDayOpen(false)}
         onSelectWeekday={state.selectWeekday}
-        onSave={() => void state.saveSplit()}
         onWorkoutTypeChange={state.setWorkoutType}
         onExerciseNameChange={state.handleExerciseNameChange}
         onExerciseNameFocus={state.handleExerciseNameFocus}

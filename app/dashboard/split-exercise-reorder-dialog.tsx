@@ -1,6 +1,6 @@
 "use client";
 
-import { ExerciseReorderDialog } from "@/app/components/exercise-reorder-dialog";
+import { MoveReorderDialog } from "@/app/components/move-reorder-dialog";
 import type { WorkoutSplitExerciseTemplate } from "@/lib/workout-splits/shared";
 
 type SplitExerciseReorderDialogProps = {
@@ -23,7 +23,7 @@ export function SplitExerciseReorderDialog({
   }));
 
   return (
-    <ExerciseReorderDialog
+    <MoveReorderDialog kind="exercise"
       items={items}
       open={open}
       onCancel={onCancel}

@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { isWorkspaceEnabled } from "@/lib/workspace-feature-flag";
 import { loadExerciseDetailPageData } from "@/app/exercises/[exerciseKey]/exercise-detail.data";
 import { toWorkspaceExerciseDetail } from "@/app/workspace/details/workspace-exercise-detail.data";
+import { isNextNotFoundError } from "@/lib/next-not-found";
 
 type RouteContext = {
   params: Promise<{ exerciseKey: string }>;
@@ -10,19 +11,6 @@ type RouteContext = {
 
 // One person's training log: never a shared cache entry, never a disk copy.
 const PRIVATE_HEADERS = { "Cache-Control": "private, no-store" };
-
-// The page loader signals "no such exercise" by calling `notFound()`, which
-// throws a routing error rather than returning. In a handler that answers with
-// JSON, that has to become a 404 body the sheet can read, while anything else
-// stays a real failure.
-function isNotFoundError(error: unknown) {
-  const digest = (error as { digest?: unknown } | null)?.digest;
-
-  return (
-    typeof digest === "string" &&
-    (digest === "NEXT_NOT_FOUND" || digest.startsWith("NEXT_HTTP_ERROR_FALLBACK;404"))
-  );
-}
 
 /**
  * The detail sheet's read model for one exercise. The flag is checked before
@@ -56,7 +44,7 @@ export async function GET(_request: Request, context: RouteContext) {
       { status: 200, headers: PRIVATE_HEADERS },
     );
   } catch (error) {
-    if (isNotFoundError(error)) {
+    if (isNextNotFoundError(error)) {
       return NextResponse.json(
         { error: "Exercise not found." },
         { status: 404, headers: PRIVATE_HEADERS },

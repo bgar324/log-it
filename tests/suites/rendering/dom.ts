@@ -27,15 +27,18 @@ globalAny.Element = dom.window.Element;
 globalAny.Node = dom.window.Node;
 globalAny.Event = dom.window.Event;
 globalAny.MouseEvent = dom.window.MouseEvent;
-// Radix must receive constructors from the same DOM realm as its elements.
+// UI libraries must receive constructors from the same DOM realm as their elements.
 for (const name of [
   "CustomEvent", "KeyboardEvent", "FocusEvent", "NodeFilter", "NodeIterator",
   "HTMLInputElement", "HTMLTextAreaElement", "HTMLSelectElement",
   "HTMLButtonElement", "HTMLAnchorElement", "DocumentFragment", "MutationObserver",
+  "HTMLSlotElement",
 ] as const) {
   globalAny[name] = dom.window[name];
 }
 globalAny.getComputedStyle = dom.window.getComputedStyle;
+// jsdom has no layout scroll position; browser walkthroughs verify scrolling.
+dom.window.scrollTo = () => {};
 // jsdom has no media-query engine. Real resize/reduced-motion behavior is
 // exercised by the headless interaction walkthrough.
 Object.defineProperty(dom.window, "matchMedia", {

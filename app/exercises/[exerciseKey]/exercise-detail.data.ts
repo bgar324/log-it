@@ -246,6 +246,7 @@ function summarizeExerciseSessions(exerciseLogs: ExerciseLogRow[], weightUnit: W
       weightedSetCount: number;
       bestWeight: number;
       topSetReps: number;
+      bodyweightTopReps: number;
       totalLoad: number;
     }
   >();
@@ -263,6 +264,7 @@ function summarizeExerciseSessions(exerciseLogs: ExerciseLogRow[], weightUnit: W
       weightedSetCount: 0,
       bestWeight: 0,
       topSetReps: 0,
+      bodyweightTopReps: 0,
       totalLoad: 0,
     };
 
@@ -272,26 +274,41 @@ function summarizeExerciseSessions(exerciseLogs: ExerciseLogRow[], weightUnit: W
       session.setCount += 1;
       session.totalReps += set.reps;
 
-      if (weight !== null) {
-        session.weightedSetCount += 1;
-
-        if (weight > session.bestWeight) {
-          session.bestWeight = weight;
-          session.topSetReps = set.reps;
-        } else if (weight === session.bestWeight) {
-          session.topSetReps = Math.max(session.topSetReps, set.reps);
-        }
-
-        session.totalLoad += weight * set.reps;
+      if (weight === null) {
+        // An unloaded set still has a hardest version of itself. Remember it
+        // apart from the weighted work so a real best weight always keeps the
+        // reps that were actually performed under it.
+        session.bodyweightTopReps = Math.max(session.bodyweightTopReps, set.reps);
+        continue;
       }
+
+      session.weightedSetCount += 1;
+
+      if (weight > session.bestWeight) {
+        session.bestWeight = weight;
+        session.topSetReps = set.reps;
+      } else if (weight === session.bestWeight) {
+        session.topSetReps = Math.max(session.topSetReps, set.reps);
+      }
+
+      session.totalLoad += weight * set.reps;
     }
 
     sessionsByWorkout.set(exerciseLog.workoutLog.id, session);
   }
 
-  const sessions = Array.from(sessionsByWorkout.values()).sort(
-    (a, b) => b.performedAt.getTime() - a.performedAt.getTime(),
-  );
+  const sessions = Array.from(sessionsByWorkout.values())
+    .map((session) => ({
+      ...session,
+      // Bodyweight reps stand in only where there is no external load to
+      // describe: a session that reached 135 lb for 5 is not a 12-rep session
+      // because it finished with pushups.
+      topSetReps:
+        session.bestWeight > 0
+          ? session.topSetReps
+          : Math.max(session.topSetReps, session.bodyweightTopReps),
+    }))
+    .sort((a, b) => b.performedAt.getTime() - a.performedAt.getTime());
   const totalSetCount = sessions.reduce((sum, session) => sum + session.setCount, 0);
   const totalReps = sessions.reduce((sum, session) => sum + session.totalReps, 0);
   const bestWeight = sessions.reduce((max, session) => Math.max(max, session.bestWeight), 0);

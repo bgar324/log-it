@@ -62,14 +62,6 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     document.documentElement.style.colorScheme = value;
   }, value);
   const viewport = width => page.setViewport({ width, height: width >= 900 ? 1000 : 844, deviceScaleFactor: 1, isMobile: width < 900, hasTouch: width < 900 });
-  const waitForChart = async () => {
-    await page.waitForFunction(() => {
-      const chart = document.querySelector(".recharts-wrapper");
-      const value = chart?.closest("section")?.querySelector("p")?.textContent;
-      return chart && (Number.parseFloat(value ?? "") === 0 || [...chart.querySelectorAll(".recharts-bar-rectangle path")].some(node => node.getBoundingClientRect().height > 1 && getComputedStyle(node).fill !== "none"));
-    });
-    await pause(250);
-  };
   const checkGeometry = async label => {
     const geometry = await page.evaluate(() => {
       const visible = node => { const box = node.getBoundingClientRect(); const style = getComputedStyle(node); return box.width > 0 && box.height > 0 && style.visibility !== "hidden"; };
@@ -102,8 +94,8 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     await go("/dashboard");
     assert.ok(await page.$('[data-training-design="true"]'));
     assert.equal(await page.$('[data-workspace-design="nova"]'), null);
-    assert.equal(await page.evaluate(() => document.querySelectorAll('[data-app-nav="tabbar"] a').length), 6);
-    assert.ok(await page.$('[data-app-nav="tabbar"] button[aria-label="Sign out"]'));
+    assert.equal(await page.evaluate(() => document.querySelectorAll('[data-app-nav="tabbar"] a').length), 3);
+    assert.equal(await page.$('[data-app-nav="tabbar"] form[action="/auth/signout"]'), null);
     assert.equal(await page.$('[role="dialog"][aria-label="Navigation"]'), null);
     assert.equal(await page.$('[data-app-drawer-trigger]'), null);
     assert.ok(await page.$('a[aria-label="Profile"]'));
@@ -112,131 +104,113 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
 
     await go("/dashboard?view=workouts");
     await page.waitForSelector('[aria-label="Recorded days"] button[aria-pressed="true"]');
-    await page.focus('button[aria-label="Filter workouts"]');
-    await page.keyboard.press("Enter");
-    await page.waitForSelector('.auth-popover-content[data-state="open"]');
-    assert.equal(await page.evaluate(() => document.activeElement.getAttribute("aria-label")), "Filter workouts");
-    await closeMenu();
-    await page.evaluate(() => document.querySelectorAll('[aria-label="Recorded days"] button[aria-pressed]')[1]?.click());
+    assert.equal(await page.$('button[aria-label="Filter workouts"]'), null);
+    assert.ok(await page.$('button[aria-label="Previous month"]'));
+    assert.ok(await page.$('button[aria-label="Next month"]'));
+    await page.evaluate(() => [...document.querySelectorAll('[aria-label="Recorded days"] button[aria-pressed]')].at(-1)?.click());
     await page.waitForFunction(() => document.querySelector('a[href*="/edit?from=workouts"]'));
     const history = await page.evaluate(() => ({ day: new URLSearchParams(location.search).get("day"), edit: document.querySelector('a[href*="/edit?from=workouts"]').getAttribute("href") }));
     workoutId = new URL(history.edit, origin).pathname.split("/")[2];
     assert.ok(history.day);
     await go(history.edit);
-    await page.waitForSelector('input[aria-label="Set 1 reps"]');
-    assert.equal(await page.evaluate(() => document.querySelectorAll('input[aria-label="Exercise name"]').length), 1);
-    const firstName = await page.$eval('input[aria-label="Exercise name"]', node => node.value);
-    const oldReps = await page.$eval('input[aria-label="Set 1 reps"]', node => node.value);
+    await page.waitForFunction(() => document.querySelector('[data-exercise-carousel]')?.swiper?.initialized === true);
+    await page.waitForSelector('[data-exercise-active="true"] input[aria-label="Set 1 reps"]');
+    assert.equal(await page.evaluate(() => document.querySelectorAll('[data-exercise-active="true"] input[aria-label="Exercise name"]').length), 1);
+    const firstName = await page.$eval('[data-exercise-active="true"] input[aria-label="Exercise name"]', node => node.value);
+    const oldReps = await page.$eval('[data-exercise-active="true"] input[aria-label="Set 1 reps"]', node => node.value);
     const newReps = String(Number(oldReps || 8) + 1);
-    await replaceInput('input[aria-label="Set 1 reps"]', newReps);
+    await replaceInput('[data-exercise-active="true"] input[aria-label="Set 1 reps"]', newReps);
     await page.click('button[aria-label="Next exercise"]');
     await page.click('button[aria-label="Previous exercise"]');
-    assert.equal(await page.$eval('input[aria-label="Exercise name"]', node => node.value), firstName);
-    assert.equal(await page.$eval('input[aria-label="Set 1 reps"]', node => node.value), newReps);
+    assert.equal(await page.$eval('[data-exercise-active="true"] input[aria-label="Exercise name"]', node => node.value), firstName);
+    assert.equal(await page.$eval('[data-exercise-active="true"] input[aria-label="Set 1 reps"]', node => node.value), newReps);
     record("focused-exercise-switch-preserves-typed-set");
     const touch = await page.target().createCDPSession();
     const swipe = async (box, left) => {
       const start = left ? box.x + box.width - 12 : box.x + 12;
       const end = left ? box.x + 12 : box.x + box.width - 12;
       const y = box.y + box.height / 2;
+      let tracked = false;
       await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: start, y, radiusX: 2, radiusY: 2 }] });
       for (let step = 1; step <= 8; step++) {
-        await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: start + (end - start) * step / 8, y, radiusX: 2, radiusY: 2 }] });
+        const x = step === 1 ? start + Math.sign(end - start) * 10 : start + (end - start) * step / 8;
+        await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x, y: step === 1 ? y + 7 : y, radiusX: 2, radiusY: 2 }] });
         await pause(16);
+        tracked ||= await page.$eval('[data-exercise-active="true"]', node => Math.abs(node.getBoundingClientRect().left - node.closest('[data-exercise-carousel]').getBoundingClientRect().left) > 8);
       }
       await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-      await pause(240);
+      await page.waitForFunction(() => document.querySelector('[data-exercise-carousel]')?.swiper?.animating === false);
+      return tracked;
     };
     try {
-      const headingBox = await page.$eval("main h1", node => { const b = node.getBoundingClientRect(); return { x: b.x, y: b.y, width: Math.min(b.width, 240), height: b.height }; });
-      await swipe(headingBox, true);
-      assert.notEqual(await page.$eval('input[aria-label="Exercise name"]', node => node.value), firstName);
-      await swipe(headingBox, false);
-      assert.equal(await page.$eval('input[aria-label="Exercise name"]', node => node.value), firstName);
-      const inputBox = await page.$eval('input[aria-label="Set 1 reps"]', node => { const b = node.getBoundingClientRect(); return { x: b.x, y: b.y, width: b.width, height: b.height }; });
-      await swipe(inputBox, true);
-      assert.equal(await page.$eval('input[aria-label="Exercise name"]', node => node.value), firstName, "numeric fields must not trigger exercise swipes");
-      record("touch-exercise-swipe-and-input-exclusion");
+      const cardBox = () => page.$eval('[data-exercise-active="true"]', node => { const b = node.getBoundingClientRect(); return { x: b.x + 20, y: b.bottom - 9, width: Math.min(b.width - 40, 240), height: 1 }; });
+      assert.equal(await swipe(await cardBox(), true), false, "flashcards must not follow a drag");
+      assert.equal(await page.$eval('[data-exercise-active="true"] input[aria-label="Exercise name"]', node => node.value), firstName);
+      const inputBox = await page.$eval('[data-exercise-active="true"] input[aria-label="Set 1 reps"]', node => { const b = node.getBoundingClientRect(); return { x: b.x, y: b.y, width: b.width, height: b.height }; });
+      assert.equal(await swipe(inputBox, true), false, "numeric fields must not move the card");
+      assert.equal(await page.$eval('[data-exercise-active="true"] input[aria-label="Exercise name"]', node => node.value), firstName, "numeric fields must not trigger exercise swipes");
+      record("flashcard-drag-keeps-current-exercise");
     } finally { await touch.detach(); }
 
-    const rapid = await page.evaluate(async () => {
-      const trigger = document.querySelector('[data-fab-trigger]');
-      const box = trigger.getBoundingClientRect();
-      let submits = 0;
-      const count = () => submits++;
-      document.querySelector("form").addEventListener("submit", count);
-      trigger.click();
-      await new Promise(resolve => setTimeout(resolve, 30));
-      const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2).closest("button");
-      const label = hit.getAttribute("aria-label") || hit.textContent.trim();
-      hit.click();
-      document.querySelector("form").removeEventListener("submit", count);
-      return { label, submits };
-    });
-    assert.equal(rapid.label, "Close workout tools");
-    assert.equal(rapid.submits, 0);
-    record("rapid-tools-double-tap-never-submits", rapid);
-    await page.focus('input[aria-label="Set 1 reps"]');
-    const motion = await page.evaluate(async () => {
-      const focused = document.activeElement;
-      document.querySelector('[data-fab-trigger]').click();
-      const frames = [];
-      for (let i = 0; i < 12; i++) {
-        await new Promise(resolve => setTimeout(resolve, 30));
-        frames.push([...document.querySelectorAll('button[title="Save changes"]')].map(node => ({ opacity: Number(getComputedStyle(node).opacity), transform: getComputedStyle(node).transform })));
-      }
-      return { frames, focusKept: document.activeElement === focused };
-    });
-    assert.equal(motion.focusKept, true);
-    const circles = await page.evaluate(() => [...document.querySelector('[data-fab-trigger]').parentElement.querySelectorAll('button[title]')].map(node => { const b = node.getBoundingClientRect(); return { label: node.title, x: b.x, y: b.y, width: b.width, height: b.height }; }));
-    assert.ok(motion.frames.some(frame => frame.some(node => node.opacity > 0 && node.opacity < 1)), "fan must animate, not snap");
-    for (const box of circles) assert.ok(box.x >= 0 && box.y >= 0 && box.x + box.width <= 391 && box.y + box.height <= 845, `fan out of viewport: ${JSON.stringify(box)}`);
-    for (let i = 0; i < circles.length; i++) for (let j = i + 1; j < circles.length; j++) assert.ok(Math.hypot(circles[i].x - circles[j].x, circles[i].y - circles[j].y) >= 62, "fan hit targets overlap");
-    await capture("logger-tools-fan");
-    record("fan-animation-focus-and-arc", { motion, circles });
-    await clickText("Save changes");
+    const actions = await page.evaluate(() => [...document.querySelectorAll('[aria-label="Workout actions"] button')].map(node => {
+      const box = node.getBoundingClientRect();
+      return { label: node.getAttribute("aria-label"), x: box.x, y: box.y, width: box.width, height: box.height };
+    }));
+    for (const box of actions) assert.ok(box.x >= 0 && box.y >= 0 && box.x + box.width <= 391 && box.y + box.height <= 845);
+    for (let i = 1; i < actions.length; i++) assert.ok(actions[i].x >= actions[i - 1].x + actions[i - 1].width + 7);
+    assert.equal(await page.$eval('[aria-label="Workout actions"] button[aria-label="Save changes"]', node => node.textContent.trim()), "Save");
+    await capture("logger-floating-actions");
+    record("direct-floating-actions", { actions });
+    await page.click('[aria-label="Workout actions"] button[aria-label="Save changes"]');
     await page.waitForFunction(() => document.body.textContent.includes("Verification blocked this write."));
-    assert.equal(await page.$eval('input[aria-label="Set 1 reps"]', node => node.value), newReps);
+    assert.equal(await page.$eval('[data-exercise-active="true"] input[aria-label="Set 1 reps"]', node => node.value), newReps);
     const savedAttempt = writes.find(write => write.path === "/api/workouts" && write.method === "PUT");
     assert.ok(savedAttempt);
     assert.equal(JSON.parse(savedAttempt.body).workoutId, workoutId);
     assert.equal(JSON.parse(savedAttempt.body).exercises[0].sets[0].reps, Number(newReps));
     record("failed-save-retains-edits-and-sends-real-payload");
     mode = "success";
-    await page.click('[data-fab-trigger]');
-    await pause(400);
-    await clickText("Save changes");
+    await page.click('[aria-label="Workout actions"] button[aria-label="Save changes"]');
     await page.waitForFunction(() => !location.pathname.endsWith("/edit"));
     assert.equal(new URL(page.url()).searchParams.get("day"), history.day);
-    await clickText("Back");
     await page.waitForFunction(day => location.pathname === "/dashboard" && new URLSearchParams(location.search).get("day") === day, {}, history.day);
     await page.waitForFunction(day => document.querySelector('[aria-label="Recorded days"] button[aria-pressed="true"]')?.getAttribute("aria-label") && document.querySelector(`a[href*="day=${day}"]`), {}, history.day);
     record("simulated-save-cleans-editor-and-preserves-history-origin");
     mode = "fail";
 
     await go("/dashboard?view=progress");
-    await page.waitForSelector('[aria-label="Period"]');
-    const beforeGraph = await page.evaluate(() => document.querySelector(".recharts-surface")?.getAttribute("aria-label") || document.querySelector(".recharts-surface")?.textContent);
-    await clickText("Year", '[aria-label="Period"]');
-    await page.evaluate(() => [...document.querySelectorAll('button[aria-pressed]')].find(node => node.textContent.includes("Sets"))?.click());
-    await waitForChart();
-    assert.equal(await page.evaluate(() => [...document.querySelectorAll('[aria-label="Period"] button')].find(node => node.textContent.trim() === "Year")?.getAttribute("aria-pressed")), "true");
-    assert.equal(await page.evaluate(() => [...document.querySelectorAll('button[aria-pressed]')].find(node => node.textContent.includes("Sets"))?.getAttribute("aria-pressed")), "true");
-    assert.ok(await page.$(".recharts-surface"));
-    record("analysis-period-and-metric-update", { beforeGraph });
+    assert.equal(new URL(page.url()).search, "");
+    assert.equal(await page.evaluate(() => Boolean(document.querySelector('[data-app-nav="tabbar"] a[href*="view=progress"]'))), false);
+    const retiredViewData = await page.evaluate(async origin => {
+      const response = await fetch(`${origin}/api/dashboard/view-data?view=progress`, { cache: "no-store" });
+      return response.status;
+    }, origin);
+    assert.equal(retiredViewData, 404);
+    record("analysis-is-unreachable", { retiredViewData });
 
     await go("/dashboard?view=split");
-    await page.evaluate(() => [...document.querySelectorAll("button")].find(node => node.getAttribute("aria-label")?.includes(", today:")).click());
+    await page.click('button[data-split-folder][aria-current="true"]');
+    const trainingWeekday = await page.evaluate(async () => {
+      const response = await fetch("/api/dashboard/view-data?view=split");
+      const { data } = await response.json();
+      return data.split.days.find(day => day.exercises.length > 0)?.weekday;
+    });
+    assert.ok(trainingWeekday, "split edit verification needs an existing training day");
+    await page.evaluate(weekday => {
+      const label = weekday[0] + weekday.slice(1).toLowerCase();
+      [...document.querySelectorAll('nav[aria-label="Choose a day to edit"] button')]
+        .find(button => button.getAttribute("aria-label")?.startsWith(label)).click();
+    }, trainingWeekday);
     await page.waitForSelector('input[aria-label="Exercise name"]');
-    const workoutField = 'section input:not([aria-label])';
+    const workoutField = 'input[aria-label="Workout name"]';
     const originalType = await page.$eval(workoutField, node => node.value);
     const originalExerciseCount = await page.evaluate(() => document.querySelectorAll('input[aria-label="Exercise name"]').length);
     await replaceInput(workoutField, `${originalType} check`);
     assert.equal(await page.evaluate(() => document.querySelectorAll('input[aria-label="Exercise name"]').length), originalExerciseCount);
-    await page.click('button[aria-label="Back to week"]');
     mode = "hold";
-    await clickText("Save split");
+    await page.click('button[aria-label="Save split"]');
     await page.waitForFunction(() => document.body.textContent.includes("Saving"));
+    assert.equal(await page.$eval(workoutField, node => node.disabled || Boolean(node.closest("fieldset[disabled]"))), true);
     await page.click('button[aria-label="Split options"]');
     await page.waitForSelector('.auth-popover-content[data-state="open"]');
     assert.equal(await page.evaluate(() => [...document.querySelectorAll(".auth-popover-content button")].find(node => node.textContent.includes("Rename split"))?.disabled), true);
@@ -250,8 +224,8 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     pending = undefined;
     mode = "fail";
     await page.waitForFunction(() => !document.querySelector(".training-guard-panel"));
-    await clickText("All splits", "main", true);
-    const folders = await page.evaluate(() => [...document.querySelectorAll("button[data-split-folder]")].map(node => ({ id: node.dataset.splitFolder, active: node.getAttribute("aria-label").includes("Active split.") })));
+    await page.click('header button[aria-label="Back to splits"]');
+    const folders = await page.evaluate(() => [...document.querySelectorAll("button[data-split-folder]")].map(node => ({ id: node.dataset.splitFolder, active: node.getAttribute("aria-current") === "true" })));
     assert.ok(folders.length >= 2, "cross-folder proof requires two existing saved splits");
     const inactive = folders.find(folder => !folder.active);
     const active = folders.find(folder => folder.active);
@@ -261,9 +235,9 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     assert.ok(await page.evaluate(() => document.querySelector(".training-guard-panel").textContent.includes("split library")));
     await clickText("Keep editing", ".training-guard-panel");
     await pause(240);
-    await clickText("All splits", "main", true);
+    await page.click('header button[aria-label="Back to splits"]');
     await page.click(`button[data-split-folder="${active.id}"]`);
-    assert.ok(await page.evaluate(type => [...document.querySelectorAll("button")].some(node => node.getAttribute("aria-label")?.includes(`${type} check`)), originalType));
+    assert.equal(await page.$eval(workoutField, node => node.value), `${originalType} check`);
     await page.click('[data-app-nav="tabbar"] a[href="/dashboard"]');
     await page.waitForSelector('.training-guard-panel[data-state="open"]');
     await clickText("Discard changes", ".training-guard-panel");
@@ -271,7 +245,6 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     record("split-failure-busy-rename-and-cross-folder-draft-protection");
 
     await go("/dashboard?view=split");
-    await clickText("All splits", "main", true);
     await capture("split-folders");
     const folderSelector = `button[data-split-folder="${inactive.id}"]`;
     await page.$eval(folderSelector, node => node.scrollIntoView({ block: "center" }));
@@ -289,18 +262,17 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     const activation = writes.find(write => write.path === "/api/workout-split" && write.method === "PATCH");
     assert.ok(activation, "Set active must send its own activation request");
     assert.deepEqual(JSON.parse(activation.body), { id: inactive.id, action: "activate" });
-    assert.ok(await page.$eval(`button[data-split-folder="${active.id}"]`, node => node.getAttribute("aria-label").includes("Active split.")));
+    assert.ok(await page.$eval(`button[data-split-folder="${active.id}"]`, node => node.getAttribute("aria-current") === "true"));
     record("touch-folder-long-press-and-explicit-activation-failure");
 
     for (const width of [390, 1440, 320]) {
       await viewport(width);
       for (const color of ["dark", "light"]) {
         await theme(color);
-        for (const view of ["dashboard", "workouts", "progress", "split", "profile", "settings"]) {
+        for (const view of ["dashboard", "workouts", "split", "profile", "settings"]) {
           await go(view === "dashboard" ? "/dashboard" : `/dashboard?view=${view}`);
           await theme(color);
           await pause(400);
-          if (view === "progress") await waitForChart();
           await checkGeometry(`${view}-${width}-${color}`);
           if (width !== 320) await capture(`${view}-${width}-${color}`);
         }

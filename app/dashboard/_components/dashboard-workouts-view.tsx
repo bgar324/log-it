@@ -1,24 +1,23 @@
 "use client";
 
-import { Filter } from "lucide-react";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/app/components/ui/popover";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import type {
   DashboardClientData,
   DashboardWorkoutFilters,
 } from "../dashboard-types";
 import { countLabel, type WorkoutTableRow } from "../dashboard-client.shared";
-import { styles } from "../dashboard.styles";
 import { DashboardDaySessions } from "./dashboard-day-sessions";
 import { DashboardDayStrip, type RecordedDay } from "./dashboard-day-strip";
-import { DATE_KEY_PATTERN, monthYearLabel } from "./dashboard-history.dates";
+import {
+  DATE_KEY_PATTERN,
+  MONTH_KEY_PATTERN,
+  monthKeyLabel,
+  monthKeyOf,
+  shiftMonthKey,
+} from "./dashboard-history.dates";
 import { historyStyles } from "./dashboard-history.styles";
 import { HistorySkeleton } from "./dashboard-view-skeleton";
-
 
 export type WorkoutFiltersControlProps = {
   filters: DashboardWorkoutFilters;
@@ -34,6 +33,8 @@ export type DashboardWorkoutsViewProps = {
   lifetime: DashboardClientData["workoutHistory"]["lifetime"];
   displayWeightUnit: DashboardClientData["user"]["preferredWeightUnit"];
   filters: DashboardWorkoutFilters;
+  /** The user's today, so "next month" stops at the month they live in. */
+  asOfDate?: string;
   isLoading?: boolean;
   isLoadingMore?: boolean;
   hasMore?: boolean;
@@ -114,218 +115,181 @@ export function getWorkoutCount(workoutMonths: DashboardClientData["workoutMonth
   return workoutMonths.reduce((sum, month) => sum + month.entries.length, 0);
 }
 
-export function DashboardWorkoutFiltersControl({
-  filters,
-  workoutTypes,
-  filteredCount,
-  hasFilters,
-  onChange,
-  onClear,
-}: WorkoutFiltersControlProps) {
-  const [open, setOpen] = useState(false);
+type LoadedHistory = {
+  /** Recorded days per `YYYY-MM`, oldest day first inside each month. */
+  byMonth: Map<string, RecordedDay[]>;
+  oldestMonth: string | null;
+  newestMonth: string | null;
+  loadedWorkouts: number;
+};
 
-  function updateFilter<Key extends keyof DashboardWorkoutFilters>(
-    key: Key,
-    value: DashboardWorkoutFilters[Key],
-  ) {
-    onChange({
-      ...filters,
-      [key]: value,
-    });
-  }
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label="Filter workouts"
-          className={styles.workoutFilterToggle}
-          data-active={open || hasFilters}
-        >
-          <Filter className={styles.workoutFilterToggleIcon} strokeWidth={1.9} />
-        </button>
-      </PopoverTrigger>
-
-      <PopoverContent
-        asChild
-        side="bottom"
-        align="end"
-        avoidCollisions
-        collisionPadding={13}
-      >
-        <div className={styles.workoutFilterPopover}>
-          <div className={styles.workoutFilterGrid}>
-            <label className={styles.workoutFilterField}>
-              <span>From</span>
-              <input
-                className={styles.workoutFilterInput}
-                type="date"
-                value={filters.dateFrom}
-                max={filters.dateTo || undefined}
-                onChange={(event) => updateFilter("dateFrom", event.target.value)}
-              />
-            </label>
-            <label className={styles.workoutFilterField}>
-              <span>To</span>
-              <input
-                className={styles.workoutFilterInput}
-                type="date"
-                value={filters.dateTo}
-                min={filters.dateFrom || undefined}
-                onChange={(event) => updateFilter("dateTo", event.target.value)}
-              />
-            </label>
-            <label className={styles.workoutFilterField}>
-              <span>Type</span>
-              <select
-                className={styles.workoutFilterInput}
-                value={filters.workoutType}
-                onChange={(event) => updateFilter("workoutType", event.target.value)}
-              >
-                <option value="">All types</option>
-                {workoutTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className={styles.workoutFilterField}>
-              <span>Search title</span>
-              <input
-                className={styles.workoutFilterInput}
-                type="search"
-                value={filters.titleQuery}
-                onChange={(event) => updateFilter("titleQuery", event.target.value)}
-                placeholder="Push day"
-              />
-            </label>
-          </div>
-          <div className={styles.workoutFilterFooter}>
-            <p className={styles.workoutFilterMeta}>
-              {filteredCount} workout{filteredCount === 1 ? "" : "s"}
-              {hasFilters ? " matched" : ""}
-            </p>
-            <button
-              type="button"
-              className={styles.workoutFilterReset}
-              onClick={onClear}
-              disabled={!hasFilters}
-            >
-              Clear filters
-            </button>
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-// A long history is thousands of elements before anything is interactive.
-// Mount the most recent months of days and let the rest be revealed on demand.
-// Filtering still runs over the whole loaded history — only the strip is
-// capped.
-const INITIAL_MONTHS = 3;
-const MONTHS_PER_REVEAL = 6;
-
-function buildRecordedDays(
+/**
+ * The loader hands history over as server pages of months; the browser needs
+ * it as one month of recorded days at a time. Indexing it once per page keeps
+ * month navigation and the totals off the render path.
+ */
+function indexLoadedHistory(
   months: DashboardClientData["workoutMonths"],
-): RecordedDay[] {
+): LoadedHistory {
   const byDate = new Map<string, WorkoutTableRow[]>();
+  let oldestMonth: string | null = null;
+  let newestMonth: string | null = null;
+  let loadedWorkouts = 0;
 
   for (const month of months) {
     for (const workout of month.entries) {
-      const existing = byDate.get(workout.performedAtDate);
+      const monthKey = monthKeyOf(workout.performedAtDate);
 
-      if (existing) {
+      if (!monthKey) {
+        // A date that is not a calendar day has no place on the strip.
+        continue;
+      }
+
+      loadedWorkouts += 1;
+      const sessions = byDate.get(workout.performedAtDate);
+
+      if (sessions) {
         // Two sessions on one day belong to the same card, not to two days.
-        existing.push(workout);
+        sessions.push(workout);
       } else {
         byDate.set(workout.performedAtDate, [workout]);
+      }
+
+      if (!oldestMonth || monthKey < oldestMonth) {
+        oldestMonth = monthKey;
+      }
+
+      if (!newestMonth || monthKey > newestMonth) {
+        newestMonth = monthKey;
       }
     }
   }
 
-  return Array.from(byDate, ([date, workouts]) => ({ date, workouts })).sort(
-    (left, right) => right.date.localeCompare(left.date),
+  const byMonth = new Map<string, RecordedDay[]>();
+  const ascending = Array.from(byDate).sort(([left], [right]) =>
+    left.localeCompare(right),
   );
+
+  for (const [date, workouts] of ascending) {
+    const monthKey = date.slice(0, 7);
+    const days = byMonth.get(monthKey);
+
+    if (days) {
+      days.push({ date, workouts });
+    } else {
+      byMonth.set(monthKey, [{ date, workouts }]);
+    }
+  }
+
+  return { byMonth, oldestMonth, newestMonth, loadedWorkouts };
 }
 
-const HISTORY_DAY_CHANGE = "logit-history-day-change";
+const NO_DAYS: readonly RecordedDay[] = [];
 
-function subscribeToHistoryDay(notify: () => void) {
+const HISTORY_SELECTION_CHANGE = "logit-history-selection-change";
+
+function subscribeToHistorySelection(notify: () => void) {
   window.addEventListener("popstate", notify);
-  window.addEventListener(HISTORY_DAY_CHANGE, notify);
+  window.addEventListener(HISTORY_SELECTION_CHANGE, notify);
   return () => {
     window.removeEventListener("popstate", notify);
-    window.removeEventListener(HISTORY_DAY_CHANGE, notify);
+    window.removeEventListener(HISTORY_SELECTION_CHANGE, notify);
   };
 }
 
-function historyDaySnapshot() {
+function bookmarkedDaySnapshot() {
   const day = new URLSearchParams(window.location.search).get("day");
   return day && DATE_KEY_PATTERN.test(day) ? day : null;
 }
 
+function bookmarkedMonthSnapshot() {
+  const month = new URLSearchParams(window.location.search).get("month");
+  return month && MONTH_KEY_PATTERN.test(month) ? month : null;
+}
+
 /**
- * History as a browser of the days you actually trained: the month you are
- * looking at, a horizontal strip of recorded days, and everything logged on
- * the selected one. Days with nothing in them are not drawn, so scrolling
- * moves through sessions instead of through empty squares, and the selected
- * day is kept in the address bar so reloading or returning to the view lands
- * on the same day.
+ * History as one month of the days you actually trained: the month you are
+ * looking at with an arrow either side of it, its recorded days in a
+ * horizontal scroller running oldest to newest, and everything logged on the
+ * selected one. Days with nothing in them are not drawn, so scrolling moves
+ * through sessions instead of through empty squares.
+ *
+ * The month and the day live in the address bar and nowhere else, so reloading,
+ * returning from an edit, or the loader delivering another page all land on the
+ * same view instead of on a stale local selection.
  */
 export function DashboardWorkoutsView({
   workoutMonths,
-  lifetime,
   displayWeightUnit,
-  filters,
+  asOfDate,
   isLoading = false,
   isLoadingMore = false,
   hasMore = false,
-  remainingCount = 0,
   error = null,
   onLoadMore,
   onRetry,
 }: DashboardWorkoutsViewProps) {
-  const filteredWorkoutMonths = useMemo(
-    () => getFilteredWorkoutMonths(workoutMonths, filters),
-    [filters, workoutMonths],
+  const history = useMemo(() => indexLoadedHistory(workoutMonths), [workoutMonths]);
+  const bookmarkedDay = useSyncExternalStore(
+    subscribeToHistorySelection,
+    bookmarkedDaySnapshot,
+    () => null,
   );
-  const [visibleMonths, setVisibleMonths] = useState(INITIAL_MONTHS);
-  const [renderedFilters, setRenderedFilters] = useState(filters);
-  const selectedDate = useSyncExternalStore(subscribeToHistoryDay, historyDaySnapshot, () => null);
-  const selectedMonthIndex = filteredWorkoutMonths.findIndex((month) =>
-    month.entries.some((workout) => workout.performedAtDate === selectedDate),
+  const bookmarkedMonth = useSyncExternalStore(
+    subscribeToHistorySelection,
+    bookmarkedMonthSnapshot,
+    () => null,
   );
-  const visibleMonthCount = Math.max(visibleMonths, selectedMonthIndex + 1);
 
-  // A new filter should start from the most recent results again. Adjusting
-  // during render rather than in an effect avoids rendering the stale slice
-  // first and then immediately re-rendering.
-  if (filters !== renderedFilters) {
-    setRenderedFilters(filters);
-    setVisibleMonths(INITIAL_MONTHS);
-  }
+  const now = new Date();
+  // Forward travel stops at the month the person is living in; there is no
+  // history in front of today.
+  const latestMonth =
+    (asOfDate ? monthKeyOf(asOfDate) : null) ??
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  // An explicit month wins, a bookmarked day names its own month, and a first
+  // visit opens on the newest month there is anything in.
+  const selectedMonth =
+    bookmarkedMonth ??
+    (bookmarkedDay ? monthKeyOf(bookmarkedDay) : null) ??
+    history.newestMonth ??
+    latestMonth;
 
-  // Returning from a detail page starts with the newest server page again.
-  // Fetch older pages only until the requested date falls inside the loaded
-  // range; a deleted or filtered-out date must not trigger a full-history scan.
+  // Older months live on later server pages, so a month is only finished when
+  // the loader has nothing left or has already reached past it. Anything less
+  // and its totals would be a fraction presented as a fact.
+  const monthComplete =
+    !hasMore || (history.oldestMonth !== null && history.oldestMonth < selectedMonth);
+  const requestedPage = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!selectedDate || selectedMonthIndex !== -1 || isLoading || isLoadingMore || error || !hasMore) return;
-    const oldestLoadedDate = workoutMonths.at(-1)?.entries.at(-1)?.performedAtDate;
-    if (oldestLoadedDate && selectedDate < oldestLoadedDate) onLoadMore?.();
-  }, [error, hasMore, isLoading, isLoadingMore, onLoadMore, selectedDate, selectedMonthIndex, workoutMonths]);
+    if (error) {
+      requestedPage.current = null;
+      return;
+    }
+    if (monthComplete || isLoading || isLoadingMore || !onLoadMore) {
+      return;
+    }
 
-  const days = useMemo(
-    () => buildRecordedDays(filteredWorkoutMonths.slice(0, visibleMonthCount)),
-    [filteredWorkoutMonths, visibleMonthCount],
-  );
-  // Derived, not stored: a filter that hides the selected day falls back to
-  // the newest recorded one instead of leaving the view on nothing.
-  const selectedDay =
-    days.find((day) => day.date === selectedDate) ?? days[0] ?? null;
+    // One request per month per page of loaded history: a loader that keeps
+    // reporting more while returning nothing cannot turn into a fetch loop.
+    const request = `${selectedMonth}:${history.loadedWorkouts}`;
+
+    if (requestedPage.current === request) {
+      return;
+    }
+
+    requestedPage.current = request;
+    onLoadMore();
+  }, [
+    error,
+    history.loadedWorkouts,
+    isLoading,
+    isLoadingMore,
+    monthComplete,
+    onLoadMore,
+    selectedMonth,
+  ]);
 
   if (error) {
     return (
@@ -348,96 +312,127 @@ export function DashboardWorkoutsView({
     return <HistorySkeleton />;
   }
 
-  const hiddenWorkoutCount = getWorkoutCount(
-    filteredWorkoutMonths.slice(visibleMonthCount),
-  );
-  // The reveal promises the workouts in the months it mounts, not every hidden
-  // one.
-  const revealWorkoutCount = getWorkoutCount(
-    filteredWorkoutMonths.slice(visibleMonthCount, visibleMonthCount + MONTHS_PER_REVEAL),
-  );
-  const canLoadMore = hiddenWorkoutCount > 0 || (hasMore && Boolean(onLoadMore));
-  const filterCount = getWorkoutCount(filteredWorkoutMonths);
-  const filtersActive = hasActiveWorkoutFilters(filters);
+  const monthDays = history.byMonth.get(selectedMonth) ?? NO_DAYS;
+  // Derived, not stored: a month opens on its newest session, and a bookmarked
+  // day that was since deleted falls back to it instead of showing nothing.
+  const selectedDay =
+    monthDays.find((day) => day.date === bookmarkedDay) ?? monthDays.at(-1) ?? null;
 
-  function selectDate(date: string) {
-    // `replaceState` keeps the day recoverable on reload or on returning to
-    // the view without turning a scroll through the strip into a stack of
-    // history entries to back out of.
+  let monthWorkouts = 0;
+  let monthSets = 0;
+
+  for (const day of monthDays) {
+    for (const workout of day.workouts) {
+      monthWorkouts += 1;
+      monthSets += workout.setCount;
+    }
+  }
+
+  let contextLine: string | null = null;
+
+  if (!monthComplete) {
+    contextLine = monthWorkouts > 0 ? "Still loading this month." : null;
+  } else if (monthWorkouts > 0) {
+    contextLine = `${countLabel(monthWorkouts, "workout")}, ${countLabel(
+      monthSets,
+      "set",
+    )} this month.`;
+  }
+
+  let emptyMessage: string | null = null;
+
+  if (monthDays.length === 0) {
+    if (!monthComplete) {
+      emptyMessage = `Loading ${monthKeyLabel(selectedMonth)}.`;
+    } else if (history.loadedWorkouts === 0) {
+      emptyMessage = "No workouts logged yet.";
+    } else {
+      emptyMessage = "Nothing logged this month.";
+    }
+  }
+
+  // With pages still to come an earlier month may yet arrive; once the loader
+  // is exhausted its oldest month is where the history starts.
+  const earliestMonth = hasMore ? null : (history.oldestMonth ?? selectedMonth);
+
+  function select(monthKey: string, day: string | null) {
+    // `replaceState` keeps the month and day recoverable on reload or on
+    // returning from a session without turning a walk through the year into a
+    // stack of entries to back out of.
     const url = new URL(window.location.href);
-    url.searchParams.set("day", date);
+    url.searchParams.set("month", monthKey);
+
+    if (day) {
+      url.searchParams.set("day", day);
+    } else {
+      url.searchParams.delete("day");
+    }
+
     window.history.replaceState(window.history.state, "", url);
-    window.dispatchEvent(new Event(HISTORY_DAY_CHANGE));
+    window.dispatchEvent(new Event(HISTORY_SELECTION_CHANGE));
   }
 
   return (
     <div className={historyStyles.root}>
       <header className={historyStyles.header}>
-        {selectedDay ? (
+        <div className={historyStyles.monthHeaderRow}>
           <h2 className={historyStyles.monthTitle}>
-            <span
-              key={selectedDay.date.slice(0, 7)}
-              className={historyStyles.monthTitleMotion}
-            >
-              {monthYearLabel(selectedDay.date)}
+            <span key={selectedMonth} className={historyStyles.monthTitleMotion}>
+              {monthKeyLabel(selectedMonth)}
             </span>
           </h2>
+          <div className={historyStyles.monthNavigation}>
+            <button
+              type="button"
+              aria-label="Previous month"
+              className={historyStyles.monthButton}
+              disabled={earliestMonth !== null && selectedMonth <= earliestMonth}
+              onClick={() => select(shiftMonthKey(selectedMonth, -1), null)}
+            >
+              <ChevronLeft
+                aria-hidden="true"
+                className={historyStyles.monthIcon}
+                strokeWidth={1.9}
+              />
+            </button>
+            <button
+              type="button"
+              aria-label="Next month"
+              className={historyStyles.monthButton}
+              disabled={selectedMonth >= latestMonth}
+              onClick={() => select(shiftMonthKey(selectedMonth, 1), null)}
+            >
+              <ChevronRight
+                aria-hidden="true"
+                className={historyStyles.monthIcon}
+                strokeWidth={1.9}
+              />
+            </button>
+          </div>
+        </div>
+        {contextLine ? (
+          <p className={historyStyles.contextLine}>{contextLine}</p>
         ) : null}
-        <p className={historyStyles.contextLine}>
-          {filtersActive
-            ? `${countLabel(filterCount, "workout")} ${
-                filterCount === 1 ? "matches" : "match"
-              } these filters.`
-            : `${countLabel(lifetime.workouts, "workout")} logged, ${countLabel(
-                lifetime.sets,
-                "set",
-              )} across ${countLabel(lifetime.exercises, "exercise")}.`}
-        </p>
       </header>
 
-      {days.length > 0 ? (
-        <>
-          <DashboardDayStrip
-            days={days}
-            selectedDate={selectedDay?.date ?? null}
-            onSelect={selectDate}
-            older={
-              canLoadMore
-                ? {
-                    label:
-                      hiddenWorkoutCount > 0
-                        ? `Show ${countLabel(revealWorkoutCount, "older workout")}`
-                        : isLoadingMore
-                          ? "Loading older workouts"
-                          : `Load ${countLabel(remainingCount, "older workout")}`,
-                    busy: hiddenWorkoutCount === 0 && isLoadingMore,
-                    onActivate: () => {
-                      if (hiddenWorkoutCount > 0) {
-                        setVisibleMonths((count) => Math.max(count, selectedMonthIndex + 1) + MONTHS_PER_REVEAL);
-                      } else {
-                        onLoadMore?.();
-                      }
-                    },
-                  }
-                : null
-            }
-          />
+      {monthDays.length > 0 ? (
+        <DashboardDayStrip
+          days={monthDays}
+          selectedDate={selectedDay?.date ?? null}
+          onSelect={(date) => select(selectedMonth, date)}
+        />
+      ) : null}
 
-          {selectedDay ? (
-            // Deliberately unkeyed: the day's own section restarts the
-            // entrance, while this component keeps the sets it already
-            // fetched, so stepping back a day costs nothing.
-            <DashboardDaySessions day={selectedDay} weightUnit={displayWeightUnit} />
-          ) : null}
-        </>
-      ) : (
-        <p className={historyStyles.empty}>
-          {filtersActive
-            ? "No workouts match those filters."
-            : "No workouts logged yet."}
-        </p>
-      )}
+      {selectedDay ? (
+        // Deliberately unkeyed: the day's own section restarts the entrance,
+        // while this component keeps the sets it already fetched, so stepping
+        // back a day costs nothing.
+        <DashboardDaySessions day={selectedDay} weightUnit={displayWeightUnit} />
+      ) : null}
+
+      {emptyMessage ? (
+        <p className={historyStyles.empty}>{emptyMessage}</p>
+      ) : null}
     </div>
   );
 }
-

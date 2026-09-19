@@ -1,8 +1,7 @@
 "use client";
 
-import { ListOrdered, Pencil, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { ListOrdered, Pencil, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import {
   getSplitWeekdayLabel,
   isRestDayWorkoutTypeSlug,
@@ -12,21 +11,15 @@ import {
 import { ExerciseTemplateRow } from "./exercise-template-row";
 import { SplitActionMenu } from "./split-action-menu";
 import { SplitExerciseReorderDialog } from "./split-exercise-reorder-dialog";
-import { countLabel } from "./split-library.shared";
-import { getInitialSelectedWeekday } from "./split-manager.shared";
+import { countLabel, getSplitDayTitle } from "./split-library.shared";
 import { splitStyles } from "./split-system.styles";
 
 type SplitEditorProps = {
   day: WorkoutSplitDayTemplate;
   days: WorkoutSplitDayTemplate[];
   exerciseSearchResults: Record<string, string[]>;
-  /** True while the split holds edits the server has not stored. */
-  hasUnsavedChanges: boolean;
-  isMobileOpen: boolean;
   isSaving: boolean;
-  onMobileClose: () => void;
   onSelectWeekday: (weekday: SplitWeekdayValue) => void;
-  onSave: () => void;
   onWorkoutTypeChange: (value: string) => void;
   onExerciseNameChange: (exerciseIndex: number, value: string) => void;
   onExerciseNameFocus: (exerciseIndex: number, value: string) => void;
@@ -38,16 +31,21 @@ type SplitEditorProps = {
   onReorderExercises: (orderedExerciseOrders: number[]) => void;
 };
 
+/**
+ * The day editor is inline at every width: the split header above it owns the
+ * title and the one Save, so this surface is only the week strip and the day
+ * you picked. Nothing here portals, locks scroll or renders a second Save.
+ *
+ * Local state (reorder dialog, remove mode) is per day by construction: the
+ * manager keys this component on the selected split and weekday, so switching
+ * either remounts it and no menu or remove mode carries across.
+ */
 export function SplitEditor({
   day,
   days,
   exerciseSearchResults,
-  hasUnsavedChanges,
-  isMobileOpen,
   isSaving,
-  onMobileClose,
   onSelectWeekday,
-  onSave,
   onWorkoutTypeChange,
   onExerciseNameChange,
   onExerciseNameFocus,
@@ -59,119 +57,104 @@ export function SplitEditor({
   onReorderExercises,
 }: SplitEditorProps) {
   const [isReorderOpen, setIsReorderOpen] = useState(false);
-  const [isEditingExercises, setIsEditingExercises] = useState(false);
-  const [todayWeekday] = useState<SplitWeekdayValue>(getInitialSelectedWeekday);
+  const [isRemoveMode, setIsRemoveMode] = useState(false);
+  const stripRef = useRef<HTMLElement | null>(null);
+  const selectedDayRef = useRef<HTMLButtonElement | null>(null);
   const isRestDay = isRestDayWorkoutTypeSlug(day.workoutTypeSlug);
   // Naming a day Rest is how you empty it, but typing is not a delete: the
   // exercises stay in local state and stay visible with the consequence spelt
   // out, so clearing the field to retype it cannot silently destroy the day.
   const hasRestDayExercises = isRestDay && day.exercises.length > 0;
+  const hasExercises = day.exercises.length > 0;
 
+  // The selected day is brought into the strip's own scroll box, never through
+  // scrollIntoView: that would scroll the page under the sticky header too.
   useEffect(() => {
-    if (
-      !isMobileOpen ||
-      !window.matchMedia("(max-width: 980px)").matches
-    ) {
+    const strip = stripRef.current;
+    const selected = selectedDayRef.current;
+    if (!strip || !selected) {
       return;
     }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const target =
+      selected.offsetLeft - (strip.clientWidth - selected.offsetWidth) / 2;
+    const maxScroll = strip.scrollWidth - strip.clientWidth;
+    strip.scrollLeft = Math.max(0, Math.min(target, maxScroll));
+  }, [day.weekday]);
 
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isMobileOpen]);
-
-  function handleOpenReorder(close: () => void) {
-    setIsReorderOpen(true);
-    close();
-  }
-
-  const editor = (
-    <section
-      data-mobile-open={isMobileOpen}
-      role={isMobileOpen ? "dialog" : undefined}
-      aria-modal={isMobileOpen ? true : undefined}
-      aria-label={isMobileOpen ? `Edit ${getSplitWeekdayLabel(day.weekday)}` : undefined}
-      className={`${splitStyles.splitEditor} ${
-        isMobileOpen
-          ? splitStyles.splitEditorMobileOpen
-          : splitStyles.splitEditorMobileClosed
-      }`}
-    >
-      <header className={splitStyles.editorHeader}>
-        <button
-          type="button"
-          aria-label="Back to week"
-          className={splitStyles.editorMobileClose}
-          onClick={onMobileClose}
-        >
-          <X className={splitStyles.editorHeaderIcon} strokeWidth={1.9} />
-        </button>
-        <h2 className={splitStyles.editorTitle}>
-          {getSplitWeekdayLabel(day.weekday)}
-        </h2>
-        {/* Save states what it will do: there is nothing to commit until an
-            edit exists, and the pending label replaces it while the request
-            is in flight. */}
-        <button
-          type="button"
-          className={splitStyles.editorSave}
-          onClick={onSave}
-          disabled={isSaving || !hasUnsavedChanges}
-        >
-          {isSaving ? "Saving..." : hasUnsavedChanges ? "Save" : "Saved"}
-        </button>
-      </header>
-
-      <nav aria-label="Choose a day to edit" className={splitStyles.editorDayTabs}>
+  return (
+    <section aria-label="Day editor" className={splitStyles.dayEditor}>
+      <nav aria-label="Choose a day to edit" className={splitStyles.dayStrip} ref={stripRef}>
+        <div className={splitStyles.dayStripContent}>
         {days.map((item) => {
           const label = getSplitWeekdayLabel(item.weekday);
+          const title = getSplitDayTitle(item);
           const isSelected = item.weekday === day.weekday;
-          const isToday = item.weekday === todayWeekday;
 
           return (
             <button
               key={item.weekday}
               type="button"
-              aria-label={`${label}${isToday ? ", today" : ""}`}
+              ref={isSelected ? selectedDayRef : undefined}
+              aria-label={`${label}: ${title}`}
               aria-current={isSelected ? "true" : undefined}
-              className={splitStyles.editorDayTab}
+              data-selected={isSelected}
+              aria-pressed={isSelected}
+              className={splitStyles.dayStripItem}
               onClick={() => onSelectWeekday(item.weekday)}
             >
-              <span>{label.slice(0, 3)}</span>
-              {isToday ? (
-                <span
-                  aria-hidden="true"
-                  className={splitStyles.editorDayTabToday}
-                />
-              ) : null}
+              <span className={splitStyles.dayStripWeekday}>{label.slice(0, 3)}</span>
+              <span
+                className={splitStyles.dayStripTitle}
+              >
+                {title}
+              </span>
             </button>
           );
         })}
+        </div>
       </nav>
 
-      <div className={splitStyles.editorBody}>
-        <div className={splitStyles.editorInputWithMenu}>
-          <label className={`${splitStyles.editorField} min-w-0 flex-1`}>
-            <span className={splitStyles.editorLabel}>Workout</span>
+      <div className={splitStyles.dayPanel}>
+        <div className={splitStyles.dayPanelHead}>
+          <div className={splitStyles.dayPanelIdentity}>
             <input
-              className={splitStyles.editorInput}
+              aria-label="Workout name"
+              className={splitStyles.dayNameInput}
               value={day.workoutType}
               onChange={(event) => onWorkoutTypeChange(event.target.value)}
-              placeholder="Workout type"
+              placeholder="Rest"
+              disabled={isSaving}
+              autoComplete="off"
+              autoCapitalize="words"
             />
-          </label>
-          {!isRestDay || hasRestDayExercises ? (
+          </div>
+          {!isRestDay || hasExercises ? (
             <SplitActionMenu label="Day options">
               {(close) => (
                 <>
+                  {!isRestDay ? (
+                    <button
+                      type="button"
+                      className={splitStyles.actionMenuItem}
+                      disabled={isSaving}
+                      onClick={() => {
+                        onAddExercise();
+                        close();
+                      }}
+                    >
+                      <Plus className={splitStyles.inlineIcon} strokeWidth={1.9} />
+                      Add exercise
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className={splitStyles.actionMenuItem}
-                    onClick={() => handleOpenReorder(close)}
-                    disabled={day.exercises.length < 2}
+                    onClick={() => {
+                      setIsReorderOpen(true);
+                      close();
+                    }}
+                    disabled={day.exercises.length < 2 || isSaving}
                   >
                     <ListOrdered
                       className={splitStyles.inlineIcon}
@@ -179,48 +162,23 @@ export function SplitEditor({
                     />
                     Reorder exercises
                   </button>
+                  {/* Remove is a mode, not a row-level button: a stray tap
+                      while typing a name cannot drop an exercise. */}
                   <button
                     type="button"
                     className={splitStyles.actionMenuItem}
                     onClick={() => {
-                      setIsEditingExercises((editing) => !editing);
+                      setIsRemoveMode((removing) => !removing);
                       close();
                     }}
-                    disabled={day.exercises.length === 0}
+                    disabled={isSaving || !hasExercises}
                   >
-                    <Pencil
-                      className={splitStyles.inlineIcon}
-                      strokeWidth={1.9}
-                    />
-                    {isEditingExercises ? "Done editing" : "Edit exercises"}
+                    <Pencil className={splitStyles.inlineIcon} strokeWidth={1.9} />
+                    {isRemoveMode ? "Done editing" : "Edit exercises"}
                   </button>
                 </>
               )}
             </SplitActionMenu>
-          ) : null}
-        </div>
-
-        <div className={splitStyles.editorSectionHead}>
-          <h3 className={splitStyles.editorSectionTitle}>Exercises</h3>
-          {!isRestDay ? (
-            <button
-              type="button"
-              className={splitStyles.editorAddExerciseButton}
-              onClick={
-                isEditingExercises
-                  ? () => setIsEditingExercises(false)
-                  : onAddExercise
-              }
-            >
-              {isEditingExercises ? (
-                "Done"
-              ) : (
-                <>
-                  <Plus className={splitStyles.inlineIcon} strokeWidth={1.9} />
-                  Add exercise
-                </>
-              )}
-            </button>
           ) : null}
         </div>
 
@@ -233,62 +191,54 @@ export function SplitEditor({
           </p>
         ) : null}
 
-        {isRestDay && !hasRestDayExercises ? (
-          <div className={splitStyles.emptyState}>
-            <p>Change the workout to add exercises for this day.</p>
+        {hasExercises ? (
+          <div className={splitStyles.editorExerciseList}>
+            {day.exercises.map((exercise, index) => (
+              <ExerciseTemplateRow
+                key={exercise.id ?? `${day.weekday}-${exercise.order}`}
+                exercise={exercise}
+                searchResults={exerciseSearchResults[`${day.weekday}-${index}`] ?? []}
+                isRemoveMode={isRemoveMode}
+                isDisabled={isSaving}
+                onNameChange={(value) => onExerciseNameChange(index, value)}
+                onNameFocus={(value) => onExerciseNameFocus(index, value)}
+                onNameBlur={(value) => onExerciseNameBlur(index, value)}
+                onApplySearchResult={(suggestion) =>
+                  onApplyExerciseSearchResult(index, suggestion)
+                }
+                onSetsChange={(value) => onExerciseSetsChange(index, value)}
+                onRemove={() => onRemoveExercise(index)}
+              />
+            ))}
           </div>
-        ) : day.exercises.length > 0 ? (
-          <>
-            <div
-              className={
-                isEditingExercises
-                  ? splitStyles.editorColumnLabelsEditing
-                  : splitStyles.editorColumnLabels
-              }
-            >
-              <span>Exercise</span>
-              <span>Sets</span>
-              {isEditingExercises ? <span /> : null}
-            </div>
-            <div className={splitStyles.editorExerciseList}>
-              {day.exercises.map((exercise, index) => (
-                <ExerciseTemplateRow
-                  key={exercise.id ?? `${day.weekday}-${exercise.order}`}
-                  exercise={exercise}
-                  searchResults={exerciseSearchResults[`${day.weekday}-${index}`] ?? []}
-                  isEditing={isEditingExercises}
-                  onNameChange={(value) => onExerciseNameChange(index, value)}
-                  onNameFocus={(value) => onExerciseNameFocus(index, value)}
-                  onNameBlur={(value) => onExerciseNameBlur(index, value)}
-                  onApplySearchResult={(suggestion) =>
-                    onApplyExerciseSearchResult(index, suggestion)
-                  }
-                  onSetsChange={(value) => onExerciseSetsChange(index, value)}
-                  onRemove={() => onRemoveExercise(index)}
-                />
-              ))}
-            </div>
-          </>
+        ) : isRestDay ? (
+          <p className={splitStyles.emptyState}>
+            Rest day. Type a workout name to add exercises.
+          </p>
         ) : (
-          <div className={splitStyles.emptyState}>
-            <p>No exercises yet.</p>
-          </div>
+          <p className={splitStyles.emptyState}>No exercises yet.</p>
         )}
 
-        <SplitExerciseReorderDialog
-          exercises={day.exercises}
-          open={isReorderOpen}
-          onCancel={() => setIsReorderOpen(false)}
-          onSave={(orderedExerciseOrders) => {
-            onReorderExercises(orderedExerciseOrders);
-            setIsReorderOpen(false);
-          }}
-        />
+        {isRemoveMode ? (
+          <button
+            type="button"
+            className={splitStyles.addExerciseButton}
+            onClick={() => setIsRemoveMode(false)}
+          >
+            Done editing
+          </button>
+        ) : null}
       </div>
+
+      <SplitExerciseReorderDialog
+        exercises={day.exercises}
+        open={isReorderOpen}
+        onCancel={() => setIsReorderOpen(false)}
+        onSave={(orderedExerciseOrders) => {
+          onReorderExercises(orderedExerciseOrders);
+          setIsReorderOpen(false);
+        }}
+      />
     </section>
   );
-
-  return isMobileOpen && typeof document !== "undefined"
-    ? createPortal(editor, document.body)
-    : editor;
 }

@@ -20,12 +20,7 @@ export type WorkoutLoggerExercisePagerProps = {
   onJumpTo: (exerciseId: string) => void;
 };
 
-/**
- * Where you are in the session, and every way to move through it that is not a
- * swipe: a previous and a next control, and the list of exercises itself. The
- * focused logger shows one exercise, so position has to be stated rather than
- * implied by what happens to be on screen.
- */
+/** Flashcard navigation and a direct jump to any exercise in the workout. */
 export function WorkoutLoggerExercisePager({
   exercises,
   focusedIndex,
@@ -46,7 +41,7 @@ export function WorkoutLoggerExercisePager({
   const position = `${focusedIndex + 1} of ${exercises.length}`;
 
   return (
-    <div className={styles.pagerRow} data-swipe-ignore="true">
+    <div className={styles.pagerRow}>
       <button
         type="button"
         className={styles.pagerButton}
@@ -63,7 +58,7 @@ export function WorkoutLoggerExercisePager({
           aria-label={`${focusedName}, exercise ${position}. Jump to another exercise`}
         >
           <span className={styles.pagerJumpLabel}>
-            {`Exercise ${focusedIndex + 1}`}
+            {focusedIndex + 1}
             <span className={styles.pagerJumpCount}>
               {` of ${exercises.length}`}
             </span>

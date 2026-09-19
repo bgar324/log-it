@@ -1,10 +1,12 @@
 # Design System
 
-The authenticated app uses an ink-and-ivory palette, Geist typography, and soft grouped surfaces. Home is sentence-led; History and Analysis give recorded training data the space it needs.
+The authenticated app uses an ink-and-ivory palette, Geist typography, and soft grouped surfaces. Home is sentence-led; History makes recorded training readable.
 
 ## Authenticated design status
 
 The owner authorized the reference-driven redesign behind the existing PostHog `Ben` flag. The rules below describe that design. Unflagged users and public previews retain the previous UI; Nova and Ionic remain disabled.
+
+The latest monochrome, Home, Profile, and folder refinements are local-only until the owner requests publication.
 
 `training-theme.css` scopes the new palette to documents containing `[data-training-design="true"]`. Public pages retain their existing warm palette. Portalled controls inherit the authenticated document tokens.
 
@@ -61,7 +63,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - App chrome: `app/components/app-nav.tsx` and `app/components/app-nav.styles.ts` own direct bottom navigation and header utilities. The original drawer exists only in the unflagged baseline.
 - Data lists: `app/components/data-list.styles.ts` owns the row and pager shape shared by today's plan, the progress exercise index, and an exercise's session history. See the list rule under "Controls".
 - Product dashboard shell: `app/dashboard/dashboard.styles.ts` and dashboard components/hooks. The desktop sidebar lists every section and supports an icon-only collapsed state.
-- Split planner: `app/dashboard/split-system.styles.ts`, `app/dashboard/split-manager.tsx`, and related hooks. Layouts below `981px` render the full week as a compact agenda and open the selected day as a full-viewport task surface; wider layouts keep the weekday grid and editor side by side.
+- Split planner: `app/dashboard/split-system.styles.ts`, `app/dashboard/split-manager.tsx`, and related hooks. A folder opens directly into one inline editor at every width, with a shared header Save and a scrollable day selector.
 - Workout logger: `app/workouts/new/workout-logger.styles.ts` and logger components/hooks.
 - Workout detail: `app/workouts/[workoutId]/workout-detail.styles.ts`.
 - Exercise detail: `app/exercises/[exerciseKey]/exercise-detail.styles.ts`, which composes the shared data-list shape for its session history.
@@ -72,35 +74,35 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 
 ### Navigation and hierarchy
 
-- Phones use one floating icon-only pill with Home, History, Log, Split, Analysis, Profile, and Sign out. All seven controls remain visible at 320px and keep a 44px minimum target.
-- Profile's avatar and the Settings gear remain in the top utility row. There is no header ellipsis or hidden secondary navigation.
-- The owner shell has no drawer layers, scrim, slide animation, or scroll lock. Desktop retains its collapsible sidebar from 900px upward.
-- Logger routes are task surfaces without the main dock. Their Back link retains the originating view; editing returns to the workout detail. Detail and loading screens retain the same return context.
-- The dock reserves `--app-dock-height`, including the safe-area inset. Content can scroll beyond the dock; it must not end underneath it.
+- Phones use one floating icon-only pill with Home, History, and Split, plus Nutrition when enabled for the account. Workout entry is Home's primary action, not a separate plus button. History uses a calendar; Split uses a clipboard. Its 20px side gutters match Home's content width. A shared, softly tinted indicator slides between tabs with breathing room around it; reduced motion switches it instantly. Controls keep a 44px minimum target.
+- Profile is reached through the header avatar; Sign out lives in Profile. The Settings gear remains at the right. There is no header ellipsis or hidden secondary navigation.
+- The authenticated shell has no drawer layers, scrim, slide animation, or scroll lock. Desktop retains its collapsible sidebar from 900px upward.
+- Logger routes are task surfaces without the main dock. Their Back link retains the originating view. Edits opened from History return directly to the selected day; other edit entry points retain the workout-detail return.
+- The dock sits at the larger of 8px or the bottom safe-area inset, without adding another gap above the safe area. `--app-dock-height` reserves its 58px height, bottom offset, and 24px of content clearance.
+- Destination changes, repeated destination taps, and browser traversal reset the document and desktop content scroller to the top. Internal folder navigation also starts at the top.
 
-### Home, History, and Analysis
+### Home and History
 
-- Home shows the weekday, a personal plan sentence, one primary action, three compact calendar months, the latest session, and today's planned exercises. Resume takes precedence over Open, then Start.
-- Calendar dots mean recorded activity. Blank dots do not mean failure, and future days are dimmed. Home does not invent recovery scores or coaching claims.
-- History uses a horizontal strip of recorded days, not empty calendar days. Selecting a date reveals its sessions and sets. Older reveals more months or fetches another server page. The selected date survives detail, edit, Back, and reload.
-- Analysis leads with one large graph. Week, Month, and Year select its window; Sessions, Sets, and Volume select its measure. The three metric cards control the graph rather than acting as unrelated KPIs.
-- Heuristic notes describe recorded data. Weekly consistency counts weeks with a recorded session, not daily adherence to a split. A current week without a session is pending, not a broken streak.
-- Graphs appear without an initial reveal. Deliberate period and metric changes may animate. Reduced motion disables those animations and animated day-strip scrolling.
-- Searchable exercise indexes keep their existing edge-chevron pagination and range line. Rows keep identity left and numbers right, with hairlines between them.
+- Home shows the weekday without a status dot, a personal plan sentence, one primary action, three compact calendar months, and today's planned exercises. Exercise names lead muted sentences, with dates, previous top sets, and suggested top sets emphasized in primary text. There are no ordinal numbers or detached result columns. Targets require medium/high confidence from the existing predictor; otherwise state the recorded history and planned sets only. Resume takes precedence over Open, then Start. The plan has no trailing workout-type label or View your split link. There is no Last session section or unfinished-session subtitle.
+- Calendar dots mean recorded activity. Blank dots do not mean failure, and future days are dimmed. Home does not invent recovery scores or progression rules.
+- History browses one calendar month with Previous and Next controls and monthly workout/set counts. Its left-aligned horizontal strip contains only that month's recorded days, oldest left and newest right; the newest day is initially selected. Sessions show exercise names and actual sets. The title opens workout details for copy/delete actions; the top-right pencil opens editing directly. There is no filter, repeated day heading, volume summary, exercise ordinal/count metadata, or footer action row. Month/day selection survives reload, and the selected day survives editing and Back.
+- There is no Analysis destination and no replacement Home graph. Existing exercise-detail graphs remain available. Reduced motion disables their transitions and animated day-strip scrolling.
 
 ### Logger and split editing
 
-- The logger shows one exercise and all its sets. Previous, Next, a jump list, and horizontal swipes change exercises without dropping typed values. Swipes starting inside fields or controls do not navigate.
-- The active exercise name leads the form. Numeric entries are larger than metadata and keep a single Weight/Reps header rather than repeating visible labels for every field.
-- The protected tools control expands into an arc of 52px circles. Save stays inside that fan, away from the opening thumb. The trigger paints above entering actions so a rapid second tap cannot hit an invisible Save.
-- Add set and Delete exercise remain in the exercise menu. Workout details use the shared dialog. Set completion is not required.
-- Saved splits appear as folders with actual weekday structure and an explicit active state. Tapping opens a split; Set active is a separate action. Long press and the visible options button open the same menu.
+- The logger works like flashcards. History's circular arrows and the position/jump control sit at thumb level in a fixed row above the floating workout actions. No visible Previous/Next labels. Shared styles keep the controls coherent; sufficient bottom padding lets the entire form scroll clear of both rows. Swiper owns button-driven exercise transitions; dragging does not switch exercises.
+- The workout title uses primary text with a nearby pencil. Set numbers are plain 1, 2, and so on; input headers replace repeated placeholders. Guidance sits directly below the logging card with a 16px gap, in a matching soft container. The two containers slide as one unit over 280ms with gentle deceleration, no tilt or bounce, and a 20px gap between exercise pages. Muted date/Suggested headings and emphasized values keep guidance quiet. No estimate footer; low-confidence targets are withheld.
+- Set numbers sit close to the inputs while retaining 44px tap targets. The input row follows left swipes, including gestures over fields; taps edit and vertical gestures scroll. Red Delete covers 80% of the row and matches input height. Only one row stays open. No blocking overlay or trash-can column. Delete confirms before removal; the set-number menu is the non-swipe alternative.
+- Logger actions float separately along the bottom at the navigation dock's safe-area offset, without an enclosing bar or scrim. The red trash circle is farthest left and confirms deletion of the focused exercise. Add exercise, Reorder, and available Reset from split follow; Save remains on the right. Circles retain 44px targets, and all actions disable while saving. The last exercise cannot be deleted.
+- The logger metadata line shows the date and workout type. Its heading is the actual workout name with an adjacent pencil for inline editing. Existing-workout dates and types remain editable by tapping the metadata. Add set sits at the logging card's bottom. The floating plus is the only Add exercise action; the exercise ellipsis menu is removed.
+- Accounts with rest timing enabled have a Rest timer control beside Add set, not another floating circle. Presets, pause/resume, extra time, and skip use one logger-owned clock that survives exercise changes. The owner's timer remains hidden.
+- The split library opens first, without Back, an active-plan heading, or explanatory subtitle. Finder-style folder graphics show the active plan with a full monochrome fill; inactive folders are quiet outlines. Names and concise counts sit below them. A dashed New split folder is last. Activation remains in the long-press/options menu, not a card footer, and current state is also available through `aria-current`.
 - Day edits remain in the library when another folder opens. Leaving warns about any dirty split, not only the selected one. Pending saves disable renaming and other conflicting mutations.
-- Below 981px, a split day opens as one full-viewport task surface. Wider layouts show the same editor beside the week. Week moves use source/destination buttons; exercise order uses the shared drag sheet with Cancel and Save order.
+- The inner split editor is one mobile-first column. When a folder is open, the page header shows a Back arrow beside Splits; it returns to the folders without discarding edits. The sticky inner header contains the split name, Save, and options. History is the day-selector canon via `day-selector.styles.ts`, with wider Split buttons only for workout names. There is no Today marker or repeated weekday inside the exercise container. Exercise rows use shared list spacing and hairlines. Add exercise lives in the three-dot menu beside the workout name, not below the list. No day portal or body scroll lock.
 
 ### Shared controls and feedback
 
-- General actions compose `action.styles.ts`. Hero actions, metric selectors, recorded-day cards, navigation tabs, and fan circles have distinct roles and geometry, but all retain the 44px phone minimum.
+- General actions compose `action.styles.ts`. Hero actions, recorded-day cards, navigation tabs, and floating logger controls retain the same tokens and 44px phone minimum.
 - Text inputs and selects use at least 16px text on phones. Logger number fields are larger. `field.styles.ts` owns field feedback; the authenticated theme sets 14px field corners.
 - Popovers and dialogs do not move focus on open or close. Tab remains available to enter and traverse them. Editing-menu pointer presses preserve the current input.
 - Menus and dialogs retain outgoing content for their actual exit animation, then unmount. Outgoing content is immediately inert. Do not add per-page exit timers.
@@ -114,9 +116,9 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 
 - Dark background: `#0d0e11`; surfaces: `#1a1b20` and `#24252b`; text: `#f5f5f4`.
 - Light background: `#f6f5f2`; raised surface: white; text: `#1c1d21`.
-- The analytical accent is ice blue in dark mode and muted blue in light mode. It identifies recorded activity, selected metrics, and the active split.
+- Accents are monochrome: the text color supplies chart marks, selected controls, and the filled active folder. Soft states use a neutral tint, not blue.
 - Grouped surfaces use 24px corners, fields use 14px, and general actions remain pills. Avoid nested frames and decorative glows.
-- View and exercise changes use short, small movements. The tools fan uses staggered entry. Reduced motion preserves the same states without those movements.
+- View changes use short, small movements. Exercise navigation uses Swiper's horizontal slide motion; the floating action row stays stationary. Reduced motion preserves the same states without animated movement.
 
 ## Public Landing System
 
@@ -170,4 +172,4 @@ Other facts worth knowing before editing here:
 
 - Public appearance and navigation remain separate from this authenticated interaction layer. `app/globals.css` retains public focus-visible and reduced-motion rules.
 - **What remains because it is interaction rather than semantics:** `[touch-action:manipulation]`, pointer capture where direct manipulation still requires it, body scroll locks, `Escape`-to-close, scrim click-to-dismiss, `tabIndex={-1}` on invisible scrim buttons, and the 44px/16px phone minimums.
-- **Week and exercise reordering stay distinct.** Week moves use ordinary source and destination buttons. Exercise ordering remains pointer-only on one grab handle per row, with pointer capture and no directional arrows.
+- **Move workouts is the reorder canon.** Weekday and exercise ordering use the same shared dialog: select an item, choose its destination, then Save order. Selected rows offer Deselect and other rows offer Move here. No drag handles or pointer-capture reordering.

@@ -3,16 +3,22 @@ import { convertStoredWeightToDisplay, type WeightUnit } from "@/lib/weight-unit
 import { getWorkoutSplitSeedForDate } from "@/lib/workout-splits/service";
 import { isRestDayWorkoutTypeSlug } from "@/lib/workout-splits/shared";
 import { normalizeExerciseName } from "@/lib/workout-utils";
+import { predictExercisePerformance, type PredictionSession } from "@/lib/workouts/prediction";
+import { MAX_RECENT_SESSIONS } from "@/lib/workouts/prediction-types";
 import type { DashboardClientData } from "./dashboard-types";
 import { shortDate } from "./data.formatters";
 
 type PlannedExercise = DashboardClientData["overview"]["todaySession"][number];
+type HistoryRow = {
+  id: string;
+  normalizedName: string;
+  workoutId: string;
+  workoutTitle: string;
+  performedAt: Date;
+  exerciseOrder: number;
+};
 
-/**
- * What today's split day actually asks of you, with the numbers you hit last
- * time beside each exercise. The plan sentence says *what* today is; this says
- * what walking into it looks like.
- */
+/** Read recent sessions for every planned lift together, not one request per row. */
 export async function loadTodaySession(
   userId: string,
   weightUnit: WeightUnit,
@@ -20,116 +26,99 @@ export async function loadTodaySession(
 ): Promise<PlannedExercise[]> {
   try {
     const splitSeed = await getWorkoutSplitSeedForDate(userId, now);
+    if (!splitSeed.split.id || isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug)) return [];
+    const planned = splitSeed.day.exercises.filter(exercise => exercise.exerciseDisplayName.trim());
+    if (planned.length === 0) return [];
+    const normalizedNames = Array.from(new Set(planned.map(exercise => normalizeExerciseName(exercise.exerciseDisplayName))));
 
-    if (
-      !splitSeed.split.id ||
-      isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug) ||
-      splitSeed.day.exercises.length === 0
-    ) {
-      return [];
-    }
-
-    const planned = splitSeed.day.exercises.filter((exercise) =>
-      exercise.exerciseDisplayName.trim(),
-    );
-
-    if (planned.length === 0) {
-      return [];
-    }
-
-    const normalizedNames = Array.from(
-      new Set(planned.map((exercise) => normalizeExerciseName(exercise.exerciseDisplayName))),
-    );
-
-    // `DISTINCT ON` picks the newest row per exercise in one round trip. The
-    // two alternatives are both worse: a shared `take` window is wrong by
-    // construction (an exercise untrained for months falls outside it and the
-    // row then contradicts `ExerciseSummary`), and one `findFirst` per exercise
-    // is a ten-query first paint.
-    const [summaries, newestLogs] = await Promise.all([
+    const [summaries, history] = await Promise.all([
       prisma.exerciseSummary.findMany({
         where: { userId, normalizedName: { in: normalizedNames } },
-        // Only used to prove history exists when the newest log predates the
-        // set rows we can quote. Bests are not shown: an all-time number beside
-        // a real set reads as a target the row never claimed.
         select: { normalizedName: true, lastPerformedAt: true },
       }),
-      prisma.$queryRaw<Array<{ id: string; normalizedName: string; performedAt: Date }>>`
-        SELECT DISTINCT ON (we."normalizedName")
-          we.id,
-          we."normalizedName",
-          wl."performedAt"
-        FROM "WorkoutExercise" we
-        JOIN "WorkoutLog" wl ON wl.id = we."workoutLogId"
-        WHERE wl."userId" = ${userId}
-          AND we."normalizedName" = ANY(${normalizedNames})
-        ORDER BY we."normalizedName", wl."performedAt" DESC, we.id
+      prisma.$queryRaw<HistoryRow[]>`
+        SELECT id, "normalizedName", "workoutId", "workoutTitle", "performedAt", "exerciseOrder"
+        FROM (
+          SELECT we.id, we."normalizedName", we."order" AS "exerciseOrder",
+            wl.id AS "workoutId", wl.title AS "workoutTitle", wl."performedAt",
+            DENSE_RANK() OVER (
+              PARTITION BY we."normalizedName"
+              ORDER BY wl."performedAt" DESC, wl.id DESC
+            ) AS recency
+          FROM "WorkoutExercise" we
+          JOIN "WorkoutLog" wl ON wl.id = we."workoutLogId"
+          WHERE wl."userId" = ${userId}
+            AND we."normalizedName" = ANY(${normalizedNames})
+        ) recent
+        WHERE recency <= ${MAX_RECENT_SESSIONS}
+        ORDER BY "normalizedName", "performedAt" DESC, "workoutId" DESC, "exerciseOrder" ASC
       `,
     ]);
-
-    const newestLogByName = new Map(
-      newestLogs.map((log) => [log.normalizedName, { id: log.id, performedAt: log.performedAt }]),
-    );
-
     const sets = await prisma.workoutSet.findMany({
-      where: {
-        workoutExerciseId: {
-          in: Array.from(newestLogByName.values(), (log) => log.id),
-        },
-      },
+      where: { workoutExerciseId: { in: history.map(log => log.id) } },
       orderBy: { order: "asc" },
       select: { workoutExerciseId: true, reps: true, weightLb: true },
     });
-
-    // The heaviest set of the last session is the number you are chasing today.
-    // Bodyweight sets carry no `weightLb`, so they compete on reps instead —
-    // without this, every pull-up row would claim it had never been trained.
-    const topSetByLogId = new Map<string, { weightLb: number | null; reps: number }>();
-
+    const setsByLog = new Map<string, typeof sets>();
     for (const set of sets) {
-      if (set.reps === null) {
-        continue;
-      }
-
-      const weightLb = set.weightLb === null ? null : Number(set.weightLb);
-      const current = topSetByLogId.get(set.workoutExerciseId);
-
-      if (!current) {
-        topSetByLogId.set(set.workoutExerciseId, { weightLb, reps: set.reps });
-        continue;
-      }
-
-      // A weighted set always outranks a bodyweight one; within a kind, the
-      // heavier weight or the longer bodyweight set wins.
-      const beatsCurrent =
-        weightLb === null
-          ? current.weightLb === null && set.reps > current.reps
-          : current.weightLb === null || weightLb > current.weightLb;
-
-      if (beatsCurrent) {
-        topSetByLogId.set(set.workoutExerciseId, { weightLb, reps: set.reps });
-      }
+      const group = setsByLog.get(set.workoutExerciseId) ?? [];
+      group.push(set);
+      setsByLog.set(set.workoutExerciseId, group);
     }
+    const histories = new Map<string, Map<string, PredictionSession>>();
+    for (const log of history) {
+      const sessions = histories.get(log.normalizedName) ?? new Map<string, PredictionSession>();
+      const session: PredictionSession = sessions.get(log.workoutId) ?? {
+        workoutId: log.workoutId,
+        workoutTitle: log.workoutTitle,
+        performedAt: log.performedAt,
+        exerciseOrder: log.exerciseOrder,
+        sets: [],
+      };
+      for (const set of setsByLog.get(log.id) ?? []) {
+        if (set.reps === null) continue;
+        session.sets.push({
+          setIndex: session.sets.length + 1,
+          reps: set.reps,
+          weightLb: set.weightLb === null ? null : Number(set.weightLb),
+        });
+      }
+      sessions.set(log.workoutId, session);
+      histories.set(log.normalizedName, sessions);
+    }
+    const summaryByName = new Map(summaries.map(row => [row.normalizedName, row]));
 
-    const summaryByName = new Map(summaries.map((row) => [row.normalizedName, row]));
-
-    return planned.map((exercise) => {
+    return planned.map((exercise, index) => {
       const normalizedName = normalizeExerciseName(exercise.exerciseDisplayName);
-      const summary = summaryByName.get(normalizedName);
-      const newestLog = newestLogByName.get(normalizedName);
-      const topSet = newestLog ? topSetByLogId.get(newestLog.id) : undefined;
-      const lastPerformedAt = newestLog?.performedAt ?? summary?.lastPerformedAt ?? null;
+      const sessions = Array.from(histories.get(normalizedName)?.values() ?? []);
+      const lastSession = sessions[0];
+      const lastPerformedAt = lastSession?.performedAt ?? summaryByName.get(normalizedName)?.lastPerformedAt;
+      let topSet: PredictionSession["sets"][number] | undefined;
+      for (const set of lastSession?.sets ?? []) {
+        if (!topSet || (set.weightLb !== null
+          ? topSet.weightLb === null || set.weightLb > topSet.weightLb || (set.weightLb === topSet.weightLb && set.reps > topSet.reps)
+          : topSet.weightLb === null && set.reps > topSet.reps)) topSet = set;
+      }
+      const prediction = predictExercisePerformance({
+        sessions, performedAt: now, currentPosition: index + 1,
+        setCount: exercise.sets, weightUnit,
+      });
+      const target = prediction?.predictedSets[0];
 
       return {
         id: exercise.id ?? `${normalizedName}-${exercise.order}`,
         name: exercise.exerciseDisplayName.trim(),
         plannedSets: exercise.sets,
         lastPerformedLabel: lastPerformedAt ? shortDate(lastPerformedAt) : null,
-        lastWeight:
-          topSet && topSet.weightLb !== null
-            ? convertStoredWeightToDisplay(topSet.weightLb, weightUnit)
-            : null,
+        lastWeight: topSet?.weightLb != null ? convertStoredWeightToDisplay(topSet.weightLb, weightUnit) : null,
         lastReps: topSet?.reps ?? null,
+        ...(prediction && target?.reps != null ? {
+          suggestedTopSet: {
+            weight: target.weightLb === null ? null : convertStoredWeightToDisplay(target.weightLb, weightUnit),
+            reps: target.reps,
+            confidence: prediction.confidence,
+          },
+        } : {}),
       };
     });
   } catch (error) {

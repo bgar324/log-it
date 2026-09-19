@@ -24,7 +24,6 @@ import {
   resolveWorkoutReturn,
   type WorkoutReturnSearchParams,
 } from "@/app/workouts/workout-return";
-import LegacyWorkoutDetailPage from "@/app/_legacy/workouts/[workoutId]/page";
 
 type WorkoutPageParams = Promise<{ workoutId: string }>;
 
@@ -81,13 +80,9 @@ export default async function WorkoutDetailPage({
     );
   }
 
-  // The redesign is owner-gated, so the decision is made before the query: an
-  // unflagged reader is handed the shipped page, which loads its own data.
+  // Ben only decides whether Nutrition is a tab; the training screen below is
+  // what every reader gets once the workspace design is off.
   const benEnabled = await isBenFeatureEnabled(user);
-
-  if (!benEnabled) {
-    return <LegacyWorkoutDetailPage params={params} />;
-  }
 
   const workout = await prisma.workoutLog.findFirst({
     where: {

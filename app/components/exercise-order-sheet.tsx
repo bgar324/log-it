@@ -27,14 +27,14 @@ import { GripVertical } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { exerciseOrderStyles as styles } from "./exercise-order-sheet.styles";
-import type { ExerciseReorderItem } from "./exercise-reorder-dialog";
+import type { MoveReorderItem } from "./move-reorder-dialog";
 import { Button } from "./workspace-ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "./workspace-ui/sheet";
 
 export type ExerciseOrderSheetProps<Id extends string | number> = {
   open: boolean;
   /** The parent's current order. Snapshotted when the sheet opens. */
-  items: ExerciseReorderItem<Id>[];
+  items: MoveReorderItem<Id>[];
   /** Closed without committing: the parent's order is untouched. */
   onCancel: () => void;
   /** The only way an order leaves this sheet. */
@@ -88,7 +88,7 @@ export function ExerciseOrderSheet<Id extends string | number>({
 
   const itemById = useMemo(
     () =>
-      new Map<UniqueIdentifier, ExerciseReorderItem<Id>>(
+      new Map<UniqueIdentifier, MoveReorderItem<Id>>(
         items.map((item) => [item.id, item]),
       ),
     [items],
@@ -98,7 +98,7 @@ export function ExerciseOrderSheet<Id extends string | number>({
   // parent added while the sheet was open, so no exercise can hide.
   const draftItems = useMemo(() => {
     const seen = new Set<UniqueIdentifier>();
-    const ordered: ExerciseReorderItem<Id>[] = [];
+    const ordered: MoveReorderItem<Id>[] = [];
 
     for (const id of orderedIds) {
       const item = itemById.get(id);

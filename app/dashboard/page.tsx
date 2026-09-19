@@ -28,6 +28,8 @@ export default async function DashboardPage({
   const workspaceEnabled = isWorkspaceEnabled(user);
   const benFlag = isBenFeatureEnabled(user);
   if (workspaceEnabled && initialView === "nutrition" && await benFlag) redirect("/dashboard");
+  // Retired Analysis links return Home before loading unused progress data.
+  if (!workspaceEnabled && initialView === "progress") redirect("/dashboard");
   const now = getCurrentPacificDate();
   const data = createEmptyDashboardData(user, now);
   const [viewData, benEnabled] = await Promise.all([

@@ -8,16 +8,15 @@ import { render } from "./render";
 
 const user = { displayName: "Test User", username: "test-user", avatarUrl: null };
 
-test("the Ben phone bar exposes every former drawer destination directly", async () => {
+test("the Ben phone bar exposes every owner destination directly and no Analysis", async () => {
   const mounted = await render(createElement(AppTabBar, { activeView: "workouts", benEnabled: true }));
   try {
     const links = mounted.all('nav[aria-label="Primary"] a');
-    assert.deepEqual(links.map(link => link.getAttribute("aria-label")), ["Home", "History", "Log workout", "Split", "Analysis", "Profile"]);
-    assert.deepEqual(links.map(link => link.getAttribute("href")), ["/dashboard", "/dashboard?view=workouts", "/workouts/new?from=workouts", "/dashboard?view=split", "/dashboard?view=progress", "/dashboard?view=profile"]);
+    assert.deepEqual(links.map(link => link.getAttribute("aria-label")), ["Home", "History", "Split"]);
+    assert.deepEqual(links.map(link => link.getAttribute("href")), ["/dashboard", "/dashboard?view=workouts", "/dashboard?view=split"]);
     assert.equal(links.find(link => link.getAttribute("aria-current") === "page")?.getAttribute("aria-label"), "History");
-    const signout = mounted.container.querySelector('nav form[action="/auth/signout"]');
-    assert.equal(signout?.getAttribute("method"), "post");
-    assert.ok(signout?.querySelector('button[type="submit"][aria-label="Sign out"]'));
+    assert.equal(mounted.container.querySelector('nav form[action="/auth/signout"]'), null);
+    assert.equal(mounted.container.querySelector('nav button[aria-label="Sign out"]'), null);
   } finally { mounted.unmount(); }
 });
 
@@ -31,12 +30,13 @@ test("the owner header has no drawer trigger or hidden navigation dialog", async
   } finally { mounted.unmount(); }
 });
 
-test("the Ben desktop sidebar omits Nutrition and keeps Split", async () => {
+test("the Ben desktop sidebar omits Nutrition and Analysis and keeps Split", async () => {
   const mounted = await render(<DashboardShell activeView="dashboard" title="Home" user={user} benEnabled sidebarCollapsed={false} onToggleSidebar={() => {}} onNavigate={() => {}}><div /></DashboardShell>);
   try {
     const sidebar = mounted.container.querySelector("aside");
     assert.ok(sidebar);
     assert.doesNotMatch(sidebar.textContent ?? "", /Nutrition/);
+    assert.doesNotMatch(sidebar.textContent ?? "", /Analysis/);
     assert.match(sidebar.textContent ?? "", /Split/);
   } finally { mounted.unmount(); }
 });
@@ -46,5 +46,26 @@ test("the capability-aware bar retains both Nutrition and Split when needed", as
   try {
     assert.ok(mounted.container.querySelector('nav a[aria-label="Nutrition"]'));
     assert.ok(mounted.container.querySelector('nav a[aria-label="Split"]'));
+  } finally { mounted.unmount(); }
+});
+
+test("desktop navigation resets its own scrolling section", async () => {
+  const view = (activeView: "workouts" | "split") => (
+    <DashboardShell activeView={activeView} title="History" user={user} benEnabled sidebarCollapsed={false} onToggleSidebar={() => {}} onNavigate={() => {}}>
+      <div />
+    </DashboardShell>
+  );
+  const mounted = await render(view("workouts"));
+  try {
+    const scroller = mounted.container.querySelector<HTMLElement>("main > section");
+    assert.ok(scroller);
+    scroller.scrollTop = 400;
+    await mounted.rerender(view("split"));
+    assert.equal(scroller.scrollTop, 0);
+    scroller.scrollTop = 300;
+    const current = mounted.findByText("button", "Splits");
+    assert.ok(current);
+    await mounted.click(current);
+    assert.equal(scroller.scrollTop, 0);
   } finally { mounted.unmount(); }
 });

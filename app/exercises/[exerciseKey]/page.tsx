@@ -14,7 +14,6 @@ import { ExerciseDetailChart } from "./exercise-detail-chart";
 import { loadExerciseDetailPageData } from "./exercise-detail.data";
 import { SessionBreakdownList } from "./session-breakdown-list";
 import { styles } from "./exercise-detail.styles";
-import LegacyExerciseDetailPage from "@/app/_legacy/exercises/[exerciseKey]/page";
 
 type ExerciseDetailParams = Promise<{ exerciseKey: string }>;
 
@@ -26,14 +25,10 @@ export default async function ExerciseDetailPage({
   const { exerciseKey: rawExerciseKey } = await params;
   const user = await requireSessionUser();
   if (await isIonicEnabled(user)) redirect(`/ionic/exercises/${encodeURIComponent(rawExerciseKey)}`);
-  // The redesign is owner-gated, so the decision is made before the query: an
-  // unflagged reader is handed the shipped page, which loads its own data.
+  // Ben only decides whether Nutrition is a tab; the training screen below is
+  // what every reader gets once the workspace design is off.
   const workspaceEnabled = isWorkspaceEnabled(user);
   const benEnabled = await isBenFeatureEnabled(user);
-
-  if (!workspaceEnabled && !benEnabled) {
-    return <LegacyExerciseDetailPage params={params} />;
-  }
 
   const data = await loadExerciseDetailPageData(rawExerciseKey);
 
@@ -56,7 +51,7 @@ export default async function ExerciseDetailPage({
       <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
           <BackButton
-            fallbackHref="/dashboard?view=progress"
+            fallbackHref="/dashboard?view=workouts"
             label="Back"
             className={styles.backLink}
             iconClassName={styles.backButtonIcon}
@@ -108,7 +103,7 @@ export default async function ExerciseDetailPage({
     <AppShell
       user={appNavUserFromSession(data.user)}
       analyticsUser={data.user}
-      activeView="progress"
+      activeView="workouts"
       benEnabled={benEnabled}
     >
       {screen}

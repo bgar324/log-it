@@ -4,7 +4,8 @@ import test from "node:test";
 import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
 import { render } from "./render";
 import posthog from "posthog-js";
-import { AppTabBar } from "@/app/components/app-nav";
+import { DashboardClient } from "@/app/dashboard/dashboard-client";
+import { createEmptyDashboardData } from "@/app/dashboard/data.empty";
 import { WorkspaceNavigationProvider, useWorkspaceUnsavedChanges } from "@/app/components/workspace-navigation";
 
 const user = {
@@ -12,6 +13,18 @@ const user = {
   username: "test-user",
   avatarUrl: null,
 };
+
+const profileData = createEmptyDashboardData({
+  id: "profile-user",
+  email: "profile@example.com",
+  username: "profile-user",
+  firstName: "Test",
+  lastName: "User",
+  preferredWeightUnit: "LB",
+  publicProfileEnabled: false,
+  profileImageUpdatedAt: null,
+  createdAt: new Date("2026-01-01T12:00:00Z"),
+}, new Date("2026-09-18T12:00:00Z"));
 
 function shell(sidebarCollapsed: boolean) {
   return (
@@ -49,10 +62,10 @@ test("the desktop sidebar exposes sign out in expanded and collapsed states", as
 
 function DirtyNavigation({ busy, desktop, discard }: { busy: boolean; desktop: boolean; discard: () => void }) {
   useWorkspaceUnsavedChanges(true, "split library", busy, discard);
-  return desktop ? shell(false) : <AppTabBar activeView="split" benEnabled />;
+  return desktop ? shell(false) : <DashboardClient initialView="profile" userId="profile-user" data={profileData} benEnabled />;
 }
 
-test("mobile and desktop sign-out wait for saves and unsaved-edit approval", async () => {
+test("Profile and desktop sign-out wait for saves and unsaved-edit approval", async () => {
   const originalSubmit = window.HTMLFormElement.prototype.submit;
   const originalReset = posthog.reset;
   const originalUrl = window.location.href;
@@ -69,9 +82,10 @@ test("mobile and desktop sign-out wait for saves and unsaved-edit approval", asy
         <WorkspaceNavigationProvider variant="training"><DirtyNavigation busy desktop={desktop} discard={discard} /></WorkspaceNavigationProvider>,
       );
       try {
-        const selector = desktop ? 'aside form[action="/auth/signout"] button' : 'nav form[action="/auth/signout"] button';
+        const selector = desktop ? 'aside form[action="/auth/signout"] button' : 'main > section form[action="/auth/signout"] button';
         const signout = mounted.container.querySelector<HTMLButtonElement>(selector);
         assert.ok(signout);
+        assert.equal(mounted.container.querySelector('nav form[action="/auth/signout"]'), null);
         await mounted.click(signout);
         assert.deepEqual(events, []);
         let dialog = document.querySelector('.training-guard-panel[data-state="open"]');

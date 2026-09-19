@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AppNavUser } from "@/app/components/app-nav";
 import { useIdentifyPostHogUser } from "@/app/hooks/use-posthog-user";
 import { SplitManager } from "./split-manager";
@@ -17,11 +17,9 @@ import { DashboardOverviewView } from "./_components/dashboard-overview-view";
 import { DashboardNutritionPanel } from "./_components/dashboard-nutrition-panel";
 import { DashboardProfileView } from "./_components/dashboard-profile-view";
 import { DashboardSettingsView } from "./_components/dashboard-settings-view";
-import { DashboardProgressView } from "./_components/dashboard-progress-view";
 import { DashboardShell } from "./_components/dashboard-shell";
 import { DashboardViewSkeleton } from "./_components/dashboard-view-skeleton";
 import {
-  DashboardWorkoutFiltersControl,
   DashboardWorkoutsView,
   emptyWorkoutFilters,
   getFilteredWorkoutMonths,
@@ -43,7 +41,6 @@ import { WorkspaceProfileView } from "@/app/workspace/views/workspace-profile-vi
 import { WorkspaceSettingsView } from "@/app/workspace/views/workspace-settings-view";
 import { WorkspaceNutritionPanel } from "@/app/workspace/views/workspace-nutrition-panel";
 import { WorkspaceSplitManager } from "@/app/workspace/split/workspace-split-manager";
-import { DashboardClient as LegacyDashboardClient } from "@/app/_legacy/dashboard/dashboard-client";
 
 function LegacyViewError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return <div className={styles.panel}><p className={styles.empty}>{message}</p><button type="button" className={styles.retryButton} onClick={onRetry}>Retry</button></div>;
@@ -83,6 +80,15 @@ function createInitialLoadedDashboardViews(initialView: DashboardView) {
   return new Set<DashboardView>([initialView, "profile"]);
 }
 
+/**
+ * Analysis lives only in the dormant workspace design. The owner's interface
+ * has no such surface, so that view — including the `exercises` aliases that
+ * normalize onto it — resolves to Home instead of an empty panel.
+ */
+function resolveSupportedView(view: DashboardView, workspaceEnabled: boolean): DashboardView {
+  return !workspaceEnabled && view === "progress" ? "dashboard" : view;
+}
+
 function workoutFiltersMatch(
   left: DashboardWorkoutFilters,
   right: DashboardWorkoutFilters,
@@ -113,23 +119,7 @@ function mergeWorkoutMonthPages(
   return Array.from(entriesByMonth, ([month, entries]) => ({ month, entries }));
 }
 
-/**
- * The redesigned dashboard is owner-gated. The selection happens here, in a
- * component that renders one implementation or the other, so each design keeps
- * its own hooks: an unflagged reader never runs the redesign's hooks, and no
- * branch can reorder them.
- */
-export function DashboardClient(props: DashboardClientProps) {
-  const workspaceEnabled = useWorkspaceDesign();
-
-  if (!workspaceEnabled && !props.benEnabled) {
-    return <LegacyDashboardClient {...props} />;
-  }
-
-  return <TrainingDashboardClient {...props} />;
-}
-
-function TrainingDashboardClient({
+export function DashboardClient({
   initialView,
   data,
   userId,
@@ -141,8 +131,6 @@ function TrainingDashboardClient({
   const Shell = workspaceEnabled ? WorkspaceDashboardShell : DashboardShell;
   const OverviewView = workspaceEnabled ? WorkspaceOverviewView : DashboardOverviewView;
   const WorkoutsView = workspaceEnabled ? WorkspaceWorkoutsView : DashboardWorkoutsView;
-  const FiltersControl = workspaceEnabled ? WorkspaceWorkoutFiltersControl : DashboardWorkoutFiltersControl;
-  const ProgressView = workspaceEnabled ? WorkspaceProgressView : DashboardProgressView;
   const NutritionPanel = workspaceEnabled ? WorkspaceNutritionPanel : DashboardNutritionPanel;
   const SplitView = workspaceEnabled ? WorkspaceSplitManager : SplitManager;
   const ProfileView = workspaceEnabled ? WorkspaceProfileView : DashboardProfileView;
@@ -150,17 +138,20 @@ function TrainingDashboardClient({
   const ViewSkeleton = workspaceEnabled ? WorkspaceViewSkeleton : DashboardViewSkeleton;
   const ViewError = workspaceEnabled ? WorkspaceViewError : LegacyViewError;
   const viewClassName = workspaceEnabled ? "space-y-6" : "view-transition-shell";
-  const [activeView, setActiveView] = useState(initialView);
+  const resolvedInitialView = resolveSupportedView(initialView, workspaceEnabled);
+  const [activeView, setActiveView] = useState(resolvedInitialView);
+  const [splitLibraryOpen, setSplitLibraryOpen] = useState(true);
+  if (activeView !== "split" && !splitLibraryOpen) setSplitLibraryOpen(true);
   const [dashboardData, setDashboardData] = useState(data);
   const [loadedViews, setLoadedViews] = useState<ReadonlySet<DashboardView>>(
-    () => createInitialLoadedDashboardViews(initialView),
+    () => createInitialLoadedDashboardViews(resolvedInitialView),
   );
   const [loadingViews, setLoadingViews] = useState<ReadonlySet<DashboardView>>(
     () => new Set(),
   );
   const [viewErrors, setViewErrors] = useState<Partial<Record<DashboardView, string>>>({});
   const loadedViewsRef = useRef<Set<DashboardView>>(
-    createInitialLoadedDashboardViews(initialView),
+    createInitialLoadedDashboardViews(resolvedInitialView),
   );
   const inFlightViewsRef = useRef<Set<DashboardView>>(new Set());
   const workoutHistoryRequestRef = useRef(0);
@@ -236,15 +227,15 @@ function TrainingDashboardClient({
     // Server refreshes are authoritative. Keeping this cache instance-local and
     // resetting it here prevents one account or old unit conversion from being
     // merged into another account's dashboard payload.
-    loadedViewsRef.current = createInitialLoadedDashboardViews(initialView);
+    loadedViewsRef.current = createInitialLoadedDashboardViews(resolvedInitialView);
     workoutHistoryRequestRef.current += 1;
     setDashboardData(data);
-    setLoadedViews(createInitialLoadedDashboardViews(initialView));
+    setLoadedViews(createInitialLoadedDashboardViews(resolvedInitialView));
     setLoadingViews(new Set());
     setViewErrors({});
     setAppliedWorkoutFilters(emptyWorkoutFilters);
     setWorkoutHistoryLoading(false);
-  }, [data, initialView]);
+  }, [data, resolvedInitialView]);
 
   const loadViewData = useCallback(async (
     view: DashboardView,
@@ -440,10 +431,13 @@ function TrainingDashboardClient({
 
   useEffect(() => {
     function handlePopState() {
-      const view = normalizeDashboardView(
+      const requested = normalizeDashboardView(
         new URL(window.location.href).searchParams.get("view") ?? undefined,
       );
-      if (workspaceEnabled && benEnabled && view === "nutrition") {
+      const view = resolveSupportedView(requested, workspaceEnabled);
+      // Browser traversal onto a view this design does not have lands on Home,
+      // and the address bar is corrected so a reload agrees with the screen.
+      if ((workspaceEnabled && benEnabled && view === "nutrition") || view !== requested) {
         setActiveView("dashboard");
         router.replace("/dashboard");
         return;
@@ -458,13 +452,26 @@ function TrainingDashboardClient({
     };
   }, [loadViewData, workspaceEnabled, benEnabled, router]);
 
-  function navigateToView(view: DashboardView) {
+  useEffect(() => {
+    if (workspaceEnabled) return;
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    return () => { window.history.scrollRestoration = previous; };
+  }, [workspaceEnabled]);
+
+  useLayoutEffect(() => {
+    if (!workspaceEnabled) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [activeView, workspaceEnabled]);
+
+  function navigateToView(requestedView: DashboardView) {
+    const view = resolveSupportedView(requestedView, workspaceEnabled);
     if (workspaceEnabled && benEnabled && view === "nutrition") {
       setActiveView("dashboard");
       router.push("/dashboard");
       return;
     }
     if (view === activeView) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       return;
     }
 
@@ -495,12 +502,11 @@ function TrainingDashboardClient({
       sidebarCollapsed={sidebarCollapsed}
       onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
       onNavigate={navigateToView}
+      onHeaderBack={!workspaceEnabled && activeView === "split" && !splitLibraryOpen
+        ? () => setSplitLibraryOpen(true) : undefined}
       renderHeaderAccessory={() =>
-        activeView === "workouts" &&
-        (workspaceEnabled || dashboardData.workoutHistory.totalCount > 0 ||
-          workoutTypes.length > 0 ||
-          hasWorkoutFilters) ? (
-          <FiltersControl
+        workspaceEnabled && activeView === "workouts" ? (
+          <WorkspaceWorkoutFiltersControl
             filters={workoutFilters}
             workoutTypes={workoutTypes}
             filteredCount={filteredWorkoutCount}
@@ -534,6 +540,7 @@ function TrainingDashboardClient({
         <div key="workouts" className={viewClassName}>
           <WorkoutsView
             workoutMonths={dashboardData.workoutMonths}
+            asOfDate={dashboardData.overview.asOfDate}
             lifetime={dashboardData.workoutHistory.lifetime}
             displayWeightUnit={displayWeightUnit}
             filters={workoutFilters}
@@ -560,9 +567,9 @@ function TrainingDashboardClient({
         </div>
       ) : null}
 
-      {activeView === "progress" ? (
+      {workspaceEnabled && activeView === "progress" ? (
         <div key="progress" className={viewClassName}>
-          <ProgressView
+          <WorkspaceProgressView
             progress={dashboardData.progress}
             exercises={dashboardData.exercises}
             weightUnit={displayWeightUnit}
@@ -604,6 +611,8 @@ function TrainingDashboardClient({
               <SplitView
                 initialSplit={dashboardData.split}
                 initialSplits={dashboardData.splits}
+                libraryOpen={splitLibraryOpen}
+                onLibraryOpenChange={setSplitLibraryOpen}
               />
             )}
           </section>

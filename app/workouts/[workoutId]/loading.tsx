@@ -12,7 +12,6 @@ import {
 import { WorkspaceFrame } from "@/app/components/workspace-frame";
 import { WorkspaceWorkoutDetailSkeleton } from "@/app/workspace/details/workspace-detail-skeletons";
 import { styles } from "./workout-detail.styles";
-import LegacyWorkoutDetailLoading from "@/app/_legacy/workouts/[workoutId]/loading";
 
 function SkeletonBlock({
   className = "",
@@ -34,8 +33,9 @@ function SetRowSkeleton() {
 
 // The fallback has to draw the same chrome the page draws, or the frame the
 // user is looking at disappears for the length of the fetch. Which chrome that
-// is depends on the design flag, so the fallback reads it too — otherwise the
-// legacy tab bar flashes into the workspace on every detail navigation.
+// is depends on the workspace design flag, so the fallback reads it too —
+// otherwise the training tab bar flashes into the workspace on every detail
+// navigation.
 export default function WorkoutDetailLoading() {
   const workspaceDesign = useWorkspaceDesign();
   const benEnabled = useWorkspaceBenEnabled();
@@ -55,12 +55,6 @@ export default function WorkoutDetailLoading() {
         <WorkspaceWorkoutDetailSkeleton />
       </WorkspaceFrame>
     );
-  }
-
-  // Unflagged readers wait on the shipped detail screen, so they wait behind
-  // its own fallback rather than the redesigned one below.
-  if (!benEnabled) {
-    return <LegacyWorkoutDetailLoading />;
   }
 
   return (

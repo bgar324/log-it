@@ -1,17 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
-import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
+import type { WeightUnit } from "@/lib/weight-unit";
 import { workoutReturnQueryForDay } from "@/app/workouts/workout-return";
-import { countLabel } from "../dashboard-client.shared";
 import { styles } from "../dashboard.styles";
 import {
   useWorkoutDetails,
   type WorkoutDetailState,
 } from "../_hooks/use-workout-details";
 import type { RecordedDay } from "./dashboard-day-strip";
-import { fullDayLabel } from "./dashboard-history.dates";
 import { historyStyles } from "./dashboard-history.styles";
 
 type DashboardDaySessionsProps = {
@@ -22,48 +21,38 @@ type DashboardDaySessionsProps = {
 const MAX_SKELETON_EXERCISES = 6;
 const MAX_SKELETON_SETS = 5;
 
-/**
- * Everything recorded on the selected day: each session with its exercises and
- * the sets as they were logged. The list rows the history used to show already
- * carry the counts, so the card is complete before the sets arrive and the
- * placeholder is sized from the counts it is standing in for.
- */
+/** The selected day's sessions, with title links for details and direct edit pencils. */
 export function DashboardDaySessions({ day, weightUnit }: DashboardDaySessionsProps) {
   const workoutIds = day.workouts.map((workout) => workout.id);
   const { details, retry } = useWorkoutDetails(workoutIds, weightUnit);
-  const daySets = day.workouts.reduce((sum, workout) => sum + workout.setCount, 0);
-  const dayVolume = day.workouts.reduce((sum, workout) => sum + workout.volume, 0);
-  // Opening a session should be able to bring you back to the day you were
+  // Editing a session should be able to bring you back to the day you were
   // browsing, not to the top of the history.
   const returnQuery = workoutReturnQueryForDay(day.date);
 
   return (
     <section key={day.date} className={historyStyles.day}>
-      <header className={historyStyles.dayHead}>
-        <h3 className={historyStyles.dayTitle}>{fullDayLabel(day.date)}</h3>
-        {/* One session already states its own counts on its card. */}
-        {day.workouts.length > 1 ? (
-          <p className={historyStyles.dayMeta}>
-            {countLabel(day.workouts.length, "session")} ·{" "}
-            {countLabel(daySets, "set")} ·{" "}
-            {formatWeightWithUnit(dayVolume, weightUnit, { maximumFractionDigits: 0 })}
-          </p>
-        ) : null}
-      </header>
-
       <div className={historyStyles.sessionList}>
         {day.workouts.map((workout) => (
           <article key={workout.id} className={historyStyles.session}>
             <header className={historyStyles.sessionHead}>
-              <h4 className={historyStyles.sessionTitle}>{workout.title}</h4>
-              <p className={historyStyles.sessionMeta}>
-                {workout.workoutType ? `${workout.workoutType} · ` : ""}
-                {countLabel(workout.exerciseCount, "exercise")} ·{" "}
-                {countLabel(workout.setCount, "set")} ·{" "}
-                {formatWeightWithUnit(workout.volume, weightUnit, {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
+              <h3 className={historyStyles.sessionTitle}>
+                <Link href={`/workouts/${workout.id}${returnQuery}`} className="relative -my-3 inline-block min-w-11 py-3 [touch-action:manipulation]" aria-label={`Open ${workout.title}`}>
+                  {workout.title}
+                  <LinkPendingOverlay />
+                </Link>
+              </h3>
+              <Link
+                href={`/workouts/${workout.id}/edit${returnQuery}`}
+                className={historyStyles.sessionEdit}
+                aria-label={`Edit ${workout.title}`}
+              >
+                <Pencil
+                  aria-hidden="true"
+                  className={historyStyles.sessionEditIcon}
+                  strokeWidth={1.9}
+                />
+                <LinkPendingOverlay />
+              </Link>
             </header>
 
             <SessionDetail
@@ -72,23 +61,6 @@ export function DashboardDaySessions({ day, weightUnit }: DashboardDaySessionsPr
               setCount={workout.setCount}
               onRetry={() => retry(workout.id)}
             />
-
-            <div className={historyStyles.sessionActions}>
-              <Link
-                href={`/workouts/${workout.id}${returnQuery}`}
-                className={historyStyles.sessionOpen}
-              >
-                Open workout
-                <LinkPendingOverlay />
-              </Link>
-              <Link
-                href={`/workouts/${workout.id}/edit${returnQuery}`}
-                className={historyStyles.sessionEdit}
-              >
-                Edit
-                <LinkPendingOverlay />
-              </Link>
-            </div>
           </article>
         ))}
       </div>
@@ -137,7 +109,6 @@ function SessionDetail({
       {state.detail.exercises.map((exercise) => (
         <div key={exercise.id} className={historyStyles.exercise}>
           <p className={historyStyles.exerciseName}>{exercise.name}</p>
-          <p className={historyStyles.exerciseMeta}>{exercise.metaLine}</p>
           {exercise.sets.length > 0 ? (
             <ul className={historyStyles.setList}>
               {exercise.sets.map((set) => (
@@ -175,7 +146,6 @@ function SessionDetailSkeleton({
       {Array.from({ length: exercises }, (_, exercise) => (
         <div key={exercise} className={historyStyles.exercise}>
           <span className={`${styles.skeletonBlock} h-[1.05rem] w-[8.5rem]`} />
-          <span className={`${styles.skeletonBlock} mt-[0.2rem] h-[0.7rem] w-[6rem]`} />
           <div className={historyStyles.setList}>
             {Array.from({ length: setsPerExercise }, (_, set) => (
               <div key={set} className={historyStyles.setRow}>

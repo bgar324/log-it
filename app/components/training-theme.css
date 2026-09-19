@@ -6,11 +6,11 @@
   --app-surface: #eeefed;
   --app-surface-raised: #ffffff;
   --app-line: color-mix(in srgb, var(--text) 8%, transparent);
-  --app-accent: #326785;
-  --app-accent-soft: #e0edf2;
-  --app-mark: #d97664;
+  --app-accent: var(--text);
+  --app-accent-soft: color-mix(in srgb, var(--text) 9%, transparent);
   --app-radius: 24px;
-  --app-dock-height: calc(92px + env(safe-area-inset-bottom));
+  --app-dock-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  --app-dock-height: calc(82px + var(--app-dock-bottom));
   --field-bg: var(--app-surface);
   --field-line: var(--app-line);
   --focus-ring: color-mix(in srgb, var(--app-accent) 18%, transparent);
@@ -32,9 +32,8 @@
   --app-surface: #1a1b20;
   --app-surface-raised: #24252b;
   --app-line: color-mix(in srgb, var(--text) 8%, transparent);
-  --app-accent: #9dd4ee;
-  --app-accent-soft: #253842;
-  --app-mark: #e18c7d;
+  --app-accent: var(--text);
+  --app-accent-soft: color-mix(in srgb, var(--text) 12%, transparent);
   --field-bg: var(--app-surface);
   --field-line: var(--app-line);
   --focus-ring: color-mix(in srgb, var(--app-accent) 20%, transparent);

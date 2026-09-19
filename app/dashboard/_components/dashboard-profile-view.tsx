@@ -1,7 +1,9 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { LogOut, Pencil } from "lucide-react";
 import { useState } from "react";
+import posthog from "posthog-js";
+import { useWorkspaceNavigation } from "@/app/components/workspace-navigation";
 import { styles } from "../dashboard.styles";
 import type { DashboardProfileFormState } from "../_hooks/use-dashboard-profile-form";
 import { DashboardAccountSettings } from "./dashboard-account-settings";
@@ -15,6 +17,7 @@ export type DashboardProfileViewProps = {
 
 export function DashboardProfileView({ state }: DashboardProfileViewProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const { requestNavigation } = useWorkspaceNavigation();
   const avatarUrl = state.profile.profileImageUpdatedAt
     ? `/api/profile/avatar?v=${encodeURIComponent(state.profile.profileImageUpdatedAt)}`
     : null;
@@ -62,6 +65,24 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
           <h2 className={styles.sectionTitle}>Account</h2>
         </div>
         <DashboardAccountSettings currentEmail={state.profile.email} />
+        <form
+          method="post"
+          action="/auth/signout"
+          className={styles.accountRow}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            requestNavigation(() => {
+              posthog.reset();
+              form.submit();
+            });
+          }}
+        >
+          <button type="submit" className={styles.accountRowAction}>
+            <LogOut className={styles.buttonInlineIcon} strokeWidth={1.9} />
+            Sign out
+          </button>
+        </form>
       </section>
 
       {/* Irreversible actions get their own tinted, bordered zone so they read

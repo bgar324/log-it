@@ -11,11 +11,14 @@ import {
   addDaysToDatabaseDate,
   daysBetweenDatabaseDates,
   startOfDatabaseWeek,
+  toDatabaseDateFromInput,
 } from "@/lib/workout-utils";
-import { ANALYSIS_HISTORY_DAYS, weekStartKey } from "./analysis-model";
 import type { ProgressDay } from "./dashboard-types";
 import { dateKey, shortDate } from "./data.formatters";
 import { loadExerciseSummaryRows } from "./data.queries";
+
+/** Retained daily history, in days. */
+const HISTORY_DAYS = 760;
 
 type DailyAggregateRow = {
   performedAt: Date;
@@ -25,9 +28,9 @@ type DailyAggregateRow = {
 };
 
 /**
- * One row per recorded day, not per set. Analysis needs sessions, sets and
- * volume for every day in a two-year window; reading the sets themselves would
- * be tens of thousands of rows to produce at most 760 numbers.
+ * One row per recorded day, not per set. The progress section needs sessions,
+ * sets and volume for every day in a two-year window; reading the sets
+ * themselves would be tens of thousands of rows to produce at most 760 numbers.
  *
  * Set counts have to come through the exercise join, so they are collapsed in a
  * correlated subquery before the day grouping: joining sets directly would
@@ -116,7 +119,7 @@ export async function loadProgressSection(
 ) {
   const weekStart = startOfDatabaseWeek(now);
   const progressStart = addDaysToDatabaseDate(weekStart, -(7 * 11));
-  const historyStart = addDaysToDatabaseDate(now, -(ANALYSIS_HISTORY_DAYS - 1));
+  const historyStart = addDaysToDatabaseDate(now, -(HISTORY_DAYS - 1));
   const [exerciseSummaries, dailyRows, totalWeightLiftedAggregate] = await Promise.all([
     loadExerciseSummaryRows(userId),
     loadDailyAggregates(userId, dateKey(historyStart)),
@@ -165,7 +168,7 @@ export async function loadProgressSection(
       continue;
     }
 
-    const key = weekStartKey(day.date);
+    const key = dateKey(startOfDatabaseWeek(toDatabaseDateFromInput(day.date)));
     const current = progressCounts.get(key) ?? { sessions: 0, volume: 0 };
 
     current.sessions += day.sessions;

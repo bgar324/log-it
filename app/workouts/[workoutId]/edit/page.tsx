@@ -55,8 +55,8 @@ export default async function EditWorkoutPage({
   searchParams?: Promise<WorkoutReturnSearchParams>;
 }) {
   const { workoutId } = await params;
-  // Editing returns to the workout it edits, carrying whatever context brought
-  // the person here so the detail's own Back still lands on their day.
+  // A direct History edit returns to its selected day, without an extra detail
+  // screen. Other entry points retain their workout-detail return destination.
   const workoutReturn = resolveWorkoutReturn(await searchParams);
   const user = await requireSessionUser();
   if (await isIonicEnabled(user)) redirect(`/ionic/workouts/${encodeURIComponent(workoutId)}/edit`);
@@ -127,6 +127,7 @@ export default async function EditWorkoutPage({
       })),
     })),
   };
+  const workspaceEnabled = isWorkspaceEnabled(user);
 
   return (
     <WorkoutLogger
@@ -139,8 +140,10 @@ export default async function EditWorkoutPage({
       bodyWeightDisplay={bodyWeightDisplay}
       analyticsUser={user}
       benEnabled={benEnabled}
-      workspaceEnabled={isWorkspaceEnabled(user)}
-      returnHref={`/workouts/${workout.id}${workoutReturn.query}`}
+      workspaceEnabled={workspaceEnabled}
+      returnHref={!workspaceEnabled && workoutReturn.query.startsWith("?from=workouts")
+        ? workoutReturn.href
+        : `/workouts/${workout.id}${workoutReturn.query}`}
     />
   );
 }

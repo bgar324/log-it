@@ -23,9 +23,10 @@ import {
 import { Skeleton } from "@/app/components/workspace-ui/skeleton";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { countLabel, daysAgoLabel } from "@/app/dashboard/dashboard-client.shared";
-import type { DashboardProgressViewProps } from "@/app/dashboard/_components/dashboard-progress-view";
+import type { DashboardClientData } from "@/app/dashboard/dashboard-types";
 import {
   EXERCISES_PER_PAGE,
+  type DashboardProgressState,
   type ExerciseSortMode,
 } from "@/app/dashboard/_hooks/use-dashboard-progress";
 import { WorkspaceLinkPending } from "./workspace-link-pending";
@@ -34,6 +35,22 @@ import {
   isPlainRowActivation,
   useWorkspaceDetailSheet,
 } from "@/app/workspace/details/workspace-detail-sheet.context";
+
+/**
+ * The dormant workspace progress screen is the only surface left that renders
+ * the full exercise directory, so the props it was written against live here
+ * rather than in the deleted owner Analysis view.
+ */
+export type DashboardProgressViewProps = {
+  progress: DashboardClientData["progress"];
+  exercises: DashboardClientData["exercises"];
+  weightUnit: WeightUnit;
+  /** Search, sort and pagination state for the directory rendering. */
+  state: DashboardProgressState;
+  isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
+};
 
 const WorkspaceProgressChart = dynamic(() =>
   import("./workspace-progress-charts").then((module) => module.WorkspaceProgressChart),

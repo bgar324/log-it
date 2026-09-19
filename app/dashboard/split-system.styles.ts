@@ -6,10 +6,10 @@ import {
   actionIconQuiet,
   actionMenuRow,
   actionMenuRowDanger,
-  actionOutline,
-  actionQuiet,
 } from "@/app/components/action.styles";
 import { fieldBoxed } from "@/app/components/field.styles";
+import { daySelectorStyles } from "@/app/components/day-selector.styles";
+import { dataListStyles } from "@/app/components/data-list.styles";
 
 /**
  * Split takes its colour from the shared training tokens and keeps one local
@@ -18,9 +18,6 @@ import { fieldBoxed } from "@/app/components/field.styles";
  * every portalled layer re-declares them: a token declared on the page root
  * does not reach a node Radix moved to `document.body`.
  *
- * `--split-plan` is deliberately local ink rather than `--app-mark`: the mark
- * token means recorded activity elsewhere in the app, and a split holds plans,
- * not history. Only the active split's week borrows the accent.
  */
 const splitTokens =
   "[--split-border:var(--app-line,color-mix(in_srgb,var(--text)_12%,transparent))] [--split-border-strong:color-mix(in_srgb,var(--text)_20%,transparent)] [--split-raised:var(--app-surface-raised,var(--surface,var(--bg)))] [--split-accent:var(--app-accent,var(--text))] [--split-accent-soft:var(--app-accent-soft,color-mix(in_srgb,var(--text)_10%,transparent))] [--split-plan:color-mix(in_srgb,var(--text)_30%,transparent)] [--split-radius:var(--app-radius,24px)]";
@@ -37,171 +34,89 @@ const splitTokens =
  */
 const splitPanel =
   `${splitTokens} rounded-[var(--split-radius)] border border-[var(--split-border)] bg-[var(--split-raised)]`;
-const splitMotion =
-  "transition-[transform,border-color,background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px]";
-const editorColumnLabelBase =
-  "grid items-center gap-[0.68rem] text-[0.8125rem] leading-none text-[var(--muted)]";
+/** A tinted well: the quiet fill used for inline fields inside a panel. */
+const splitWell = "bg-[color-mix(in_srgb,var(--text)_5%,transparent)]";
 
 export const splitStyles = {
   // ---------------------------------------------------------------- library
-  // The saved splits are folders: a tab drawn behind an opaque body, so the
-  // collection reads as physical objects you open rather than a list of rows.
-  libraryStage: `${splitTokens} flex min-h-0 flex-col gap-[1.5rem] min-[981px]:h-full min-[981px]:overflow-y-auto min-[981px]:[scrollbar-width:thin]`,
-  libraryHead: "flex flex-col gap-[0.75rem]",
-  libraryHeadRow: "flex flex-wrap items-center justify-between gap-[0.5rem]",
-  libraryTitle:
-    "m-0 text-[1.5rem] font-[540] leading-[1.15] tracking-[-0.03em] text-[var(--text)]",
-  libraryLede:
-    "m-0 max-w-[34rem] text-[0.9375rem] leading-[1.45] text-[var(--muted)] min-[621px]:text-[1rem]",
-  libraryActions: "flex flex-wrap items-center gap-[0.5rem]",
-  libraryNewButton: actionFilled,
-  // The phone dock floats over the page, so both browsing lists end above it.
+  libraryStage: `${splitTokens} min-w-0`,
   libraryGrid:
-    "grid grid-cols-1 gap-[1rem] pb-[0.5rem] min-[621px]:grid-cols-2 min-[1200px]:grid-cols-3 max-[980px]:pb-[calc(var(--app-dock-height,0px)+0.75rem)]",
-
-  folderShell: "relative flex min-w-0 flex-col pt-[16px]",
-  // Painted before the body and overlapped by it, so the seam disappears and
-  // only the protruding tab remains.
-  folderTab:
-    "absolute left-[20px] top-0 h-[20px] w-[38%] max-w-[8.5rem] rounded-t-[10px] border border-b-0",
-  folderTabQuiet: "border-[color:var(--split-border)] bg-[var(--split-raised)]",
-  folderTabActive:
-    "border-[color:var(--split-accent)] bg-[var(--split-accent-soft)]",
-  folderBody: `${splitTokens} relative flex min-w-0 flex-col rounded-[var(--split-radius)] border bg-[var(--split-raised)]`,
-  folderBodyQuiet:
-    "border-[color:var(--split-border)]",
-  folderBodyActive:
-    "border-[color:var(--split-accent)]",
-  folderOpen: `flex min-w-0 cursor-pointer select-none flex-col items-stretch gap-[0.75rem] rounded-[var(--split-radius)] p-[1rem] pr-[3.4rem] text-left [touch-action:manipulation] [-webkit-touch-callout:none] ${splitMotion}`,
-  folderName:
-    "m-0 truncate text-[1.25rem] font-[560] leading-[1.15] tracking-[-0.03em] text-[var(--text)]",
-  folderState: "text-[0.8125rem] leading-none",
-  folderStateActive: "font-[560] text-[var(--split-accent)]",
-  folderStateDirty: "text-[var(--text)]",
-  folderWeek: "flex items-end justify-between gap-[0.2rem]",
-  folderWeekCell:
-    "flex min-w-0 flex-1 flex-col items-center justify-end gap-[0.35rem]",
-  folderWeekLetter: "text-[0.75rem] leading-none text-[var(--muted)]",
-  folderWeekBarTrack: "flex h-[2rem] w-full items-end justify-center",
-  folderWeekBar: "w-[0.5rem] rounded-[3px] min-[621px]:w-[0.6rem]",
-  folderWeekBarQuiet: "bg-[var(--split-plan)]",
-  folderWeekBarActive: "bg-[var(--split-accent)]",
-  folderWeekRest: "h-px w-[0.7rem] rounded-full bg-[var(--split-border-strong)]",
-  folderTypes:
-    "truncate text-[0.9375rem] leading-[1.35] text-[var(--text)] min-[621px]:text-[1rem]",
-  folderMeta: "text-[0.8125rem] leading-none text-[var(--muted)]",
-  folderFooter:
-    "flex items-center justify-between gap-[0.5rem] border-t border-[var(--split-border)] px-[0.65rem] py-[0.2rem]",
-  folderActivateButton: actionChip,
-  folderMenuButton: `${actionIconQuiet} absolute right-[0.4rem] top-[0.55rem]`,
+    "m-0 grid list-none grid-cols-2 gap-x-6 gap-y-8 p-0 min-[620px]:grid-cols-3 min-[1100px]:grid-cols-4",
+  folderShell: "relative flex min-w-0 flex-col items-center",
+  folderBody: "relative w-full max-w-[14rem]",
+  folderOpen:
+    "mx-auto flex w-full max-w-[14rem] min-w-0 cursor-pointer select-none flex-col items-center gap-2 border-0 bg-transparent p-0 pb-1 text-center [touch-action:manipulation] [-webkit-touch-callout:none] disabled:cursor-wait disabled:opacity-50",
+  folderArtwork: "block h-auto w-full overflow-visible",
+  folderName: "max-w-full truncate text-[1rem] font-[520] leading-[1.3] text-[var(--text)]",
+  folderMeta: "min-h-4 text-[0.75rem] leading-[1.35] text-[var(--muted)]",
+  folderMenuButton:
+    `${actionIconQuiet} absolute right-0 top-[1.4rem] data-[active=true]:text-[var(--bg)]`,
 
   // ------------------------------------------------------------------- plan
+  // One column at every width: opening a folder lands straight in the day
+  // editor, so there is no second column to place and no week page in between.
   splitLayout:
-    `${splitTokens} grid min-h-0 grid-cols-1 gap-[1rem] min-[981px]:h-full min-[981px]:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] max-[980px]:block`,
+    `${splitTokens} mx-auto flex w-full min-w-0 max-w-[52rem] flex-col gap-[0.85rem]`,
+  // The split's own header, not a panel: title, save state and options sit on
+  // the page background. It sticks so the single Save stays reachable while a
+  // long exercise list scrolls under it.
   splitSummary:
-    `${splitPanel} flex min-h-0 flex-col gap-[0.9rem] overflow-hidden p-[1rem] max-[980px]:gap-[0.75rem] max-[980px]:overflow-visible max-[980px]:rounded-none max-[980px]:border-0 max-[980px]:bg-transparent max-[980px]:p-0`,
-  splitSummaryHead: "flex items-center gap-[0.5rem]",
-  planTopRow: "flex items-center justify-between gap-[0.5rem]",
-  planBackButton: `${actionQuiet} -ml-[0.35rem]`,
-  planBackIcon: "h-[1rem] w-[1rem]",
+    "sticky top-0 z-20 flex min-w-0 flex-col gap-[0.35rem] bg-[var(--bg)] pb-[0.55rem] pt-[0.3rem]",
+  /** Title (or rename field) left, the one Save right. */
+  splitSummaryHead: "flex min-w-0 items-center justify-between gap-[0.6rem]",
   planTitle:
-    "m-0 truncate text-[2rem] font-[560] leading-[1.05] tracking-[-0.035em] text-[var(--text)] min-[981px]:text-[1.75rem]",
+    "m-0 min-w-0 flex-1 truncate text-[1.75rem] font-[560] leading-[1.1] tracking-[-0.035em] text-[var(--text)] min-[621px]:text-[2rem]",
   planTitleInput:
     `${fieldBoxed} min-h-[2.75rem] w-full min-w-0 rounded-[14px] px-[0.9rem] text-[1.125rem] font-[560] tracking-[-0.03em] max-[980px]:text-base`,
-  planMeta:
-    "m-0 text-[0.9375rem] leading-[1.4] text-[var(--muted)] min-[621px]:text-[1rem]",
-  planMetaActive: "font-[560] text-[var(--split-accent)]",
-  planActions: "flex flex-wrap items-center gap-[0.5rem]",
-  planActivateButton: actionOutline,
-  // A save bar, not a banner: it appears with the first edit and says what is
-  // unsaved, what saves it, and what throws it away.
-  planDirtyBar:
-    "flex flex-wrap items-center justify-between gap-[0.5rem] rounded-[14px] border border-[var(--split-border-strong)] bg-[var(--split-accent-soft)] px-[0.9rem] py-[0.35rem]",
-  planDirtyText: "text-[0.8125rem] leading-[1.3] text-[var(--text)]",
-  planDirtyActions: "flex items-center gap-[0.2rem]",
   planSaveButton: actionFilled,
-  planDiscardButton: actionQuiet,
-
-  splitWeekHeader: "flex min-h-[2.75rem] items-center justify-between gap-[0.65rem]",
-  splitWeekTitle:
-    "m-0 text-[1.25rem] font-[560] leading-[1.15] tracking-[-0.03em] text-[var(--text)]",
-  splitWeekActions: "flex shrink-0 items-center gap-[0.2rem]",
-  splitReorderOpenButton: actionQuiet,
-  splitGrid:
-    "flex min-h-0 flex-1 flex-col border-t border-[var(--split-border)] max-[980px]:pb-[calc(var(--app-dock-height,0px)+0.75rem)] min-[981px]:grid min-[981px]:grid-cols-2 min-[981px]:content-start min-[981px]:gap-[0.65rem] min-[981px]:overflow-y-auto min-[981px]:border-0 min-[981px]:pb-0 min-[981px]:pr-[0.08rem] min-[981px]:[scrollbar-width:thin]",
-  // Selection and rest state ride on data attributes so one class string owns
-  // the whole card: an attribute selector outranks the base it overrides.
-  splitDayCard:
-    `grid min-h-[3.4rem] w-full cursor-pointer grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-[0.65rem] border-b border-[var(--split-border)] px-[0.35rem] py-[0.42rem] text-left text-[var(--text)] [touch-action:manipulation] data-[selected=true]:bg-[var(--split-accent-soft)] data-[rest=true]:text-[var(--muted)] min-[981px]:min-h-[7.2rem] min-[981px]:grid-cols-[minmax(0,1fr)_auto] min-[981px]:grid-rows-[auto_1fr] min-[981px]:gap-x-[0.75rem] min-[981px]:gap-y-[0.45rem] min-[981px]:rounded-[14px] min-[981px]:border min-[981px]:p-[0.85rem] min-[981px]:data-[rest=true]:border-dashed min-[981px]:data-[selected=true]:border-[color:var(--split-accent)] ${splitMotion}`,
-  splitDayIdentity:
-    "flex min-w-0 flex-col gap-[0.14rem] text-[var(--muted)] min-[981px]:col-start-1 min-[981px]:row-start-1",
-  splitDayWeekdayMobile: "text-[0.8125rem] leading-none min-[981px]:hidden",
-  splitDayWeekdayDesktop: "hidden text-[0.8125rem] leading-none min-[981px]:inline",
-  splitDayToday: "text-[0.75rem] leading-none text-[var(--split-accent)]",
-  splitDayMain:
-    "flex min-w-0 flex-col gap-[0.18rem] min-[981px]:col-span-2 min-[981px]:row-start-2 min-[981px]:self-stretch",
-  splitDayTitle:
-    "truncate text-[0.9375rem] font-[560] leading-[1.15] tracking-[-0.03em] min-[981px]:text-[1rem]",
-  splitDayStats:
-    "truncate text-[0.8125rem] leading-[1.2] text-[var(--muted)] min-[981px]:mt-auto min-[981px]:text-[0.9375rem]",
-  splitDayMeta:
-    "text-right text-[0.8125rem] leading-none text-[var(--muted)] min-[981px]:col-start-2 min-[981px]:row-start-1",
+  /** Quiet inline save state, never a banner. */
+  planDirtyText: "m-0 text-[0.8125rem] leading-[1.3] text-[var(--muted)]",
 
   // ----------------------------------------------------------------- editor
-  // A side-by-side panel at 981px and a full task surface below it, where it
-  // covers the floating dock. The closed class removes the single mounted
-  // narrow editor; no hidden duplicate form can drift or keep stale local
-  // menu state.
-  splitEditor:
-    `${splitPanel} flex min-h-0 flex-col gap-[0.9rem] overflow-hidden p-[1rem] max-[980px]:fixed max-[980px]:inset-0 max-[980px]:z-[70] max-[980px]:h-dvh max-[980px]:gap-0 max-[980px]:rounded-none max-[980px]:border-0 max-[980px]:bg-[var(--bg)] max-[980px]:p-0`,
-  splitEditorMobileOpen: "max-[980px]:flex",
-  splitEditorMobileClosed: "max-[980px]:hidden",
-  editorHeader:
-    "grid min-h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 grid-cols-[2.75rem_minmax(0,1fr)_auto] items-end gap-[0.5rem] border-b border-[var(--split-border)] px-[0.5rem] pb-[0.38rem] pt-[env(safe-area-inset-top)] min-[981px]:grid-cols-[minmax(0,1fr)_auto] min-[981px]:items-center min-[981px]:min-h-0 min-[981px]:border-0 min-[981px]:p-0",
-  editorMobileClose: `${actionIconQuiet} min-[981px]:hidden`,
-  editorHeaderIcon: "h-[1.1rem] w-[1.1rem]",
-  editorTitle:
-    "m-0 self-center truncate text-[1.25rem] font-[560] leading-[1.15] tracking-[-0.03em] min-[981px]:text-[1.375rem]",
-  // The day editor is where day edits happen, so its Save is the one that
-  // commits them — at every width, not only on phones.
-  editorSave: actionFilled,
-  editorDayTabs:
-    "grid shrink-0 grid-cols-7 justify-items-center border-b border-[var(--split-border)] py-[0.28rem] min-[981px]:hidden",
-  editorDayTab: `${actionIconQuiet} relative aria-[current=true]:bg-[var(--split-accent-soft)] aria-[current=true]:text-[var(--text)]`,
-  editorDayTabToday:
-    "absolute bottom-[0.2rem] left-1/2 h-[0.2rem] w-[0.2rem] -translate-x-1/2 rounded-full bg-[var(--split-accent)]",
-  editorBody:
-    "flex min-h-0 flex-1 flex-col gap-[0.9rem] overflow-y-auto p-[0.82rem] pb-[calc(1.5rem+env(safe-area-inset-bottom))] [scrollbar-width:thin] min-[981px]:p-0",
-  editorField: "flex flex-col gap-[0.36rem]",
-  editorInputWithMenu: "flex min-w-0 items-end gap-[0.55rem]",
-  editorLabel: "text-[0.8125rem] text-[var(--muted)]",
-  editorInput:
-    `${fieldBoxed} min-h-[2.75rem] rounded-[14px] px-[0.9rem] text-[0.9375rem] max-[980px]:text-base`,
-  editorSectionHead:
-    "flex min-h-[2.75rem] items-center justify-between gap-[0.75rem]",
-  editorSectionTitle:
-    "m-0 text-[1.25rem] font-[560] leading-[1.15] tracking-[-0.03em]",
-  editorAddExerciseButton: actionChip,
+  // The editor is inline at every width: a day strip you scroll sideways and
+  // one soft group for the day you picked. No dialog, no scroll lock, no save
+  // of its own — the header above owns saving.
+  dayEditor: "flex min-w-0 flex-col gap-[0.7rem]",
+  dayStrip: `relative ${daySelectorStyles.strip}`,
+  dayStripContent: daySelectorStyles.track,
+  // Same History control, wider only to accommodate workout names.
+  dayStripItem: `${daySelectorStyles.button} min-w-[4.5rem] max-w-[9rem] px-3`,
+  dayStripWeekday: daySelectorStyles.weekday,
+  dayStripTitle: `${daySelectorStyles.value} max-w-full truncate`,
+
+  dayPanel:
+    `${splitPanel} flex min-w-0 flex-col gap-[0.6rem] p-[0.85rem] min-[620px]:p-[1rem]`,
+  dayPanelHead: "flex min-w-0 items-center gap-[0.4rem]",
+  dayPanelIdentity: "flex min-w-0 flex-1 flex-col gap-[0.12rem]",
+  // The workout name is the day's title and its only text field: it looks like
+  // the heading it is until you focus it, when the well appears behind it.
+  dayNameInput:
+    "min-h-[2.75rem] w-full min-w-0 rounded-[12px] border-0 bg-transparent px-[0.3rem] text-[1.25rem] font-[560] leading-[1.2] tracking-[-0.03em] text-[var(--text)] outline-none placeholder:font-[420] placeholder:text-[var(--muted)] focus:bg-[color-mix(in_srgb,var(--text)_6%,transparent)] disabled:opacity-50",
   editorNote:
     "m-0 rounded-[14px] bg-[var(--split-accent-soft)] px-[0.8rem] py-[0.55rem] text-[0.8125rem] leading-[1.35] text-[var(--text)]",
-  editorColumnLabels:
-    `${editorColumnLabelBase} grid-cols-[minmax(0,1fr)_4.75rem] min-[620px]:grid-cols-[minmax(0,1fr)_6rem]`,
-  editorColumnLabelsEditing:
-    `${editorColumnLabelBase} grid-cols-[minmax(0,1fr)_4.75rem_2.75rem] gap-x-[0.5rem] min-[620px]:grid-cols-[minmax(0,1fr)_6rem_2.75rem]`,
-  editorExerciseList:
-    "flex min-h-0 flex-1 flex-col gap-[0.55rem] min-[981px]:overflow-y-auto min-[981px]:pr-[0.08rem] min-[981px]:[scrollbar-width:thin]",
-  exerciseRow: "flex min-w-0 items-end gap-[0.5rem]",
-  exerciseMain:
-    "grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_4.75rem] gap-[0.68rem] min-[620px]:grid-cols-[minmax(0,1fr)_6rem]",
-  setsInput: "text-center",
-  dangerIconButton: actionIconDanger,
+
+  // Rows, not a spreadsheet: a hairline between exercises, nothing boxed, the
+  // name at 16px so phones never zoom, sets in a labelled well beside it.
+  editorExerciseList: "flex min-w-0 flex-col",
+  exerciseRow: dataListStyles.row,
+  /** The suggestion anchor is the flex child; this only stacks the input. */
+  exerciseNameField: "flex min-w-0 flex-col",
+  exerciseNameInput:
+    "min-h-[2.75rem] w-full min-w-0 rounded-[10px] border-0 bg-transparent px-[0.3rem] text-base font-[520] leading-[1.25] text-[var(--text)] outline-none placeholder:font-[420] placeholder:text-[var(--muted)] focus:bg-[color-mix(in_srgb,var(--text)_6%,transparent)] disabled:opacity-50",
+  exerciseSetsField:
+    `flex shrink-0 items-center gap-[0.28rem] rounded-[12px] ${splitWell} px-[0.5rem]`,
+  exerciseSetsInput:
+    "min-h-[2.75rem] w-[2.1rem] border-0 bg-transparent p-0 text-center text-base tabular-nums text-[var(--text)] outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-50",
+  exerciseSetsLabel: "text-[0.8125rem] leading-none text-[var(--muted)]",
+  exerciseRemoveButton: actionIconDanger,
+  addExerciseButton: `${actionChip} w-full justify-center`,
 
   actionMenuToggle: actionIcon,
   // The panel is portalled to the body, so Radix owns its placement and the
   // shared popover CSS owns its motion: no absolute anchoring, no transform
   // origin, no per-page keyframes. It re-declares the split tokens because a
   // portalled node sits outside the panel that defines them. The stack order
-  // clears the phone editor and the logger dial, both at 70.
+  // clears the sticky split header and the logger dial.
   actionMenuPanel:
     `${splitTokens} z-[75] flex w-[14rem] flex-col gap-[0.18rem] rounded-[14px] border border-[var(--split-border)] bg-[var(--split-raised)] p-[0.28rem] shadow-[0_14px_32px_color-mix(in_srgb,#000_18%,transparent)] outline-none`,
   actionMenuItem: actionMenuRow,
@@ -210,13 +125,7 @@ export const splitStyles = {
   actionMenuNote:
     "m-0 px-[0.85rem] py-[0.3rem] text-[0.75rem] leading-[1.3] text-[var(--muted)]",
 
-  splitReorderSlot:
-    "grid min-h-[3.45rem] grid-cols-[3.25rem_minmax(0,1fr)] items-center gap-[0.35rem]",
-  splitReorderDayLabel:
-    "flex flex-col gap-[0.16rem] pl-[0.15rem] text-[0.8125rem] leading-none text-[var(--muted)]",
-  splitReorderDayLabelToday: "font-[560] text-[var(--text)]",
-  splitReorderToday: "text-[0.75rem] text-[var(--muted)]",
   inlineIcon: "h-[0.92rem] w-[0.92rem]",
   emptyState:
-    "flex flex-col gap-[0.22rem] rounded-[14px] border border-dashed border-[var(--split-border-strong)] p-[1rem] text-[0.9375rem] leading-[1.4] text-[var(--muted)] max-[980px]:rounded-none max-[980px]:border-0 max-[980px]:p-0",
+    "m-0 px-[0.3rem] py-[0.4rem] text-[0.9375rem] leading-[1.45] text-[var(--muted)]",
 } as const;

@@ -32,21 +32,23 @@ Protected product pages use `requireSessionUser()`:
 
 ## Default authenticated redesign
 
-The owner authorized deployment behind the existing server-evaluated PostHog `Ben` flag. Unflagged accounts keep the previous interface.
+The approved training interface is the default for every authenticated account. `Ben` remains a separate server-evaluated capability for Nutrition, rest timing, and optional logger fields; it no longer selects an interface.
 
-`WorkspaceDesignProvider` applies `[data-training-design="true"]` and the shared navigation boundary only when Ben is enabled and Nova is disabled. `training-theme.css` scopes tokens to that document, including portals. Flag failures and unauthenticated contexts default to the previous interface. Nova and Ionic remain separate dormant variants.
+`WorkspaceDesignProvider` applies `[data-training-design="true"]` and the shared navigation boundary whenever Nova is disabled. `training-theme.css` scopes tokens to that document, including portals. Nova and Ionic remain separate dormant variants.
 
-Home reads `asOfDate`, `activityDays`, the current plan, and the existing draft parser. `use-stored-workout-draft.ts` is shared with dormant workspace Home and never writes storage. The overview cache namespace is `v3-training-home`.
+Home reads `asOfDate`, `activityDays`, the current plan, and the existing draft parser. `use-stored-workout-draft.ts` is shared with dormant workspace Home and never writes storage. The overview cache namespace is `v5-confident-plan-targets`.
 
-History groups loaded workouts into recorded days. `use-workout-details.ts` lazily reads the selected sessions through the owned, private `GET /api/workouts/:id` projection and aborts obsolete reads. `workout-return.ts` carries normalized view/day context through detail and edit pages. Missing older dates trigger successive existing history pages until the date is found or its range is exhausted.
+History indexes loaded workouts by month and recorded day. URL `month` and `day` values select the calendar month and date; absent selections default to the newest recorded month/day. Older server pages load sequentially until the selected month is complete: the oldest loaded month is earlier, or no pages remain. Final monthly counts are withheld until then. `use-workout-details.ts` lazily reads selected sessions through the owned, private `GET /api/workouts/:id` projection and aborts obsolete reads. `workout-return.ts` carries normalized view/day context; owner History-origin edits return directly to that day, while other edit entry points retain their detail-page return.
 
-`data.progress.ts` returns at most one aggregate per recorded date in a 760-day window. Set counts are collapsed before grouping so joins cannot multiply volume. Stored pounds convert once at the output boundary. Lifetime volume remains a separate aggregate. `analysis-model.ts` derives windows, comparisons, and weekly consistency without a provider call; `analysis-panel.tsx` and `analysis-chart.tsx` render the result. The daily cache namespace is `v2-daily-analysis`.
+The owner Analysis page, its components/model, and the abandoned `/api/exercises/[exerciseKey]` endpoint are removed. Shared `data.progress.ts` still serves legacy and dormant interfaces, returning at most one aggregate per recorded date in a 760-day window. Set counts are collapsed before grouping so joins cannot multiply volume. Existing exercise-detail pages retain their data loader and graphs.
 
 `use-focused-exercise.ts` tracks stable exercise identity independently of array position. The logger controller still owns draft recovery, insights, payloads, and submission. Reordering does not change the active exercise; adding selects the new exercise; removing chooses the neighboring valid index.
 
-The default split manager now consumes `use-split-library-state.ts`. Its saved snapshots and per-split dirty keys survive folder switches. Navigation registers the whole dirty library and discards all drafts only after confirmation. The previous default-only state and persistence hooks are removed.
+`WorkoutLoggerExerciseCarousel` uses Swiper React for button-driven flashcard transitions, with touch/mouse exercise dragging disabled. Each slide contains both its editable exercise card and its matching guidance, separated by 16px, so they share one transform. Transitions use 280ms eased deceleration and 20px between slides. An interruption freezes Swiper at its current visual position before targeting the next slide; controls remain responsive. Inactive fieldsets are disabled and hidden from assistive technology. Draft values stay in the controller, and reduced motion switches instantly.
 
-`app/_legacy/` preserves the affected UI from production baseline `1d7c93d`. Next private folders create no routes. `scripts/snapshot-legacy-ui.mjs` regenerates those files and rebases their imports without copying backend services or splitting the capability context. Dashboard, logger, detail pages, loading states, and toasts select the baseline for unflagged users. Public previews also use the baseline.
+The default split manager consumes `use-split-library-state.ts`. A folder opens directly into the inline `SplitEditor`, keyed by split identity and weekday to reset disclosures without losing parent-held draft values. The manager owns the single Save action and split-level menus; the editor owns day selection and exercise controls. There is no intermediate week grid, mobile day portal, or body scroll lock. Saved snapshots and per-split dirty keys survive folder switches; navigation warns about the whole dirty library and discards drafts only after confirmation.
+
+`app/_legacy/` preserves the `1d7c93d` snapshot used by public previews. Protected dashboard, logger, detail pages, loading states, and toasts no longer select that snapshot. `scripts/snapshot-legacy-ui.mjs` regenerates its files and rebases imports without copying backend services.
 
 ## Owner-only authenticated workspace
 
@@ -88,13 +90,15 @@ The Ionic screens reuse existing secured mutation endpoints and business service
 
 `app/components/app-nav.tsx` owns the owner interface's header utilities and direct bottom navigation. There is no drawer, veil, sliding app layer, drawer focus trap, or drawer scroll lock in this interface.
 
-`AppTabBar` exposes Home, History, Log, Split, Analysis, Profile, and Sign out below 900px. Its seven targets fit a 320px phone at a minimum 44px width. Avatar and Settings remain in the header. The desktop sidebar remains available from 900px upward.
+`AppTabBar` exposes Home, History, and Split below 900px; Home owns workout entry. `TrainingDashboardClient` controls whether the split library is open, and supplies `AppTopBar`'s Back action beside Splits when editing a folder. Back preserves the manager's drafts. Profile is reached through the header avatar; Settings stays in the header. The desktop sidebar remains available from 900px upward. Retired owner progress URLs return Home; legacy/dormant progress remains separate.
 
 Workout and exercise detail pages retain the bottom navigation and their quiet Back link. Loading screens use the same destinations. Logger routes remain task screens without the browsing dock.
 
-Both bottom-bar and desktop sign-out use the shared unsaved-navigation boundary before resetting PostHog and submitting the native `POST /auth/signout` form. Cancel leaves the session and analytics identity intact; an in-flight editor save prevents sign-out.
+Profile and desktop sign-out use the shared unsaved-navigation boundary before resetting PostHog and submitting the native `POST /auth/signout` form. Cancel leaves the session and analytics identity intact; an in-flight registered editor save prevents sign-out.
 
 Unflagged users retain the original drawer under `app/_legacy/`. Its presence and styling are independent of the owner navigation. PostHog identification and server-evaluated Ben capabilities remain unchanged.
+
+Owner view changes reset the document scroll in a layout effect. `DashboardShell` separately resets its desktop content scroller, including repeated destination clicks. Browser restoration is set to manual while the dashboard is mounted so Back cannot overwrite the reset. Split-library and plan navigation reset independently. The folder library is the initial Split view; `split-folder-artwork.tsx` shares its active, inactive, and dashed-create geometry with loading states.
 
 ## Shared authenticated interactions
 
@@ -104,7 +108,7 @@ Unflagged users retain the original drawer under `app/_legacy/`. Its presence an
 
 `ui/legacy-dialog.tsx` supplies controlled Radix dialog presence, Escape/outside dismissal, scroll locking, no automatic focus transfer, and pending-request dismissal guards. Form and reorder drafts live inside the mounted content, surviving exit and resetting on the next complete opening. Callers keep the boundary mounted and pass `open`; they do not conditionally remove it at the start of exit. Close buttons also honor busy state.
 
-Detail fallbacks pass the same Ben capability and return context as the loaded page. Edit routes reuse the focused logger skeleton. Dashboard skeletons now follow Home, the recorded-day browser, and the single Analysis graph.
+Detail fallbacks pass the same Ben capability and return context as the loaded page. Edit routes reuse the focused logger skeleton. Dashboard skeletons follow the remaining owner surfaces; dormant progress keeps its legacy skeleton.
 
 API routes:
 
@@ -163,9 +167,11 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 
 `/api/workouts/insights` is the logger's comparison endpoint and the feature the logger is built around. `lib/workouts/insight-request.ts` builds its request and an in-memory cache key from exercise name, date, and position only — deliberately not from set count, so adding a set never refetches. The route returns the last session's ordered sets, the all-time best weight (read from `ExerciseSummary` by primary key, falling back to the scanned window), and a prediction from `lib/workouts/prediction*.ts`.
 
-The UI consumes it inline rather than as a panel: each draft set row shows the matching past set as muted ghost text (`lastSession.sets[index]`) and takes its weight/reps placeholders from `prediction.predictedSets[index]`. The exercise card carries one sentence — `Last hit May 15 · best 140 lb`, or `First time logging this.` Refetches carry the previous payload forward so the card never blanks or shifts, and edit mode passes `excludeWorkoutId` so a workout is never compared against itself.
+`WorkoutLoggerGuidance` lives inside its exercise's Swiper slide, immediately below the logging card. Both containers move together while the thumb-level pager and bottom actions remain fixed. Guidance pairs dated recorded sets with medium/high-confidence predictions limited to the planned set count. Loading/error states withhold stale values; Retry uses the insight loader. Inputs have no predicted placeholders or history lines, and edit requests exclude the edited workout.
 
-`app/components/exercise-reorder-dialog.tsx` owns exercise ordering for both the split editor and the workout logger. One grab handle per row starts a pointer-captured drag; crossing another row updates only the dialog's draft order. `Save order` sends the ordered identifiers to the owning editor, while `Cancel`, the backdrop, and Escape discard the draft.
+`WorkoutLoggerSwipeableSet` uses a two-snap Swiper inside the non-draggable exercise carousel: one full-width input slide and an 80%-width trailing Delete slide that matches input height. Swiper permits drags from inputs without preventing tap-to-focus. Reveal state follows `snapIndex`; stable set IDs coordinate one open row. The wrapper overrides inherited cross-axis alignment. Both Delete and the set-number menu use confirmation. The last set cannot be deleted.
+
+`app/components/move-reorder-dialog.tsx` owns weekday and exercise ordering through one two-tap flow: select an item, then choose its destination. Tapping the selected item cancels the selection. The dialog holds a draft order; `Save order` sends identifiers to its owner, while Cancel, backdrop dismissal, and Escape discard it. Split weekdays supply fixed weekday slots; exercises use numbered positions. Split and logger no longer have drag-handle exercise ordering.
 
 ## Read Models And Caching
 
@@ -177,7 +183,7 @@ The UI consumes it inline rather than as a panel: each draft set row shows the m
 - Nutrition view data uses a user-scoped cache tag and is invalidated after nutrition writes.
 - The split dashboard payload includes the active split as `split` and the saved split library as `splits`.
 - `todayPlan` includes `workoutTypeSlug` and `isLoggedToday`; overview loading sets `isLoggedToday` by matching today's Pacific date plus normalized workout type against existing workout logs.
-- Overview includes `asOfDate`, three calendar months of activity aggregates, `loggedWorkoutId`, `todayPlan`, and `todaySession`. `loadTodaySession` reads the split seed, selects the newest workout exercise per planned name, and loads sets only for those rows. It shows the last session's top set rather than an all-time best. The workouts payload retains `workoutHistory.lifetime`.
+- Overview includes `asOfDate`, three calendar months of activity aggregates, `loggedWorkoutId`, `todayPlan`, and `todaySession`. `loadTodaySession` reads the split seed and up to five recent sessions per planned exercise in a batched history query. The last session's heaviest set wins, with higher reps breaking equal-weight ties. It reuses `predictExercisePerformance()` for suggested top sets, converting pounds only at the output boundary and carrying confidence into the payload. The UI renders a target only for medium/high confidence and never when today's session is complete. The workouts payload retains `workoutHistory.lifetime`.
 - Dashboard client-side view data is kept only for the mounted dashboard instance in `app/dashboard/dashboard-client.tsx`; `/api/dashboard/view-data` loads missing views. A loaded view is reused on later tab switches, while authoritative server refreshes reset the local data to prevent stale or cross-account payloads from being merged.
 - Workout history is loaded in 60-row server pages. Filters are applied in PostgreSQL before pagination, and the client merges older pages by month on demand rather than serializing the user's full history into the initial dashboard payload.
 - Public profiles use `ExerciseSummary`, `WorkoutCalendarDay`, scalar workout aggregates, grouped workout types, and a best-set-per-exercise query. They do not hydrate every historical workout/set into application memory.
@@ -209,4 +215,4 @@ Useful suites:
 
 `scripts/verify-ionic.mjs` and `scripts/verify-ionic-logger.mjs` export no-write browser walkthroughs. They accept an isolated Puppeteer page, origin, short-lived session cookies, and artifact directory; the logger walkthrough also needs an existing workout ID for its intercepted success navigation. They intercept server mutations rather than creating test records. Use a dedicated headless browser, never the user's browser profile. The suite covers rollout isolation, phone/desktop themes, completion recovery, failure/retry, and post-save draft cleanup. Browser emulation does not prove physical iPhone keyboard or lock-screen behavior.
 
-`scripts/verify-authenticated-interactions.mjs` exports `verifyAuthenticatedInteractions(page, { origin, sessionToken, artifactDir })`. Supply a dedicated headless Puppeteer page and an account with existing workouts and at least two saved splits. The walkthrough derives an owned workout from History, intercepts every mutation, checks failure and simulated-success paths, and restores draft storage. It verifies history returns, focused navigation and swipes, protected fan motion, split dirty/busy boundaries, and 320px, 390px, and 1440px layouts in both themes. Tokens stay outside source. Successful simulated responses prove client behavior, not database persistence.
+`scripts/verify-authenticated-interactions.mjs` exports `verifyAuthenticatedInteractions(page, { origin, sessionToken, artifactDir })`. Supply a dedicated headless Puppeteer page, origin, short-lived session token, and artifact directory. The no-write walkthrough verifies History returns, flashcard button navigation and drag exclusion, direct floating-action save wiring, split dirty/busy boundaries, and responsive layouts. Tokens stay outside source. Simulated success responses prove client behavior, not database persistence.

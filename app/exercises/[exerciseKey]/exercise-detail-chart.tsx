@@ -49,9 +49,9 @@ export function ExerciseDetailChart({
   weightUnit,
 }: ExerciseDetailChartProps) {
   const dataKey = metric === "weight" ? "bestWeight" : "estimatedOneRepMax";
-  const stroke = metric === "weight"
-    ? "var(--text)"
-    : "color-mix(in srgb, #7bc469 78%, var(--text))";
+  const stroke = metric === "strength"
+    ? "color-mix(in srgb, #7bc469 78%, var(--text))"
+    : "var(--text)";
   const unitLabel = getWeightUnitLabel(weightUnit);
 
   return (
@@ -91,8 +91,14 @@ export function ExerciseDetailChart({
               const point = item.payload as ExerciseDetailChartProps["series"][number];
               const value = typeof rawValue === "number" ? rawValue : Number(rawValue);
 
+              // Load and reps always travel together: 3 reps at a heavier bar
+              // is not the same result as 3 reps at a lighter one, and a value
+              // shown alone invites reading one as the other.
               if (metric === "weight") {
-                return [`${toDisplayNumber(value)} ${unitLabel}`, "Best top set"];
+                return [
+                  `${toDisplayNumber(value)} ${unitLabel} × ${point.topSetReps}`,
+                  "Top set",
+                ];
               }
 
               const topSetWeight = toDisplayNumber(point.bestWeight);

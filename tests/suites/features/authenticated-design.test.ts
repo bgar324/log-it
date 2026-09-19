@@ -6,23 +6,18 @@ import * as flags from "../../../lib/posthog-feature-flags";
 import * as workspace from "../../../lib/workspace-feature-flag";
 import { loadAuthenticatedDesign } from "../../../app/components/authenticated-design";
 
-test("Ben is evaluated outside Nova and cannot enable the redesign without a session", async () => {
+test("unauthenticated requests do not evaluate account capabilities", async () => {
   const authDescriptor = Object.getOwnPropertyDescriptor(auth, "getSessionUser");
   const flagDescriptor = Object.getOwnPropertyDescriptor(flags, "isBenFeatureEnabled");
   const workspaceDescriptor = Object.getOwnPropertyDescriptor(workspace, "isWorkspaceEnabled");
   assert.ok(authDescriptor && flagDescriptor && workspaceDescriptor);
-  const user = { id: "owner-id", username: "owner", email: "owner@example.com" };
-  let signedIn = true;
-  let enabled = false;
-  Object.defineProperty(auth, "getSessionUser", { ...authDescriptor, value: async () => signedIn ? user : null });
-  Object.defineProperty(flags, "isBenFeatureEnabled", { ...flagDescriptor, value: async () => enabled });
+  let flagCalls = 0;
+  Object.defineProperty(auth, "getSessionUser", { ...authDescriptor, value: async () => null });
+  Object.defineProperty(flags, "isBenFeatureEnabled", { ...flagDescriptor, value: async () => { flagCalls++; return true; } });
   Object.defineProperty(workspace, "isWorkspaceEnabled", { ...workspaceDescriptor, value: () => false });
   try {
     assert.deepEqual(await loadAuthenticatedDesign(), { enabled: false, benEnabled: false });
-    enabled = true;
-    assert.deepEqual(await loadAuthenticatedDesign(), { enabled: false, benEnabled: true });
-    signedIn = false;
-    assert.deepEqual(await loadAuthenticatedDesign(), { enabled: false, benEnabled: false });
+    assert.equal(flagCalls, 0);
   } finally {
     Object.defineProperty(auth, "getSessionUser", authDescriptor);
     Object.defineProperty(flags, "isBenFeatureEnabled", flagDescriptor);

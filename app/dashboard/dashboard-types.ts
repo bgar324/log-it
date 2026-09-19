@@ -1,5 +1,6 @@
 import type { WeightUnit } from "@/lib/weight-unit";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
+import type { ExercisePrediction } from "@/lib/workouts/prediction";
 
 export type DashboardView =
   | "dashboard"
@@ -106,6 +107,7 @@ export type DashboardClientData = {
       lastPerformedLabel: string | null;
       lastWeight: number | null;
       lastReps: number | null;
+      suggestedTopSet?: { weight: number | null; reps: number; confidence: ExercisePrediction["confidence"] };
     }>;
   };
   nutrition: DashboardNutritionData;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { isWorkspaceEnabled } from "@/lib/workspace-feature-flag";
 import { getCurrentPacificDate } from "@/lib/workout-utils";
 import {
   loadDashboardViewData,
@@ -18,6 +19,12 @@ export async function GET(request: Request) {
   const view = normalizeDashboardView(
     url.searchParams.get("view") ?? undefined,
   );
+
+  // Progress is retained only for the dormant workspace.
+  if (view === "progress" && !isWorkspaceEnabled(user)) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+
   const workoutHistoryRequest = parseWorkoutHistoryRequest(url.searchParams);
 
   try {

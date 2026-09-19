@@ -1,6 +1,6 @@
 "use client";
 
-import { ExerciseReorderDialog } from "@/app/components/exercise-reorder-dialog";
+import { MoveReorderDialog } from "@/app/components/move-reorder-dialog";
 import type { ExerciseDraft } from "../workout-logger.utils";
 
 type WorkoutLoggerReorderDialogProps = {
@@ -23,7 +23,7 @@ export function WorkoutLoggerReorderDialog({
   }));
 
   return (
-    <ExerciseReorderDialog
+    <MoveReorderDialog kind="exercise"
       items={items}
       open={isOpen}
       onCancel={onCancel}

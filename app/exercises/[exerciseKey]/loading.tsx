@@ -10,7 +10,6 @@ import {
 import { WorkspaceFrame } from "@/app/components/workspace-frame";
 import { WorkspaceExerciseDetailSkeleton } from "@/app/workspace/details/workspace-detail-skeletons";
 import { styles } from "./exercise-detail.styles";
-import LegacyExerciseDetailLoading from "@/app/_legacy/exercises/[exerciseKey]/loading";
 
 function SkeletonBlock({
   className = "",
@@ -39,8 +38,9 @@ function SessionRowSkeleton() {
 
 // The fallback has to draw the same chrome the page draws, or the frame the
 // user is looking at disappears for the length of the fetch. Which chrome that
-// is depends on the design flag, so the fallback reads it too — otherwise the
-// legacy tab bar flashes into the workspace on every detail navigation.
+// is depends on the workspace design flag, so the fallback reads it too —
+// otherwise the training tab bar flashes into the workspace on every detail
+// navigation.
 export default function ExerciseDetailLoading() {
   const workspaceDesign = useWorkspaceDesign();
   const benEnabled = useWorkspaceBenEnabled();
@@ -57,18 +57,12 @@ export default function ExerciseDetailLoading() {
     );
   }
 
-  // Unflagged readers wait on the shipped detail screen, so they wait behind
-  // its own fallback rather than the redesigned one below.
-  if (!benEnabled) {
-    return <LegacyExerciseDetailLoading />;
-  }
-
   return (
     <main className={styles.shell}>
       <section className={`${styles.stage} ${navStyles.mainInset}`}>
         <header className={styles.topRow}>
           <BackButton
-            fallbackHref="/dashboard?view=progress"
+            fallbackHref="/dashboard?view=workouts"
             label="Back"
             className={styles.backLink}
             iconClassName={styles.backButtonIcon}
@@ -108,7 +102,7 @@ export default function ExerciseDetailLoading() {
           </div>
         </section>
       </section>
-      <AppTabBar activeView="progress" benEnabled={benEnabled} />
+      <AppTabBar activeView="workouts" benEnabled={benEnabled} />
     </main>
   );
 }

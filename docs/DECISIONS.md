@@ -50,7 +50,7 @@ The overview returns calendar aggregates for statistics and month navigation, bu
 
 ## Navigate By Trip Frequency, Not Object Importance
 
-The owner chose direct bottom navigation over the drawer. Home, History, Log, Split, Analysis, Profile, and Sign out are always reachable from the phone bar. Avatar and Settings remain above the content. The header ellipsis and the entire owner drawer implementation are removed, rather than hidden. Sign-out uses the existing unsaved-navigation boundary before clearing analytics identity and posting to the server.
+The owner chose direct bottom navigation over the drawer, then removed duplicate account controls, Analysis, and the Log shortcut. Home, History, and Split remain in the phone bar; Home owns workout entry. The header avatar opens Profile, where Sign out lives. Settings stays in the header. The owner drawer is removed rather than hidden.
 
 The following layer rationale applies only to the retained unflagged baseline in `app/_legacy/`.
 
@@ -66,9 +66,9 @@ The hamburger dropdown and its 761–899px navigation dead zone are gone: the bo
 
 The authenticated app ships zero KPI tiles. Today greets the user and names the plan (`Hi, Benjamin. / Today is Upper B.`), summary numbers render as one or two quiet typographic lines, and workout/exercise detail summaries are sentences. Every fact the old tile grids showed is retained; only the boxes are gone. A number is never printed twice on one screen, so views that expose an editable value no longer repeat it in a tile above the input.
 
-## Compare Belongs Inside The Set Row
+## Separate Guidance From Entered Results
 
-The workout logger's comparison is the feature the product is built around, so it renders where the work happens: each set row shows what that set was last time as ghost text and takes its placeholder from the prediction for that set index. The old panel above the sets — recommended target, expected range, confidence, predicted set flow, volume delta — is deleted. `lib/workouts/insight-request.ts` keys the request on exercise, date, and position but never set count, so adding a set costs no request, and refetches carry the previous payload forward so the card cannot collapse and shove the inputs down mid-workout.
+The owner moved comparisons and predictions out of the inputs into a soft container directly below the logging card, while exercise navigation stays at thumb level. Blank inputs cannot be mistaken for predicted results. The container separates dated recorded sets from medium/high-confidence suggestions without an estimate footer. Insight requests remain keyed on exercise, date, and position—not set count—so adding a set does not refetch. This supersedes the inline ghost-text and predicted-placeholder design.
 
 ## Phone Control Floors Are Not Negotiable
 
@@ -124,18 +124,24 @@ The logger returns to its originating view, defaulting to Home. This applies to 
 
 Draft recovery remains StrictMode-safe and does not replace dirty work on server refresh. Available timer code remains clock-based; it is not reintroduced into the owner's disabled feature set.
 
-## Limit the reference-driven redesign to the existing Ben flag
+## Make the approved training interface the default
 
-The owner first requested local implementation, then explicitly authorized deployment for their account through the existing Ben feature flag. Server-side capability resolution selects the redesign; unflagged users retain the `1d7c93d` interface in `app/_legacy/`. No new flag or database schema is introduced. Verification must not write to the shared production database.
+After reviewing the owner-only implementation locally, the owner authorized updating main and rolling it out to every user. Protected routes no longer select the baseline snapshot through the Ben flag. Ben retains its separate Nutrition, rest-timer, and optional-field behavior; enabling the design must not force that capability on other accounts. Public previews keep their baseline snapshot, and Nova/Ionic remain disabled. No new rollout flag or database schema is introduced. Verification must not write to the shared production database.
 
-The references supply structure, not fabricated data: compact activity calendars on Home, recorded-day browsing in History, a graph controlled by reachable metrics in Analysis, a protected logger tools arc, one focused exercise, and saved split folders. Home remains sentence-led. Deliberate metric cards are allowed where they control the graph, superseding the blanket ban on KPIs.
+The references supply structure, not fabricated data: compact activity calendars on Home, recorded-day browsing in History, one focused exercise, and saved split folders. The owner replaced the logger tools arc with separate floating bottom actions and an explicit Save label, and removed Analysis rather than continuing its overhaul. Existing exercise-detail graphs remain, but a Home graph is only a proposal. Home's plan separates prior top-set facts from medium/high-confidence targets produced by the existing predictor.
 
 ## Preserve intent across view and loading boundaries
 
 Workout return context is normalized once and carried through Open, Edit, save, and Back. Loading fallbacks use the same context. Back is a real in-app link so it works before hydration; after hydration, the shared boundary guards unsaved edits.
 
-Split navigation checks every dirty folder, not only the selected one. Renaming is disabled while a save is pending. The tools trigger stays above entering fan actions, preventing a rapid second tap from submitting through an invisible Save.
+Split navigation checks every dirty folder, not only the selected one. Renaming is disabled while a save is pending. Logger actions remain fixed and visible, with Save labelled explicitly; pending saves disable repeated submission and conflicting edits.
 
 ## Keep local verification memory-bounded
 
 Run test files serially with `--test-concurrency=1`. Rendering suites each load jsdom and Next, so CPU-count parallelism multiplies their memory use. Do not run duplicate dev servers and browser sweeps alongside validation. Use Vercel's remote production build for deployment.
+
+## Review visual refinements before release
+
+The owner reviewed the refinements through one local preview before authorizing the all-user release. The earlier no-commit/no-deploy restriction is superseded by that explicit authorization.
+
+The visual direction is monochrome. Home loses the day dot, unfinished-session subtitle, and Last session section. Splits opens on a Finder-style folder library without root-level Back or explanatory headings. The active folder is filled, and New split is a dashed folder at the end. Activation remains available through the options menu. All navigation starts at the top.
