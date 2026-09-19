@@ -1,0 +1,605 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { AppNavUser } from "@/app/_legacy/components/app-nav";
+import { useIdentifyPostHogUser } from "@/app/hooks/use-posthog-user";
+import { SplitManager } from "@/app/_legacy/dashboard/split-manager";
+import { VIEW_TITLES, toViewHref } from "@/app/_legacy/dashboard/dashboard-client.shared";
+import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
+import type {
+  DashboardClientData,
+  DashboardView,
+  DashboardWorkoutFilters,
+} from "@/app/dashboard/dashboard-types";
+import { normalizeDashboardView } from "@/app/dashboard/data.view-helpers";
+import { DashboardOverviewView } from "@/app/_legacy/dashboard/_components/dashboard-overview-view";
+import { DashboardNutritionPanel } from "@/app/_legacy/dashboard/_components/dashboard-nutrition-panel";
+import { DashboardProfileView } from "@/app/_legacy/dashboard/_components/dashboard-profile-view";
+import { DashboardSettingsView } from "@/app/_legacy/dashboard/_components/dashboard-settings-view";
+import { DashboardProgressView } from "@/app/_legacy/dashboard/_components/dashboard-progress-view";
+import { DashboardShell } from "@/app/_legacy/dashboard/_components/dashboard-shell";
+import { DashboardViewSkeleton } from "@/app/_legacy/dashboard/_components/dashboard-view-skeleton";
+import {
+  DashboardWorkoutFiltersControl,
+  DashboardWorkoutsView,
+  emptyWorkoutFilters,
+  getFilteredWorkoutMonths,
+  getWorkoutCount,
+  getWorkoutTypes,
+  hasActiveWorkoutFilters,
+} from "@/app/_legacy/dashboard/_components/dashboard-workouts-view";
+import { useDashboardProfileForm } from "@/app/dashboard/_hooks/use-dashboard-profile-form";
+import { useDashboardProgress } from "@/app/dashboard/_hooks/use-dashboard-progress";
+import { useDashboardTodayPlan } from "@/app/dashboard/_hooks/use-dashboard-today-plan";
+import { useWorkspaceDesign } from "@/app/components/workspace-design-context";
+import { WorkspaceDashboardShell } from "@/app/components/workspace-frame";
+import { WorkspaceViewError, WorkspaceViewSkeleton } from "@/app/components/workspace-view-state";
+import { WorkspaceOverviewView } from "@/app/workspace/views/workspace-overview-view";
+import { WorkspaceWorkoutsView, WorkspaceWorkoutFiltersControl } from "@/app/workspace/views/workspace-workouts-view";
+import { WorkspaceProgressView } from "@/app/workspace/views/workspace-progress-view";
+import { WorkspaceProfileView } from "@/app/workspace/views/workspace-profile-view";
+import { WorkspaceSettingsView } from "@/app/workspace/views/workspace-settings-view";
+import { WorkspaceNutritionPanel } from "@/app/workspace/views/workspace-nutrition-panel";
+import { WorkspaceSplitManager } from "@/app/workspace/split/workspace-split-manager";
+
+function LegacyViewError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return <div className={styles.panel}><p className={styles.empty}>{message}</p><button type="button" className={styles.retryButton} onClick={onRetry}>Retry</button></div>;
+}
+
+type DashboardClientProps = {
+  initialView: DashboardView;
+  userId: string;
+  benEnabled: boolean;
+  data: DashboardClientData;
+};
+
+type LoadViewDataOptions = {
+  showError?: boolean;
+  showLoading?: boolean;
+};
+
+type LoadWorkoutHistoryPageOptions = {
+  offset: number;
+  filters: DashboardWorkoutFilters;
+  append: boolean;
+};
+
+type DashboardViewData = Partial<DashboardClientData>;
+
+function mergeDashboardViewData(
+  data: DashboardClientData,
+  viewData: DashboardViewData,
+): DashboardClientData {
+  return {
+    ...data,
+    ...viewData,
+  };
+}
+
+function createInitialLoadedDashboardViews(initialView: DashboardView) {
+  return new Set<DashboardView>([initialView, "profile"]);
+}
+
+function workoutFiltersMatch(
+  left: DashboardWorkoutFilters,
+  right: DashboardWorkoutFilters,
+) {
+  return (
+    left.dateFrom === right.dateFrom &&
+    left.dateTo === right.dateTo &&
+    left.workoutType === right.workoutType &&
+    left.titleQuery === right.titleQuery
+  );
+}
+
+function mergeWorkoutMonthPages(
+  current: DashboardClientData["workoutMonths"],
+  incoming: DashboardClientData["workoutMonths"],
+) {
+  const entriesByMonth = new Map(
+    current.map((month) => [month.month, [...month.entries]]),
+  );
+
+  for (const month of incoming) {
+    const entries = entriesByMonth.get(month.month) ?? [];
+    const existingIds = new Set(entries.map((entry) => entry.id));
+    entries.push(...month.entries.filter((entry) => !existingIds.has(entry.id)));
+    entriesByMonth.set(month.month, entries);
+  }
+
+  return Array.from(entriesByMonth, ([month, entries]) => ({ month, entries }));
+}
+
+export function DashboardClient({
+  initialView,
+  data,
+  userId,
+  benEnabled,
+}: DashboardClientProps) {
+  const router = useRouter();
+  const workspaceEnabled = useWorkspaceDesign();
+  const Shell = workspaceEnabled ? WorkspaceDashboardShell : DashboardShell;
+  const OverviewView = workspaceEnabled ? WorkspaceOverviewView : DashboardOverviewView;
+  const WorkoutsView = workspaceEnabled ? WorkspaceWorkoutsView : DashboardWorkoutsView;
+  const FiltersControl = workspaceEnabled ? WorkspaceWorkoutFiltersControl : DashboardWorkoutFiltersControl;
+  const ProgressView = workspaceEnabled ? WorkspaceProgressView : DashboardProgressView;
+  const NutritionPanel = workspaceEnabled ? WorkspaceNutritionPanel : DashboardNutritionPanel;
+  const SplitView = workspaceEnabled ? WorkspaceSplitManager : SplitManager;
+  const ProfileView = workspaceEnabled ? WorkspaceProfileView : DashboardProfileView;
+  const SettingsView = workspaceEnabled ? WorkspaceSettingsView : DashboardSettingsView;
+  const ViewSkeleton = workspaceEnabled ? WorkspaceViewSkeleton : DashboardViewSkeleton;
+  const ViewError = workspaceEnabled ? WorkspaceViewError : LegacyViewError;
+  const viewClassName = workspaceEnabled ? "space-y-6" : "view-transition-shell";
+  const [activeView, setActiveView] = useState(initialView);
+  const [dashboardData, setDashboardData] = useState(data);
+  const [loadedViews, setLoadedViews] = useState<ReadonlySet<DashboardView>>(
+    () => createInitialLoadedDashboardViews(initialView),
+  );
+  const [loadingViews, setLoadingViews] = useState<ReadonlySet<DashboardView>>(
+    () => new Set(),
+  );
+  const [viewErrors, setViewErrors] = useState<Partial<Record<DashboardView, string>>>({});
+  const loadedViewsRef = useRef<Set<DashboardView>>(
+    createInitialLoadedDashboardViews(initialView),
+  );
+  const inFlightViewsRef = useRef<Set<DashboardView>>(new Set());
+  const workoutHistoryRequestRef = useRef(0);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [workoutFilters, setWorkoutFilters] = useState(emptyWorkoutFilters);
+  const [appliedWorkoutFilters, setAppliedWorkoutFilters] =
+    useState(emptyWorkoutFilters);
+  const [workoutHistoryLoading, setWorkoutHistoryLoading] = useState(false);
+  const profileFormState = useDashboardProfileForm(dashboardData.user, () => {
+    router.refresh();
+  });
+
+  useIdentifyPostHogUser({
+    id: userId,
+    email: profileFormState.profile.email,
+    username: profileFormState.profile.username,
+    firstName: profileFormState.profile.firstName,
+    lastName: profileFormState.profile.lastName,
+  });
+  const progressState = useDashboardProgress(dashboardData.exercises);
+  const todayPlan = useDashboardTodayPlan(dashboardData.overview.todayPlan);
+  const activeViewError = viewErrors[activeView] ?? null;
+  const activeViewIsLoading = loadingViews.has(activeView) ||
+    (!loadedViews.has(activeView) && activeView !== "profile" && activeView !== "settings" && !activeViewError);
+  const navUser = useMemo<AppNavUser>(() => {
+    const firstName = (profileFormState.profile.firstName ?? "").trim();
+    const lastName = (profileFormState.profile.lastName ?? "").trim();
+    const fullName = `${firstName} ${lastName}`.trim();
+    const updatedAt = profileFormState.profile.profileImageUpdatedAt;
+
+    return {
+      displayName: fullName || firstName || profileFormState.profile.username,
+      username: profileFormState.profile.username,
+      avatarUrl: updatedAt
+        ? `/api/profile/avatar?v=${encodeURIComponent(updatedAt)}`
+        : null,
+    };
+  }, [
+    profileFormState.profile.firstName,
+    profileFormState.profile.lastName,
+    profileFormState.profile.profileImageUpdatedAt,
+    profileFormState.profile.username,
+  ]);
+  const greetingName =
+    (profileFormState.profile.firstName ?? "").trim() || profileFormState.profile.username;
+  const displayWeightUnit = profileFormState.profile.preferredWeightUnit;
+  const workoutTypes = useMemo(
+    () =>
+      dashboardData.workoutHistory.workoutTypes.length > 0
+        ? dashboardData.workoutHistory.workoutTypes
+        : getWorkoutTypes(dashboardData.workoutMonths),
+    [dashboardData.workoutHistory.workoutTypes, dashboardData.workoutMonths],
+  );
+  const filteredWorkoutMonths = useMemo(
+    () => getFilteredWorkoutMonths(dashboardData.workoutMonths, workoutFilters),
+    [dashboardData.workoutMonths, workoutFilters],
+  );
+  const filtersAreApplied = workoutFiltersMatch(
+    workoutFilters,
+    appliedWorkoutFilters,
+  );
+  const filteredWorkoutCount = filtersAreApplied
+    ? dashboardData.workoutHistory.totalCount
+    : getWorkoutCount(filteredWorkoutMonths);
+  const hasWorkoutFilters = hasActiveWorkoutFilters(workoutFilters);
+  const remainingWorkoutCount = Math.max(
+    0,
+    dashboardData.workoutHistory.totalCount -
+      dashboardData.workoutHistory.nextOffset,
+  );
+
+  useEffect(() => {
+    // Server refreshes are authoritative. Keeping this cache instance-local and
+    // resetting it here prevents one account or old unit conversion from being
+    // merged into another account's dashboard payload.
+    loadedViewsRef.current = createInitialLoadedDashboardViews(initialView);
+    workoutHistoryRequestRef.current += 1;
+    setDashboardData(data);
+    setLoadedViews(createInitialLoadedDashboardViews(initialView));
+    setLoadingViews(new Set());
+    setViewErrors({});
+    setAppliedWorkoutFilters(emptyWorkoutFilters);
+    setWorkoutHistoryLoading(false);
+  }, [data, initialView]);
+
+  const loadViewData = useCallback(async (
+    view: DashboardView,
+    options: LoadViewDataOptions = {},
+  ) => {
+    // Profile and settings render from state the shell already has.
+    if (
+      view === "profile" ||
+      view === "settings" ||
+      inFlightViewsRef.current.has(view) ||
+      loadedViewsRef.current.has(view)
+    ) {
+      return;
+    }
+
+    const hasCachedData = loadedViewsRef.current.has(view);
+    const showLoading = options.showLoading ?? !hasCachedData;
+    const showError = options.showError ?? !hasCachedData;
+
+    inFlightViewsRef.current.add(view);
+
+    if (showLoading) {
+      setLoadingViews((current) => {
+        const next = new Set(current);
+        next.add(view);
+        return next;
+      });
+    }
+
+    if (showError) {
+      setViewErrors((current) => {
+        const next = { ...current };
+        delete next[view];
+        return next;
+      });
+    }
+
+    try {
+      const response = await fetch(`/api/dashboard/view-data?view=${view}`, {
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as
+        | { data?: Partial<DashboardClientData> }
+        | { error?: string };
+
+      if (!response.ok || !payload || !("data" in payload) || !payload.data) {
+        throw new Error(
+          payload && "error" in payload ? payload.error : "Unable to load dashboard view.",
+        );
+      }
+
+      setDashboardData((current) => mergeDashboardViewData(current, payload.data ?? {}));
+      loadedViewsRef.current.add(view);
+      setLoadedViews((current) => {
+        const next = new Set(current);
+        next.add(view);
+        return next;
+      });
+      setViewErrors((current) => {
+        const next = { ...current };
+        delete next[view];
+        return next;
+      });
+    } catch (error) {
+      if (showError) {
+        setViewErrors((current) => ({
+          ...current,
+          [view]: error instanceof Error ? error.message : "Unable to load dashboard view.",
+        }));
+      }
+    } finally {
+      inFlightViewsRef.current.delete(view);
+      setLoadingViews((current) => {
+        const next = new Set(current);
+        next.delete(view);
+        return next;
+      });
+    }
+  }, []);
+
+  const loadWorkoutHistoryPage = useCallback(
+    async (options: LoadWorkoutHistoryPageOptions) => {
+      const requestId = workoutHistoryRequestRef.current + 1;
+      workoutHistoryRequestRef.current = requestId;
+      setWorkoutHistoryLoading(true);
+      setViewErrors((current) => {
+        const next = { ...current };
+        delete next.workouts;
+        return next;
+      });
+
+      const searchParams = new URLSearchParams({
+        view: "workouts",
+        offset: String(options.offset),
+      });
+      for (const [key, value] of Object.entries(options.filters)) {
+        if (value) {
+          searchParams.set(key, value);
+        }
+      }
+
+      try {
+        const response = await fetch(`/api/dashboard/view-data?${searchParams}`, {
+          cache: "no-store",
+        });
+        const payload = (await response.json()) as
+          | { data?: Partial<DashboardClientData> }
+          | { error?: string };
+        const pageMonths =
+          payload && "data" in payload ? payload.data?.workoutMonths : undefined;
+        const pageHistory =
+          payload && "data" in payload ? payload.data?.workoutHistory : undefined;
+
+        if (!response.ok || !pageMonths || !pageHistory) {
+          throw new Error(
+            payload && "error" in payload
+              ? payload.error
+              : "Unable to load workout history.",
+          );
+        }
+
+        if (requestId !== workoutHistoryRequestRef.current) {
+          return;
+        }
+
+        setDashboardData((current) => ({
+          ...current,
+          workoutMonths: options.append
+            ? mergeWorkoutMonthPages(current.workoutMonths, pageMonths)
+            : pageMonths,
+          workoutHistory: pageHistory,
+        }));
+        setAppliedWorkoutFilters(options.filters);
+        loadedViewsRef.current.add("workouts");
+        setLoadedViews((current) => {
+          const next = new Set(current);
+          next.add("workouts");
+          return next;
+        });
+      } catch (error) {
+        if (requestId === workoutHistoryRequestRef.current) {
+          setViewErrors((current) => ({
+            ...current,
+            workouts:
+              error instanceof Error
+                ? error.message
+                : "Unable to load workout history.",
+          }));
+        }
+      } finally {
+        if (requestId === workoutHistoryRequestRef.current) {
+          setWorkoutHistoryLoading(false);
+        }
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const hasCachedData = loadedViewsRef.current.has(activeView);
+
+    void loadViewData(activeView, {
+      showError: !hasCachedData,
+      showLoading: !hasCachedData,
+    });
+  }, [activeView, loadViewData]);
+
+  useEffect(() => {
+    if (
+      !loadedViews.has("workouts") ||
+      workoutFiltersMatch(workoutFilters, appliedWorkoutFilters)
+    ) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void loadWorkoutHistoryPage({
+        offset: 0,
+        filters: workoutFilters,
+        append: false,
+      });
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    appliedWorkoutFilters,
+    loadedViews,
+    loadWorkoutHistoryPage,
+    workoutFilters,
+  ]);
+
+  useEffect(() => {
+    function handlePopState() {
+      const view = normalizeDashboardView(
+        new URL(window.location.href).searchParams.get("view") ?? undefined,
+      );
+      if (workspaceEnabled && benEnabled && view === "nutrition") {
+        setActiveView("dashboard");
+        router.replace("/dashboard");
+        return;
+      }
+
+      setActiveView(view);
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [loadViewData, workspaceEnabled, benEnabled, router]);
+
+  function navigateToView(view: DashboardView) {
+    if (workspaceEnabled && benEnabled && view === "nutrition") {
+      setActiveView("dashboard");
+      router.push("/dashboard");
+      return;
+    }
+    if (view === activeView) {
+      return;
+    }
+
+    startTransition(() => {
+      window.history.pushState(null, "", toViewHref(view));
+      setActiveView(view);
+    });
+  }
+
+  function handleNutritionChange(nutrition: DashboardClientData["nutrition"]) {
+    setDashboardData((current) => {
+      const nextData = {
+        ...current,
+        nutrition,
+      };
+      return nextData;
+    });
+  }
+
+  return (
+    <Shell
+      activeView={activeView}
+      title={VIEW_TITLES[activeView]}
+      user={navUser}
+      benEnabled={benEnabled}
+      sidebarCollapsed={sidebarCollapsed}
+      onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
+      onNavigate={navigateToView}
+      renderHeaderAccessory={() =>
+        activeView === "workouts" &&
+        (workspaceEnabled || dashboardData.workoutHistory.totalCount > 0 ||
+          workoutTypes.length > 0 ||
+          hasWorkoutFilters) ? (
+          <FiltersControl
+            filters={workoutFilters}
+            workoutTypes={workoutTypes}
+            filteredCount={filteredWorkoutCount}
+            hasFilters={hasWorkoutFilters}
+            onChange={setWorkoutFilters}
+            onClear={() => setWorkoutFilters(emptyWorkoutFilters)}
+          />
+        ) : null
+      }
+    >
+      {activeView === "dashboard" ? (
+        <div key="dashboard" className={viewClassName}>
+          {activeViewError ? (
+            <ViewError message={activeViewError} onRetry={() => void loadViewData("dashboard", { showError: true, showLoading: true })} />
+          ) : activeViewIsLoading && !loadedViews.has("dashboard") ? (
+            <ViewSkeleton kind="dashboard" />
+          ) : (
+            <OverviewView
+              overview={dashboardData.overview}
+              workouts={dashboardData.workouts}
+              todayPlan={todayPlan}
+              greetingName={greetingName}
+              weightUnit={displayWeightUnit}
+              onNavigateToView={navigateToView}
+            />
+          )}
+        </div>
+      ) : null}
+
+      {activeView === "workouts" ? (
+        <div key="workouts" className={viewClassName}>
+          <WorkoutsView
+            workoutMonths={dashboardData.workoutMonths}
+            lifetime={dashboardData.workoutHistory.lifetime}
+            displayWeightUnit={displayWeightUnit}
+            filters={workoutFilters}
+            isLoading={activeViewIsLoading && !loadedViews.has("workouts")}
+            isLoadingMore={workoutHistoryLoading}
+            hasMore={dashboardData.workoutHistory.hasMore}
+            remainingCount={remainingWorkoutCount}
+            error={activeViewError}
+            onLoadMore={() =>
+              void loadWorkoutHistoryPage({
+                offset: dashboardData.workoutHistory.nextOffset,
+                filters: appliedWorkoutFilters,
+                append: true,
+              })
+            }
+            onRetry={() =>
+              void loadWorkoutHistoryPage({
+                offset: 0,
+                filters: workoutFilters,
+                append: false,
+              })
+            }
+          />
+        </div>
+      ) : null}
+
+      {activeView === "progress" ? (
+        <div key="progress" className={viewClassName}>
+          <ProgressView
+            progress={dashboardData.progress}
+            exercises={dashboardData.exercises}
+            weightUnit={displayWeightUnit}
+            state={progressState}
+            isLoading={activeViewIsLoading && !loadedViews.has("progress")}
+            error={activeViewError}
+            onRetry={() => void loadViewData("progress", { showError: true, showLoading: true })}
+          />
+        </div>
+      ) : null}
+
+      {activeView === "nutrition" ? (
+        <div key="nutrition" className={viewClassName}>
+          {activeViewError ? (
+            <ViewError message={activeViewError} onRetry={() => void loadViewData("nutrition", { showError: true, showLoading: true })} />
+          ) : activeViewIsLoading && !loadedViews.has("nutrition") ? (
+            <ViewSkeleton kind="nutrition" />
+          ) : (
+            <NutritionPanel
+              nutrition={dashboardData.nutrition}
+              weightUnit={displayWeightUnit}
+              onNutritionChange={handleNutritionChange}
+            />
+          )}
+        </div>
+      ) : null}
+
+      {activeView === "split" ? (
+        <div
+          key="split"
+          className={workspaceEnabled ? "space-y-6" : "view-transition-shell min-[900px]:h-[calc(100dvh-5.35rem)] min-[900px]:min-h-0 min-[900px]:overflow-hidden"}
+        >
+          <section className={workspaceEnabled ? "min-w-0" : `${styles.plainSection} min-[900px]:h-full`}>
+            {activeViewError ? (
+              <ViewError message={activeViewError} onRetry={() => void loadViewData("split", { showError: true, showLoading: true })} />
+            ) : activeViewIsLoading && !loadedViews.has("split") ? (
+              <ViewSkeleton kind="split" />
+            ) : (
+              <SplitView
+                initialSplit={dashboardData.split}
+                initialSplits={dashboardData.splits}
+              />
+            )}
+          </section>
+        </div>
+      ) : null}
+
+      {activeView === "profile" ? (
+        <div key="profile" className={viewClassName}>
+          <ProfileView state={profileFormState} />
+        </div>
+      ) : null}
+
+      {activeView === "settings" ? (
+        <div key="settings" className={viewClassName}>
+          <SettingsView state={profileFormState} />
+        </div>
+      ) : null}
+    </Shell>
+  );
+}

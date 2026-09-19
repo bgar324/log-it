@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
-import type { WorkoutTableRow } from "../dashboard-client.shared";
-import { styles } from "../dashboard.styles";
-import { DashboardMetricHeader } from "./dashboard-metric-header";
+import type { WorkoutTableRow } from "@/app/_legacy/dashboard/dashboard-client.shared";
+import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
+import { DashboardMetricHeader } from "@/app/_legacy/dashboard/_components/dashboard-metric-header";
 
 type DashboardWorkoutListProps = {
   rows: WorkoutTableRow[];

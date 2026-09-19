@@ -10,11 +10,9 @@ import type {
 } from "./dashboard-types";
 import { monthDateLabel, monthLabel, timelineDateLabel } from "./data.formatters";
 import {
-  loadWorkoutCalendarSummary,
   loadWorkoutLogPage,
   mapWorkoutSummaries,
 } from "./data.queries";
-import { formatDatabaseDateValue } from "@/lib/workout-utils";
 
 export const WORKOUT_HISTORY_PAGE_SIZE = 60;
 const MAX_WORKOUT_HISTORY_OFFSET = 1_000_000;

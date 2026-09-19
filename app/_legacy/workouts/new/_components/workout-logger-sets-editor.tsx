@@ -1,0 +1,239 @@
+"use client";
+
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import type { WeightUnit } from "@/lib/weight-unit";
+import { styles } from "@/app/_legacy/workouts/new/workout-logger.styles";
+import {
+  formatLoggedSetSnapshot,
+  formatPredictedWeightPlaceholder,
+  sanitizeDurationInput,
+  sanitizeRepsInput,
+  sanitizeWeightInput,
+  type ExerciseDraft,
+  type ExerciseInsightState,
+  type ExerciseSetDraft,
+} from "@/app/workouts/new/workout-logger.utils";
+import { WorkoutLoggerConfirmDialog } from "@/app/_legacy/workouts/new/_components/workout-logger-confirm-dialog";
+
+export type WorkoutLoggerSetsEditorProps = {
+  exercise: ExerciseDraft;
+  insightState?: ExerciseInsightState;
+  weightUnit: WeightUnit;
+  weightUnitLabel: string;
+  bodyWeightDisplay: number | null;
+  showOptionalSetControls: boolean;
+  onRemoveSet: (setId: string) => void;
+  onUpdateSet: <K extends keyof ExerciseSetDraft>(
+    setId: string,
+    field: K,
+    value: ExerciseSetDraft[K],
+  ) => void;
+};
+
+export function WorkoutLoggerSetsEditor({
+  exercise,
+  insightState,
+  weightUnit,
+  weightUnitLabel,
+  bodyWeightDisplay,
+  showOptionalSetControls,
+  onRemoveSet,
+  onUpdateSet,
+}: WorkoutLoggerSetsEditorProps) {
+  const bodyWeightLabel =
+    bodyWeightDisplay === null ? null : `${Number(bodyWeightDisplay.toFixed(1))}`;
+  const [pendingRemoval, setPendingRemoval] = useState<{
+    id: string;
+    index: number;
+    open: boolean;
+  } | null>(null);
+
+  function handleConfirmRemoveSet() {
+    if (!pendingRemoval) {
+      return;
+    }
+
+    onRemoveSet(pendingRemoval.id);
+    setPendingRemoval({ ...pendingRemoval, open: false });
+  }
+
+  const insight = insightState?.data;
+  const lastSets = insight?.lastSession?.sets ?? [];
+  const predictedSets = insight?.prediction?.predictedSets ?? [];
+  // Reserve the ghost line while the comparison is in flight, and keep it once
+  // there is history to show, so the inputs never move under a thumb.
+  const showGhostLine =
+    insightState?.status === "loading" || Boolean(insight?.lastSession);
+
+  return (
+    <div className={styles.setsStack}>
+      {exercise.sets.map((setItem, setIndex) => {
+        const isBodyweight = setItem.usesBodyweight;
+        const bodyweightPlaceholder = bodyWeightLabel
+          ? `BW (${bodyWeightLabel})`
+          : "BW";
+        const lastSet = lastSets[setIndex];
+        const predictedSet = predictedSets[setIndex];
+        const weightPlaceholder =
+          predictedSet && predictedSet.weightLb !== null
+            ? formatPredictedWeightPlaceholder(predictedSet.weightLb, weightUnit)
+            : weightUnitLabel;
+        const repsPlaceholder =
+          predictedSet && predictedSet.reps !== null
+            ? `${predictedSet.reps}`
+            : "Reps";
+
+        return (
+          <div key={setItem.id} className={styles.setRowGroup}>
+            <div
+              className={showOptionalSetControls ? styles.setRow : styles.setRowWithoutDuration}
+            >
+              <p className={styles.setNumber}>#{setIndex + 1}</p>
+              <label
+                className={`${styles.setField} ${styles.setFieldWeight}`}
+                htmlFor={`${exercise.id}-${setItem.id}-weight`}
+              >
+                <span className={styles.setFieldLabel}>
+                  Weight ({weightUnitLabel})
+                </span>
+                <span className={styles.setWeightControl}>
+                  <input
+                    id={`${exercise.id}-${setItem.id}-weight`}
+                    aria-label={`Set ${setIndex + 1} weight in ${weightUnitLabel}`}
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.]?[0-9]*"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    enterKeyHint="next"
+                    className={`${styles.setInput} ${
+                      showOptionalSetControls
+                        ? styles.setWeightInputWithBodyweight
+                        : ""
+                    }`}
+                    placeholder={
+                      isBodyweight ? bodyweightPlaceholder : weightPlaceholder
+                    }
+                    value={setItem.weightLb}
+                    disabled={showOptionalSetControls && isBodyweight}
+                    onChange={(event) => {
+                      onUpdateSet(setItem.id, "usesBodyweight", false);
+                      onUpdateSet(
+                        setItem.id,
+                        "weightLb",
+                        sanitizeWeightInput(event.target.value),
+                      );
+                    }}
+                  />
+                  {showOptionalSetControls ? (
+                    <button
+                      type="button"
+                      className={styles.bodyweightButton}
+                      aria-label={`Set ${setIndex + 1} bodyweight`}
+                      aria-pressed={isBodyweight}
+                      data-active={isBodyweight}
+                      onClick={() => {
+                        if (isBodyweight) {
+                          onUpdateSet(setItem.id, "usesBodyweight", false);
+                          return;
+                        }
+
+                        onUpdateSet(setItem.id, "weightLb", "");
+                        onUpdateSet(setItem.id, "usesBodyweight", true);
+                      }}
+                    >
+                      BW
+                    </button>
+                  ) : null}
+                </span>
+              </label>
+              <label className={`${styles.setField} ${styles.setFieldReps}`}>
+                <span className={styles.setFieldLabel}>Reps</span>
+                <input
+                  id={`${exercise.id}-${setItem.id}-reps`}
+                  aria-label={`Set ${setIndex + 1} reps`}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  enterKeyHint="done"
+                  className={styles.setInput}
+                  placeholder={repsPlaceholder}
+                  value={setItem.reps}
+                  onChange={(event) =>
+                    onUpdateSet(
+                      setItem.id,
+                      "reps",
+                      sanitizeRepsInput(event.target.value),
+                    )
+                  }
+                />
+              </label>
+              {showOptionalSetControls ? (
+                <label className={`${styles.setField} ${styles.setFieldDuration}`}>
+                  <span className={styles.setFieldLabel}>Time (sec)</span>
+                  <input
+                    id={`${exercise.id}-${setItem.id}-duration`}
+                    aria-label={`Set ${setIndex + 1} time in seconds`}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    enterKeyHint="done"
+                    className={styles.setInput}
+                    placeholder="Sec"
+                    value={setItem.durationSeconds}
+                    onChange={(event) =>
+                      onUpdateSet(
+                        setItem.id,
+                        "durationSeconds",
+                        sanitizeDurationInput(event.target.value),
+                      )
+                    }
+                  />
+                </label>
+              ) : null}
+              <button
+                type="button"
+                className={styles.setRemoveButton}
+                aria-label={`Delete set ${setIndex + 1}`}
+                onClick={() =>
+                  setPendingRemoval({ id: setItem.id, index: setIndex, open: true })
+                }
+                disabled={exercise.sets.length === 1}
+              >
+                <Trash2 className={styles.icon} strokeWidth={1.9} />
+              </button>
+            </div>
+
+            {showGhostLine ? (
+              <p className={styles.setGhostLine}>
+                {lastSet
+                  ? `last: ${formatLoggedSetSnapshot(lastSet, weightUnit)}`
+                  : ""}
+              </p>
+            ) : null}
+          </div>
+        );
+      })}
+
+      {pendingRemoval ? (
+        <WorkoutLoggerConfirmDialog
+          open={pendingRemoval.open}
+          title={`Delete set ${pendingRemoval.index + 1}?`}
+          description="This removes the reps, weight, and time entered for this set."
+          cancelLabel="Keep set"
+          confirmLabel="Delete set"
+          onCancel={() => setPendingRemoval({ ...pendingRemoval, open: false })}
+          onConfirm={handleConfirmRemoveSet}
+        />
+      ) : null}
+    </div>
+  );
+}

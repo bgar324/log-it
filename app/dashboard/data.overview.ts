@@ -3,7 +3,8 @@ import { loadTodayPlan } from "@/lib/workout-splits/today-plan";
 import { findLoggedWorkoutForDateAndType } from "@/lib/workouts/service";
 import type { DashboardClientData } from "./dashboard-types";
 import { monthDateLabel, monthLabel, timelineDateLabel } from "./data.formatters";
-import { loadRecentLogs, mapWorkoutSummaries } from "./data.queries";
+import { loadRecentLogs, loadWorkoutCalendarSummary, mapWorkoutSummaries } from "./data.queries";
+import { formatDatabaseDateValue } from "@/lib/workout-utils";
 
 import { loadTodaySession } from "./data.today-session";
 
@@ -12,10 +13,13 @@ export async function loadDashboardOverviewSection(
   weightUnit: WeightUnit,
   now: Date,
 ) {
-  const [recentLogs, todayPlan, todaySession] = await Promise.all([
+  const asOfDate = formatDatabaseDateValue(now);
+  const activityStart = formatDatabaseDateValue(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1)));
+  const [recentLogs, todayPlan, todaySession, calendar] = await Promise.all([
     loadRecentLogs(userId, 5),
     loadTodayPlan(userId, now),
     loadTodaySession(userId, weightUnit, now),
+    loadWorkoutCalendarSummary(userId),
   ]);
 
   const workouts = mapWorkoutSummaries(recentLogs, weightUnit, {
@@ -51,6 +55,10 @@ export async function loadDashboardOverviewSection(
 
   return {
     overview: {
+      asOfDate,
+      activityDays: calendar
+        .filter((day) => day.dateKey >= activityStart && day.dateKey <= asOfDate)
+        .map((day) => ({ date: day.dateKey, count: day.count })),
       loggedWorkoutId,
       todayPlan: {
         ...todayPlan,

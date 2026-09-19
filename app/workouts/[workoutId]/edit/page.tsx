@@ -15,6 +15,10 @@ import {
 import { getUserWorkoutSplit } from "@/lib/workout-splits/service";
 import { REST_DAY_WORKOUT_TYPE } from "@/lib/workout-splits/shared";
 import { formatDatabaseDateValue, normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
+import {
+  resolveWorkoutReturn,
+  type WorkoutReturnSearchParams,
+} from "@/app/workouts/workout-return";
 
 type EditWorkoutPageParams = Promise<{ workoutId: string }>;
 
@@ -45,10 +49,15 @@ function createWorkoutTypeOptions(
 
 export default async function EditWorkoutPage({
   params,
+  searchParams,
 }: {
   params: EditWorkoutPageParams;
+  searchParams?: Promise<WorkoutReturnSearchParams>;
 }) {
   const { workoutId } = await params;
+  // Editing returns to the workout it edits, carrying whatever context brought
+  // the person here so the detail's own Back still lands on their day.
+  const workoutReturn = resolveWorkoutReturn(await searchParams);
   const user = await requireSessionUser();
   if (await isIonicEnabled(user)) redirect(`/ionic/workouts/${encodeURIComponent(workoutId)}/edit`);
 
@@ -131,6 +140,7 @@ export default async function EditWorkoutPage({
       analyticsUser={user}
       benEnabled={benEnabled}
       workspaceEnabled={isWorkspaceEnabled(user)}
+      returnHref={`/workouts/${workout.id}${workoutReturn.query}`}
     />
   );
 }

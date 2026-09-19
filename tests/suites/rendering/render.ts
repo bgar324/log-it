@@ -5,6 +5,16 @@ import "./dom";
 import { createElement, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
+import { AppRouterContext, type AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+
+const router: AppRouterInstance = {
+  back() {},
+  forward() {},
+  refresh() {},
+  push() {},
+  replace() {},
+  prefetch() {},
+};
 
 export type Mounted = {
   container: HTMLElement;
@@ -28,7 +38,7 @@ export async function render(element: ReactElement): Promise<Mounted> {
   const root = createRoot(container);
 
   await act(async () => {
-    root.render(element);
+    root.render(createElement(AppRouterContext.Provider, { value: router }, element));
   });
 
   const mounted: Mounted = {
@@ -48,7 +58,7 @@ export async function render(element: ReactElement): Promise<Mounted> {
     },
     rerender: async (next) => {
       await act(async () => {
-        root.render(next);
+        root.render(createElement(AppRouterContext.Provider, { value: router }, next));
       });
     },
     unmount: () => {

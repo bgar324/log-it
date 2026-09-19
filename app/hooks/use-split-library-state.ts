@@ -12,6 +12,7 @@ import {
   getInitialSelectedWeekday,
   saveWorkoutSplit,
 } from "@/app/dashboard/split-manager.shared";
+import { DRAFT_SPLIT_LIBRARY_KEY as DRAFT_SPLIT_KEY } from "@/app/dashboard/split-library.shared";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
 import {
   createUnsavedWorkoutSplitDraft,
@@ -21,8 +22,6 @@ import {
   type WorkoutSplitDayTemplate,
   type WorkoutSplitTemplate,
 } from "@/lib/workout-splits/shared";
-
-const DRAFT_SPLIT_KEY = "unsaved-draft";
 
 export type SplitLibraryNoticeTone = "success" | "error" | "info";
 
@@ -36,18 +35,22 @@ export type SplitLibraryState = {
   isSaving: boolean;
   /** True while the selected split holds day edits the server has not stored. */
   hasUnsavedChanges: boolean;
+  /** Every library key — split id, or the draft key — holding unsaved edits. */
+  unsavedSplitIds: readonly string[];
   exerciseSearchResults: Record<string, string[]>;
   selectSplit: (splitId: string | null) => void;
   selectWeekday: (weekday: SplitWeekdayValue) => void;
-  renameSplit: (name: string) => Promise<void>;
+  renameSplit: (name: string, target?: WorkoutSplitTemplate) => Promise<void>;
   createSplit: () => Promise<void>;
   deleteSplit: (splitId: string) => Promise<void>;
   activateSplit: (splitId: string) => Promise<void>;
-  copySplit: () => Promise<void>;
+  copySplit: (target?: WorkoutSplitTemplate) => Promise<void>;
   /** Resolves true only when the server stored the split. */
   saveSplit: (nextSplit?: WorkoutSplitTemplate) => Promise<boolean>;
   /** Restores the selected split to the last version the server confirmed. */
   discardChanges: () => void;
+  /** Discards the entire in-memory library when leaving its editing surface. */
+  discardAllChanges: () => void;
   saveDayOrder: (orderedWeekdays: SplitWeekdayValue[]) => Promise<void>;
   setWorkoutType: (value: string) => void;
   handleExerciseNameChange: (exerciseIndex: number, value: string) => void;
@@ -273,9 +276,16 @@ export function useSplitLibraryState({
     }
   }
 
-  async function renameSplit(name: string) {
-    const nextSplit = { ...split, name };
-    setSplit(nextSplit);
+  // The library renames a folder without opening it, so the target is explicit.
+  // `setSplit` only ever writes the selected split; for any other split the
+  // save itself is what puts the new name back into the library.
+  async function renameSplit(name: string, target?: WorkoutSplitTemplate) {
+    const nextSplit = { ...(target ?? split), name };
+
+    if (nextSplit.id === split.id) {
+      setSplit(nextSplit);
+    }
+
     await saveSplit(nextSplit);
   }
 
@@ -397,13 +407,13 @@ export function useSplitLibraryState({
     }
   }
 
-  async function copySplit() {
+  async function copySplit(target?: WorkoutSplitTemplate) {
     if (refuseInPreview("Copying splits is disabled in this preview.")) {
       return;
     }
 
     try {
-      const message = await copyWorkoutSplit(split);
+      const message = await copyWorkoutSplit(target ?? split);
       posthog.capture("workout_split_copied");
       notify(message, "success");
     } catch (error) {
@@ -434,6 +444,20 @@ export function useSplitLibraryState({
       ),
     );
     markDirty(selectedSplitKey, false);
+  }
+
+  function discardAllChanges() {
+    if (isSaving) return;
+    const dirty = new Set(dirtyKeysRef.current);
+    const saved = getSavedSplits();
+    clearAllExerciseSuggestions();
+    setSplits((current) => current.map((item) => {
+      const key = item.id ?? DRAFT_SPLIT_KEY;
+      const snapshot = saved.get(key);
+      return dirty.has(key) && snapshot ? { ...snapshot, isActive: item.isActive } : item;
+    }));
+    dirtyKeysRef.current = [];
+    setDirtySplitKeys([]);
   }
 
   // The reorder gesture is the commit: weekday assignments move and persist in
@@ -481,6 +505,7 @@ export function useSplitLibraryState({
     todayWeekday,
     isSaving,
     hasUnsavedChanges: dirtySplitKeys.includes(selectedSplitKey),
+    unsavedSplitIds: dirtySplitKeys,
     exerciseSearchResults: exerciseActions.selectedDayExerciseSearchResults,
     selectSplit,
     selectWeekday: setSelectedWeekday,
@@ -491,6 +516,7 @@ export function useSplitLibraryState({
     copySplit,
     saveSplit,
     discardChanges,
+    discardAllChanges,
     saveDayOrder,
     setWorkoutType: exerciseActions.setWorkoutType,
     handleExerciseNameChange: exerciseActions.handleExerciseNameChange,

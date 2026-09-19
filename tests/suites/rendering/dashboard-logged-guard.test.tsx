@@ -15,7 +15,7 @@ const todayPlan = {
 test("a completed planned workout has no second log action", async () => {
   const mounted = await render(
     <DashboardOverviewView
-      overview={{ loggedWorkoutId: "logged-pull", todayPlan, todaySession: [] }}
+      overview={{ asOfDate: "2026-09-18", activityDays: [], loggedWorkoutId: "logged-pull", todayPlan, todaySession: [] }}
       todayPlan={todayPlan}
       greetingName="Benjamin"
       weightUnit="LB"
@@ -23,7 +23,7 @@ test("a completed planned workout has no second log action", async () => {
     />,
   );
   try {
-    assert.ok(mounted.findByText("p", "Logged for today."));
+    assert.ok(mounted.all("a").some((link) => link.getAttribute("href") === "/workouts/logged-pull?from=dashboard"));
     assert.equal(mounted.findByText("a", "Log another workout"), undefined);
     assert.equal(mounted.container.querySelector('a[href^="/workouts/new"]'), null);
   } finally {

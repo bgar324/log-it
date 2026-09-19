@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
 import {
   Card,
   CardContent,
@@ -15,11 +14,8 @@ import { formatWeightWithUnit } from "@/lib/weight-unit";
 import { countLabel } from "@/app/dashboard/dashboard-client.shared";
 import type { DashboardClientData } from "@/app/dashboard/dashboard-types";
 import type { DashboardOverviewViewProps } from "@/app/dashboard/_components/dashboard-overview-view";
-import {
-  formatWorkoutLoggerDateLabel,
-  parseStoredWorkoutDraft,
-  WORKOUT_DRAFT_STORAGE_KEY,
-} from "@/app/workouts/new/workout-logger.utils";
+import { formatWorkoutLoggerDateLabel } from "@/app/workouts/new/workout-logger.utils";
+import { useStoredWorkoutDraft } from "@/app/workouts/new/_hooks/use-stored-workout-draft";
 import { WorkspaceDetailSheetProvider } from "@/app/workspace/details/workspace-detail-sheet";
 import { WorkspaceWorkoutHistoryList } from "./workspace-workout-history-list";
 import { WorkspaceLinkPending } from "./workspace-link-pending";
@@ -49,59 +45,6 @@ function planSentence(todayPlan: TodayPlan) {
   return `Today is ${todayPlan.workoutType}.`;
 }
 
-// Home reads the logger's draft key; it never writes or clears it. Storage can
-// throw outright (Safari private mode, a blocked third-party context), and a
-// home screen is not the place to surface that — no draft is the honest
-// fallback, and the logger still recovers whatever is really there.
-function readStoredDraftRaw() {
-  try {
-    return window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-// `storage` alone only fires for *other* tabs. Coming back to this one — a
-// browser back out of the logger, a BFCache restore, an app switch on a phone —
-// fires pageshow/focus/visibilitychange instead, and those are exactly the
-// moments the draft has just changed under us.
-function subscribeToStoredDraft(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  window.addEventListener("pageshow", onStoreChange);
-  window.addEventListener("focus", onStoreChange);
-  document.addEventListener("visibilitychange", onStoreChange);
-
-  return () => {
-    window.removeEventListener("storage", onStoreChange);
-    window.removeEventListener("pageshow", onStoreChange);
-    window.removeEventListener("focus", onStoreChange);
-    document.removeEventListener("visibilitychange", onStoreChange);
-  };
-}
-
-// There is no draft on the server, so the first client render matches the HTML
-// and the real answer arrives on the next commit.
-function noStoredDraft() {
-  return null;
-}
-
-/**
- * The draft as the logger itself would recover it: same key, same parser, same
- * weight-unit equality check. If this says "resume", the logger will restore
- * that draft; if it says nothing, the logger will start clean.
- */
-function useStoredWorkoutDraft(weightUnit: DashboardOverviewViewProps["weightUnit"]) {
-  const rawDraft = useSyncExternalStore(
-    subscribeToStoredDraft,
-    readStoredDraftRaw,
-    noStoredDraft,
-  );
-
-  return useMemo(
-    () => parseStoredWorkoutDraft(rawDraft, weightUnit),
-    [rawDraft, weightUnit],
-  );
-}
 
 /**
  * Home: what today asks for, the one thing to do about it, and what you have

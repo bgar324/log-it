@@ -1,5 +1,7 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { resolveWorkoutReturn } from "../workout-return";
 import { AppTabBar } from "@/app/components/app-nav";
 import { navStyles } from "@/app/components/app-nav.styles";
 import { BackButton } from "@/app/components/back-button";
@@ -10,6 +12,7 @@ import {
 import { WorkspaceFrame } from "@/app/components/workspace-frame";
 import { WorkspaceWorkoutDetailSkeleton } from "@/app/workspace/details/workspace-detail-skeletons";
 import { styles } from "./workout-detail.styles";
+import LegacyWorkoutDetailLoading from "@/app/_legacy/workouts/[workoutId]/loading";
 
 function SkeletonBlock({
   className = "",
@@ -36,17 +39,28 @@ function SetRowSkeleton() {
 export default function WorkoutDetailLoading() {
   const workspaceDesign = useWorkspaceDesign();
   const benEnabled = useWorkspaceBenEnabled();
+  const searchParams = useSearchParams();
+  const workoutReturn = resolveWorkoutReturn({
+    from: searchParams.get("from") ?? undefined,
+    day: searchParams.get("day") ?? undefined,
+  });
 
   if (workspaceDesign) {
     return (
       <WorkspaceFrame
         activeView="workouts"
         benEnabled={benEnabled}
-        backHref="/dashboard?view=workouts"
+        backHref={workoutReturn.href}
       >
         <WorkspaceWorkoutDetailSkeleton />
       </WorkspaceFrame>
     );
+  }
+
+  // Unflagged readers wait on the shipped detail screen, so they wait behind
+  // its own fallback rather than the redesigned one below.
+  if (!benEnabled) {
+    return <LegacyWorkoutDetailLoading />;
   }
 
   return (
@@ -55,7 +69,7 @@ export default function WorkoutDetailLoading() {
         <header className={styles.topRow}>
           <div className={styles.topLead}>
             <BackButton
-              fallbackHref="/dashboard?view=workouts"
+              fallbackHref={workoutReturn.href}
               label="Back"
               className={styles.backLink}
               iconClassName={styles.backButtonIcon}

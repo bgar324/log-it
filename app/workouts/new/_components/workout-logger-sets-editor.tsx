@@ -68,6 +68,13 @@ export function WorkoutLoggerSetsEditor({
 
   return (
     <div className={styles.setsStack}>
+      <div className={`${showOptionalSetControls ? styles.setRow : styles.setRowWithoutDuration} ${styles.setHeader}`} aria-hidden="true">
+        <span className="order-1" />
+        <span className={styles.setFieldWeight}>Weight ({weightUnitLabel})</span>
+        <span className={styles.setFieldReps}>Reps</span>
+        {showOptionalSetControls ? <span className={styles.setFieldDuration}>Sec</span> : null}
+        <span className="order-5" />
+      </div>
       {exercise.sets.map((setItem, setIndex) => {
         const isBodyweight = setItem.usesBodyweight;
         const bodyweightPlaceholder = bodyWeightLabel
@@ -101,6 +108,7 @@ export function WorkoutLoggerSetsEditor({
                   <input
                     id={`${exercise.id}-${setItem.id}-weight`}
                     aria-label={`Set ${setIndex + 1} weight in ${weightUnitLabel}`}
+                    data-compact={showOptionalSetControls}
                     type="text"
                     inputMode="decimal"
                     pattern="[0-9]*[.]?[0-9]*"

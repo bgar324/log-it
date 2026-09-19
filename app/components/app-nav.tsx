@@ -7,7 +7,7 @@ import {
   ClipboardList,
   House,
   LogOut,
-  PanelLeft,
+  Ellipsis,
   Plus,
   Settings,
   UserRound,
@@ -34,6 +34,8 @@ import {
 import posthog from "posthog-js";
 import { navStyles } from "./app-nav.styles";
 import { usePresence } from "@/app/hooks/use-presence";
+import { useRouter } from "next/navigation";
+import { useWorkspaceNavigation } from "./workspace-navigation";
 
 type NavIcon = ComponentType<{
   className?: string;
@@ -45,20 +47,17 @@ type NavIcon = ComponentType<{
 const HOME_TAB = { view: "dashboard", label: "Home", icon: House } as const;
 const NUTRITION_TAB = { view: "nutrition", label: "Nutrition", icon: Apple } as const;
 const SPLIT_TAB = { view: "split", label: "Split", icon: CalendarDays } as const;
+const ANALYSIS_TAB = { view: "progress", label: "Analysis", icon: ChartNoAxesColumnIncreasing } as const;
 // Profile leads: the identity block sits directly above it, so the row that
 // opens that identity belongs next to it rather than buried between Split and
 // the footer.
 const DRAWER_ITEMS: Array<{ view: DashboardView; label: string; icon: NavIcon }> = [
   { view: "profile", label: "Profile", icon: UserRound },
-  { view: "workouts", label: "Workouts", icon: ClipboardList },
-  { view: "progress", label: "Progress", icon: ChartNoAxesColumnIncreasing },
-  { view: "split", label: "Split", icon: CalendarDays },
+  { view: "workouts", label: "History", icon: ClipboardList },
+  { view: "split", label: "Splits", icon: CalendarDays },
 ];
 const BEN_DRAWER_ITEMS = DRAWER_ITEMS.filter((item) => item.view !== "split");
 
-// Preferences, not identity: theme and units live here, account actions stay on
-// the profile view.
-const DRAWER_FOOTER_ITEM = { view: "settings", label: "Settings", icon: Settings } as const;
 
 export type AppNavUser = {
   displayName: string;
@@ -70,6 +69,9 @@ const AppNavContext = createContext<{
   openDrawer: () => void;
   drawerOpen: boolean;
   drawerId: string;
+  user: AppNavUser;
+  onNavigate: NavigateHandler;
+  activeView: DashboardView | null | undefined;
 } | null>(null);
 
 function initialsFor(displayName: string, username: string) {
@@ -145,7 +147,7 @@ export function AppDrawerTrigger() {
       onClick={() => nav?.openDrawer()}
       data-app-drawer-trigger="true"
     >
-      <PanelLeft
+      <Ellipsis
         aria-hidden="true"
         className={navStyles.drawerTriggerIcon}
         strokeWidth={1.9}
@@ -154,11 +156,7 @@ export function AppDrawerTrigger() {
   );
 }
 
-/**
- * The app's sticky header: drawer trigger (phones), view title, optional
- * accessory slot. Each surface places it, so the dashboard can keep it inside
- * its content column beside the desktop sidebar.
- */
+/** Personal utilities stay above the page rather than taking dock destinations. */
 export function AppTopBar({
   title,
   accessory,
@@ -166,13 +164,39 @@ export function AppTopBar({
   title: string;
   accessory?: ReactNode;
 }) {
+  const nav = useContext(AppNavContext);
   return (
     <header className={navStyles.topBar}>
-      <AppDrawerTrigger />
-
-      <h1 className={navStyles.topBarTitle}>{title}</h1>
-
-      {accessory ? <div className={navStyles.topBarAccessory}>{accessory}</div> : null}
+      <div className={navStyles.utilityRow}>
+        <Link
+          href={toViewHref("profile")}
+          className={navStyles.identityLink}
+          aria-label="Profile"
+          onClick={viewClickHandler(nav?.onNavigate, "profile")}
+        >
+          {nav?.user ? (
+            <Avatar user={nav.user} imageClassName={navStyles.headerAvatar} fallbackClassName={navStyles.headerAvatarFallback} />
+          ) : <UserRound className={navStyles.utilityIcon} />}
+        </Link>
+        <div className={navStyles.utilityActions}>
+          <AppDrawerTrigger />
+          <Link
+            href={toViewHref("settings")}
+            className={navStyles.utilityButton}
+            aria-label="Settings"
+            aria-current={nav?.activeView === "settings" ? "page" : undefined}
+            onClick={viewClickHandler(nav?.onNavigate, "settings")}
+          >
+            <Settings className={navStyles.utilityIcon} strokeWidth={1.7} />
+          </Link>
+        </div>
+      </div>
+      {title !== "Home" || accessory ? (
+        <div className={navStyles.titleRow}>
+          <h1 className={navStyles.topBarTitle}>{title}</h1>
+          {accessory ? <div className={navStyles.topBarAccessory}>{accessory}</div> : null}
+        </div>
+      ) : null}
     </header>
   );
 }
@@ -193,6 +217,8 @@ export function AppTabBar({
 }) {
   const endTab = benEnabled ? SPLIT_TAB : NUTRITION_TAB;
   const EndTabIcon = endTab.icon;
+  const router = useRouter();
+  const { requestNavigation } = useWorkspaceNavigation();
 
   return (
     <nav
@@ -200,6 +226,7 @@ export function AppTabBar({
       data-drawer={drawerOpen ? "open" : "closed"}
       data-app-nav="tabbar"
       inert={drawerPresent}
+      aria-label="Primary"
     >
       <Link
         href={toViewHref(HOME_TAB.view)}
@@ -217,6 +244,11 @@ export function AppTabBar({
         href={`/workouts/new?from=${activeView}`}
         className={navStyles.tabAction}
         aria-label="Log workout"
+        onClick={(event) => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          requestNavigation(() => router.push(`/workouts/new?from=${activeView ?? "dashboard"}`));
+        }}
       >
         <Plus className={navStyles.tabActionIcon} strokeWidth={2} />
         <LinkPendingOverlay />
@@ -231,6 +263,17 @@ export function AppTabBar({
       >
         <EndTabIcon className={navStyles.tabIcon} strokeWidth={1.9} />
         <span className={navStyles.tabLabel}>{endTab.label}</span>
+        <LinkPendingOverlay />
+      </Link>
+      <Link
+        href={toViewHref(ANALYSIS_TAB.view)}
+        className={navStyles.tabItem}
+        data-active={activeView === ANALYSIS_TAB.view}
+        aria-current={activeView === ANALYSIS_TAB.view ? "page" : undefined}
+        onClick={viewClickHandler(onNavigate, ANALYSIS_TAB.view)}
+      >
+        <ChartNoAxesColumnIncreasing className={navStyles.tabIcon} strokeWidth={1.9} />
+        <span className={navStyles.tabLabel}>{ANALYSIS_TAB.label}</span>
         <LinkPendingOverlay />
       </Link>
     </nav>
@@ -313,9 +356,12 @@ export function AppShell({
     <AppNavContext.Provider value={{
       drawerOpen,
       drawerId,
+      user,
+      onNavigate,
+      activeView,
       openDrawer: () => setDrawerOpen(true),
     }}>
-      <div className={navStyles.stage}>
+      <div className={navStyles.stage} data-training-design="true">
         <div
           ref={drawerRef}
           id={drawerId}
@@ -365,31 +411,15 @@ export function AppShell({
             })}
           </nav>
 
-          {/* Settings and sign out share one row: one is the only place you go
-              for preferences, the other is a single rare action. The row is also
-              the drawer's half of the bottom strip, so it carries its own
-              hairline and sits flush with the tab bar beside it. */}
           <div className={navStyles.drawerFooterRow}>
-            <Link
-              href={toViewHref(DRAWER_FOOTER_ITEM.view)}
-              className={navStyles.drawerItem}
-              data-active={activeView === DRAWER_FOOTER_ITEM.view}
-              aria-current={activeView === DRAWER_FOOTER_ITEM.view ? "page" : undefined}
-              onClick={(event) => {
-                viewClickHandler(onNavigate, DRAWER_FOOTER_ITEM.view)(event);
-                setDrawerOpen(false);
-              }}
-            >
-              <Settings className={navStyles.drawerItemIcon} strokeWidth={1.9} />
-              <span>{DRAWER_FOOTER_ITEM.label}</span>
-            </Link>
             <form method="post" action="/auth/signout" onSubmit={() => posthog.reset()}>
               <button
                 type="submit"
-                className={navStyles.drawerIconAction}
+                className={navStyles.drawerItem}
                 title="Sign out"
               >
                 <LogOut className={navStyles.drawerItemIcon} strokeWidth={1.9} />
+                <span>Sign out</span>
               </button>
             </form>
           </div>

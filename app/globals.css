@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "./components/workspace-theme.css";
 @import "./components/interaction.css";
+@import "./components/training-theme.css";
 
 :root {
   color-scheme: light;

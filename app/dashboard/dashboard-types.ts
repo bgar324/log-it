@@ -17,6 +17,18 @@ export type DashboardWorkoutFilters = {
   titleQuery: string;
 };
 
+export type ActivityDay = {
+  date: string;
+  count: number;
+};
+
+export type ProgressDay = {
+  date: string;
+  sessions: number;
+  sets: number;
+  volume: number;
+};
+
 export type DashboardNutritionData = {
   bmrCalories: number | null;
   today: {
@@ -74,6 +86,8 @@ export type DashboardClientData = {
   // The overview renders a greeting, today's plan, and a preview of the session
   // that plan asks for. Every other number lives on the view that owns it.
   overview: {
+    asOfDate: string;
+    activityDays: ActivityDay[];
     // The completed workout that already occupies today's logger identity —
     // the planned type, or no type at all on a rest day or without a split.
     // Null means today's session is still unlogged under that identity.
@@ -141,6 +155,8 @@ export type DashboardClientData = {
     daysSinceLastHit: number;
   }>;
   progress: {
+    asOfDate: string;
+    dailySeries: ProgressDay[];
     currentWeek: number;
     weekDelta: number;
     avgWeekly: number;

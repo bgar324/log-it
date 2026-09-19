@@ -12,6 +12,7 @@ import {
 import { ExerciseTemplateRow } from "./exercise-template-row";
 import { SplitActionMenu } from "./split-action-menu";
 import { SplitExerciseReorderDialog } from "./split-exercise-reorder-dialog";
+import { countLabel } from "./split-library.shared";
 import { getInitialSelectedWeekday } from "./split-manager.shared";
 import { splitStyles } from "./split-system.styles";
 
@@ -19,6 +20,8 @@ type SplitEditorProps = {
   day: WorkoutSplitDayTemplate;
   days: WorkoutSplitDayTemplate[];
   exerciseSearchResults: Record<string, string[]>;
+  /** True while the split holds edits the server has not stored. */
+  hasUnsavedChanges: boolean;
   isMobileOpen: boolean;
   isSaving: boolean;
   onMobileClose: () => void;
@@ -39,6 +42,7 @@ export function SplitEditor({
   day,
   days,
   exerciseSearchResults,
+  hasUnsavedChanges,
   isMobileOpen,
   isSaving,
   onMobileClose,
@@ -58,6 +62,10 @@ export function SplitEditor({
   const [isEditingExercises, setIsEditingExercises] = useState(false);
   const [todayWeekday] = useState<SplitWeekdayValue>(getInitialSelectedWeekday);
   const isRestDay = isRestDayWorkoutTypeSlug(day.workoutTypeSlug);
+  // Naming a day Rest is how you empty it, but typing is not a delete: the
+  // exercises stay in local state and stay visible with the consequence spelt
+  // out, so clearing the field to retype it cannot silently destroy the day.
+  const hasRestDayExercises = isRestDay && day.exercises.length > 0;
 
   useEffect(() => {
     if (
@@ -104,13 +112,16 @@ export function SplitEditor({
         <h2 className={splitStyles.editorTitle}>
           {getSplitWeekdayLabel(day.weekday)}
         </h2>
+        {/* Save states what it will do: there is nothing to commit until an
+            edit exists, and the pending label replaces it while the request
+            is in flight. */}
         <button
           type="button"
           className={splitStyles.editorSave}
           onClick={onSave}
-          disabled={isSaving}
+          disabled={isSaving || !hasUnsavedChanges}
         >
-          {isSaving ? "Saving..." : "Save"}
+          {isSaving ? "Saving..." : hasUnsavedChanges ? "Save" : "Saved"}
         </button>
       </header>
 
@@ -126,9 +137,7 @@ export function SplitEditor({
               type="button"
               aria-label={`${label}${isToday ? ", today" : ""}`}
               aria-current={isSelected ? "true" : undefined}
-              className={`${splitStyles.editorDayTab} ${
-                isSelected ? splitStyles.editorDayTabActive : ""
-              }`}
+              className={splitStyles.editorDayTab}
               onClick={() => onSelectWeekday(item.weekday)}
             >
               <span>{label.slice(0, 3)}</span>
@@ -154,7 +163,7 @@ export function SplitEditor({
               placeholder="Workout type"
             />
           </label>
-          {!isRestDay ? (
+          {!isRestDay || hasRestDayExercises ? (
             <SplitActionMenu label="Day options">
               {(close) => (
                 <>
@@ -215,7 +224,16 @@ export function SplitEditor({
           ) : null}
         </div>
 
-        {isRestDay ? (
+        {hasRestDayExercises ? (
+          <p className={splitStyles.editorNote}>
+            {`Saving a rest day drops the ${countLabel(
+              day.exercises.length,
+              "exercise",
+            )} below. Type a workout name to keep them.`}
+          </p>
+        ) : null}
+
+        {isRestDay && !hasRestDayExercises ? (
           <div className={splitStyles.emptyState}>
             <p>Change the workout to add exercises for this day.</p>
           </div>

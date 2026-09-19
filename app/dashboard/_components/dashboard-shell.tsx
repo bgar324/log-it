@@ -9,10 +9,10 @@ import {
   LogOut,
   PanelLeft,
   Plus,
-  Settings,
-  UserRound,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useWorkspaceNavigation } from "@/app/components/workspace-navigation";
 import posthog from "posthog-js";
 import { type ComponentType, type ReactNode } from "react";
 import type { DashboardView } from "../dashboard-types";
@@ -34,10 +34,10 @@ const SIDEBAR_ITEMS: Array<{
   icon: SidebarIcon;
 }> = [
   { view: "dashboard", label: "Home", icon: House },
-  { view: "workouts", label: "Workouts", icon: ClipboardList },
-  { view: "progress", label: "Progress", icon: ChartNoAxesColumnIncreasing },
+  { view: "workouts", label: "History", icon: ClipboardList },
+  { view: "progress", label: "Analysis", icon: ChartNoAxesColumnIncreasing },
   { view: "nutrition", label: "Nutrition", icon: Apple },
-  { view: "split", label: "Split", icon: CalendarDays },
+  { view: "split", label: "Splits", icon: CalendarDays },
 ];
 const BEN_SIDEBAR_ITEMS = SIDEBAR_ITEMS.filter((item) => item.view !== "nutrition");
 
@@ -64,6 +64,8 @@ export function DashboardShell({
   renderHeaderAccessory,
   children,
 }: DashboardShellProps) {
+  const router = useRouter();
+  const { requestNavigation } = useWorkspaceNavigation();
   const appScreen = (
     <main
       className={`${styles.shell} ${sidebarCollapsed ? styles.shellSidebarCollapsed : ""}`}
@@ -153,6 +155,11 @@ export function DashboardShell({
               sidebarCollapsed ? styles.sidebarActionCollapsed : styles.sidebarAction
             }`}
             title={sidebarCollapsed ? "Log workout" : undefined}
+            onClick={(event) => {
+              if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              event.preventDefault();
+              requestNavigation(() => router.push(`/workouts/new?from=${activeView}`));
+            }}
           >
             <Plus className={styles.sidebarActionIcon} strokeWidth={1.9} />
             <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Log workout</span>
@@ -161,29 +168,6 @@ export function DashboardShell({
 
           <div className={styles.sidebarDivider} />
 
-          <button
-            type="button"
-            className={sidebarCollapsed ? styles.navButtonCollapsed : styles.navButton}
-            data-active={activeView === "profile"}
-            onClick={() => onNavigate("profile")}
-            title={sidebarCollapsed ? user.displayName : undefined}
-          >
-            <UserRound className={styles.navIcon} strokeWidth={1.9} />
-            <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>
-              {user.displayName}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={sidebarCollapsed ? styles.navButtonCollapsed : styles.navButton}
-            data-active={activeView === "settings"}
-            onClick={() => onNavigate("settings")}
-            title={sidebarCollapsed ? "Settings" : undefined}
-          >
-            <Settings className={styles.navIcon} strokeWidth={1.9} />
-            <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Settings</span>
-          </button>
 
           <form method="post" action="/auth/signout" onSubmit={() => posthog.reset()}>
             <button

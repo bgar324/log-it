@@ -66,4 +66,5 @@ if (testFiles.length === 0) {
   process.exit(1);
 }
 
-run(process.execPath, ["--test", ...testFiles]);
+// Rendering suites load jsdom and Next. Keep their processes serial on laptops.
+run(process.execPath, ["--test", "--test-concurrency=1", ...testFiles]);

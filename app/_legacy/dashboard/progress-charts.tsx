@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import { getWeightUnitLabel, type WeightUnit } from "@/lib/weight-unit";
-import { styles } from "./dashboard.styles";
+import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
 
 type ProgressChartsProps = {
   weeklySeries: Array<{

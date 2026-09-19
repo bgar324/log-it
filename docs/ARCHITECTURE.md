@@ -30,6 +30,24 @@ Protected product pages use `requireSessionUser()`:
 - `/ionic/[[...path]]`: dormant Ionic experiment, disabled in production. Its code remains behind the server flag.
 - `/api/ionic`: private, uncached GET loader for dashboard views, new/edit logger data, workout details, and exercise details. It requires a session and the Ionic rollout flag.
 
+## Default authenticated redesign
+
+The owner authorized deployment behind the existing server-evaluated PostHog `Ben` flag. Unflagged accounts keep the previous interface.
+
+`WorkspaceDesignProvider` applies `[data-training-design="true"]` and the shared navigation boundary only when Ben is enabled and Nova is disabled. `training-theme.css` scopes tokens to that document, including portals. Flag failures and unauthenticated contexts default to the previous interface. Nova and Ionic remain separate dormant variants.
+
+Home reads `asOfDate`, `activityDays`, the current plan, and the existing draft parser. `use-stored-workout-draft.ts` is shared with dormant workspace Home and never writes storage. The overview cache namespace is `v3-training-home`.
+
+History groups loaded workouts into recorded days. `use-workout-details.ts` lazily reads the selected sessions through the owned, private `GET /api/workouts/:id` projection and aborts obsolete reads. `workout-return.ts` carries normalized view/day context through detail and edit pages. Missing older dates trigger successive existing history pages until the date is found or its range is exhausted.
+
+`data.progress.ts` returns at most one aggregate per recorded date in a 760-day window. Set counts are collapsed before grouping so joins cannot multiply volume. Stored pounds convert once at the output boundary. Lifetime volume remains a separate aggregate. `analysis-model.ts` derives windows, comparisons, and weekly consistency without a provider call; `analysis-panel.tsx` and `analysis-chart.tsx` render the result. The daily cache namespace is `v2-daily-analysis`.
+
+`use-focused-exercise.ts` tracks stable exercise identity independently of array position. The logger controller still owns draft recovery, insights, payloads, and submission. Reordering does not change the active exercise; adding selects the new exercise; removing chooses the neighboring valid index.
+
+The default split manager now consumes `use-split-library-state.ts`. Its saved snapshots and per-split dirty keys survive folder switches. Navigation registers the whole dirty library and discards all drafts only after confirmation. The previous default-only state and persistence hooks are removed.
+
+`app/_legacy/` preserves the affected UI from production baseline `1d7c93d`. Next private folders create no routes. `scripts/snapshot-legacy-ui.mjs` regenerates those files and rebases their imports without copying backend services or splitting the capability context. Dashboard, logger, detail pages, loading states, and toasts select the baseline for unflagged users. Public previews also use the baseline.
+
 ## Owner-only authenticated workspace
 
 Status: production rollout disabled at the owner's request. The following section describes dormant code, not the active owner UI.
@@ -82,7 +100,7 @@ Open state rides on a `data-drawer="open" | "closed"` attribute set on all four 
 
 The bottom bar is a stage sibling rather than a layer-A child, and translates by the same distance in sync. A translated ancestor becomes the containing block for `position: fixed` descendants, so a bar nested inside layer A resolves `bottom: 0` against the full page height and slides off-screen while the drawer is open; measured at 390px it dropped from `y=781` to `y=1126`. Keeping it viewport-anchored and translating it separately produces the same "whole foreground slides" effect without that artifact, and it becomes `pointer-events-none` while open so the close target stays the exposed app surface.
 
-Inside layer A, each surface places the pieces it needs: `AppTopBar` (sticky header: drawer trigger, view title, accessory slot) plus the three-slot bottom bar `AppTabBar`. The default slots are Home, the filled log action, and Nutrition. Detail surfaces place only a quiet Back control.
+`AppTopBar` places Profile and Settings above the view title, with an ellipsis for secondary navigation. `AppTabBar` is a four-slot floating icon pill: Home, Log, owner Split or standard Nutrition, and Analysis. Detail surfaces retain their quiet Back link.
 
 `DashboardShell` composes `AppShell` around the desktop sidebar and the content column. The bottom bar and drawer cover every width below 900px; the sidebar, which exposes every section plus sign out, covers 900px and up, so no viewport is left without navigation and layer A never translates on desktop. `/workouts/[workoutId]` and `/exercises/[exerciseKey]` render the same `AppShell` for its bottom bar, but their own header is one quiet Back control: they are reached from a list, and Back is the trip a user makes from them. They add `navStyles.mainInset` so the fixed bar never covers content. Route-loading skeletons render `AppTabBar` alone, since they have no session user. `/workouts/new` and `/workouts/[workoutId]/edit` are task surfaces: no nav chrome, only a quiet top Back control and the tools dial.
 
@@ -96,12 +114,12 @@ Inside layer A, each surface places the pieces it needs: `AppTopBar` (sticky hea
 
 `ui/legacy-dialog.tsx` supplies controlled Radix dialog presence, Escape/outside dismissal, scroll locking, no automatic focus transfer, and pending-request dismissal guards. Form and reorder drafts live inside the mounted content, surviving exit and resetting on the next complete opening. Callers keep the boundary mounted and pass `open`; they do not conditionally remove it at the start of exit. Close buttons also honor busy state.
 
-Detail fallbacks pass the same Ben capability to `AppTabBar` as the loaded page. `ProgressChartsSkeleton` is shared between the data-loading skeleton and the lazy chart-module fallback.
+Detail fallbacks pass the same Ben capability and return context as the loaded page. Edit routes reuse the focused logger skeleton. Dashboard skeletons now follow Home, the recorded-day browser, and the single Analysis graph.
 
 API routes:
 
 - `app/api/workouts/route.ts`: create and update workouts.
-- `app/api/workouts/[workoutId]/route.ts`: workout-specific actions such as delete.
+- `app/api/workouts/[workoutId]/route.ts`: private owned workout detail GET and workout-specific deletion.
 - `app/api/workouts/[workoutId]/duplicate/route.ts`: duplicate a workout.
 - `app/api/workouts/exercise-suggestions/route.ts`: exercise suggestion lookup.
 - `app/api/workouts/insights/route.ts`: workout logger insight lookup.
@@ -169,7 +187,7 @@ The UI consumes it inline rather than as a panel: each draft set row shows the m
 - Nutrition view data uses a user-scoped cache tag and is invalidated after nutrition writes.
 - The split dashboard payload includes the active split as `split` and the saved split library as `splits`.
 - `todayPlan` includes `workoutTypeSlug` and `isLoggedToday`; overview loading sets `isLoggedToday` by matching today's Pacific date plus normalized workout type against existing workout logs.
-- The overview payload carries only what the overview renders: `todayPlan` and `todaySession`. Counts, streaks, weekly bars, per-day calendar data and personal-best rows were removed with the tiles, calendar and records panel that displayed them. `loadTodaySession` (`data.today-session.ts`) reads the split seed for today, then one `DISTINCT ON (normalizedName)` raw query for the newest `WorkoutExercise` per planned name, then sets for only those rows — three round trips regardless of plan length. Neither alternative works: a shared `take` window is wrong by construction (an exercise untrained for months falls outside it, and the row then contradicts `ExerciseSummary`), and one `findFirst` per exercise is an N-query first paint. It shows the last session's top set, never `bestE1rmLb` or `bestWeightLb`. The workouts payload carries `workoutHistory.lifetime` for its summary line.
+- Overview includes `asOfDate`, three calendar months of activity aggregates, `loggedWorkoutId`, `todayPlan`, and `todaySession`. `loadTodaySession` reads the split seed, selects the newest workout exercise per planned name, and loads sets only for those rows. It shows the last session's top set rather than an all-time best. The workouts payload retains `workoutHistory.lifetime`.
 - Dashboard client-side view data is kept only for the mounted dashboard instance in `app/dashboard/dashboard-client.tsx`; `/api/dashboard/view-data` loads missing views. A loaded view is reused on later tab switches, while authoritative server refreshes reset the local data to prevent stale or cross-account payloads from being merged.
 - Workout history is loaded in 60-row server pages. Filters are applied in PostgreSQL before pagination, and the client merges older pages by month on demand rather than serializing the user's full history into the initial dashboard payload.
 - Public profiles use `ExerciseSummary`, `WorkoutCalendarDay`, scalar workout aggregates, grouped workout types, and a best-set-per-exercise query. They do not hydrate every historical workout/set into application memory.
@@ -201,4 +219,4 @@ Useful suites:
 
 `scripts/verify-ionic.mjs` and `scripts/verify-ionic-logger.mjs` export no-write browser walkthroughs. They accept an isolated Puppeteer page, origin, short-lived session cookies, and artifact directory; the logger walkthrough also needs an existing workout ID for its intercepted success navigation. They intercept server mutations rather than creating test records. Use a dedicated headless browser, never the user's browser profile. The suite covers rollout isolation, phone/desktop themes, completion recovery, failure/retry, and post-save draft cleanup. Browser emulation does not prove physical iPhone keyboard or lock-screen behavior.
 
-`scripts/verify-authenticated-interactions.mjs` exports `verifyAuthenticatedInteractions(page, { origin, sessionToken, workoutId, artifactDir })`. Supply a dedicated headless Puppeteer page and an existing owned workout. It intercepts mutations for the entire walkthrough, verifies drawer/menu/dialog lifecycle and responsive geometry, restores its browser draft storage, and records screenshots. Tokens are supplied at runtime, never committed.
+`scripts/verify-authenticated-interactions.mjs` exports `verifyAuthenticatedInteractions(page, { origin, sessionToken, artifactDir })`. Supply a dedicated headless Puppeteer page and an account with existing workouts and at least two saved splits. The walkthrough derives an owned workout from History, intercepts every mutation, checks failure and simulated-success paths, and restores draft storage. It verifies history returns, focused navigation and swipes, protected fan motion, split dirty/busy boundaries, and 320px, 390px, and 1440px layouts in both themes. Tokens stay outside source. Successful simulated responses prove client behavior, not database persistence.

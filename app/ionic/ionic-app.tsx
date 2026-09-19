@@ -37,7 +37,7 @@ export function IonicApp({ user }: { user: IonicSessionUser }) {
     observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
     return () => { observer.disconnect(); root.classList.remove("ion-palette-dark"); };
   }, []);
-  return <IonApp className="ionic-app" data-ionic-app="true"><IonReactRouter><IonicRoutes user={user} /></IonReactRouter><Toaster /></IonApp>;
+  return <IonApp className="ionic-app" data-ionic-app="true"><IonReactRouter><IonicRoutes user={user} /></IonReactRouter><Toaster position="bottom-right" /></IonApp>;
 }
 
 function IonicRoutes({ user }: { user: IonicSessionUser }) {

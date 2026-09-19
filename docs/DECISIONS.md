@@ -50,7 +50,7 @@ The overview returns calendar aggregates for statistics and month navigation, bu
 
 ## Navigate By Trip Frequency, Not Object Importance
 
-The authenticated app has exactly three first-class destinations in a fixed bottom bar — Home, the log action, Nutrition — because those are the trips a user makes reflexively. Workouts, Progress, Split, and Profile are deliberate trips, so they live in a drawer opened by the top-left avatar; the poor reachability of that corner is acceptable precisely because the reach frequency is low.
+The local reference redesign uses four phone destinations: Home, Log, owner Split or standard Nutrition, and Analysis. Graphs now have first-class reachability. History stays available through Home and secondary navigation; Profile and Settings move to direct controls above the content. This supersedes the earlier three-slot layout without changing capability gates.
 
 The drawer is modeled as a layer, not a panel. It is the base layer of the app (`z-0`, always mounted, `visibility: hidden` while closed) and the app screen is an opaque layer on top of it; opening translates the app screen right to reveal the drawer underneath. A panel sliding over the app with a dimming scrim was built first and rejected: it reads as a web dropdown, while the reveal reads as an app. Consequences worth keeping: the stage uses `overflow-x: clip` rather than `hidden` so the document still scrolls and the header still sticks, and the trigger ships on surfaces that own a dashboard view. Workout and exercise detail carry Back alone — they are entered from a list, so the drawer would be a second competing control next to the one the user actually wants.
 
@@ -121,3 +121,19 @@ All exercise blocks remain open. dnd-kit handles ordering without mandatory comp
 The logger returns to its originating view, defaulting to Home. This applies to Back and successful create saves; edits still return to the saved workout. Home no longer redirects into the logger, so this exit cannot recreate the previous Already logged loop. A valid unfinished draft takes precedence over today's saved session when choosing Home's action.
 
 Draft recovery remains StrictMode-safe and does not replace dirty work on server refresh. Available timer code remains clock-based; it is not reintroduced into the owner's disabled feature set.
+
+## Limit the reference-driven redesign to the existing Ben flag
+
+The owner first requested local implementation, then explicitly authorized deployment for their account through the existing Ben feature flag. Server-side capability resolution selects the redesign; unflagged users retain the `1d7c93d` interface in `app/_legacy/`. No new flag or database schema is introduced. Verification must not write to the shared production database.
+
+The references supply structure, not fabricated data: compact activity calendars on Home, recorded-day browsing in History, a graph controlled by reachable metrics in Analysis, a protected logger tools arc, one focused exercise, and saved split folders. Home remains sentence-led. Deliberate metric cards are allowed where they control the graph, superseding the blanket ban on KPIs.
+
+## Preserve intent across view and loading boundaries
+
+Workout return context is normalized once and carried through Open, Edit, save, and Back. Loading fallbacks use the same context. Back is a real in-app link so it works before hydration; after hydration, the shared boundary guards unsaved edits.
+
+Split navigation checks every dirty folder, not only the selected one. Renaming is disabled while a save is pending. The tools trigger stays above entering fan actions, preventing a rapid second tap from submitting through an invisible Save.
+
+## Keep local verification memory-bounded
+
+Run test files serially with `--test-concurrency=1`. Rendering suites each load jsdom and Next, so CPU-count parallelism multiplies their memory use. Do not run duplicate dev servers and browser sweeps alongside validation. Use Vercel's remote production build for deployment.

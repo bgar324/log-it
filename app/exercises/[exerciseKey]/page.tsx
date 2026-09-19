@@ -14,6 +14,7 @@ import { ExerciseDetailChart } from "./exercise-detail-chart";
 import { loadExerciseDetailPageData } from "./exercise-detail.data";
 import { SessionBreakdownList } from "./session-breakdown-list";
 import { styles } from "./exercise-detail.styles";
+import LegacyExerciseDetailPage from "@/app/_legacy/exercises/[exerciseKey]/page";
 
 type ExerciseDetailParams = Promise<{ exerciseKey: string }>;
 
@@ -25,9 +26,16 @@ export default async function ExerciseDetailPage({
   const { exerciseKey: rawExerciseKey } = await params;
   const user = await requireSessionUser();
   if (await isIonicEnabled(user)) redirect(`/ionic/exercises/${encodeURIComponent(rawExerciseKey)}`);
+  // The redesign is owner-gated, so the decision is made before the query: an
+  // unflagged reader is handed the shipped page, which loads its own data.
+  const workspaceEnabled = isWorkspaceEnabled(user);
+  const benEnabled = await isBenFeatureEnabled(user);
+
+  if (!workspaceEnabled && !benEnabled) {
+    return <LegacyExerciseDetailPage params={params} />;
+  }
+
   const data = await loadExerciseDetailPageData(rawExerciseKey);
-  const workspaceEnabled = isWorkspaceEnabled(data.user);
-  const benEnabled = await isBenFeatureEnabled(data.user);
 
   // The workspace design owns the whole authenticated frame, so it returns
   // before the legacy screen is built rather than being swapped inside it.

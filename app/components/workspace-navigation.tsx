@@ -3,6 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./workspace-ui/alert-dialog";
 import { installLegacyWorkspaceHistory } from "./workspace-legacy-history";
+import { LegacyDialog } from "./ui/legacy-dialog";
+import { actionDanger, actionOutline } from "./action.styles";
 
 type UnsavedEditor = { label: string; busy: boolean; discard: () => void };
 type NavigationBoundary = {
@@ -17,7 +19,7 @@ const WorkspaceNavigationContext = createContext<NavigationBoundary>({
   syncNavigation: () => {},
 });
 
-export function WorkspaceNavigationProvider({ children }: { children: ReactNode }) {
+export function WorkspaceNavigationProvider({ children, variant = "workspace" }: { children: ReactNode; variant?: "workspace" | "training" }) {
   // Workout and Plan are mutually exclusive editors. The synchronous guard
   // lives outside React's update queue so a navigation cannot outrun it.
   const editorRef = useRef<UnsavedEditor | null>(null);
@@ -106,9 +108,32 @@ export function WorkspaceNavigationProvider({ children }: { children: ReactNode 
   const syncNavigation = useCallback(() => { legacyHistoryRef.current?.sync(); }, []);
 
   const value = useMemo(() => ({ requestNavigation, register, syncNavigation }), [requestNavigation, register, syncNavigation]);
+  function leaveWithoutSaving() {
+    approvedRef.current = true;
+    setOpen(false);
+    pending?.editor.discard();
+    pending?.proceed();
+    legacyHistoryRef.current?.sync();
+  }
+
   return <WorkspaceNavigationContext.Provider value={value}>
     {children}
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    {variant === "training" ? (
+      <LegacyDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={pending?.editor.busy ? "Saving changes" : "Leave without saving?"}
+        overlayClassName="training-guard-overlay"
+        contentClassName="training-guard-panel"
+      >
+        <h2>{pending?.editor.busy ? "Saving changes" : "Leave without saving?"}</h2>
+        <p>{pending?.editor.busy ? "Wait for the save to finish before leaving." : `Your changes to this ${pending?.editor.label ?? "view"} have not been saved.`}</p>
+        <div className="training-guard-actions">
+          <button type="button" className={actionOutline} onClick={() => setOpen(false)}>Keep editing</button>
+          {!pending?.editor.busy ? <button type="button" className={actionDanger} onClick={leaveWithoutSaving}>Discard changes</button> : null}
+        </div>
+      </LegacyDialog>
+    ) : <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogContent onCloseAutoFocus={event => {
         event.preventDefault();
         if (pending?.trigger?.isConnected) pending.trigger.focus({ preventScroll: true });
@@ -121,16 +146,10 @@ export function WorkspaceNavigationProvider({ children }: { children: ReactNode 
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Keep editing</AlertDialogCancel>
-          {!pending?.editor.busy ? <AlertDialogAction variant="destructive" onClick={() => {
-            approvedRef.current = true;
-            setOpen(false);
-            pending?.editor.discard();
-            pending?.proceed();
-            legacyHistoryRef.current?.sync();
-          }}>Leave without saving</AlertDialogAction> : null}
+          {!pending?.editor.busy ? <AlertDialogAction variant="destructive" onClick={leaveWithoutSaving}>Leave without saving</AlertDialogAction> : null}
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog>
+    </AlertDialog>}
   </WorkspaceNavigationContext.Provider>;
 }
 

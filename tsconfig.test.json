@@ -16,7 +16,7 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "types": ["node"]
+    "types": ["node", "dom-navigation", "next"]
   },
   "include": [
     "tests/**/*.ts",

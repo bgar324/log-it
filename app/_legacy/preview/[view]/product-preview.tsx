@@ -6,15 +6,15 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
 } from "react";
-import { DashboardOverviewView } from "@/app/dashboard/_components/dashboard-overview-view";
-import { DashboardProgressView } from "@/app/dashboard/_components/dashboard-progress-view";
+import { DashboardOverviewView } from "@/app/_legacy/dashboard/_components/dashboard-overview-view";
+import { DashboardProgressView } from "@/app/_legacy/dashboard/_components/dashboard-progress-view";
 import { useDashboardProgress } from "@/app/dashboard/_hooks/use-dashboard-progress";
-import { DashboardShell } from "@/app/dashboard/_components/dashboard-shell";
-import { VIEW_TITLES } from "@/app/dashboard/dashboard-client.shared";
+import { DashboardShell } from "@/app/_legacy/dashboard/_components/dashboard-shell";
+import { VIEW_TITLES } from "@/app/_legacy/dashboard/dashboard-client.shared";
 import type { DashboardClientData, DashboardView } from "@/app/dashboard/dashboard-types";
-import { SplitManager } from "@/app/dashboard/split-manager";
+import { SplitManager } from "@/app/_legacy/dashboard/split-manager";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
-import previewStyles from "./preview.module.css";
+import previewStyles from "@/app/preview/[view]/preview.module.css";
 
 export type ProductPreviewView = "dashboard" | "progress" | "split";
 
@@ -280,6 +280,21 @@ const PREVIEW_WORKOUTS: DashboardClientData["workoutMonths"] = [
   },
 ];
 
+// Additive fields required by the shared DashboardClientData contract. Derived
+// from this fixture's own dates and totals; no baseline view below reads them.
+const PREVIEW_AS_OF_DATE = "2026-08-12";
+const PREVIEW_LOGGED_ENTRIES = PREVIEW_WORKOUTS.flatMap((month) => month.entries);
+const PREVIEW_ACTIVITY_DAYS = PREVIEW_LOGGED_ENTRIES.map((entry) => ({
+  date: entry.performedAtDate,
+  count: 1,
+}));
+const PREVIEW_DAILY_SERIES = PREVIEW_LOGGED_ENTRIES.map((entry) => ({
+  date: entry.performedAtDate,
+  sessions: 1,
+  sets: entry.setCount,
+  volume: entry.volume,
+}));
+
 const PREVIEW_DATA = {
   user: {
     username: "trainingdemo",
@@ -292,6 +307,8 @@ const PREVIEW_DATA = {
     joinedAtLabel: "July 2025",
   },
   overview: {
+    asOfDate: PREVIEW_AS_OF_DATE,
+    activityDays: PREVIEW_ACTIVITY_DAYS,
     loggedWorkoutId: null,
     todayPlan: {
       workoutType: "Push",
@@ -448,6 +465,8 @@ const PREVIEW_DATA = {
     },
   ],
   progress: {
+    asOfDate: PREVIEW_AS_OF_DATE,
+    dailySeries: PREVIEW_DAILY_SERIES,
     currentWeek: 3,
     weekDelta: 1,
     avgWeekly: 3,

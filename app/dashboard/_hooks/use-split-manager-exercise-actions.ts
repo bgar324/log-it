@@ -72,13 +72,6 @@ export function useSplitManagerExerciseActions({
     updateSplitDay(selectedDay.weekday, updater);
   }
 
-  function setSplitName(value: string) {
-    setSplit((current) => ({
-      ...current,
-      name: value,
-    }));
-  }
-
   function handleExerciseNameChange(exerciseIndex: number, value: string) {
     if (!selectedDay) {
       return;
@@ -152,14 +145,15 @@ export function useSplitManagerExerciseActions({
     }));
   }
 
+  // Renaming a day is not a delete. The save payload is what drops exercises
+  // for a rest day, so local state keeps them here: clearing the field to
+  // retype it, or passing through "Rest" on the way to another name, no longer
+  // destroys the day's plan mid-keystroke.
   function setWorkoutType(value: string) {
-    const workoutTypeSlug = normalizeWorkoutTypeSlug(value || REST_DAY_WORKOUT_TYPE);
-
     updateSelectedDayExercises((day) => ({
       ...day,
       workoutType: value,
-      workoutTypeSlug,
-      exercises: isRestDayWorkoutTypeSlug(workoutTypeSlug) ? [] : day.exercises,
+      workoutTypeSlug: normalizeWorkoutTypeSlug(value || REST_DAY_WORKOUT_TYPE),
     }));
   }
 
@@ -228,7 +222,6 @@ export function useSplitManagerExerciseActions({
   return {
     selectedDay,
     selectedDayExerciseSearchResults,
-    setSplitName,
     handleExerciseNameChange,
     handleExerciseNameBlur,
     handleExerciseNameFocus,

@@ -40,6 +40,7 @@ function buildProps(overrides: Partial<Props> = {}): Props {
     exerciseSearchResults: {},
     isMobileOpen: false,
     isSaving: false,
+    hasUnsavedChanges: true,
     onMobileClose: () => {},
     onSelectWeekday: () => {},
     onSave: () => {},

@@ -5,9 +5,9 @@ import {
   type WorkoutSplitTemplate,
 } from "@/lib/workout-splits/shared";
 import { NO_SPLIT_TODAY_PLAN } from "@/lib/workout-splits/today-plan";
-import { getCurrentPacificDate, normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
+import { formatDatabaseDateValue, getCurrentPacificDate, normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
 import type { DashboardClientData } from "./dashboard-types";
-import { dateKey, monthKey, monthLabel } from "./data.formatters";
+import { dateKey, monthLabel } from "./data.formatters";
 
 export function createDefaultSplit(): WorkoutSplitTemplate {
   return {
@@ -48,8 +48,6 @@ export function createEmptyDashboardData(
   user: Awaited<ReturnType<typeof requireSessionUser>>,
   now: Date,
 ): DashboardClientData {
-  const emptyMonthKey = monthKey(now);
-
   return {
     user: {
       username: user.username,
@@ -62,6 +60,8 @@ export function createEmptyDashboardData(
       joinedAtLabel: monthLabel(user.createdAt),
     },
     overview: {
+      asOfDate: formatDatabaseDateValue(now),
+      activityDays: [],
       loggedWorkoutId: null,
       todayPlan: NO_SPLIT_TODAY_PLAN,
       todaySession: [],
@@ -78,6 +78,8 @@ export function createEmptyDashboardData(
     },
     exercises: [],
     progress: {
+      asOfDate: formatDatabaseDateValue(now),
+      dailySeries: [],
       currentWeek: 0,
       weekDelta: 0,
       avgWeekly: 0,
@@ -113,6 +115,8 @@ export function createEmptyOverview(user: DashboardClientData["user"]) {
   return {
     user,
     overview: {
+      asOfDate: formatDatabaseDateValue(now),
+      activityDays: [],
       loggedWorkoutId: null,
       todayPlan: NO_SPLIT_TODAY_PLAN,
       todaySession: [],

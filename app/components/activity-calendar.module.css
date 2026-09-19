@@ -1,0 +1,14 @@
+.calendar { width: 100%; min-width: 0; }
+.months { display: grid; gap: 5px; margin-bottom: 12px; color: var(--muted); font-size: 12px; line-height: 1.2; }
+.months span { white-space: nowrap; }
+.grid { display: grid; grid-template-rows: repeat(7, 14px); grid-auto-flow: column; gap: 5px; }
+.day { display: block; align-self: center; justify-self: center; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--text) 15%, transparent); }
+.day[data-active="true"] { background: var(--app-accent, var(--text)); }
+.day[data-future="true"] { opacity: 0.15; }
+.grid[data-shape="tile"] .day { width: 100%; height: 14px; border-radius: 3px; }
+@media (max-width: 359px) { .grid, .months { gap: 4px; } .day { width: 7px; height: 7px; } }
+.miniMonths { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px; }
+.miniMonth { min-width: 0; }
+.miniMonthName { display: block; margin-bottom: 14px; color: var(--muted); font-size: 12px; font-weight: 500; }
+.miniGrid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); grid-template-rows: repeat(6, 12px); gap: 4px; }
+.miniGrid .day { width: 6px; height: 6px; }

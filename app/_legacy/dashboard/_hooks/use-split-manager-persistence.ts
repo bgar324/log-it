@@ -9,7 +9,7 @@ import {
   copyWorkoutSplit,
   saveWorkoutSplit,
   type SplitManagerSaveState,
-} from "../split-manager.shared";
+} from "@/app/_legacy/dashboard/split-manager.shared";
 
 type UseSplitManagerPersistenceOptions = {
   split: WorkoutSplitTemplate;

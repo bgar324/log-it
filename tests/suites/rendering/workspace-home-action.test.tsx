@@ -68,7 +68,7 @@ function home({
   };
 
   return createElement(WorkspaceOverviewView, {
-    overview: { loggedWorkoutId, todayPlan, todaySession: [] },
+    overview: { asOfDate: "2026-09-18", activityDays: [], loggedWorkoutId, todayPlan, todaySession: [] },
     todayPlan,
     greetingName: "Ben",
     weightUnit,

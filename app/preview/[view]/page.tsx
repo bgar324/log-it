@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { preload } from "react-dom";
 import { notFound } from "next/navigation";
-import { Toaster } from "@/app/components/ui/toaster";
+import { Toaster } from "@/app/_legacy/components/ui/toaster";
 import {
   ProductPreview,
   ProductPreviewShell,
   type ProductPreviewView,
-} from "./product-preview";
+} from "@/app/_legacy/preview/[view]/product-preview";
 
 const PRODUCT_PREVIEW_VIEWS = [
   "dashboard",

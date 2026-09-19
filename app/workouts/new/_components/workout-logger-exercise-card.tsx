@@ -79,6 +79,7 @@ export function WorkoutLoggerExerciseCard({
             >
               <input
                 id={`exercise-name-${exercise.id}`}
+                aria-label="Exercise name"
                 className={styles.nameInput}
                 value={exercise.name}
                 onChange={(event) => onExerciseNameChange(event.target.value)}

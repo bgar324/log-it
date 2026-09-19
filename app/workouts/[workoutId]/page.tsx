@@ -20,6 +20,11 @@ import { WorkspaceWorkoutDetailActions } from "@/app/workspace/details/workspace
 import { loadWorkspaceWorkoutDetail } from "@/app/workspace/details/workspace-workout-detail.data";
 import { WorkoutDetailActions } from "./workout-detail-actions";
 import { styles } from "./workout-detail.styles";
+import {
+  resolveWorkoutReturn,
+  type WorkoutReturnSearchParams,
+} from "@/app/workouts/workout-return";
+import LegacyWorkoutDetailPage from "@/app/_legacy/workouts/[workoutId]/page";
 
 type WorkoutPageParams = Promise<{ workoutId: string }>;
 
@@ -33,10 +38,14 @@ function formatDate(value: Date) {
 
 export default async function WorkoutDetailPage({
   params,
+  searchParams,
 }: {
   params: WorkoutPageParams;
+  searchParams?: Promise<WorkoutReturnSearchParams>;
 }) {
   const { workoutId } = await params;
+  // Validated, never trusted: an unknown or missing context is plain History.
+  const workoutReturn = resolveWorkoutReturn(await searchParams);
   const user = await requireSessionUser();
   if (await isIonicEnabled(user)) redirect(`/ionic/workouts/${encodeURIComponent(workoutId)}`);
 
@@ -58,10 +67,10 @@ export default async function WorkoutDetailPage({
       <WorkspaceFrame
         activeView="workouts"
         benEnabled={benEnabled}
-        backHref="/dashboard?view=workouts"
+        backHref={workoutReturn.href}
         accessory={
           <WorkspaceWorkoutDetailActions
-            editHref={detail.editHref}
+            editHref={`${detail.editHref}${workoutReturn.query}`}
             workoutId={detail.id}
             workoutExport={detail.exportText}
           />
@@ -72,45 +81,50 @@ export default async function WorkoutDetailPage({
     );
   }
 
-  const [workout, benEnabled] = await Promise.all([
-    prisma.workoutLog.findFirst({
-      where: {
-        id: workoutId,
-        userId: user.id,
-      },
-      select: {
-        id: true,
-        title: true,
-        workoutType: true,
-        performedAt: true,
-        totalWeightLb: true,
-        bodyWeightLb: true,
-        exercises: {
-          orderBy: {
-            order: "asc",
-          },
-          select: {
-            id: true,
-            order: true,
-            name: true,
-            sets: {
-              orderBy: {
-                order: "asc",
-              },
-              select: {
-                id: true,
-                order: true,
-                reps: true,
-                weightLb: true,
-                durationSeconds: true,
-              },
+  // The redesign is owner-gated, so the decision is made before the query: an
+  // unflagged reader is handed the shipped page, which loads its own data.
+  const benEnabled = await isBenFeatureEnabled(user);
+
+  if (!benEnabled) {
+    return <LegacyWorkoutDetailPage params={params} />;
+  }
+
+  const workout = await prisma.workoutLog.findFirst({
+    where: {
+      id: workoutId,
+      userId: user.id,
+    },
+    select: {
+      id: true,
+      title: true,
+      workoutType: true,
+      performedAt: true,
+      totalWeightLb: true,
+      bodyWeightLb: true,
+      exercises: {
+        orderBy: {
+          order: "asc",
+        },
+        select: {
+          id: true,
+          order: true,
+          name: true,
+          sets: {
+            orderBy: {
+              order: "asc",
+            },
+            select: {
+              id: true,
+              order: true,
+              reps: true,
+              weightLb: true,
+              durationSeconds: true,
             },
           },
         },
       },
-    }),
-    isBenFeatureEnabled(user),
-  ]);
+    },
+  });
 
   if (!workout) {
     notFound();
@@ -161,7 +175,7 @@ export default async function WorkoutDetailPage({
         <header className={styles.topRow}>
           <div className={styles.topLead}>
             <BackButton
-              fallbackHref="/dashboard?view=workouts"
+              fallbackHref={workoutReturn.href}
               label="Back"
               className={styles.backLink}
               iconClassName={styles.backButtonIcon}
@@ -169,7 +183,7 @@ export default async function WorkoutDetailPage({
           </div>
           <div className={styles.topActions}>
             <WorkoutDetailActions
-              editHref={`/workouts/${workout.id}/edit`}
+              editHref={`/workouts/${workout.id}/edit${workoutReturn.query}`}
               workoutId={workout.id}
               workoutExport={workoutExport}
             />

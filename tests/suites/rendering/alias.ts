@@ -13,7 +13,8 @@ type Resolver = (
   options?: unknown,
 ) => string;
 
-const moduleAny = Module as unknown as { _resolveFilename: Resolver };
+type Loader = (request: string, parent: NodeJS.Module | undefined, isMain: boolean) => unknown;
+const moduleAny = Module as unknown as { _resolveFilename: Resolver; _load: Loader };
 const original = moduleAny._resolveFilename;
 
 moduleAny._resolveFilename = function patched(request, parent, isMain, options) {
@@ -22,6 +23,15 @@ moduleAny._resolveFilename = function patched(request, parent, isMain, options) 
     : request;
 
   return original.call(this, mapped, parent, isMain, options);
+};
+
+// Node does not load CSS; computed styles and layout are verified in Chromium.
+const originalLoad = moduleAny._load;
+moduleAny._load = function load(request, parent, isMain) {
+  if (request.endsWith(".module.css")) {
+    return { __esModule: true, default: new Proxy({}, { get: (_target, key) => String(key) }) };
+  }
+  return originalLoad.call(this, request, parent, isMain);
 };
 
 export {};

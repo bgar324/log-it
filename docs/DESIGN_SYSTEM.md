@@ -1,19 +1,14 @@
 # Design System
 
-Logit uses a restrained monochrome UI. Authenticated screens are calm and sentence-led at the top of each view, dense where the user is scanning rows of workout data.
+The authenticated app uses an ink-and-ivory palette, Geist typography, and soft grouped surfaces. Home is sentence-led; History and Analysis give recorded training data the space it needs.
 
-## Shared authenticated behavior
+## Authenticated design status
 
-The active interface remains the warm legacy app. The owner uses Home, Logger, and Split as first-class destinations, with secondary pages in the drawer. Logging is plan-first: splits supply exercises and sets, while exceptional adjustments and protected Save remain in the tools dial. The shared-behavior pass does not change this hierarchy or introduce the reference-image revamp.
+The owner authorized the reference-driven redesign behind the existing PostHog `Ben` flag. The rules below describe that design. Unflagged users and public previews retain the previous UI; Nova and Ionic remain disabled.
 
-- `app/components/action.styles.ts` remains the button authority. `field.styles.ts` owns boxed and underlined field feedback; callers retain current density and geometry.
-- `ui/popover.tsx` owns anchored disclosure presence and dismissal. `ui/legacy-dialog.tsx` owns dialog presence, scroll locking, and busy-dismissal protection. Both prevent automatic focus transfer on open and close. Closing content is inert.
-- `interaction.css` owns menu/dialog motion and drawer timing. The tools dial keeps its deliberate staggered entry and immediate action commitment. Do not add another per-page exit timer.
-- Logger and Split use `exercise-suggestions.tsx`. Its portalled results flip within available space without scrolling the focused input or expanding the form.
-- The drawer retains its revealed layer and interaction shield until the foreground finishes returning. Reduced motion finishes the same lifecycle without an extra timeout.
-- Loading and loaded views use the same navigation capability. Progress reserves chart geometry while its chart module loads.
+`training-theme.css` scopes the new palette to documents containing `[data-training-design="true"]`. Public pages retain their existing warm palette. Portalled controls inherit the authenticated document tokens.
 
-The visual revamp is a separate, not-yet-approved implementation. New reference images and exploratory calendar, graph, KPI, navigation, and focused-logger ideas must not be silently folded into this release.
+Shared interaction behavior is unchanged: `ui/popover.tsx` owns anchored disclosure presence and dismissal; `ui/legacy-dialog.tsx` owns dialog presence, scroll locking, and busy-dismissal protection. Neither transfers focus automatically. Closing content is inert. The drawer retains its interaction shield until the foreground finishes returning.
 
 ## Authenticated Nova workspace
 
@@ -73,82 +68,55 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - Public profiles: `app/u/[username]/public-profile.styles.ts`.
 - Research/editorial pages: shared article shell in `app/components/public-article.tsx`; content classes (`legal-*`, `changelog-*`) live in `app/globals.css`.
 
-## Authenticated App System
+## Authenticated app system
 
-The authenticated app is navigated by frequency of the trip, not by importance of the object.
+### Navigation and hierarchy
 
-- **First class (bottom bar, three slots):** Home, a filled log action, Nutrition. These are the trips a user makes without thinking. The bar is fixed, thumb-height, and present on every phone-width screen except task surfaces.
-- **Second class (drawer):** Profile, Workouts, Progress, Split, theme, sign out. Deliberate trips tolerate one extra tap. The drawer is a *layer*, not a panel: it is the base layer of the app, and the app screen slides right to reveal it. It opens from a top-left `PanelLeft` control — a familiar navigation signifier — and closes by tapping the exposed app surface or pressing Escape. There is no gesture trigger: an edge swipe collides with the platform back gesture in standalone web apps. Profile leads the list because the identity block sits directly above it.
-- **Two layers, always.** Layer B is the drawer underneath; layer A is the app on top of it. Never stack a nav panel over the app with a dimming scrim — the app moves, the menu stays put. The trigger belongs on browsing surfaces that own a view (the dashboard's own top bar), not on detail surfaces reached from a list: there, Back is the only navigation a user wants, and a second control beside it competes with it.
-- **The exposed app is lifted and seamed, never fogged or rounded.** Two surfaces painted `--bg` meeting at an invisible edge read as one broken screen. The fix is elevation plus a line: while the drawer is open, layer A takes a `--text` 9% veil (deliberately *lighter* than the drawer in dark, shaded in light) and a full-height `border-l` at the canon 12% hairline, and it stays full-bleed. Two alternatives were built and rejected — a `--bg` fog behind a 7px blur, which smears the app into the drawer and reads as a modal scrim, and rounding the exposed edge into an inset card, which costs bands that crop the chrome and a corner curve that eats the bottom hairline where it meets the drawer's footer. The veil is kept mounted at `opacity: 0` and ramped over the same 280ms as the slide: introduced with the open state instead, it has no previous frame to transition from and snaps to full strength across the whole screen before the app has moved.
-- **Task surfaces** (`/workouts/new`, `/workouts/[workoutId]/edit`) carry no nav chrome. They get one quiet 44px Back control at the top. Save and every other logger action live in the bottom-right tools dial.
-- **One drawer control, no dropdown nav, and no width without navigation.** The `PanelLeft` control opens the drawer below `900px`; the sidebar covers `900px` and up.
-- **Icon set (Lucide):** Navigation `PanelLeft` · Home `House` · Log `Plus` · Nutrition `Apple` · Workouts `ClipboardList` · Progress `ChartNoAxesColumnIncreasing` · Split `CalendarDays` · Profile `UserRound` · Settings `Settings`. Pick the icon that names the *thing* (a split is a week, so it is a calendar; workouts are a log, so they are a clipboard) rather than a domain mascot; `Dumbbell`, `ChartLine`, `Blocks` and `Utensils` read as noise at 1.2rem. Progress is the bare ascending bars rather than `TrendingUp`, whose arrow reads as a stock ticker.
-- Settings and sign-out share the phone drawer footer and the desktop sidebar utility stack. Settings holds preferences only (theme, units); the profile view owns email, password, and account deletion.
-- A control that saves on selection must not reuse a form's unsaved input state. Write the persisted values plus the one field being changed, or the toggle silently commits whatever the user left half-typed on another view.
+- Phones use one floating icon-only pill: Home, Log, Split for the owner or Nutrition for standard accounts, and Analysis. Every icon has an accessible name and a target of at least 44px.
+- Profile is the avatar in the top utility row. Settings is the gear at the right. The adjacent ellipsis opens secondary navigation, including History and Sign out.
+- The drawer remains a revealed layer: the app moves aside, with a full-height veil and seam. It is not a second modal card. Desktop uses the collapsible sidebar from 900px upward.
+- Logger routes are task surfaces without the main dock. Their Back link retains the originating view; editing returns to the workout detail. Detail and loading screens retain the same return context.
+- The dock reserves `--app-dock-height`, including the safe-area inset. Content can scroll beyond the dock; it must not end underneath it.
 
-### Sentences, not tiles
+### Home, History, and Analysis
 
-- Say the fact in a sentence a person would speak. Today reads `Hi, Benjamin.` / `Today is Upper B.` / one muted plan note / one action — not a label/value grid.
-- There are no KPI tiles anywhere in the authenticated app. Summary numbers live in one or two quiet typographic lines (`styles.statLine`, `styles.statLineMuted`), keeping every fact while removing the boxes.
-- Never print the same number twice on one screen. If a value is editable below, the summary above states it once or not at all.
-- Prefer a sentence to a badge for state: `Logged for today.` beats a green pill.
-- An empty-state label must key off the fact it names, not off a value that happens to be missing. "First time" belongs to *no history*; a bodyweight set has no weight and is still a session that happened, so gating it on a null weight makes every pull-up row claim it was never trained. Name the states you actually have — never trained, trained with a number worth quoting, trained without one — and render each.
+- Home shows the weekday, a personal plan sentence, one primary action, three compact calendar months, the latest session, and today's planned exercises. Resume takes precedence over Open, then Start.
+- Calendar dots mean recorded activity. Blank dots do not mean failure, and future days are dimmed. Home does not invent recovery scores or coaching claims.
+- History uses a horizontal strip of recorded days, not empty calendar days. Selecting a date reveals its sessions and sets. Older reveals more months or fetches another server page. The selected date survives detail, edit, Back, and reload.
+- Analysis leads with one large graph. Week, Month, and Year select its window; Sessions, Sets, and Volume select its measure. The three metric cards control the graph rather than acting as unrelated KPIs.
+- Heuristic notes describe recorded data. Weekly consistency counts weeks with a recorded session, not daily adherence to a split. A current week without a session is pending, not a broken streak.
+- Graphs appear without an initial reveal. Deliberate period and metric changes may animate. Reduced motion disables those animations and animated day-strip scrolling.
+- Searchable exercise indexes keep their existing edge-chevron pagination and range line. Rows keep identity left and numbers right, with hairlines between them.
 
-### Controls
+### Logger and split editing
 
-- One filled primary per screen: `.app-filled-action` in `app/globals.css` (pill radius, `--button-bg`/`--button-text`). Everything else is quiet — muted text or a hairline border. Differentiate by fill and color, never by border opacity.
-- **Every button comes from one place.** `app/components/action.styles.ts` owns button geometry for the whole app, derived from the landing page's `.primaryAction`: a 999px pill, 44px tall at every width, weight 400, type mirroring the landing's own ramp (`0.9375rem` under `52rem`, `1rem` above). Variants — `actionFilled`, `actionQuiet`, `actionOutline`, `actionDanger`, `actionChip`, `actionIcon*`, `actionMenuRow*`, `actionNavRow` — differ only in fill and colour. Before this existed the dashboard file alone carried 9 distinct radii, because nothing structurally stopped a new key inventing one.
-- Never re-declare `rounded-*`, `min-h-*`, or `text-[…rem]` on a control. Compose a canon variant with layout-only extras (`w-full`, `justify-start`, `ml-auto`, grid placement). A collapsed or compact state SELECTS A DIFFERENT VARIANT; it never appends a modifier hoping to shrink one.
-- **Tailwind v4 composition rule, learned the hard way:** utilities are emitted by family in Tailwind's order, not in their order inside a class string. Appending a utility from a family the base already sets does not guarantee an override. Measured here, `.border-0` beats `.border`, `.bg-transparent` beats `.bg-[color-mix(…)]`, `.text-[var(--text)]` beats `.text-[#b13d48]`, `.px-[1.2rem]` beats `.px-0`, and `.w-full` beats `.w-[2.75rem]`. A shared base states a family only if every variant wants the same value; contested values live on the variants. Prefixed `hover:`, `data-[]:`, and `min-[]:` utilities carry enough specificity to win. Add a canon variant instead of `!important`.
-- Unlayered CSS outranks every Tailwind utility. `a { color: inherit }` in `app/globals.css` sat outside `@layer base` and silently killed every `text-*` class on every `<Link>` in the app — quiet actions rendered at full `--text` while the identical class on a `<button>` rendered muted. Any global element rule belongs in `@layer base`.
-- Occasional workout-level tools belong in a dial, not a column. Save, add another exercise, reorder exercises, reset from split, and the rest timer live in one fixed bottom-right circle (`workout-logger-tools-fab.tsx`). `Add set` and `Delete exercise` stay in each exercise's overflow menu because they act on that exercise. Opening the dial blurs the page rather than drawing a panel: the actions are label-plus-circle rows on the blurred content, revealed with a per-row `transition-delay` that runs up from the trigger. Only transform and opacity animate, so the stagger never reflows the column.
-- **Preserve focus when a disclosure opens or closes.** Automatic focus transfer dismissed the iOS keyboard and jumped the viewport mid-set. Shared popovers and dialogs prevent open/close autofocus; the drawer does not transfer focus automatically. Keyboard Tab navigation may move focus in response to the user's action. Editing-menu pointer presses preserve the focused input.
-- A CSS transition needs a frame to start from. An element that mounts already in its final state jumps there instantly — the animation exists in the stylesheet and is never seen. Mount in the closed state and flip to open in a `requestAnimationFrame`, which is how the tools dial's stagger became visible.
-- The tools dial has a deliberate staggered entry and immediate close on action commitment. Other menus and dialogs share retained entry/exit behavior through `interaction.css` and Radix presence. Their outgoing content becomes inert immediately; visual lifetime is not another opportunity to act.
-- A seven-day plan must read as one week below `981px`. Use compact agenda rows for the overview, not desktop cards stacked into a 1,400px page. Tapping a day opens one full-viewport, keyboard-safe editor with a seven-day switcher; it renders through a body portal so it covers the app tab bar or narrow desktop shell, and it opens instantly with no segment transition. At `981px` and wider the same editor remains an in-flow side panel. Never mount separate narrow and wide copies of the form.
-- Week reordering is a two-tap move flow because weekdays are fixed destination slots: select a workout, then choose its day. Exercise reordering is a separate grab-handle drag flow. The split editor and workout logger share one exercise-reorder component, so their handles, row treatment, `Cancel`, and `Save order` behavior stay identical.
-- **One Back control, and it is the quiet one.** `actionQuiet` pulled left by its own padding (`-ml-[1rem]`) is the canon on every authenticated surface that has a Back: logger, workout detail, exercise detail. It is the one deliberate exception to "secondary actions get a hairline" — a bordered pill in the top-left competes with the content and reads heavier than the page title under it.
-- Minimums on phones: **44px** (`2.75rem`) for anything a thumb hits, **16px** (`text-base`) for every text input so iOS Safari never zooms the viewport. Desktop density is restored behind `min-[620px]:` / `min-[760px]:` overrides.
-- Declare inverted foregrounds in CSS, not as Tailwind arbitrary colors. `text-[var(--bg)]` on a `bg-[var(--text)]` control was observed rendering same-on-same (invisible label), which is why `.app-filled-action` exists. Always confirm a filled action in a browser.
-- Write arbitrary values as literals, never assembled from a template variable (`bg-[${token}]`). Tailwind's scanner reads source text, so an interpolated class is only present if the identical literal happens to exist elsewhere in the repo.
-- No native number steppers. `input[type="number"]` spin buttons are removed globally in `app/globals.css`; the numeric keyboard is the input on a phone.
-- No native select carets. Chrome pins its own caret to the right border and `padding-right` will not move it, so `select:not([multiple])` in `app/globals.css` sets `appearance: none` and draws a `--select-caret` background at a real inset. The rule is deliberately specific enough to beat `.input` and the Tailwind `px-*` utilities: the right padding belongs to the caret, the left padding stays with each control, and a new dropdown cannot ship cramped. Never hand-roll an absolutely positioned chevron beside a select — that was the split selector's old pattern, and it double-drew once the rule existed.
-- Settings-style screens are rows, not cards: `label · current value · action`. An editing form opens inline from its row (`accountDisclosure`) instead of sitting open on the page. Two always-open forms are what made the profile view the heaviest screen in the app.
-- Never leave a permanently-disabled primary on screen. Render the save action when there is something to save; a greyed filled pill reads as broken rather than inactive.
-- Irreversible actions live in a bordered, tinted danger zone (`dangerZone`) rather than as one more row in a list, so they read as a different class of control. Everything else on a settings-style screen stays a plain row.
-- Editing identity happens in a dialog, not as fields parked on the page: a pencil beside the name opens first/last/username/visibility together, and dropdowns are fine for two-option preferences.
-- Destructive row actions live behind an explicit edit mode, not on every row. The split editor exposes `Add exercise` directly, while its day tools menu enters delete mode or opens the exercise-reorder drag sheet. Deleting is immediate because entering edit mode is the confirmation.
-- **A Save belongs on the surface that changed something, and nowhere else.** The split week has no Save: reordering commits from its own sheet's `Save`, and day edits commit from the day editor's `Save` (top right, at every width). A page-level Save above a list that cannot itself be edited leaves the user guessing what is unsaved.
-- Do not wrap a row of fields in a card. Inputs already read as fields; a border around them is a second frame.
-- The legacy logger keeps one container around each exercise, with underline-only exercise-name and workout-title inputs. Numeric fields keep their boxes for scanning. Per-set trash icons use the muted icon variant with a 44px target; destructive color stays in the confirmation rather than repeating beside every set. Exercise suggestions are full-width rows in an anchored, scrollable dropdown, not pills or an expanding inline panel.
-- **The drawer's footer and the bottom tab bar are one band.** With the drawer open they sit side by side, so a mismatch in height or baseline reads as a broken line across the screen. Both derive from `--bar-row` and `--bar-pad` in `app/components/app-nav.styles.ts` and both add `env(safe-area-inset-bottom)` once, so they cannot drift; each surface declares the tokens itself rather than inheriting them, because `AppTabBar` also renders standalone inside route loading files. Nothing may crop that band at the seam — which is one reason the exposed app is not rounded.
-- **An avatar carries its own label.** The edit affordance is a sliver across the bottom of the circle, clipped by its own `overflow-hidden` - not a caption underneath. A caption cost a row of layout and read as a second control. The sliver uses a literal dark scrim with light text rather than theme tokens, because it sits on a photograph in both themes.
-- **Ask for a number the user cannot know and they will abandon the screen.** Nutrition offers the user's own logged days back as one-tap rows that fill the fields (`[data-nutrition-recall]`), ordered so a repeated total outranks a recent one-off. Their own history is the most accurate estimate available and needs no food database. Never block a partial entry: calories-only and protein-only are valid, and the copy must say so.
-- One rhythm per stack. When controls stack into a single column on a phone, every gap between them is the same value, including the gaps that cross a container boundary - a stray `pt-*` on a footer is what makes four buttons read as two pairs.
-- **One list shape, and its rows are borderless.** Every "identity on the left, numbers on the right" list — today's plan, the progress exercise index, an exercise's session history — uses `dataListStyles` from `app/components/data-list.styles.ts`: hairline between rows, name or date plus a muted counts line on the left, the number that matters plus its muted context on the right. Bordered rows inside a bordered panel draw a second frame around every row, which is what made the exercise index and the session breakdown read as a different product; a desktop-only column grid on top of that made them a third. One shape at every width means no column header, no horizontal scroller, and no `max-[760px]:` variant per cell.
-- The shared list hairline is written out rather than referencing `--dashboard-border`. That custom property is declared on the dashboard shell's root, so anything outside the shell — the exercise detail route, for one — resolves it to `currentColor` and draws an opaque line.
-- **A list panel must not grow taller than the phone holding it.** That is the deciding factor between revealing and paging, and it splits by what the list *is*:
-  - **A searchable index pages.** The progress exercise list holds 85 rows; revealing 24 at a time pushed the search field and the ordering off the top, and the only way back to them was a long scroll. It now draws one page of `EXERCISES_PER_PAGE` (8, about one screen) with arrows pinned to the panel's edges and the position (`9-16 of 85`) between them. The panel is the same height on every page.
-  - **A chronological archive reveals.** The workouts list reveals whole *months* and, past the loaded window, fetches older ones from the server (`dashboard-workouts-view.tsx`). "Further back" is the user's actual intent there, and it maps onto server paging; turning that into numbered pages would invent a cursor over a timeline nobody counts in pages.
-- Paging costs one disabled arrow at each end, which an earlier version of this rule refused. It is accepted now because the alternative costs more: the old `Prev · Page 1 of 17 · Next` failed on *page size*, not on arrows - 17 pages of five made Next the only way through. Size a page to roughly one screen and the page count stays small enough that both directions are useful. Never render a pager for a single page.
-- A pager states position, never just direction. Two bare chevrons leave the user unable to tell where they are or how much is left; the range line between them is the feedback.
-- **The skeleton follows the page size by construction.** `EXERCISES_PER_PAGE` is exported from `use-dashboard-progress.ts` and imported by `dashboard-view-skeleton.tsx`, so the loading state cannot draw a different number of rows than the list it stands in for. A hardcoded copy there drifted the first time the size changed; a test asserts the two agree.
-- A reveal button states the batch it appends, not the remainder it leaves. `Show 24 more` that adds 24 is a promise kept; `Show 71 more` that adds 24 is a lie the user catches on the first tap.
-- The exercise-detail session list (`session-breakdown-list.tsx`) pages at `PAGE_SIZE = 5` with the same edge arrows and range line as the exercise index, and its loading skeleton draws the same five rows. The `Prev · Page 1 of 7 · Next` control it replaced stated position three times and still needed a separate `Showing 1-5 of 31` line.
-- A control must not change meaning based on which sibling is already active. Two toggles that each flipped their own direction encoded four sort states behind three words, so `Recent` meant newest, oldest, or "switch away from sessions". One `<select>` naming all four orderings replaced it.
-- Put the filter before the list and above the ordering: with dozens of rows, naming the one you want beats reordering all of them. Search takes the panel's full width; the ordering rides the count line directly above the rows.
-- Avoid hover-only affordances; touch never triggers them. Cards and list rows carry no hover state.
+- The logger shows one exercise and all its sets. Previous, Next, a jump list, and horizontal swipes change exercises without dropping typed values. Swipes starting inside fields or controls do not navigate.
+- The active exercise name leads the form. Numeric entries are larger than metadata and keep a single Weight/Reps header rather than repeating visible labels for every field.
+- The protected tools control expands into an arc of 52px circles. Save stays inside that fan, away from the opening thumb. The trigger paints above entering actions so a rapid second tap cannot hit an invisible Save.
+- Add set and Delete exercise remain in the exercise menu. Workout details use the shared dialog. Set completion is not required.
+- Saved splits appear as folders with actual weekday structure and an explicit active state. Tapping opens a split; Set active is a separate action. Long press and the visible options button open the same menu.
+- Day edits remain in the library when another folder opens. Leaving warns about any dirty split, not only the selected one. Pending saves disable renaming and other conflicting mutations.
+- Below 981px, a split day opens as one full-viewport task surface. Wider layouts show the same editor beside the week. Week moves use source/destination buttons; exercise order uses the shared drag sheet with Cancel and Save order.
 
-## Visual Language
+### Shared controls and feedback
 
-- Dominant palette is black, white, transparent surfaces, thin borders, and muted text.
-- Product surfaces favor transparent or page-background panels with subtle borders over heavy cards.
-- Shared cards, public shells, and product panels use compact radii around `0.5rem` to `0.58rem`; controls use a `999px` pill. Avoid large rounded marketing cards, blur-heavy surfaces, and decorative shadows.
-- Icon buttons use Lucide icons where applicable.
-- Green success states use a darker green border with a light green fill.
-- Focus states use `focus-visible` with `--focus-ring` on public surfaces (landing, research, auth, public profiles). The authenticated app currently has none — a preference, not a constraint; see the accessibility note at the end of this file before adding or removing them there.
-- Motion is subtle: short color/border transitions, small active translate movement, and short enter/exit animations for overlays.
+- General actions compose `action.styles.ts`. Hero actions, metric selectors, recorded-day cards, navigation tabs, and fan circles have distinct roles and geometry, but all retain the 44px phone minimum.
+- Text inputs and selects use at least 16px text on phones. Logger number fields are larger. `field.styles.ts` owns field feedback; the authenticated theme sets 14px field corners.
+- Popovers and dialogs do not move focus on open or close. Tab remains available to enter and traverse them. Editing-menu pointer presses preserve the current input.
+- Menus and dialogs retain outgoing content for their actual exit animation, then unmount. Outgoing content is immediately inert. Do not add per-page exit timers.
+- Feedback sits below the phone utility row, leaving Back and the dock reachable. Informational toast bodies pass pointer events through; explicit toast actions remain interactive.
+- Profile and Settings use rows with focused editing dialogs. Destructive actions remain distinct and confirmed. A preference write uses saved profile values, never another form's unsaved draft.
+- Data rows do not gain hover-only affordances. Numeric fields have no native steppers. Selects use the shared inset caret.
+- Tailwind arbitrary values must be literal strings. State variants such as `aria-pressed:` and `data-selected:` must win through selector specificity, not class-string order.
+- Skeletons use the resolved view's layout classes. Update the skeleton whenever a surface changes. Verify geometry in the browser rather than pinning class strings in tests.
+
+## Visual language
+
+- Dark background: `#0d0e11`; surfaces: `#1a1b20` and `#24252b`; text: `#f5f5f4`.
+- Light background: `#f6f5f2`; raised surface: white; text: `#1c1d21`.
+- The analytical accent is ice blue in dark mode and muted blue in light mode. It identifies recorded activity, selected metrics, and the active split.
+- Grouped surfaces use 24px corners, fields use 14px, and general actions remain pills. Avoid nested frames and decorative glows.
+- View and exercise changes use short, small movements. The tools fan uses staggered entry. Reduced motion preserves the same states without those movements.
 
 ## Public Landing System
 
@@ -173,7 +141,7 @@ Public tokens (`--landing-*`) live on the shared `.publicRoot` class at the top 
 - Avoid nested card patterns in product surfaces; use sections, rows, lists, borders, and spacing.
 - Keep filters, split editing, profile editing, and logger controls feature-complete rather than decorative.
 - Muted title metadata such as workout type, selected date, last-hit status, or preview status is allowed when it helps scanning. Keep it natural-case and untracked; do not use uppercase eyebrow styling for hierarchy.
-- `*.styles.ts` files are plain object literals of raw Tailwind strings, not CSS modules. A duplicate key silently wins with no type error, and a stale line range in an edit can clobber the neighbouring key, so re-read before editing and typecheck after. Browser probes must select structurally, never by class-name substring — and in the authenticated app never by `aria-label`, which no longer exists there. The same trap catches tests: a jsdom assertion searching rendered HTML for the *key* name matches nothing, so assert on `styles.X`'s resolved value. Use the stable `data-*` hooks: `[data-app-drawer-trigger="true"]`, `nav[data-app-nav="tabbar"]`, `nav[data-app-nav="sections"]`, `[data-fab-trigger="true"]`, `[data-reorder-id]`, `[data-pager="exercises"]`, `[data-nutrition-recall]`, `[data-nutrition-recall-row]`, plus the state attributes `data-state`, `data-active`, `data-primary`, `data-timing`, `data-dragging`.
+- `*.styles.ts` exports literal Tailwind strings; Home and the activity calendar also use CSS modules. Browser probes use accessible names, roles, and stable `data-*` hooks, not class-name fragments. Tests assert observable behavior rather than serialized style strings.
 - Skeletons must mirror the shipped layout. When a view's shape changes, update the matching branch of `dashboard-view-skeleton.tsx` in the same change. Build each branch out of the real view's own layout keys (`today`, `sessionList`, `pagerRow`, `nutritionRecall`, …) rather than skeleton-only copies: a skeleton that shares the view's classes cannot drift into a different shape, and the four `skeleton*` layout keys that existed to duplicate them are gone. Where a count matters, import the constant instead of hardcoding it.
 
 ## State And Feedback

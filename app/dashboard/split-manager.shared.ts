@@ -1,17 +1,13 @@
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { formatWorkoutSplitForClipboard } from "@/lib/workout-export";
-import { getCurrentPacificDate } from "@/lib/workout-utils";
-import { normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
-import { isRestDayWorkoutTypeSlug } from "@/lib/workout-splits/shared";
+import { getCurrentPacificDate, normalizeWorkoutTypeSlug } from "@/lib/workout-utils";
 import {
   getWeekdayForDate,
+  isRestDayWorkoutTypeSlug,
+  REST_DAY_WORKOUT_TYPE,
   type SplitWeekdayValue,
   type WorkoutSplitTemplate,
 } from "@/lib/workout-splits/shared";
-
-export type SplitManagerSaveState =
-  | { kind: "idle" }
-  | { kind: "saving" };
 
 export type SaveSplitResponse =
   | {
@@ -80,13 +76,17 @@ export async function saveWorkoutSplit(split: WorkoutSplitTemplate) {
       days: split.days.map((day) => ({
         weekday: day.weekday,
         workoutType: day.workoutType,
-        exercises:
-          isRestDayWorkoutTypeSlug(normalizeWorkoutTypeSlug(day.workoutType))
-            ? []
-            : day.exercises.map((exercise) => ({
-                exerciseDisplayName: exercise.exerciseDisplayName,
-                sets: exercise.sets,
-              })),
+        // A day with no typed name is a rest day: the server applies the same
+        // fallback, so the payload must not ship exercises the stored day
+        // cannot have.
+        exercises: isRestDayWorkoutTypeSlug(
+          normalizeWorkoutTypeSlug(day.workoutType.trim() || REST_DAY_WORKOUT_TYPE),
+        )
+          ? []
+          : day.exercises.map((exercise) => ({
+              exerciseDisplayName: exercise.exerciseDisplayName,
+              sets: exercise.sets,
+            })),
       })),
     }),
   });

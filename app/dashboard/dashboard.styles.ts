@@ -18,7 +18,7 @@ import { fieldBoxed } from "@/app/components/field.styles";
 const dashboardBorder =
   "[--dashboard-border:color-mix(in_srgb,var(--text)_12%,transparent)]";
 const dashboardSurface =
-  "rounded-[0.54rem] border border-[var(--dashboard-border)] bg-transparent shadow-none";
+  "rounded-[var(--app-radius)] border border-[var(--app-line)] bg-[var(--surface)] shadow-none";
 const buttonMotion =
   "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]";
 
@@ -34,11 +34,11 @@ const buttonMotion =
 // utilities are safe to append.
 export const styles = {
   shell:
-    `dashboard-theme-scope flex min-h-dvh bg-[var(--bg)] ${dashboardBorder} min-[900px]:grid min-[900px]:h-dvh min-[900px]:grid-cols-[12.4rem_minmax(0,1fr)] min-[900px]:overflow-hidden min-[900px]:transition-[grid-template-columns] min-[900px]:duration-300 min-[900px]:ease-[cubic-bezier(0.2,0.7,0.2,1)]`,
+    `dashboard-theme-scope flex min-h-dvh bg-[var(--bg)] ${dashboardBorder} min-[900px]:grid min-[900px]:h-dvh min-[900px]:grid-cols-[12.4rem_minmax(0,1fr)] min-[900px]:overflow-hidden min-[900px]:transition-[grid-template-columns] min-[900px]:duration-200 min-[900px]:ease-[var(--ui-motion-ease)]`,
   shellSidebarCollapsed:
-    "min-[900px]:!grid-cols-[4.25rem_minmax(0,1fr)]",
+    "min-[900px]:!grid-cols-[5rem_minmax(0,1fr)]",
   sidebar:
-    "hidden min-[900px]:sticky min-[900px]:top-0 min-[900px]:flex min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:self-start min-[900px]:flex-col min-[900px]:gap-[1rem] min-[900px]:overflow-hidden min-[900px]:border-r min-[900px]:border-[var(--dashboard-border)] min-[900px]:bg-transparent min-[900px]:px-[0.68rem] min-[900px]:py-[1.08rem] min-[900px]:transition-[padding,background-color,border-color] min-[900px]:duration-300 min-[900px]:ease-[cubic-bezier(0.2,0.7,0.2,1)]",
+    "hidden min-[900px]:sticky min-[900px]:top-0 min-[900px]:flex min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:self-start min-[900px]:flex-col min-[900px]:gap-8 min-[900px]:overflow-hidden min-[900px]:border-r min-[900px]:border-[var(--app-line)] min-[900px]:bg-transparent min-[900px]:px-3 min-[900px]:py-6",
   sidebarCollapsed:
     "min-[900px]:items-center min-[900px]:px-[0.48rem]",
   sidebarTop:
@@ -55,13 +55,13 @@ export const styles = {
     "absolute inset-0 flex scale-110 items-center justify-center opacity-0 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-100 group-hover:opacity-100",
   sidebarToggleIcon: "h-[1rem] w-[1rem]",
   brand: "text-[2.2rem] leading-[0.92] tracking-[-0.03em] font-[520]",
-  sideNav: "flex flex-col gap-[0.28rem]",
+  sideNav: "flex flex-col gap-3",
   sideNavCollapsed: "items-center",
   // Current page reads as a fill tint plus a colour, never as a heavier border.
   navButton: `${actionNavRow} overflow-hidden`,
   navButtonCollapsed:
     `${actionIconQuiet} hover:bg-[color-mix(in_srgb,var(--text)_6%,transparent)] data-[active=true]:bg-[color-mix(in_srgb,var(--text)_8%,transparent)] data-[active=true]:text-[var(--text)]`,
-  navIcon: "h-[0.85rem] w-[0.85rem]",
+  navIcon: "size-[1.2rem]",
   navLabelCollapsed: "hidden",
   sidebarUtilityStack: "mt-auto flex flex-col gap-[0.52rem]",
   sidebarUtilityStackCollapsed: "items-center",
@@ -73,7 +73,7 @@ export const styles = {
   main:
     "flex w-full min-w-0 flex-1 flex-col bg-[var(--bg)] min-[900px]:h-dvh min-[900px]:min-h-0 min-[900px]:overflow-y-auto min-[900px]:overscroll-contain [scrollbar-gutter:stable]",
   mainContent:
-    "flex min-w-0 flex-1 flex-col gap-[0.86rem] px-[0.96rem] pt-[1rem] pb-[calc(5rem+env(safe-area-inset-bottom))] max-[760px]:px-[0.82rem] min-[900px]:px-[1.18rem] min-[900px]:pt-[1.06rem] min-[900px]:pb-[1.3rem]",
+    "mx-auto flex w-full max-w-[72rem] min-w-0 flex-1 flex-col gap-6 px-5 pt-6 pb-[var(--app-dock-height)] min-[900px]:px-8 min-[900px]:pb-8",
 
   // Today: sentences, not tiles.
   today: "flex flex-col gap-[0.34rem] pt-[0.3rem]",
@@ -91,18 +91,18 @@ export const styles = {
   statLine: dataListStyles.statLine,
   statLineMuted: dataListStyles.statLineMuted,
   sectionHead: "flex items-baseline justify-between gap-[0.6rem]",
-  sectionTitle: "m-0 text-[1.0625rem] tracking-[-0.02em] font-[520] text-[var(--text)]",
+  sectionTitle: "m-0 text-lg tracking-[-0.03em] font-[600] text-[var(--text)]",
   settingRow:
     "m-0 flex min-h-[3.25rem] flex-wrap items-center justify-between gap-[0.75rem] [&_.theme-toggle-option]:min-h-[2.75rem] [&_.theme-toggle-option]:min-w-[2.75rem]",
   settingLabel: "text-[1rem] text-[var(--text)]",
   settingSelect:
     `${fieldBoxed} min-h-[2.75rem] min-w-[10rem] cursor-pointer rounded-[0.52rem] px-[0.8rem] text-[1rem] disabled:cursor-progress`,
-  panel: `${dashboardSurface} p-[0.82rem]`,
+  panel: `${dashboardSurface} p-5`,
   plainSection: "min-h-0 p-0",
   panelHead:
     "flex items-center justify-between gap-[0.5rem] max-[760px]:flex-wrap max-[760px]:items-stretch",
-  panelTitle: "m-0 text-[1rem] tracking-[-0.03em] font-[560]",
-  panelSubtitle: "m-[0.2rem_0_0.8rem] text-[0.72rem] text-[var(--muted)]",
+  panelTitle: "m-0 text-lg tracking-[-0.03em] font-[600]",
+  panelSubtitle: "m-[0.35rem_0_1rem] text-[0.8125rem] leading-relaxed text-[var(--muted)]",
   // Search owns the panel's full width; the sort select and the count share the
   // line directly above the list so the ordering names what you are looking at.
   searchInput:
@@ -185,7 +185,7 @@ export const styles = {
     "m-0 text-[0.72rem] text-[var(--muted)]",
   chartGrid:
     "grid grid-cols-1 gap-[0.56rem] min-[900px]:grid-cols-2",
-  chartPanel: `${dashboardSurface} p-[0.82rem]`,
+  chartPanel: `${dashboardSurface} p-5`,
   chartFrame: "mt-[0.52rem] h-[15rem] w-full",
   nutritionForm:
     "grid grid-cols-2 gap-[0.52rem] min-[760px]:grid-cols-4 max-[420px]:grid-cols-1",
@@ -227,15 +227,15 @@ export const styles = {
   nutritionMobileStatSecondary:
     "text-[0.72rem] text-[var(--muted)]",
   profileIdentity:
-    "flex items-center gap-[0.9rem] pt-[0.2rem]",
+    "flex items-center gap-4 rounded-[var(--app-radius)] bg-[var(--surface)] p-5",
   profileIdentityText: "min-w-0 flex-1",
   profileName:
-    "m-0 truncate text-[1.35rem] leading-[1.15] tracking-[-0.02em] font-[560] text-[var(--text)]",
-  profileMeta: "m-[0.2rem_0_0] truncate text-[0.9375rem] text-[var(--muted)]",
+    "m-0 text-[1.5rem] leading-[1.15] tracking-[-0.03em] font-[600] text-[var(--text)]",
+  profileMeta: "m-[0.4rem_0_0] text-sm leading-relaxed text-[var(--muted)]",
   profileNameRow: "flex min-w-0 items-center gap-[0.35rem]",
   profileEditButton: actionIconQuiet,
   dangerZone:
-    "flex flex-col items-start gap-[0.5rem] rounded-[0.54rem] border border-[color-mix(in_srgb,#b13d48_42%,transparent)] bg-[color-mix(in_srgb,#b13d48_9%,var(--bg))] p-[0.95rem]",
+    "flex flex-col items-start gap-2 rounded-[var(--app-radius)] border border-[color-mix(in_srgb,#b13d48_18%,transparent)] bg-[var(--surface)] p-5",
   dangerZoneTitle:
     "m-0 text-[1.0625rem] tracking-[-0.02em] font-[540] text-[color-mix(in_srgb,#b13d48_88%,var(--text))]",
   dangerZoneText: "m-0 text-[0.9375rem] leading-[1.45] text-[var(--muted)]",
@@ -258,7 +258,7 @@ export const styles = {
   // Account rows: label, current value, and an action that opens an inline
   // form. No nested cards, no always-open forms.
   accountRow:
-    "flex min-h-[3.25rem] flex-wrap items-center gap-x-[0.75rem] gap-y-[0.2rem] border-b border-[var(--dashboard-border)] py-[0.55rem] last:border-b-0",
+    "flex min-h-16 flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--app-line)] py-3 last:border-b-0",
   accountRowLabel: "min-w-0 flex-1 text-[1rem] text-[var(--text)]",
   accountRowValue: "min-w-0 truncate text-[0.9375rem] text-[var(--muted)]",
   accountRowAction: actionQuiet,

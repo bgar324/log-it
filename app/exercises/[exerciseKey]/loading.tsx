@@ -10,6 +10,7 @@ import {
 import { WorkspaceFrame } from "@/app/components/workspace-frame";
 import { WorkspaceExerciseDetailSkeleton } from "@/app/workspace/details/workspace-detail-skeletons";
 import { styles } from "./exercise-detail.styles";
+import LegacyExerciseDetailLoading from "@/app/_legacy/exercises/[exerciseKey]/loading";
 
 function SkeletonBlock({
   className = "",
@@ -54,6 +55,12 @@ export default function ExerciseDetailLoading() {
         <WorkspaceExerciseDetailSkeleton />
       </WorkspaceFrame>
     );
+  }
+
+  // Unflagged readers wait on the shipped detail screen, so they wait behind
+  // its own fallback rather than the redesigned one below.
+  if (!benEnabled) {
+    return <LegacyExerciseDetailLoading />;
   }
 
   return (

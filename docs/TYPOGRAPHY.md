@@ -15,7 +15,7 @@ Typography should make training data easy to scan. Logit uses a quiet, direct, o
 ## Rules
 
 - Do not use uppercase styling or all-caps labels for hierarchy.
-- Do not introduce alternate tracking values; use `-0.03em` for new/touched text.
+- Use the established role-specific tracking: roughly `-0.03em` for headings, slightly tighter for large page titles, and normal or tabular treatment for dense numeric fields.
 - Muted title metadata is allowed for concrete context such as dates, workout types, last-hit status, or preview status. Keep it natural-case, untracked, and visually secondary; do not use uppercase eyebrow styling as a reusable hierarchy pattern.
 - Use size, weight, spacing, placement, muted color, and borders for hierarchy.
 - Keep display text sized to its container; compact panels and controls should not use hero-scale type.
@@ -32,6 +32,8 @@ Use these as practical ranges, not a rigid token scale.
 | Body / compact UI | `0.82rem` to `0.92rem` | Inputs, buttons, descriptions, table data, sidebar labels |
 | Section | `1rem` to `1.35rem` | Panel titles, exercise names, split-editor titles |
 | Display | `1.55rem` and up | Page titles, KPI numerics, public headings |
+
+The authenticated redesign uses 32–40px page titles, 24–28px secondary headings, 15–16px body text, and 12–13px metadata. The focused exercise name is 24–30px; ordinary logger numeric inputs are 22px and at least 60px high. Optional compact set controls retain at least 16px text. Home uses muted and strong text within its plan sentence rather than additional badges.
 
 ## Landing Type Scale
 

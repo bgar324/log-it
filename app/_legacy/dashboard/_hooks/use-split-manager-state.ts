@@ -19,9 +19,9 @@ import {
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
   getInitialSelectedWeekday,
   type SplitManagerSaveState,
-} from "../split-manager.shared";
-import { useSplitManagerExerciseActions } from "./use-split-manager-exercise-actions";
-import { useSplitManagerPersistence } from "./use-split-manager-persistence";
+} from "@/app/_legacy/dashboard/split-manager.shared";
+import { useSplitManagerExerciseActions } from "@/app/_legacy/dashboard/_hooks/use-split-manager-exercise-actions";
+import { useSplitManagerPersistence } from "@/app/_legacy/dashboard/_hooks/use-split-manager-persistence";
 
 export type SplitManagerState = {
   split: WorkoutSplitTemplate;

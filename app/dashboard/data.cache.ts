@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { getNutritionDataTag, getSplitDataTag, getWorkoutDataTag } from "@/lib/cache-tags";
 import { getUserWorkoutSplit, getUserWorkoutSplits } from "@/lib/workout-splits/service";
-import { getCurrentPacificDate, startOfDatabaseWeek } from "@/lib/workout-utils";
+import { getCurrentPacificDate } from "@/lib/workout-utils";
 import type { DashboardClientData, DashboardView } from "./dashboard-types";
 import { dateKey } from "./data.formatters";
 import { createDefaultSplit } from "./data.empty";
@@ -28,7 +28,7 @@ function loadCachedDashboardOverviewSection(
 
   return unstable_cache(
     async () => loadDashboardOverviewSection(userId, weightUnit, now),
-    ["dashboard-overview", "v2-home-action", userId, weightUnit, nowKey],
+    ["dashboard-overview", "v3-training-home", userId, weightUnit, nowKey],
     {
       revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
       tags: [getWorkoutDataTag(userId), getSplitDataTag(userId)],
@@ -100,11 +100,11 @@ function loadCachedProgressSection(
   weightUnit: WeightUnit,
   now: Date,
 ) {
-  const weekStartKey = dateKey(startOfDatabaseWeek(now));
+  const nowKey = dateKey(now);
 
   return unstable_cache(
     async () => loadProgressSection(userId, weightUnit, now),
-    ["progress-view", userId, weightUnit, weekStartKey],
+    ["progress-view", "v2-daily-analysis", userId, weightUnit, nowKey],
     {
       revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
       tags: [getWorkoutDataTag(userId)],

@@ -33,6 +33,7 @@ import { useDashboardProfileForm } from "./_hooks/use-dashboard-profile-form";
 import { useDashboardProgress } from "./_hooks/use-dashboard-progress";
 import { useDashboardTodayPlan } from "./_hooks/use-dashboard-today-plan";
 import { useWorkspaceDesign } from "@/app/components/workspace-design-context";
+import { useWorkspaceNavigation } from "@/app/components/workspace-navigation";
 import { WorkspaceDashboardShell } from "@/app/components/workspace-frame";
 import { WorkspaceViewError, WorkspaceViewSkeleton } from "@/app/components/workspace-view-state";
 import { WorkspaceOverviewView } from "@/app/workspace/views/workspace-overview-view";
@@ -42,6 +43,7 @@ import { WorkspaceProfileView } from "@/app/workspace/views/workspace-profile-vi
 import { WorkspaceSettingsView } from "@/app/workspace/views/workspace-settings-view";
 import { WorkspaceNutritionPanel } from "@/app/workspace/views/workspace-nutrition-panel";
 import { WorkspaceSplitManager } from "@/app/workspace/split/workspace-split-manager";
+import { DashboardClient as LegacyDashboardClient } from "@/app/_legacy/dashboard/dashboard-client";
 
 function LegacyViewError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return <div className={styles.panel}><p className={styles.empty}>{message}</p><button type="button" className={styles.retryButton} onClick={onRetry}>Retry</button></div>;
@@ -111,13 +113,30 @@ function mergeWorkoutMonthPages(
   return Array.from(entriesByMonth, ([month, entries]) => ({ month, entries }));
 }
 
-export function DashboardClient({
+/**
+ * The redesigned dashboard is owner-gated. The selection happens here, in a
+ * component that renders one implementation or the other, so each design keeps
+ * its own hooks: an unflagged reader never runs the redesign's hooks, and no
+ * branch can reorder them.
+ */
+export function DashboardClient(props: DashboardClientProps) {
+  const workspaceEnabled = useWorkspaceDesign();
+
+  if (!workspaceEnabled && !props.benEnabled) {
+    return <LegacyDashboardClient {...props} />;
+  }
+
+  return <TrainingDashboardClient {...props} />;
+}
+
+function TrainingDashboardClient({
   initialView,
   data,
   userId,
   benEnabled,
 }: DashboardClientProps) {
   const router = useRouter();
+  const { requestNavigation } = useWorkspaceNavigation();
   const workspaceEnabled = useWorkspaceDesign();
   const Shell = workspaceEnabled ? WorkspaceDashboardShell : DashboardShell;
   const OverviewView = workspaceEnabled ? WorkspaceOverviewView : DashboardOverviewView;
@@ -145,7 +164,7 @@ export function DashboardClient({
   );
   const inFlightViewsRef = useRef<Set<DashboardView>>(new Set());
   const workoutHistoryRequestRef = useRef(0);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [workoutFilters, setWorkoutFilters] = useState(emptyWorkoutFilters);
   const [appliedWorkoutFilters, setAppliedWorkoutFilters] =
     useState(emptyWorkoutFilters);
@@ -449,9 +468,11 @@ export function DashboardClient({
       return;
     }
 
-    startTransition(() => {
-      window.history.pushState(null, "", toViewHref(view));
-      setActiveView(view);
+    requestNavigation(() => {
+      startTransition(() => {
+        window.history.pushState(null, "", toViewHref(view));
+        setActiveView(view);
+      });
     });
   }
 
@@ -572,9 +593,9 @@ export function DashboardClient({
       {activeView === "split" ? (
         <div
           key="split"
-          className={workspaceEnabled ? "space-y-6" : "view-transition-shell min-[900px]:h-[calc(100dvh-5.35rem)] min-[900px]:min-h-0 min-[900px]:overflow-hidden"}
+          className={viewClassName}
         >
-          <section className={workspaceEnabled ? "min-w-0" : `${styles.plainSection} min-[900px]:h-full`}>
+          <section className={workspaceEnabled ? "min-w-0" : styles.plainSection}>
             {activeViewError ? (
               <ViewError message={activeViewError} onRetry={() => void loadViewData("split", { showError: true, showLoading: true })} />
             ) : activeViewIsLoading && !loadedViews.has("split") ? (

@@ -2,10 +2,10 @@ import type { DashboardClientData, DashboardView } from "./dashboard-types";
 
 export const VIEW_TITLES: Record<DashboardView, string> = {
   dashboard: "Home",
-  workouts: "Workouts",
-  progress: "Progress",
+  workouts: "History",
+  progress: "Analysis",
   nutrition: "Nutrition",
-  split: "Split",
+  split: "Splits",
   profile: "Profile",
   settings: "Settings",
 };

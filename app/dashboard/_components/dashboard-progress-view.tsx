@@ -1,21 +1,17 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { countLabel, daysAgoLabel } from "../dashboard-client.shared";
-import { styles } from "../dashboard.styles";
+import { analysisStyles } from "../analysis.styles";
+import { AnalysisPanel } from "../analysis-panel";
+import { dataListStyles } from "@/app/components/data-list.styles";
 import type { DashboardClientData } from "../dashboard-types";
 import type {
   DashboardProgressState,
   ExerciseSortMode,
 } from "../_hooks/use-dashboard-progress";
-import { DashboardViewSkeleton, ProgressChartsSkeleton } from "./dashboard-view-skeleton";
-
-const ProgressCharts = dynamic(
-  () => import("../progress-charts").then((module) => module.ProgressCharts),
-  { loading: () => <ProgressChartsSkeleton /> },
-);
+import { DashboardViewSkeleton } from "./dashboard-view-skeleton";
 
 // Four named orderings in one control. The old pair of chevron toggles carried
 // the same four states, but "Recent" meant three different things depending on
@@ -38,6 +34,15 @@ export type DashboardProgressViewProps = {
   onRetry?: () => void;
 };
 
+/**
+ * Analysis: one dominant chart with its own period and metric controls, then
+ * recorded activity, then the exercise directory.
+ *
+ * The directory stays *below* the graph deliberately. It answers "what have I
+ * done with this one lift", which is a different question from "what has my
+ * training looked like" — and putting a search field above the chart made the
+ * view read as a list page with a picture attached.
+ */
 export function DashboardProgressView({
   progress,
   exercises,
@@ -47,19 +52,12 @@ export function DashboardProgressView({
   error = null,
   onRetry,
 }: DashboardProgressViewProps) {
-  function formatBestWeight(value: number) {
-    // Bodyweight-only history has no external load, and "0 lb" reads as a
-    // measurement rather than the absence of one.
-    return value > 0 ? formatWeightWithUnit(value, weightUnit) : "Bodyweight";
-  }
-
-
   if (error) {
     return (
-      <section className={styles.panel}>
-        <p className={styles.empty}>{error}</p>
+      <section className={analysisStyles.card}>
+        <p className={analysisStyles.empty}>{error}</p>
         {onRetry ? (
-          <button type="button" className={styles.retryButton} onClick={onRetry}>
+          <button type="button" className={analysisStyles.retryButton} onClick={onRetry}>
             Retry
           </button>
         ) : null}
@@ -71,35 +69,17 @@ export function DashboardProgressView({
     return <DashboardViewSkeleton kind="progress" />;
   }
 
-  const thisWeek = `${progress.currentWeek} ${
-    progress.currentWeek === 1 ? "workout" : "workouts"
-  }`;
-  const weekComparison =
-    progress.weekDelta === 0
-      ? "the same as last week"
-      : progress.weekDelta > 0
-        ? `${progress.weekDelta} more than last week`
-        : `${Math.abs(progress.weekDelta)} fewer than last week`;
-  // Product rule: round up. A fractional average reads like a rounding error,
-  // and "0 per week" reads like you never trained.
-  const weeklyAverage = Math.ceil(progress.avgWeekly);
-
   return (
-    <>
-      <section>
-        <p className={styles.statLine}>
-          You have logged {thisWeek} this week, {weekComparison}.
-        </p>
-        <p className={styles.statLineMuted}>
-          Over the past 12 weeks you have averaged {weeklyAverage}{" "}
-          {weeklyAverage === 1 ? "workout" : "workouts"} a week.
-        </p>
-      </section>
+    <div className={analysisStyles.root}>
+      <AnalysisPanel progress={progress} weightUnit={weightUnit} />
 
-      <ProgressCharts weeklySeries={progress.weeklySeries} weightUnit={weightUnit} />
-
-      <section className={styles.panel}>
-        <h2 className={styles.panelTitle}>Exercises</h2>
+      <section className={analysisStyles.card}>
+        <div className={analysisStyles.directoryHead}>
+          <h2 className={analysisStyles.cardTitle}>Exercises</h2>
+          <p className={analysisStyles.cardNote}>
+            Every lift you have recorded. Open one for its own history.
+          </p>
+        </div>
 
         {/* Search leads: with dozens of exercises, naming one beats ordering
             them all. The sort sits on the count line as a single named choice —
@@ -109,16 +89,16 @@ export function DashboardProgressView({
           value={state.exerciseSearch}
           onChange={(event) => state.handleExerciseSearchChange(event.target.value)}
           placeholder="Search exercise"
-          className={styles.searchInput}
+          className={analysisStyles.searchInput}
         />
 
-        <div className={styles.exerciseListMeta}>
-          <p className={styles.exerciseCount}>
+        <div className={analysisStyles.listMeta}>
+          <p className={analysisStyles.listCount}>
             {state.filteredExercises.length}{" "}
             {state.filteredExercises.length === 1 ? "exercise" : "exercises"}
           </p>
           <select
-            className={styles.exerciseSortSelect}
+            className={analysisStyles.sortSelect}
             value={state.exerciseSortMode}
             onChange={(event) =>
               state.handleExerciseSortChange(event.target.value as ExerciseSortMode)
@@ -131,28 +111,34 @@ export function DashboardProgressView({
             ))}
           </select>
         </div>
+
         {state.filteredExercises.length > 0 ? (
           <>
-            <div className={styles.listStack}>
+            <div className={dataListStyles.list}>
               {state.visibleExercises.map((exercise) => (
                 <Link
                   key={exercise.key}
                   href={`/exercises/${encodeURIComponent(exercise.routeKey)}`}
-                  className={`${styles.listRow} ${styles.listRowLink}`}
+                  className={`${dataListStyles.row} ${dataListStyles.rowLink}`}
                 >
-                  <div className={styles.listRowMain}>
-                    <p className={styles.metricMain}>{exercise.name}</p>
-                    <p className={styles.metricSubtle}>
+                  <div className={dataListStyles.rowMain}>
+                    <p className={dataListStyles.rowTitle}>{exercise.name}</p>
+                    <p className={dataListStyles.rowMeta}>
                       {countLabel(exercise.sessionCount, "session")} ·{" "}
                       {countLabel(exercise.setCount, "set")} ·{" "}
                       {countLabel(exercise.totalReps, "rep")}
                     </p>
                   </div>
-                  <div className={styles.listRowStats}>
-                    <p className={styles.listRowValue}>
-                      {formatBestWeight(exercise.bestWeight)}
+                  <div className={dataListStyles.rowStats}>
+                    <p className={dataListStyles.rowValue}>
+                      {/* Bodyweight-only history has no external load, and
+                          "0 lb" reads as a measurement rather than the absence
+                          of one. */}
+                      {exercise.bestWeight > 0
+                        ? formatWeightWithUnit(exercise.bestWeight, weightUnit)
+                        : "Bodyweight"}
                     </p>
-                    <p className={styles.metricSubtle}>
+                    <p className={dataListStyles.rowMeta}>
                       last hit {exercise.lastPerformedAtLabel} ·{" "}
                       {daysAgoLabel(exercise.daysSinceLastHit)}
                     </p>
@@ -163,33 +149,33 @@ export function DashboardProgressView({
             </div>
 
             {state.hasPreviousPage || state.hasNextPage ? (
-              <div className={styles.pagerRow} data-pager="exercises">
+              <div className={dataListStyles.pagerRow} data-pager="exercises">
                 <button
                   type="button"
-                  className={styles.pagerButton}
+                  className={analysisStyles.pagerButton}
                   onClick={state.goToPreviousPage}
                   disabled={!state.hasPreviousPage}
                 >
-                  <ChevronLeft className={styles.pagerIcon} strokeWidth={1.9} />
+                  <ChevronLeft className={dataListStyles.pagerIcon} strokeWidth={1.9} />
                 </button>
-                <span className={styles.pagerRange}>{state.rangeLabel}</span>
+                <span className={dataListStyles.pagerRange}>{state.rangeLabel}</span>
                 <button
                   type="button"
-                  className={styles.pagerButton}
+                  className={analysisStyles.pagerButton}
                   onClick={state.goToNextPage}
                   disabled={!state.hasNextPage}
                 >
-                  <ChevronRight className={styles.pagerIcon} strokeWidth={1.9} />
+                  <ChevronRight className={dataListStyles.pagerIcon} strokeWidth={1.9} />
                 </button>
               </div>
             ) : null}
           </>
         ) : (
-          <p className={styles.empty}>
+          <p className={analysisStyles.empty}>
             {exercises.length > 0 ? "No exercise matches your search." : "No exercise data yet."}
           </p>
         )}
       </section>
-    </>
+    </div>
   );
 }

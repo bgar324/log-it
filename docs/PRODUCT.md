@@ -2,7 +2,15 @@
 
 Logit is a lightweight workout journal. The durable product direction in the repo is fast workout entry, exercise history, split planning, profile preferences, and progress views without a full social network or coaching platform.
 
-## Owner-only authenticated workspace
+## Default authenticated experience
+
+The reference-driven redesign is an owner-only rollout behind the existing PostHog `Ben` flag. Unflagged users and public previews retain the previous UI. Nova and Ionic remain disabled.
+
+Home is personal and plan-first. History browses recorded days. Analysis combines a dominant graph, metric selectors, activity, and descriptive weekly consistency. The logger shows one exercise at a time without requiring set completion. Saved splits use folders with separate Open and Set active actions.
+
+## Dormant Nova workspace
+
+The owner disabled this rollout. The following rules describe its retained code, not the default interface.
 
 The owner rollout covers workout entry/editing, history and details, progress and exercise details, plans, profile, settings, and account management. The homepage and other public pages are unchanged. Unflagged accounts retain the existing app.
 
@@ -32,22 +40,23 @@ Ionic account, nutrition, split, history, and progress screens use the existing 
 - First name, last name, email, username, preferred weight unit, public profile setting, and avatar are profile-level user data.
 - The profile view is one list: identity (tappable avatar, name with a pencil that opens an edit dialog, `@username`, join month, public/private state), an account section of rows (email, password), and a bordered red danger zone holding account deletion. The edit dialog covers first name, last name, username, and profile visibility. Email and password changes open inline from their row; both require the current password. Account deletion is confirmed in a modal by typing the account username, is permanent, and removes all workouts, splits, and nutrition data.
 - Usernames are editable and validated by one shared rule (`lib/username.ts`, 3–24 letters, numbers, or underscores). The server rejects duplicates and relies on the unique index for the race. Changing a username changes the `/u/[username]` public URL; the previous one stops resolving.
-- Sign out is app chrome: it lives beside Settings in the phone drawer footer and in the desktop sidebar utility group, not on the profile view.
+- Sign out remains in the phone navigation drawer and desktop sidebar, not Profile. Profile and Settings have direct controls in the top utility row.
 - A chosen profile photo applies immediately rather than waiting for a separate save.
 - Signed-in users land on `/dashboard`.
-- The dashboard has seven views: overview, workouts, progress, nutrition, split, profile, and settings. On phones the bottom bar reaches overview, the workout logger, and nutrition; a top-left sidebar control opens the drawer for workouts, progress, split, profile, and settings. Desktop lists every view in the sidebar.
+- The dashboard has seven views: overview, workouts, progress, nutrition, split, profile, and settings. The phone pill holds Home, Log, owner Split or standard Nutrition, and Analysis. The drawer holds secondary destinations. Desktop retains its sidebar.
 - Dashboard view switching updates the query string, lazily loads missing view data, and reuses loaded views until an authoritative server refresh.
-- The overview greets the user by first name and states today's plan as a sentence derived from the active split, followed by one action: log the planned workout, log an unscheduled workout on a rest day, or set up a split when none exists. The note under the plan counts both planned exercises and the sets they add up to, since ten exercises at two sets is a different session from seven at five. When today's split workout type is already logged for the current Pacific date, the overview reads `Logged for today.` and offers no second action for that plan.
+- Home greets the user by first name and states today's plan. Its primary action is Resume for a recoverable draft, otherwise Open for today's saved session, otherwise Start. The plan note counts exercises and sets. Rest days offer an explicit unscheduled workout; accounts without a split can set one up.
 - Settings holds preferences only: theme and weight unit. Both apply on selection with no save button, and the unit write sends the saved profile values plus the chosen unit, so it can never commit unsaved Profile edits or a pending avatar. Email, password, and account deletion stay on the profile view; sign out stays in app chrome.
-- Each view states its own numbers as a sentence rather than metric tiles. The overview carries no summary line at all (today's plan and one action only). Progress reads workouts this week, how that compares to last week, and a 12-week weekly average rounded **up**, and does not report total weight lifted. Workouts reads the lifetime total — or the match count when filters are active — over a muted all-time sets/exercises line.
-- The overview does not repeat workout history or weekly counts; the workouts and progress views own those. Under the plan sentence, `Where you left off` lists every exercise today's split asks for: its set target on the left, and on the right the top set of the last session with `last hit <date>` under it. No all-time bests — the number shown is one you actually did, on the day named beneath it. An exercise with no history reads `First time`. Rest days and split-less accounts show no list.
-- The workout logger's Back returns to the view that opened it, carried as `?from=<view>` and validated through `normalizeDashboardView`, so an unknown or hostile value lands on the dashboard rather than redirecting off-app. Editing an existing workout returns to that workout instead.
-- The workout logger keeps only set rows on screen. Save, add another exercise, reorder exercises, reset from split, and the rest timer live in one thumb-reachable dial in the bottom-right corner. Each exercise's overflow menu contains `Add set` and `Delete exercise`, so repeated full-width set actions do not lengthen the phone logger. Opening the dial blurs the page and reveals the workout actions as a staggered column with no panel around them. Save is the filled action. Picking a rest duration closes the dial and turns the trigger into the running clock; reopening a running timer shows skip, pause, and add 30 seconds.
+- Analysis shows one graph with Week, Month, and Year windows and Sessions, Sets, and Volume selectors. Its notes are arithmetic on recorded data, not AI coaching. Consistency is weekly, not daily; rest days do not break it, and an unfinished current week is excluded until a session is recorded.
+- Home includes three calendar months of activity, a link to the latest session, and today's planned exercises with their prior result. These are recorded facts, not recovery or adherence scores.
+- Logger Back and successful create saves return to the originating view, defaulting to Home. Edit Back and successful saves return to the workout detail. History's validated `day` context survives that chain and loads older pages when necessary.
+- The logger shows one exercise with all its sets. Previous, Next, a jump list, and swipes navigate without losing values. Save, Add exercise, Reorder, Reset from split, and capability-gated timing remain in a thumb-reachable tools fan. Add set and Delete exercise stay in the exercise menu. The owner does not see timing or Nutrition.
 - The progress view's exercise list is search-first: a full-width search, then a count line carrying one named ordering (most recent, least recent, most sessions, fewest sessions), then the rows. It shows one page of eight with an arrow at each edge of the panel and the position between them, so the panel stays the same height however deep you go; searching or reordering returns to the first page. Each row reads the exercise and its sessions, sets, and reps on the left, with the best weight and when it was last hit on the right. An exercise trained only at bodyweight reads `Bodyweight` rather than `0 lb`.
 - Nutrition does not ask for numbers nobody can estimate. Above the fields it offers the days you have already logged as one-tap rows that fill calories and protein for you, with a repeated total ranked above a recent one-off and a median "typical day" when nothing else fits. Today is never offered back, since the form already holds it. Partial entries are allowed: log the calories without the protein, or neither.
 - Users can log, edit, duplicate, and delete workouts.
 - Users can inspect workouts and exercise-specific history.
 - Users can save multiple weekly splits and choose one active split to seed the workout logger.
+- Split folders distinguish the active plan from the plan being edited. Opening another folder never activates it. Unsaved day edits survive folder switches; leaving the library warns about all dirty plans. Activation requires saved edits.
 - Users can track today's calories, protein, BMR target, and body weight from the Nutrition dashboard view, with recent-day history and day/week/month calorie charts.
 - Public profiles exist at `/u/[username]` when enabled.
 
@@ -63,7 +72,7 @@ Ionic account, nutrition, split, history, and progress screens use the existing 
 - The logger accepts the user's preferred unit, but the database stores weights in pounds.
 - Create-mode workout drafts are autosaved client-side, but only after the user changes something: opening the logger and leaving it stores nothing. A saved workout deletes its draft, and nothing — including the page-hide flush — puts it back.
 - A recovered draft keeps its own date, because it is unfinished work from that day rather than a template. When that date is not today, the logger says so and offers exactly two resolutions: move the draft to today, or discard it and return to the seeded form. The create form has no date field, so without that notice a draft from an earlier day can neither be saved nor cleared.
-- Each exercise card states its history in one line (`Last hit May 15 · best 140 lb`, or `First time logging this.`), and each set row shows what that set was last time as muted ghost text with the predicted target as its input placeholder. Comparison is per set, inline; there is no comparison panel.
+- Each exercise states when it was last trained, while each set shows its prior result as muted ghost text and its predicted target as a placeholder. There is no separate comparison panel or invented all-time best.
 - Adding a set never refetches the comparison, and editing an existing workout never compares it against itself.
 - Workout logs cannot be dated in the future.
 - Duplicate workout creates a new workout dated to the current Pacific date and the API returns the new workout id.
