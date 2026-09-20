@@ -240,7 +240,7 @@ export function WorkspaceWorkoutsView({
   error = null,
   onLoadMore,
   onRetry,
-}: DashboardWorkoutsViewProps) {
+}: Omit<DashboardWorkoutsViewProps, "userId">) {
   const filteredWorkoutMonths = useMemo(
     () => getFilteredWorkoutMonths(workoutMonths, filters),
     [filters, workoutMonths],

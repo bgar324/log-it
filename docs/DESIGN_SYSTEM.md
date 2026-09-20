@@ -116,7 +116,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 
 - Dark background: `#0d0e11`; surfaces: `#1a1b20` and `#24252b`; text: `#f5f5f4`.
 - Light background: `#f6f5f2`; raised surface: white; text: `#1c1d21`.
-- Accents are monochrome: the text color supplies chart marks, selected controls, and the filled active folder. Soft states use a neutral tint, not blue.
+- Accents are monochrome except for completed-workout feedback: Home's Open workout button uses the existing forest green `#21834d` with warm white text. Start and Resume remain neutral. The text color supplies chart marks, selected controls, and the filled active folder; soft states use a neutral tint, not blue.
 - Grouped surfaces use 24px corners, fields use 14px, and general actions remain pills. Avoid nested frames and decorative glows.
 - View changes use short, small movements. Exercise navigation uses Swiper's horizontal slide motion; the floating action row stays stationary. Reduced motion preserves the same states without animated movement.
 

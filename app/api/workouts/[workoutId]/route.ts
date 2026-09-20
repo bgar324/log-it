@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
+import { isWeightUnit } from "@/lib/weight-unit";
 import { getWorkoutDataTag } from "@/lib/cache-tags";
 import { syncWorkoutReadModels } from "@/lib/workout-read-models";
 import { deleteWorkout, WORKOUT_NOT_FOUND_ERROR } from "@/lib/workouts/service";
@@ -24,8 +25,13 @@ const PRIVATE_HEADERS = { "Cache-Control": "private, no-store" };
  * browser's selected day. It is the same projection the workout page renders,
  * and it is scoped to the session user inside the query, so an id belonging to
  * someone else is indistinguishable from an id that does not exist.
+ *
+ * A caller that is already showing numbers in a unit may ask for that unit:
+ * the history browser remembers answers per unit, and a saved preference that
+ * has not reached this request yet must not put kilograms under a pounds
+ * label. Anything but a known unit falls back to the saved preference.
  */
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const user = await getSessionUser();
 
   if (!user) {
@@ -36,12 +42,13 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   const { workoutId } = await context.params;
+  const requestedUnit = new URL(request.url).searchParams.get("unit");
 
   try {
     const detail = await loadWorkspaceWorkoutDetail(
       user.id,
       workoutId,
-      user.preferredWeightUnit,
+      isWeightUnit(requestedUnit) ? requestedUnit : user.preferredWeightUnit,
     );
 
     if (!detail) {

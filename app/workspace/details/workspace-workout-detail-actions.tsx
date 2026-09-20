@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/workspace-ui/dropdown-menu";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { invalidateWorkoutDetails } from "@/app/dashboard/workout-detail-cache";
 import { WorkspaceLinkPending } from "@/app/workspace/views/workspace-link-pending";
 
 export type WorkspaceWorkoutDetailActionsProps = {
@@ -89,6 +90,10 @@ export function WorkspaceWorkoutDetailActions({
       if (!response.ok) {
         throw new Error(payload.error ?? "Unable to delete workout.");
       }
+
+      // Deleting here lands on the dashboard history, which must not serve
+      // this workout's cached sets afterwards.
+      invalidateWorkoutDetails(workoutId);
 
       posthog.capture("workout_deleted");
       toast.success("Workout deleted.", { id: toastId });

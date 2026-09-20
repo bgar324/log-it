@@ -32,6 +32,8 @@ export type DashboardWorkoutsViewProps = {
   workoutMonths: DashboardClientData["workoutMonths"];
   lifetime: DashboardClientData["workoutHistory"]["lifetime"];
   displayWeightUnit: DashboardClientData["user"]["preferredWeightUnit"];
+  /** The signed-in account, so cached session details stay account-scoped. */
+  userId: string;
   filters: DashboardWorkoutFilters;
   /** The user's today, so "next month" stops at the month they live in. */
   asOfDate?: string;
@@ -221,6 +223,7 @@ function bookmarkedMonthSnapshot() {
 export function DashboardWorkoutsView({
   workoutMonths,
   displayWeightUnit,
+  userId,
   asOfDate,
   isLoading = false,
   isLoadingMore = false,
@@ -425,9 +428,13 @@ export function DashboardWorkoutsView({
 
       {selectedDay ? (
         // Deliberately unkeyed: the day's own section restarts the entrance,
-        // while this component keeps the sets it already fetched, so stepping
+        // while the sets already read stay in the detail cache, so stepping
         // back a day costs nothing.
-        <DashboardDaySessions day={selectedDay} weightUnit={displayWeightUnit} />
+        <DashboardDaySessions
+          day={selectedDay}
+          weightUnit={displayWeightUnit}
+          userId={userId}
+        />
       ) : null}
 
       {emptyMessage ? (

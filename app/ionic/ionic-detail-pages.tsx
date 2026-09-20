@@ -5,6 +5,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonNote, IonPage, IonSpinner, IonTitle, IonToolbar, useIonAlert, useIonRouter, useIonToast } from "@ionic/react";
 import posthog from "posthog-js";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { invalidateWorkoutDetails } from "@/app/dashboard/workout-detail-cache";
 import { formatWeightWithUnit } from "@/lib/weight-unit";
 import { ExerciseDetailChart } from "@/app/exercises/[exerciseKey]/exercise-detail-chart";
 import type { ExerciseDetailData } from "@/app/exercises/[exerciseKey]/exercise-detail.data";
@@ -27,6 +28,9 @@ export function IonicWorkoutPage({ revision, onRefresh }: { revision: number; on
       const response = await fetch(`/api/workouts/${encodeURIComponent(workoutId)}`, { method: "DELETE" });
       const payload: { error?: string } = await response.json();
       if (!response.ok) throw new Error(payload.error || "Unable to delete workout.");
+      // Deleted on the server: the dashboard history must not serve its
+      // cached sets to the same browser session.
+      invalidateWorkoutDetails(workoutId);
       posthog.capture("workout_deleted");
       onRefresh();
       router.push("/ionic/workouts", "root", "replace");

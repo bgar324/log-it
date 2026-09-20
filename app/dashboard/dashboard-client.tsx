@@ -543,6 +543,7 @@ export function DashboardClient({
             asOfDate={dashboardData.overview.asOfDate}
             lifetime={dashboardData.workoutHistory.lifetime}
             displayWeightUnit={displayWeightUnit}
+            userId={userId}
             filters={workoutFilters}
             isLoading={activeViewIsLoading && !loadedViews.has("workouts")}
             isLoadingMore={workoutHistoryLoading}

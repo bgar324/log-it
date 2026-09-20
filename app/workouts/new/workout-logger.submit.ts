@@ -1,3 +1,4 @@
+import { invalidateWorkoutDetails } from "@/app/dashboard/workout-detail-cache";
 import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { toSafeString, type ExerciseDraft, type WorkoutSubmitResponse } from "./workout-logger.utils";
@@ -139,8 +140,17 @@ export async function submitWorkoutLoggerPayload(options: {
     signal: options.signal,
   });
 
-  return {
-    response,
-    data: (await response.json()) as WorkoutSubmitResponse,
-  };
+  const data = (await response.json()) as WorkoutSubmitResponse;
+
+  // A persisted workout is a new answer to every detail read of it, so the
+  // history's in-memory details for that workout can no longer be served.
+  // Only a write the server accepted invalidates: a rejected save leaves the
+  // cached reads correct, and dropping them would cost a refetch for nothing.
+  // A create with no id back is the one case we cannot aim at, so it clears
+  // the cache rather than leave a guess behind.
+  if (response.ok) {
+    invalidateWorkoutDetails(data.id ?? options.workoutId);
+  }
+
+  return { response, data };
 }

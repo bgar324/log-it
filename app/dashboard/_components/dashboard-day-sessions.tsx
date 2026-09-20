@@ -6,25 +6,25 @@ import { LinkPendingOverlay } from "@/app/components/link-pending";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { workoutReturnQueryForDay } from "@/app/workouts/workout-return";
 import { styles } from "../dashboard.styles";
-import {
-  useWorkoutDetails,
-  type WorkoutDetailState,
-} from "../_hooks/use-workout-details";
+import { useWorkoutDetails } from "../_hooks/use-workout-details";
+import type { WorkoutDetailState } from "../workout-detail-cache";
 import type { RecordedDay } from "./dashboard-day-strip";
 import { historyStyles } from "./dashboard-history.styles";
 
 type DashboardDaySessionsProps = {
   day: RecordedDay;
   weightUnit: WeightUnit;
+  /** Whose history this is: cached sets never cross accounts. */
+  userId: string;
 };
 
 const MAX_SKELETON_EXERCISES = 6;
 const MAX_SKELETON_SETS = 5;
 
 /** The selected day's sessions, with title links for details and direct edit pencils. */
-export function DashboardDaySessions({ day, weightUnit }: DashboardDaySessionsProps) {
+export function DashboardDaySessions({ day, weightUnit, userId }: DashboardDaySessionsProps) {
   const workoutIds = day.workouts.map((workout) => workout.id);
-  const { details, retry } = useWorkoutDetails(workoutIds, weightUnit);
+  const { details, retry } = useWorkoutDetails(workoutIds, weightUnit, userId);
   // Editing a session should be able to bring you back to the day you were
   // browsing, not to the top of the history.
   const returnQuery = workoutReturnQueryForDay(day.date);

@@ -9,6 +9,10 @@ import {
   type DashboardWorkoutsViewProps,
 } from "@/app/dashboard/_components/dashboard-workouts-view";
 import type { DashboardWorkoutFilters } from "@/app/dashboard/dashboard-types";
+import {
+  invalidateWorkoutDetails,
+  readWorkoutDetail,
+} from "@/app/dashboard/workout-detail-cache";
 
 type WorkoutMonths = DashboardWorkoutsViewProps["workoutMonths"];
 type WorkoutRow = WorkoutMonths[number]["entries"][number];
@@ -60,6 +64,7 @@ function view(
     workoutMonths: months,
     lifetime: { workouts: 80, sets: 960, exercises: 12 },
     displayWeightUnit: "LB" as const,
+    userId: "user-1",
     filters,
     ...overrides,
   });
@@ -88,6 +93,36 @@ function detailFor(id: string) {
   };
 }
 
+/** The request the detail cache makes for one workout in one display unit. */
+function detailUrl(id: string, unit: "LB" | "KG" = "LB") {
+  return `/api/workouts/${id}?unit=${unit}`;
+}
+
+function detailResponse(url: string) {
+  const id = url.slice("/api/workouts/".length).split("?")[0] ?? "";
+
+  return new Response(JSON.stringify({ detail: detailFor(id) }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+/** The same session with a different exercise name, to tell two reads apart. */
+function renamedDetailResponse(url: string, exerciseName: string) {
+  const id = url.slice("/api/workouts/".length).split("?")[0] ?? "";
+  const detail = detailFor(id);
+
+  return new Response(
+    JSON.stringify({
+      detail: {
+        ...detail,
+        exercises: detail.exercises.map((exercise) => ({ ...exercise, name: exerciseName })),
+      },
+    }),
+    { status: 200, headers: { "content-type": "application/json" } },
+  );
+}
+
 const originalFetch = globalThis.fetch;
 let requestedUrls: string[] = [];
 let respond: (url: string) => Promise<Response> = async () =>
@@ -95,16 +130,14 @@ let respond: (url: string) => Promise<Response> = async () =>
 
 test.beforeEach(() => {
   requestedUrls = [];
+  // The detail cache outlives a mount by design; each test starts empty.
+  invalidateWorkoutDetails();
   globalThis.fetch = (async (input: RequestInfo | URL) => {
     const url = String(input);
     requestedUrls.push(url);
     return respond(url);
   }) as typeof fetch;
-  respond = async (url) =>
-    new Response(JSON.stringify({ detail: detailFor(url.split("/").pop() ?? "") }), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
+  respond = async (url) => detailResponse(url);
   window.history.replaceState(null, "", "/dashboard?view=workouts");
 });
 
@@ -279,7 +312,7 @@ test("the selected day's sets come from the workout detail endpoint", async () =
   const mounted = await render(view(buildMonths(1, 1)));
   await settle();
 
-  assert.deepEqual(requestedUrls, ["/api/workouts/w-0-0"]);
+  assert.deepEqual(requestedUrls, [detailUrl("w-0-0")]);
   const text = mounted.text();
   assert.match(text, /Bench press/);
   assert.match(text, /185 lb × 8 reps/);
@@ -309,10 +342,7 @@ test("a failed detail load can be retried without leaving the day", async () => 
   const retry = mounted.findByText("button", "Retry");
   assert.ok(retry, "expected a retry for the failed session");
 
-  respond = async (url) =>
-    new Response(JSON.stringify({ detail: detailFor(url.split("/").pop() ?? "") }), {
-      status: 200,
-    });
+  respond = async (url) => detailResponse(url);
   await mounted.click(retry);
   await settle();
 
@@ -488,4 +518,142 @@ test("an empty history renders the empty state rather than a strip", async () =>
   assert.equal(requestedUrls.length, 0, "nothing to fetch with no day selected");
 
   mounted.unmount();
+});
+
+test("returning to history renders the sets it already read, without asking again", async () => {
+  const mounted = await render(view(buildMonths(1, 1)));
+  await settle();
+
+  assert.deepEqual(requestedUrls, [detailUrl("w-0-0")]);
+  mounted.unmount();
+
+  // The server would fail this request now, so sets on screen can only have
+  // come from the cache — and they are there on the first frame, unsettled.
+  respond = async () => new Response(JSON.stringify({ error: "Nope." }), { status: 500 });
+  const again = await render(view(buildMonths(1, 1)));
+
+  assert.match(again.text(), /185 lb × 8 reps/);
+  assert.equal(requestedUrls.length, 1, "a remount of history re-reads nothing");
+
+  again.unmount();
+});
+
+test("stepping back to a day already read costs nothing", async () => {
+  const mounted = await render(view(buildMonths(1, 2)));
+  await settle();
+
+  const cards = dayCards(mounted);
+  await mounted.click(cards[0] as HTMLElement);
+  await settle();
+  assert.deepEqual(requestedUrls, [detailUrl("w-0-0"), detailUrl("w-0-1")]);
+
+  await mounted.click(cards[1] as HTMLElement);
+  await settle();
+
+  assert.deepEqual(
+    requestedUrls,
+    [detailUrl("w-0-0"), detailUrl("w-0-1")],
+    "the day it came back to was already read",
+  );
+  assert.match(mounted.text(), /185 lb × 8 reps/);
+
+  mounted.unmount();
+});
+
+test("leaving a day mid-read inherits that read instead of starting another", async () => {
+  const slow = Promise.withResolvers<void>();
+  respond = async (url) => {
+    await slow.promise;
+    return detailResponse(url);
+  };
+
+  const mounted = await render(view(buildMonths(1, 2)));
+  await settle();
+
+  const cards = dayCards(mounted);
+  await mounted.click(cards[0] as HTMLElement);
+  await settle();
+  await mounted.click(cards[1] as HTMLElement);
+  await settle();
+
+  assert.deepEqual(
+    requestedUrls,
+    [detailUrl("w-0-0"), detailUrl("w-0-1")],
+    "one request per day, even though its first watcher is long gone",
+  );
+
+  slow.resolve();
+  await settle();
+
+  assert.match(mounted.text(), /185 lb × 8 reps/, "the inherited read still paints the day");
+
+  mounted.unmount();
+});
+
+test("a write during a read discards that answer and asks again", async () => {
+  const slow = Promise.withResolvers<void>();
+  let served = 0;
+  respond = async (url) => {
+    served += 1;
+
+    if (served === 1) {
+      await slow.promise;
+      return renamedDetailResponse(url, "Bench before the write");
+    }
+
+    return renamedDetailResponse(url, "Bench after the write");
+  };
+
+  const mounted = await render(view(buildMonths(1, 1)));
+  await settle();
+  assert.equal(requestedUrls.length, 1);
+
+  // A save or a delete landed while the day's read was still open.
+  invalidateWorkoutDetails("w-0-0");
+  slow.resolve();
+  await settle();
+  await settle();
+
+  assert.equal(requestedUrls.length, 2, "the answer from before the write is not the answer");
+  assert.match(mounted.text(), /Bench after the write/);
+  assert.doesNotMatch(mounted.text(), /Bench before the write/);
+  assert.equal(
+    readWorkoutDetail("user-1", "LB", "w-0-0")?.status,
+    "ready",
+    "the day is cacheable again once it has been re-read",
+  );
+
+  mounted.unmount();
+});
+
+test("cached sets never cross accounts or display units", async () => {
+  const mounted = await render(view(buildMonths(1, 1)));
+  await settle();
+  mounted.unmount();
+
+  const otherAccount = await render(
+    view(buildMonths(1, 1), emptyWorkoutFilters, { userId: "user-2" }),
+  );
+  await settle();
+  assert.equal(requestedUrls.length, 2, "another account reads its own history");
+  otherAccount.unmount();
+
+  const inKilograms = await render(
+    view(buildMonths(1, 1), emptyWorkoutFilters, { displayWeightUnit: "KG" as const }),
+  );
+  await settle();
+
+  assert.deepEqual(requestedUrls, [
+    detailUrl("w-0-0"),
+    detailUrl("w-0-0"),
+    detailUrl("w-0-0", "KG"),
+  ]);
+  assert.equal(readWorkoutDetail("user-1", "KG", "w-0-0")?.status, "ready");
+  assert.equal(
+    readWorkoutDetail("user-1", "LB", "w-0-0")?.status,
+    "ready",
+    "the pounds answer is still its own entry",
+  );
+
+  inKilograms.unmount();
 });

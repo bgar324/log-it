@@ -111,3 +111,34 @@ test("workout detail route returns the private projection with its sets", async 
     { id: "set-1", orderLabel: "Set 1", detail: "185 lb × 8 reps", durationLabel: null },
   ]);
 });
+
+test("workout detail route projects the unit the caller is showing", async () => {
+  // The history browser caches an answer under the unit on its screen. A
+  // preference this request has not seen yet must not put kilograms under a
+  // pounds label, so the caller may name the unit; nonsense falls back.
+  const inKilograms = await GET(
+    new Request("http://localhost/api/workouts/workout-1?unit=KG"),
+    { params: Promise.resolve({ workoutId: "workout-1" }) },
+  );
+  const nonsenseUnit = await GET(
+    new Request("http://localhost/api/workouts/workout-1?unit=stone"),
+    { params: Promise.resolve({ workoutId: "workout-1" }) },
+  );
+  type UnitPayload = {
+    detail: {
+      summarySentence: string;
+      exercises: Array<{ sets: Array<{ detail: string }> }>;
+    };
+  };
+  const kilogramPayload = (await inKilograms.json()) as UnitPayload;
+  const fallbackPayload = (await nonsenseUnit.json()) as UnitPayload;
+
+  assert.match(kilogramPayload.detail.exercises[0]?.sets[0]?.detail ?? "", /kg × 8 reps$/);
+  assert.match(kilogramPayload.detail.summarySentence, /kg total volume$/);
+  assert.equal(
+    fallbackPayload.detail.exercises[0]?.sets[0]?.detail,
+    "185 lb × 8 reps",
+    "an unknown unit uses the saved preference",
+  );
+  assert.equal(inKilograms.headers.get("cache-control"), "private, no-store");
+});

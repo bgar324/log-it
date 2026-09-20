@@ -74,15 +74,14 @@ export function DashboardOverviewView({ overview, todayPlan, greetingName, weigh
                   : hasPlan ? <>You have <strong>{todayPlan.workoutType}</strong> today.</>
                     : <>Your next workout <strong>starts here.</strong></>}
           </p>
-          {!draft ? (
+          {!draft && !completed ? (
             <p className={styles.context}>
-              {completed ? "Your session is here whenever you want to look back."
-                : hasPlan ? <><strong>{countLabel(overview.todaySession.length, "exercise")}</strong> and <strong>{countLabel(plannedSets, "planned set")}</strong> from your split.</>
+              {hasPlan ? <><strong>{countLabel(overview.todaySession.length, "exercise")}</strong> and <strong>{countLabel(plannedSets, "planned set")}</strong> from your split.</>
                   : todayPlan.isRestDay ? "No training is scheduled in your split today."
                     : "Choose a split, or log without one."}
             </p>
           ) : null}
-          <Link href={primary.href} className={styles.primary}>
+          <Link href={primary.href} className={styles.primary} data-completed={Boolean(completed) && !draft}>
             <span>{primary.label}</span>
             {completed && !draft ? <Check size={19} strokeWidth={1.8} /> : <Play size={17} strokeWidth={1.8} />}
             <LinkPendingOverlay />

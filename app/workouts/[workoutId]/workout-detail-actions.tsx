@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import posthog from "posthog-js";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { invalidateWorkoutDetails } from "@/app/dashboard/workout-detail-cache";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { styles } from "./workout-detail.styles";
 
@@ -84,6 +85,10 @@ export function WorkoutDetailActions({
       if (!response.ok) {
         throw new Error(payload.error ?? "Unable to delete workout.");
       }
+
+      // The workout is gone on the server, so the history must not serve its
+      // cached sets when this navigation lands back on the list.
+      invalidateWorkoutDetails(workoutId);
 
       posthog.capture("workout_deleted");
       toast.success("Workout deleted.", { id: toastId });
