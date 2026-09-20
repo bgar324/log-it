@@ -55,6 +55,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - Theme tokens are CSS variables on `:root`; dark mode overrides use `:root[data-theme="dark"]`.
 - Core tokens include `--bg`, `--surface`, `--text`, `--muted`, `--field-bg`, `--field-line`, `--button-bg`, `--button-text`, `--focus-ring`, `--shadow`, and font variables.
 - The theme toggle sets `data-theme` and `data-color-scheme`; `app/layout.tsx` initializes the stored or system theme before rendering.
+- Theme controls read the saved preference on their first client-side mount, not from an initial System selection corrected by an effect. Selection updates immediately; page-color transitions run separately.
 - Tailwind v4 utilities are used heavily, often through exported `styles` objects.
 
 ## Surfaces

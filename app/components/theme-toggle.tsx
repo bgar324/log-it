@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { Moon, Smartphone, Sun } from "lucide-react";
 
 export type Theme = "light" | "dark";
 export type ThemePreference = "light" | "dark" | "system";
 const THEME_CHANGE_EVENT = "logit-theme-change";
+const THEME_PREFERENCE_CHANGE_EVENT = "logit-theme-preference-change";
 const THEME_TRANSITION_ATTRIBUTE = "data-theme-transition";
 const COLOR_SCHEME_ATTRIBUTE = "data-color-scheme";
 const THEME_STORAGE_KEY = "logit-theme";
@@ -36,6 +37,19 @@ function readStoredPreference(): ThemePreference {
     return storedTheme;
   }
 
+  return "system";
+}
+
+function subscribePreference(onChange: () => void) {
+  window.addEventListener(THEME_CHANGE_EVENT, onChange);
+  window.addEventListener(THEME_PREFERENCE_CHANGE_EVENT, onChange);
+  return () => {
+    window.removeEventListener(THEME_CHANGE_EVENT, onChange);
+    window.removeEventListener(THEME_PREFERENCE_CHANGE_EVENT, onChange);
+  };
+}
+
+function serverPreference(): ThemePreference {
   return "system";
 }
 
@@ -110,7 +124,10 @@ function applyTheme(theme: Theme) {
 
 function applyPreference(preference: ThemePreference) {
   window.localStorage.setItem(THEME_STORAGE_KEY, preference);
-  applyTheme(resolveTheme(preference));
+  const theme = resolveTheme(preference);
+  applyTheme(theme);
+  // Selection changes immediately; the page colors transition separately.
+  window.dispatchEvent(new Event(THEME_PREFERENCE_CHANGE_EVENT));
 }
 
 export function useThemeToggle() {
@@ -161,20 +178,9 @@ const THEME_OPTIONS: Array<{
 ];
 
 export function useThemePreference() {
-  const [preference, setPreferenceState] = useState<ThemePreference>("system");
+  const preference = useSyncExternalStore(subscribePreference, readStoredPreference, serverPreference);
 
   useLayoutEffect(() => {
-    function syncPreference() {
-      setPreferenceState(readStoredPreference());
-    }
-
-    function handleThemeChange() {
-      syncPreference();
-    }
-
-    syncPreference();
-    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
-
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     function handleSystemChange() {
       if (readStoredPreference() === "system") {
@@ -184,15 +190,10 @@ export function useThemePreference() {
     mediaQuery.addEventListener("change", handleSystemChange);
 
     return () => {
-      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
       mediaQuery.removeEventListener("change", handleSystemChange);
     };
   }, []);
-  const setPreference = useCallback((value: ThemePreference) => {
-    setPreferenceState(value);
-    applyPreference(value);
-  }, []);
-  return { preference, setPreference };
+  return { preference, setPreference: applyPreference };
 }
 
 export function ThemeToggle() {
