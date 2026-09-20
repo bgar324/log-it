@@ -132,7 +132,7 @@ The references supply structure, not fabricated data: compact activity calendars
 
 ## Preserve intent across view and loading boundaries
 
-Workout return context is normalized once and carried through Open, Edit, save, and Back. Loading fallbacks use the same context. Back fully prefetches its known destination rather than waiting for a tap to load a dynamic route. It remains a real link before hydration; after hydration, the shared boundary guards unsaved edits. A pending return shows feedback immediately while retaining its label. Successful saves still refresh route data.
+Workout return context is normalized once and carried through Open, Edit, save, and Back. Loading fallbacks use the same context. Back restores the loaded browser-history entry when its URL exactly matches the intended destination; otherwise it uses the fully prefetched link. It remains a real link before hydration, and the shared boundary guards unsaved edits after hydration. Cold returns show immediate pending feedback. Successful saves still refresh route data. Page entry has no fade that delays its appearance.
 
 Split navigation checks every dirty folder, not only the selected one. Renaming is disabled while a save is pending. Logger actions remain fixed and visible, with Save labelled explicitly; pending saves disable repeated submission and conflicting edits.
 

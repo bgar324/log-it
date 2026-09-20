@@ -48,7 +48,6 @@
 
 .training-app .view-transition-shell {
   gap: 24px;
-  animation: training-view-in 200ms var(--ui-motion-ease) both;
 }
 
 :root:has([data-training-design="true"]) .app-field-box {
@@ -78,9 +77,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .training-app .view-transition-shell { animation: none; }
-}
 
 .training-guard-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgb(0 0 0 / 38%); backdrop-filter: blur(5px); }
 .training-guard-panel { display: flex; width: min(420px,100%); flex-direction: column; gap: 16px; border: 1px solid var(--app-line); border-radius: var(--app-radius); padding: 24px; background: var(--surface); }

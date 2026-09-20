@@ -31,7 +31,15 @@ export function BackButton({
     if (isPending) return;
     // A real href also works before hydration; after hydration the shared
     // boundary protects edits before taking the same in-app destination.
-    requestNavigation(() => startTransition(() => router.push(fallbackHref)));
+    requestNavigation(() => startTransition(() => {
+      const current = window.navigation?.currentEntry;
+      const previous = current ? window.navigation.entries()[current.index - 1] : undefined;
+      if (previous?.url === new URL(fallbackHref, window.location.href).href) {
+        router.back();
+      } else {
+        router.push(fallbackHref);
+      }
+    }));
   }
 
   return (
