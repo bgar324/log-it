@@ -106,6 +106,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - General actions compose `action.styles.ts`. Hero actions, recorded-day cards, navigation tabs, and floating logger controls retain the same tokens and 44px phone minimum.
 - Text inputs and selects use at least 16px text on phones. Logger number fields are larger. `field.styles.ts` owns field feedback; the authenticated theme sets 14px field corners.
 - Popovers and dialogs do not move focus on open or close. Tab remains available to enter and traverse them. Editing-menu pointer presses preserve the current input.
+- Exercise suggestions complete a tap on pointer release, even if input blur has already closed the list. Dragging, canceled gestures, and unmounting the picker component cancel selection. Selection preserves the name field's focus and existing set values.
 - Menus and dialogs retain outgoing content for their actual exit animation, then unmount. Outgoing content is immediately inert. Do not add per-page exit timers.
 - Feedback sits below the phone utility row, leaving Back and the dock reachable. Informational toast bodies pass pointer events through; explicit toast actions remain interactive.
 - Profile and Settings use rows with focused editing dialogs. Destructive actions remain distinct and confirmed. A preference write uses saved profile values, never another form's unsaved draft.
