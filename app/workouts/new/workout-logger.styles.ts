@@ -156,9 +156,9 @@ export const styles = {
   // Compact rows keep all touch targets at least 44px tall.
   setsStack: "-ml-3 flex flex-col gap-2 overflow-x-visible py-[2px]",
   setRowGroup: "flex flex-col gap-[0.15rem]",
-  swipeSet: "w-full min-w-0 rounded-[14px] [&>.swiper-wrapper]:items-stretch! motion-reduce:[&>.swiper-wrapper]:duration-0!",
+  swipeSet: "w-full min-w-0 [&>.swiper-wrapper]:items-stretch! motion-reduce:[&>.swiper-wrapper]:duration-0!",
   swipeSetContent: "bg-[var(--app-surface-raised)]",
-  swipeSetDelete: "flex min-h-11 w-full flex-1 self-stretch cursor-pointer items-center justify-center border-0 bg-[#c52b28] px-3 text-[0.9375rem] font-medium text-white [touch-action:manipulation]",
+  swipeSetDelete: "flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-[#c52b28] p-0 text-white [touch-action:manipulation]",
   setHeader: "text-xs text-[var(--muted)]",
   setRow: cn(
     "grid grid-cols-[2.75rem_minmax(0,1fr)_4rem_3.5rem] items-center gap-[0.36rem] bg-transparent",

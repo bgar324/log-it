@@ -96,7 +96,6 @@ test("set deletion is available without a swipe and still requires confirmation"
   props.onRemoveSet = id => removed.push(id);
   const mounted = await render(createElement(WorkoutLoggerSetsEditor, props));
   try {
-    assert.equal(mounted.container.querySelector("svg"), null, "set rows have no trash icon");
     const actions = mounted.container.querySelector<HTMLButtonElement>('button[aria-label="Set 1 actions"]');
     assert.ok(actions);
     await mounted.click(actions);

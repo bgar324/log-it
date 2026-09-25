@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Trash2 } from "lucide-react";
 import type SwiperInstance from "swiper";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { styles } from "../workout-logger.styles";
@@ -61,7 +62,7 @@ export function WorkoutLoggerSwipeableSet({
           {children}
         </SwiperSlide>
         {canDelete ? (
-          <SwiperSlide style={{ width: "80%", height: "auto", display: "flex" }} aria-hidden={!revealed}>
+          <SwiperSlide style={{ width: "3.5rem", height: "auto", display: "flex", alignItems: "center", justifyContent: "flex-end" }} aria-hidden={!revealed}>
             <button
               type="button"
               className={styles.swipeSetDelete}
@@ -71,7 +72,9 @@ export function WorkoutLoggerSwipeableSet({
                 swiperRef.current?.slideTo(0, reducedMotion ? 0 : 180);
                 onDelete();
               }}
-            >Delete</button>
+            >
+              <Trash2 className={styles.toolIcon} aria-hidden="true" />
+            </button>
           </SwiperSlide>
         ) : null}
       </Swiper>
