@@ -27,12 +27,14 @@ export function WorkoutLoggerSwipeableSet({
   useEffect(() => {
     const swiper = swiperRef.current;
     if (!swiper || swiper.destroyed) return;
-    if (reducedMotion && swiper.animating) {
-      swiper.transitionEnd(false);
+    if (reducedMotion) {
       swiper.setTransition(0);
-      swiper.setTranslate(swiper.translate);
+      swiper.slideTo(revealed && canDelete ? 1 : 0, 0);
+      for (const animation of swiper.wrapperEl.getAnimations?.() ?? []) animation.finish();
+      swiper.transitionEnd(false);
+      return;
     }
-    if (!revealed || !canDelete) swiper.slideTo(0, reducedMotion ? 0 : 250);
+    if (!revealed || !canDelete) swiper.slideTo(0, 250);
   }, [revealed, canDelete, reducedMotion]);
 
   return (

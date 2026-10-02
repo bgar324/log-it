@@ -101,6 +101,25 @@ export async function verifyMotion(page, { origin, sessionToken, artifactDir }) 
     await pause(200);
     assert.equal(await page.$eval(repsSelector, node => node.value), reps);
 
+    await page.click('button[aria-label="Next exercise"]');
+    await pause(35);
+    await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
+    const interrupted = await page.evaluate(async () => {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const root = document.querySelector('[data-exercise-carousel]');
+      const active = root.querySelector('[data-exercise-active="true"]');
+      return {
+        delta: active.getBoundingClientRect().left - root.getBoundingClientRect().left,
+        running: root.querySelector(".swiper-wrapper").getAnimations().filter(animation => animation.playState === "running").length,
+      };
+    });
+    assert.ok(Math.abs(interrupted.delta) < 1, "reduced motion must settle the active exercise immediately");
+    assert.equal(interrupted.running, 0, "changing CSS duration alone must not leave an existing transition running");
+    await page.click('button[aria-label="Previous exercise"]');
+    await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "no-preference" }]);
+    assert.equal(await page.$eval(repsSelector, node => node.value), reps);
+    record("reduced-motion-interrupts-paging", interrupted);
+
     const saveFrames = await sample('[aria-label="Workout actions"] .motion-state-enter', () => page.click('button[aria-label="Save changes"]'), 650);
     await page.waitForFunction(() => document.body.textContent.includes("Motion verification blocked this write."));
     assert.equal(await page.$eval(repsSelector, node => node.value), reps);

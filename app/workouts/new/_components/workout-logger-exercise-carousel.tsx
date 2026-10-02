@@ -36,10 +36,13 @@ export function WorkoutLoggerExerciseCarousel({
   useLayoutEffect(() => {
     const swiper = swiperRef.current;
     if (!swiper || swiper.destroyed) return;
-    if (reducedMotion && swiper.animating) {
-      swiper.transitionEnd(false);
+    if (reducedMotion) {
       swiper.setTransition(0);
-      swiper.setTranslate(swiper.translate);
+      swiper.slideTo(index, 0, false);
+      // Duration changes apply to future transitions, not one already running.
+      for (const animation of swiper.wrapperEl.getAnimations?.() ?? []) animation.finish();
+      swiper.transitionEnd(false);
+      return;
     }
     if (swiper.activeIndex !== index) {
       if (swiper.animating) {
@@ -49,7 +52,7 @@ export function WorkoutLoggerExerciseCarousel({
         // Commit the interrupted position before Swiper starts the next slide.
         swiper.wrapperEl.getBoundingClientRect();
       }
-      swiper.slideTo(index, reducedMotion ? 0 : SLIDE_MS, false);
+      swiper.slideTo(index, SLIDE_MS, false);
     }
   }, [index, identity, reducedMotion]);
 
