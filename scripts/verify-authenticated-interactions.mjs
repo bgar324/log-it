@@ -125,6 +125,12 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     assert.equal(await page.$eval('[data-exercise-active="true"] input[aria-label="Exercise name"]', node => node.value), firstName);
     assert.equal(await page.$eval('[data-exercise-active="true"] input[aria-label="Set 1 reps"]', node => node.value), newReps);
     record("focused-exercise-switch-preserves-typed-set");
+    // Test gesture movement separately from the preceding button-driven slide.
+    await page.waitForFunction(() => {
+      const root = document.querySelector('[data-exercise-carousel]');
+      const active = root?.querySelector('[data-exercise-active="true"]');
+      return active && Math.abs(active.getBoundingClientRect().left - root.getBoundingClientRect().left) < 1;
+    });
     const touch = await page.target().createCDPSession();
     const swipe = async (box, left) => {
       const start = left ? box.x + box.width - 12 : box.x + 12;
