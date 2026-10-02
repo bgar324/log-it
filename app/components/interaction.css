@@ -1,49 +1,76 @@
+/* Motion recipes adapted from Transitions.dev. Product use: https://transitions.dev/terms.html */
 :root {
-  --ui-motion-enter: 180ms;
-  --ui-motion-panel: 220ms;
-  --ui-motion-exit: 160ms;
-  --ui-motion-drawer: 280ms;
-  --ui-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --ui-motion-ease-out: cubic-bezier(0.4, 0, 1, 1);
+  --ui-motion-enter: 250ms;
+  --ui-motion-panel: 250ms;
+  --ui-motion-exit: 150ms;
+  --ui-motion-drawer: 400ms;
+  --ui-motion-state: 150ms;
+  --ui-motion-icon: 250ms;
+  --ui-motion-resize: 300ms;
+  --ui-motion-page: 250ms;
+  --ui-motion-reveal: 400ms;
+  --ui-motion-panel-enter: 400ms;
+  --ui-motion-toast-enter: 350ms;
+  --ui-motion-toast-exit: 200ms; /* Sonner removes outgoing toasts after 200ms. */
+  --ui-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
-
-.auth-popover-content {
-  transform-origin: var(--radix-popover-content-transform-origin);
+.auth-popover-content { transform-origin: var(--radix-popover-content-transform-origin); }
+.auth-popover-content[data-state="open"] { animation: t-menu-in var(--ui-motion-enter) var(--ui-motion-ease) both; }
+.auth-popover-content[data-state="closed"] { animation: t-menu-out var(--ui-motion-exit) var(--ui-motion-ease) both; pointer-events: none; }
+.auth-dialog-overlay[data-state="open"] { animation: t-overlay-in var(--ui-motion-enter) var(--ui-motion-ease) both; }
+.auth-dialog-overlay[data-state="closed"] { animation: t-overlay-out var(--ui-motion-exit) var(--ui-motion-ease) both; pointer-events: none; }
+.auth-dialog-content[data-state="open"] { animation: t-modal-in var(--ui-motion-panel) var(--ui-motion-ease) both; }
+.auth-dialog-content[data-state="closed"] { animation: t-modal-out var(--ui-motion-exit) var(--ui-motion-ease) both; pointer-events: none; }
+@keyframes t-menu-in { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+@keyframes t-menu-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.99); } }
+@keyframes t-modal-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes t-modal-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.96); } }
+@keyframes t-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes t-overlay-out { from { opacity: 1; } to { opacity: 0; } }
+.motion-state { display: inline-grid; align-items: center; justify-items: center; vertical-align: middle; }
+.motion-state > span { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: .35rem; }
+.motion-state-enter { animation: t-state-in var(--ui-motion-state) ease-in-out both; }
+.motion-state-exit { pointer-events: none; animation: t-state-out var(--ui-motion-state) ease-in-out both; }
+@keyframes t-state-in { from { opacity: 0; transform: translateY(4px); filter: blur(2px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+@keyframes t-state-out { from { opacity: 1; transform: translateY(0); filter: blur(0); } to { opacity: 0; transform: translateY(-4px); filter: blur(2px); } }
+.motion-page { animation: t-page-in var(--ui-motion-page) var(--ui-motion-ease) both; }
+.motion-page[data-direction="back"] { --motion-page-x: -8px; }
+.motion-page[data-editable] { animation-name: t-form-page-in; }
+@keyframes t-form-page-in { from { opacity: 0; transform: translateX(var(--motion-page-x, 8px)); } to { opacity: 1; transform: translateX(0); } }
+@keyframes t-page-in { from { opacity: 0; transform: translateX(var(--motion-page-x, 8px)); filter: blur(3px); } to { opacity: 1; transform: translateX(0); filter: blur(0); } }
+.motion-skeleton { background: color-mix(in srgb, var(--text) 10%, transparent); animation: t-skeleton-pulse 1000ms ease-in-out infinite; }
+.motion-skeleton-static { background: color-mix(in srgb, var(--text) 10%, transparent); }
+@keyframes t-skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+.motion-insert { animation: t-insert-in var(--ui-motion-enter) var(--ui-motion-ease) both; }
+.motion-reveal-values { animation: t-overlay-in var(--ui-motion-reveal) var(--ui-motion-ease) both; }
+.motion-panel { animation: t-panel-in var(--ui-motion-panel-enter) var(--ui-motion-ease) both; }
+.motion-check polyline, .motion-check path { animation: t-check-draw 500ms var(--ui-motion-ease) both; }
+@keyframes t-insert-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes t-panel-in { from { opacity: 0; transform: translateY(12px); filter: blur(2px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+@keyframes t-check-draw { from { stroke-dasharray: 24; stroke-dashoffset: 24; } to { stroke-dasharray: 24; stroke-dashoffset: 0; } }
+.logit-motion-toast[data-sonner-toast][data-swiping="false"] {
+  transition: transform var(--ui-motion-toast-enter) var(--ui-motion-ease),
+    opacity var(--ui-motion-toast-enter) var(--ui-motion-ease),
+    scale var(--ui-motion-toast-enter) var(--ui-motion-ease),
+    filter var(--ui-motion-toast-enter) var(--ui-motion-ease),
+    height var(--ui-motion-resize) var(--ui-motion-ease);
 }
-
-.auth-popover-content[data-state="open"] {
-  animation: logit-menu-panel-in var(--ui-motion-enter) var(--ui-motion-ease) both;
+.logit-motion-toast[data-sonner-toast][data-front="true"][data-mounted="false"] {
+  --y: translateY(calc(var(--lift) * -16px));
+  scale: .97;
+  filter: blur(2px);
 }
-
-.auth-popover-content[data-state="closed"] {
-  animation: logit-menu-panel-out var(--ui-motion-exit) var(--ui-motion-ease-out) both;
-  pointer-events: none;
+.logit-motion-toast[data-sonner-toast][data-removed="true"][data-swiping="false"] {
+  transition-duration: var(--ui-motion-toast-exit);
+  scale: .97;
+  filter: blur(2px);
 }
-
-.auth-dialog-overlay[data-state="open"] {
-  animation: auth-overlay-in var(--ui-motion-enter) var(--ui-motion-ease) both;
+.logit-motion-toast[data-sonner-toast][data-removed="true"][data-front="true"][data-swipe-out="false"] {
+  --y: translateY(calc(var(--lift) * -16px));
 }
-
-.auth-dialog-overlay[data-state="closed"] {
-  animation: auth-overlay-out var(--ui-motion-exit) var(--ui-motion-ease-out) both;
-  pointer-events: none;
-}
-
-.auth-dialog-content[data-state="open"] {
-  animation: dashboard-modal-panel var(--ui-motion-panel) var(--ui-motion-ease) both;
-}
-
-.auth-dialog-content[data-state="closed"] {
-  animation: dashboard-modal-panel-exit var(--ui-motion-exit) var(--ui-motion-ease-out) both;
-  pointer-events: none;
-}
-
-@keyframes auth-overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes auth-overlay-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .motion-state-enter, .motion-state-exit, .motion-page,
+  .motion-skeleton, .motion-insert, .motion-reveal-values, .motion-panel,
+  .motion-check polyline, .motion-check path { animation: none !important; }
+  .motion-state-exit { display: none; }
 }

@@ -113,7 +113,7 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     workoutId = new URL(history.edit, origin).pathname.split("/")[2];
     assert.ok(history.day);
     await go(history.edit);
-    await page.waitForFunction(() => document.querySelector('[data-exercise-carousel]')?.swiper?.initialized === true);
+    await page.waitForFunction(() => Number.parseFloat(document.querySelector('[data-exercise-carousel] > .swiper-wrapper')?.style.height) > 0);
     await page.waitForSelector('[data-exercise-active="true"] input[aria-label="Set 1 reps"]');
     assert.equal(await page.evaluate(() => document.querySelectorAll('[data-exercise-active="true"] input[aria-label="Exercise name"]').length), 1);
     const firstName = await page.$eval('[data-exercise-active="true"] input[aria-label="Exercise name"]', node => node.value);
@@ -139,7 +139,7 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
         tracked ||= await page.$eval('[data-exercise-active="true"]', node => Math.abs(node.getBoundingClientRect().left - node.closest('[data-exercise-carousel]').getBoundingClientRect().left) > 8);
       }
       await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-      await page.waitForFunction(() => document.querySelector('[data-exercise-carousel]')?.swiper?.animating === false);
+      await page.waitForFunction(() => document.querySelector('[data-exercise-carousel] > .swiper-wrapper')?.getAnimations().every(animation => animation.playState === "finished"));
       return tracked;
     };
     try {

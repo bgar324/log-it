@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 import type SwiperInstance from "swiper";
 import { A11y } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -11,7 +12,7 @@ import { WorkoutLoggerExerciseCard } from "./workout-logger-exercise-card";
 import { WorkoutLoggerGuidance } from "./workout-logger-guidance";
 
 const modules = [A11y];
-const SLIDE_MS = 280;
+const SLIDE_MS = 250;
 
 export function WorkoutLoggerExerciseCarousel({
   entries,
@@ -26,20 +27,20 @@ export function WorkoutLoggerExerciseCarousel({
   onRetryInsight: (exerciseId: string, exerciseName: string) => void;
 }) {
   const swiperRef = useRef<SwiperInstance | null>(null);
-  const preference = useMemo(() => typeof window === "undefined"
-    ? null : window.matchMedia("(prefers-reduced-motion: reduce)"), []);
-  const subscribe = useCallback((notify: () => void) => {
-    preference?.addEventListener("change", notify);
-    return () => preference?.removeEventListener("change", notify);
-  }, [preference]);
-  const reducedMotion = useSyncExternalStore(subscribe, () => preference?.matches ?? false, () => false);
+  const reducedMotion = useReducedMotion();
   const index = Math.max(0, entries.findIndex(entry => entry.exercise.id === focusedId));
   // Only structural changes remount Swiper; typing never resets its position.
   const identity = entries.map(entry => entry.exercise.id).join("\0");
+  const [initialIdentity] = useState(identity);
 
   useLayoutEffect(() => {
     const swiper = swiperRef.current;
     if (!swiper || swiper.destroyed) return;
+    if (reducedMotion && swiper.animating) {
+      swiper.transitionEnd(false);
+      swiper.setTransition(0);
+      swiper.setTranslate(swiper.translate);
+    }
     if (swiper.activeIndex !== index) {
       if (swiper.animating) {
         const current = swiper.getTranslate();
@@ -54,15 +55,27 @@ export function WorkoutLoggerExerciseCarousel({
 
   useLayoutEffect(() => {
     const swiper = swiperRef.current;
-    if (swiper && !swiper.destroyed) swiper.updateAutoHeight();
-  }, [entries]);
+    const content = swiper?.slides[index]?.firstElementChild;
+    if (!swiper || swiper.destroyed || !content) return;
+    let height = content.getBoundingClientRect().height;
+    const observer = new ResizeObserver(() => {
+      if (swiper.destroyed) return;
+      const next = content.getBoundingClientRect().height;
+      if (next === height) return;
+      height = next;
+      // Keep the current page transition's clock; a settled card owns only resize.
+      swiper.updateAutoHeight(reducedMotion ? 0 : swiper.animating ? undefined : 300);
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [index, identity, reducedMotion]);
 
   if (entries.length === 0) return null;
 
   return (
     <Swiper
       key={identity}
-      className={styles.exerciseCarousel}
+      className={`${styles.exerciseCarousel}${identity !== initialIdentity ? " motion-insert" : ""}`}
       data-exercise-carousel="true"
       style={{ touchAction: "auto" }}
       modules={modules}

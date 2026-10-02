@@ -145,3 +145,11 @@ Run test files serially with `--test-concurrency=1`. Rendering suites each load 
 The owner reviewed the refinements through one local preview before authorizing the all-user release. The earlier no-commit/no-deploy restriction is superseded by that explicit authorization.
 
 The visual direction is monochrome. Home loses the day dot, unfinished-session subtitle, and Last session section. Splits opens on a Finder-style folder library without root-level Back or explanatory headings. The active folder is filled, and New split is a dashed folder at the end. Activation remains available through the options menu. All navigation starts at the top.
+
+## Use Transitions.dev as the motion reference
+
+The owner requested a predominantly Transitions.dev motion language instead of the prior in-house treatment. Its free recipes provide easing, timing, scales, distances, status swaps, and loading handoffs. Existing Radix, Swiper, and Sonner components retain lifecycle and interaction ownership; no additional animation runtime is needed.
+
+The reference demonstrations are not application state machines. Current request state updates immediately, outgoing status visuals are inaccessible and transient, and loading handoffs follow real readiness rather than a mandatory pulse. Reduced-motion preferences suppress JavaScript animation as well as CSS. Editable values and recorded numbers do not blur or roll. Overlay focus remains unchanged on open and close to preserve phone keyboard behavior.
+
+Split draft exercise IDs must survive row moves independently of order. These IDs remain client-only because the save serializer sends exercise names and set counts, not exercise IDs. Logger height observation follows actual active-content geometry rather than every entries-array render. Route Back keeps exact-history restoration and never waits for presentation.

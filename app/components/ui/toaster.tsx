@@ -12,7 +12,7 @@ export function Toaster({ position = "top-center" }: Pick<ComponentProps<typeof 
       toastOptions={{
         classNames: {
           toast:
-            `!rounded-[0.58rem] !border !border-[color:color-mix(in_srgb,var(--text)_14%,transparent)] !bg-[var(--bg)] !text-[var(--text)] !shadow-[0_12px_28px_color-mix(in_srgb,#000_12%,transparent)] [--toast-button-margin-start:0] [&_[data-content]]:flex-1 ${position === "top-center" ? "!pointer-events-none [&_[data-button]]:!pointer-events-auto" : ""}`,
+            `logit-motion-toast !rounded-[0.58rem] !border !border-[color:color-mix(in_srgb,var(--text)_14%,transparent)] !bg-[var(--bg)] !text-[var(--text)] !shadow-[0_12px_28px_color-mix(in_srgb,#000_12%,transparent)] [--toast-button-margin-start:0] [&_[data-content]]:flex-1 ${position === "top-center" ? "!pointer-events-none [&_[data-button]]:!pointer-events-auto" : ""}`,
           description: "!text-[var(--muted)]",
           actionButton:
             "!rounded-[0.44rem] !bg-[var(--button-bg)] !text-[var(--button-text)]",

@@ -4,7 +4,7 @@ import { daySelectorStyles } from "@/app/components/day-selector.styles";
 // One short, purposeful entrance shared by the day content and its states, so
 // switching days reads as a change rather than a repaint. The global
 // reduced-motion rule flattens it.
-const contentEnter = `animate-[training-view-in_200ms_var(--ui-motion-ease)_both]`;
+const contentEnter = "motion-page";
 
 export const historyStyles = {
   root: "flex min-w-0 flex-col gap-[0.9rem]",
@@ -28,7 +28,7 @@ export const historyStyles = {
   dayNumber: daySelectorStyles.value,
 
   // Selected day.
-  day: `flex min-w-0 flex-col gap-[0.6rem] ${contentEnter}`,
+  day: "flex min-w-0 flex-col gap-[0.6rem] motion-reveal-values",
 
   sessionList: "flex min-w-0 flex-col gap-[0.6rem]",
   session:
@@ -39,7 +39,7 @@ export const historyStyles = {
   // `relative` positions the LinkPendingOverlay this renders inside. The
   // negative margins keep the 44px target without padding the card open.
   sessionEdit:
-    `relative -mt-[0.35rem] -mr-[0.35rem] flex h-[2.75rem] w-[2.75rem] shrink-0 items-center justify-center rounded-full text-[var(--muted)] [touch-action:manipulation] transition-colors duration-200 ease-[var(--ui-motion-ease)]`,
+    `relative -mt-[0.35rem] -mr-[0.35rem] flex h-[2.75rem] w-[2.75rem] shrink-0 items-center justify-center rounded-full text-[var(--muted)] [touch-action:manipulation] transition-colors duration-[var(--ui-motion-enter)] ease-[var(--ui-motion-ease)]`,
   sessionEditIcon: "h-[1.05rem] w-[1.05rem]",
 
   exerciseList: "flex min-w-0 flex-col gap-[0.7rem]",

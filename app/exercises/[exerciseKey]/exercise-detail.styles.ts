@@ -28,5 +28,5 @@ export const styles = {
   pagerButton: dataListStyles.pagerButton,
   pagerIcon: dataListStyles.pagerIcon,
   pagerRange: dataListStyles.pagerRange,
-  skeletonBlock: "block rounded-md bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]",
+  skeletonBlock: "block rounded-md motion-skeleton",
 } as const;

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useReorderMotion } from "@/app/hooks/use-reorder-motion";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { WorkoutLoggerSwipeableSet } from "./workout-logger-swipeable-set";
 import { styles } from "../workout-logger.styles";
@@ -42,19 +43,23 @@ export function WorkoutLoggerSetsEditor({
     open: boolean;
   } | null>(null);
   const [revealedSetId, setRevealedSetId] = useState<string | null>(null);
+  const [initialSetIds] = useState(() => new Set(exercise.sets.map(set => set.id)));
+  const listRef = useRef<HTMLDivElement>(null);
+  const captureMotion = useReorderMotion(listRef, exercise.sets.map(set => set.id).join("\0"));
 
   function handleConfirmRemoveSet() {
     if (!pendingRemoval) {
       return;
     }
 
+    captureMotion();
     onRemoveSet(pendingRemoval.id);
     setPendingRemoval({ ...pendingRemoval, open: false });
   }
 
 
   return (
-    <div className={styles.setsStack}>
+    <div ref={listRef} className={styles.setsStack}>
       <div className={`${showOptionalSetControls ? styles.setRow : styles.setRowWithoutDuration} ${styles.setHeader}`} aria-hidden="true">
         <span className="order-1" />
         <span className={styles.setFieldWeight}>Weight ({weightUnitLabel})</span>
@@ -68,7 +73,7 @@ export function WorkoutLoggerSetsEditor({
           : "BW";
 
         return (
-          <div key={setItem.id} className={styles.setRowGroup}>
+          <div key={setItem.id} data-motion-id={setItem.id} className={`${styles.setRowGroup}${initialSetIds.has(setItem.id) ? "" : " motion-insert"}`}>
           <WorkoutLoggerSwipeableSet
             setNumber={setIndex + 1}
             canDelete={exercise.sets.length > 1}

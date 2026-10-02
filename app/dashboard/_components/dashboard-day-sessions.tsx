@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
+import { MotionReveal } from "@/app/components/motion-reveal";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { workoutReturnQueryForDay } from "@/app/workouts/workout-return";
 import { styles } from "../dashboard.styles";
@@ -55,12 +56,14 @@ export function DashboardDaySessions({ day, weightUnit, userId }: DashboardDaySe
               </Link>
             </header>
 
+            <MotionReveal loading={!details[workout.id] || details[workout.id].status === "loading"} label="session details">
             <SessionDetail
               state={details[workout.id]}
               exerciseCount={workout.exerciseCount}
               setCount={workout.setCount}
               onRetry={() => retry(workout.id)}
             />
+            </MotionReveal>
           </article>
         ))}
       </div>

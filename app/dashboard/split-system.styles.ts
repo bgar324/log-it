@@ -68,7 +68,7 @@ export const splitStyles = {
     "m-0 min-w-0 flex-1 truncate text-[1.75rem] font-[560] leading-[1.1] tracking-[-0.035em] text-[var(--text)] min-[621px]:text-[2rem]",
   planTitleInput:
     `${fieldBoxed} min-h-[2.75rem] w-full min-w-0 rounded-[14px] px-[0.9rem] text-[1.125rem] font-[560] tracking-[-0.03em] max-[980px]:text-base`,
-  planSaveButton: actionFilled,
+  planSaveButton: `${actionFilled} w-[7.5rem] px-2`,
   /** Quiet inline save state, never a banner. */
   planDirtyText: "m-0 text-[0.8125rem] leading-[1.3] text-[var(--muted)]",
 

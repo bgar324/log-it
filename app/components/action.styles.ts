@@ -28,7 +28,7 @@
  */
 
 const actionMotion =
-  "transition-[transform,background-color,color,border-color,opacity] duration-140 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:translate-y-[1px]";
+  "transition-[translate,background-color,color,border-color,opacity] duration-[var(--ui-motion-state)] ease-[var(--ui-motion-ease)] active:translate-y-[1px]";
 
 /**
  * Shape and type only: no border, background, colour, cursor or touch-action.

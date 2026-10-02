@@ -43,7 +43,7 @@ export const styles = {
   backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
   header: "flex flex-col gap-[0.3rem] [touch-action:pan-y_pinch-zoom]",
   headerMetaRow: "flex min-w-0 flex-wrap items-center gap-2 text-[0.8125rem] text-[var(--muted)]",
-  headerMetaButton: "min-h-11 cursor-pointer border-0 bg-transparent p-0 text-left text-inherit [touch-action:manipulation] disabled:cursor-default",
+  headerMetaButton: "min-h-11 min-w-11 cursor-pointer border-0 bg-transparent p-0 text-left text-inherit [touch-action:manipulation] disabled:cursor-default",
   headerMetaInput: `${fieldBoxed} min-h-11 min-w-0 max-w-full rounded-[14px] px-2 text-base`,
   titleRow: "flex min-w-0 items-center gap-0",
   title:
@@ -92,7 +92,7 @@ export const styles = {
     "pointer-events-auto mx-auto flex min-w-0 cursor-pointer items-center justify-center gap-[0.4rem] rounded-full",
     "min-h-11 border-0 bg-[var(--app-surface-raised)] px-4 text-center",
     "[touch-action:manipulation] outline-none",
-    "transition-colors duration-150 ease-[cubic-bezier(0.2,0.7,0.2,1)]",
+    "transition-colors duration-[var(--ui-motion-state)] ease-[var(--ui-motion-ease)]",
     "hover:bg-[color-mix(in_srgb,var(--text)_5%,transparent)]",
     "focus-visible:shadow-[0_0_0_3px_var(--focus-ring)]",
   ),
@@ -127,7 +127,7 @@ export const styles = {
   jumpRowMeta:
     "shrink-0 text-[0.75rem] text-[var(--muted)] [font-variant-numeric:tabular-nums]",
 
-  exerciseCarousel: "w-full min-w-0 max-w-full [&>.swiper-wrapper]:ease-[cubic-bezier(0.22,0.61,0.36,1)]! motion-reduce:[&>.swiper-wrapper]:duration-0!",
+  exerciseCarousel: "w-full min-w-0 max-w-full [&>.swiper-wrapper]:ease-[var(--ui-motion-ease)]! motion-reduce:[&>.swiper-wrapper]:duration-0!",
   exerciseSlideContent: "m-0 flex min-w-0 flex-col gap-4 border-0 p-0",
   exerciseCard: cn(
     panelSurface,
@@ -156,7 +156,7 @@ export const styles = {
   // Compact rows keep all touch targets at least 44px tall.
   setsStack: "-ml-3 flex flex-col gap-2 overflow-x-visible py-[2px]",
   setRowGroup: "flex flex-col gap-[0.15rem]",
-  swipeSet: "w-full min-w-0 [&>.swiper-wrapper]:items-stretch! motion-reduce:[&>.swiper-wrapper]:duration-0!",
+  swipeSet: "w-full min-w-0 [&>.swiper-wrapper]:items-stretch! [&>.swiper-wrapper]:ease-[var(--ui-motion-ease)]! motion-reduce:[&>.swiper-wrapper]:duration-0!",
   swipeSetContent: "bg-[var(--app-surface-raised)]",
   swipeSetDelete: "flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-[#c52b28] p-0 text-white [touch-action:manipulation]",
   setHeader: "text-xs text-[var(--muted)]",
@@ -194,7 +194,7 @@ export const styles = {
     "absolute bottom-0 right-0 top-0 inline-flex w-[2.75rem] cursor-pointer items-center justify-center rounded-r-[14px] border-l bg-transparent",
     "border-[color:var(--app-line)]",
     "text-[0.75rem] font-[400] text-[var(--muted)] [touch-action:manipulation]",
-    "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]",
+    "transition-[translate,border-color,background-color,color,box-shadow] duration-[var(--ui-motion-state)] ease-[var(--ui-motion-ease)] active:translate-y-[1px]",
     "hover:text-[var(--text)]",
     "data-[active=true]:bg-[var(--app-accent-soft)] data-[active=true]:text-[var(--text)]",
     "min-[620px]:w-[2.4rem] min-[620px]:text-[0.7rem]",
@@ -204,7 +204,7 @@ export const styles = {
   toolsRow: "pointer-events-none fixed inset-x-5 bottom-[var(--app-dock-bottom,max(0.5rem,env(safe-area-inset-bottom)))] z-50 mx-auto flex max-w-[42rem] items-center gap-2 max-[380px]:inset-x-3 max-[380px]:gap-1",
   toolCircle: `${actionIcon} pointer-events-auto bg-[var(--app-surface-raised)] shadow-[0_4px_16px_color-mix(in_srgb,#000_14%,transparent)]`,
   toolDelete: `${actionIconDanger} pointer-events-auto bg-[var(--app-surface-raised)] shadow-[0_4px_16px_color-mix(in_srgb,#000_14%,transparent)]`,
-  toolSave: `${actionFilled} pointer-events-auto ml-auto h-11 min-w-[6.5rem] shadow-[0_4px_16px_color-mix(in_srgb,#000_14%,transparent)]`,
+  toolSave: `${actionFilled} pointer-events-auto ml-auto h-11 w-[6.5rem] px-2 shadow-[0_4px_16px_color-mix(in_srgb,#000_14%,transparent)]`,
   toolIcon: "h-5 w-5 shrink-0 stroke-current",
 
   saveButton: `${actionFilled} w-full`,

@@ -7,7 +7,7 @@ import { styles } from "./workout-logger.styles";
 // The app's one skeleton fill, kept verbatim so a logger block and a dashboard
 // block shimmer as the same material. Radius is left to each usage.
 const skeleton =
-  "block bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]";
+  "block motion-skeleton";
 
 /**
  * The fallback has to agree with the logger that replaces it: one exercise in

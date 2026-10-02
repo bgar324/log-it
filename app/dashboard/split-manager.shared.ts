@@ -25,11 +25,26 @@ export const EXERCISE_SUGGESTION_DEBOUNCE_MS = 140;
 
 export function createExerciseDraft(order: number) {
   return {
-    id: null,
+    id: `draft-${crypto.randomUUID()}`,
     order,
     exerciseDisplayName: "",
     exerciseSlug: "",
     sets: 2,
+  };
+}
+
+/** Exercise IDs are UI identity; saveWorkoutSplit never sends them to the API. */
+export function withExerciseDraftIds(split: WorkoutSplitTemplate): WorkoutSplitTemplate {
+  if (split.days.every(day => day.exercises.every(exercise => exercise.id !== null))) return split;
+  return {
+    ...split,
+    days: split.days.map(day => ({
+      ...day,
+      exercises: day.exercises.map(exercise => ({
+        ...exercise,
+        id: exercise.id ?? `draft-${split.id ?? "new"}-${day.weekday}-${exercise.order}`,
+      })),
+    })),
   };
 }
 

@@ -15,6 +15,7 @@ type ExerciseTemplateRowProps = {
   isRemoveMode: boolean;
   /** True while a save is in flight: the row shows but nothing edits. */
   isDisabled: boolean;
+  animateEntry?: boolean;
   onNameChange: (value: string) => void;
   onNameFocus: (value: string) => void;
   onNameBlur: (value: string) => void;
@@ -33,6 +34,7 @@ export function ExerciseTemplateRow({
   searchResults,
   isRemoveMode,
   isDisabled,
+  animateEntry = false,
   onNameChange,
   onNameFocus,
   onNameBlur,
@@ -44,7 +46,7 @@ export function ExerciseTemplateRow({
   const [setsEmpty, setSetsEmpty] = useState(false);
 
   return (
-    <div className={splitStyles.exerciseRow}>
+    <div data-motion-id={exercise.id} className={`${splitStyles.exerciseRow}${animateEntry ? " motion-insert" : ""}`}>
       <ExerciseSuggestions
         suggestions={isDisabled ? NO_SUGGESTIONS : searchResults}
         fieldKey={`${exercise.id ?? exercise.order}`}
@@ -94,7 +96,7 @@ export function ExerciseTemplateRow({
         <button
           type="button"
           aria-label={`Remove ${name}`}
-          className={splitStyles.exerciseRemoveButton}
+          className={`${splitStyles.exerciseRemoveButton} motion-insert`}
           onClick={onRemove}
           disabled={isDisabled}
         >

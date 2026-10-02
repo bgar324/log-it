@@ -11,6 +11,7 @@ import {
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
   getInitialSelectedWeekday,
   saveWorkoutSplit,
+  withExerciseDraftIds,
 } from "@/app/dashboard/split-manager.shared";
 import { DRAFT_SPLIT_LIBRARY_KEY as DRAFT_SPLIT_KEY } from "@/app/dashboard/split-library.shared";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
@@ -94,7 +95,7 @@ export function useSplitLibraryState({
   persistChanges = true,
 }: UseSplitLibraryStateOptions): SplitLibraryState {
   const initialLibrary = useMemo(
-    () => (initialSplits.length > 0 ? initialSplits : [initialSplit]),
+    () => (initialSplits.length > 0 ? initialSplits : [initialSplit]).map(withExerciseDraftIds),
     [initialSplit, initialSplits],
   );
   const [splits, setSplits] = useState(initialLibrary);
@@ -333,7 +334,7 @@ export function useSplitLibraryState({
       const deleted = await deleteWorkoutSplit(splitId);
       // A library cannot be empty: deleting the last split leaves an unsaved
       // draft, and that draft is what discarding edits returns to.
-      const replacement = createUnsavedWorkoutSplitDraft(initialSplit);
+      const replacement = withExerciseDraftIds(createUnsavedWorkoutSplitDraft(initialSplit));
 
       setSplits((current) => {
         const remaining = current

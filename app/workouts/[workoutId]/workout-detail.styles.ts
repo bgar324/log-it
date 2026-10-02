@@ -40,5 +40,5 @@ export const styles = {
   setOrder: "text-[0.8125rem] text-[var(--muted)]",
   setDetail: "min-w-0 text-[0.9375rem] text-[var(--text)] [font-variant-numeric:tabular-nums]",
   setDuration: "whitespace-nowrap text-[0.8125rem] text-[var(--muted)]",
-  skeletonBlock: "block rounded-md bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]",
+  skeletonBlock: "block rounded-md motion-skeleton",
 } as const;

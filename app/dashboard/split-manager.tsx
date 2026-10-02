@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Check,
   Circle,
   Copy,
   ListOrdered,
@@ -13,6 +14,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useWorkspaceUnsavedChanges } from "@/app/components/workspace-navigation";
+import { MotionState } from "@/app/components/motion-state";
 import {
   useSplitLibraryState,
   type SplitLibraryNoticeTone,
@@ -202,6 +204,8 @@ export function SplitManager({
 
   if (isLibraryOpen) {
     return (
+      <div ref={layoutRef}>
+      <div className="motion-page" data-direction="back" key="library">
       <SplitLibrary
         splits={state.splits}
         activeSplitId={state.activeSplitId}
@@ -214,6 +218,8 @@ export function SplitManager({
         onDelete={requestDeleteSplit}
         onCreate={() => void state.createSplit()}
       />
+      </div>
+      </div>
     );
   }
 
@@ -258,11 +264,10 @@ export function SplitManager({
             onClick={() => void state.saveSplit()}
             disabled={state.isSaving || isRenaming || !state.hasUnsavedChanges}
           >
-            {state.isSaving
-              ? "Saving..."
-              : state.hasUnsavedChanges
-                ? "Save"
-                : "Saved"}
+            <MotionState stateKey={state.isSaving ? "saving" : state.hasUnsavedChanges ? "save" : "saved"}>
+              {!state.isSaving && !state.hasUnsavedChanges ? <Check className="motion-check size-4" aria-hidden="true" /> : null}
+              {state.isSaving ? "Saving..." : state.hasUnsavedChanges ? "Save" : "Saved"}
+            </MotionState>
           </button>
           <SplitActionMenu label="Split options">
             {(close) => (
@@ -385,6 +390,7 @@ export function SplitManager({
         ) : null}
       </section>
 
+      <div key={selectedKey} className="motion-page" data-editable>
       <SplitEditor
         key={`${selectedKey}:${state.selectedDay.weekday}`}
         day={state.selectedDay}
@@ -402,6 +408,7 @@ export function SplitManager({
         onRemoveExercise={state.removeExercise}
         onReorderExercises={state.reorderExercises}
       />
+      </div>
 
       <SplitDayReorderDialog
         days={state.split.days}

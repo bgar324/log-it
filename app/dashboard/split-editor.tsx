@@ -2,6 +2,7 @@
 
 import { ListOrdered, Pencil, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useReorderMotion } from "@/app/hooks/use-reorder-motion";
 import {
   getSplitWeekdayLabel,
   isRestDayWorkoutTypeSlug,
@@ -66,6 +67,9 @@ export function SplitEditor({
   // out, so clearing the field to retype it cannot silently destroy the day.
   const hasRestDayExercises = isRestDay && day.exercises.length > 0;
   const hasExercises = day.exercises.length > 0;
+  const [initialIds] = useState(() => new Set(day.exercises.map(exercise => exercise.id)));
+  const listRef = useRef<HTMLDivElement>(null);
+  const captureMotion = useReorderMotion(listRef, day.exercises.map(exercise => exercise.id).join("\0"));
 
   // The selected day is brought into the strip's own scroll box, never through
   // scrollIntoView: that would scroll the page under the sticky header too.
@@ -115,7 +119,7 @@ export function SplitEditor({
         </div>
       </nav>
 
-      <div className={splitStyles.dayPanel}>
+      <div className={`${splitStyles.dayPanel} motion-insert`}>
         <div className={splitStyles.dayPanelHead}>
           <div className={splitStyles.dayPanelIdentity}>
             <input
@@ -139,6 +143,7 @@ export function SplitEditor({
                       className={splitStyles.actionMenuItem}
                       disabled={isSaving}
                       onClick={() => {
+                        captureMotion();
                         onAddExercise();
                         close();
                       }}
@@ -183,7 +188,7 @@ export function SplitEditor({
         </div>
 
         {hasRestDayExercises ? (
-          <p className={splitStyles.editorNote}>
+          <p className={`${splitStyles.editorNote} motion-panel`}>
             {`Saving a rest day drops the ${countLabel(
               day.exercises.length,
               "exercise",
@@ -192,11 +197,12 @@ export function SplitEditor({
         ) : null}
 
         {hasExercises ? (
-          <div className={splitStyles.editorExerciseList}>
+          <div ref={listRef} className={splitStyles.editorExerciseList}>
             {day.exercises.map((exercise, index) => (
               <ExerciseTemplateRow
                 key={exercise.id ?? `${day.weekday}-${exercise.order}`}
                 exercise={exercise}
+                animateEntry={!initialIds.has(exercise.id)}
                 searchResults={exerciseSearchResults[`${day.weekday}-${index}`] ?? []}
                 isRemoveMode={isRemoveMode}
                 isDisabled={isSaving}
@@ -207,7 +213,7 @@ export function SplitEditor({
                   onApplyExerciseSearchResult(index, suggestion)
                 }
                 onSetsChange={(value) => onExerciseSetsChange(index, value)}
-                onRemove={() => onRemoveExercise(index)}
+                onRemove={() => { captureMotion(); onRemoveExercise(index); }}
               />
             ))}
           </div>
@@ -235,6 +241,7 @@ export function SplitEditor({
         open={isReorderOpen}
         onCancel={() => setIsReorderOpen(false)}
         onSave={(orderedExerciseOrders) => {
+          captureMotion();
           onReorderExercises(orderedExerciseOrders);
           setIsReorderOpen(false);
         }}

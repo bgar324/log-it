@@ -76,6 +76,7 @@ export function ExerciseDetailChart({
             tick={{ fill: "var(--muted)", fontSize: 11 }}
           />
           <Tooltip
+            isAnimationActive={false}
             cursor={TOOLTIP_CURSOR}
             contentStyle={TOOLTIP_CONTENT_STYLE}
             labelStyle={TOOLTIP_LABEL_STYLE}
@@ -110,6 +111,7 @@ export function ExerciseDetailChart({
             }}
           />
           <Area
+            isAnimationActive={false}
             type="monotone"
             dataKey={dataKey}
             stroke={stroke}

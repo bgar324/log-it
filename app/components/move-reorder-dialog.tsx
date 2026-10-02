@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { LegacyDialog } from "@/app/components/ui/legacy-dialog";
+import { useReorderMotion } from "@/app/hooks/use-reorder-motion";
+import { MotionState } from "@/app/components/motion-state";
 import { reorderItems } from "@/lib/workout-utils";
 import { moveReorderStyles as styles } from "./move-reorder-dialog.styles";
 
@@ -37,6 +39,8 @@ function MoveReorderContent<Id extends ReorderId>({ kind, items, slotLabels, onC
   const [selectedId, setSelectedId] = useState<Id | null>(null);
   const itemById = useMemo(() => new Map(items.map(item => [item.id, item])), [items]);
   const selected = selectedId === null ? null : itemById.get(selectedId);
+  const listRef = useRef<HTMLDivElement>(null);
+  const captureMotion = useReorderMotion(listRef, JSON.stringify(orderedIds));
 
   function selectOrMove(id: Id, destination: number) {
     if (selectedId === null) {
@@ -44,6 +48,7 @@ function MoveReorderContent<Id extends ReorderId>({ kind, items, slotLabels, onC
       return;
     }
     if (selectedId !== id) {
+      captureMotion();
       setOrderedIds(current => reorderItems(current, current.indexOf(selectedId), destination));
     }
     setSelectedId(null);
@@ -53,11 +58,13 @@ function MoveReorderContent<Id extends ReorderId>({ kind, items, slotLabels, onC
     <>
       <h2 className={styles.title}>Move {kind}s</h2>
       <p aria-live="polite" className={styles.body}>
-        {selected
-          ? `${selected.title} selected. Choose a ${kind === "workout" ? "day" : "position"}.`
-          : `Choose ${kind === "exercise" ? "an" : "a"} ${kind} to move.`}
+        <MotionState stateKey={selected ? String(selected.id) : "none"}>
+          {selected
+            ? `${selected.title} selected. Choose a ${kind === "workout" ? "day" : "position"}.`
+            : `Choose ${kind === "exercise" ? "an" : "a"} ${kind} to move.`}
+        </MotionState>
       </p>
-      <div aria-label={kind === "workout" ? "Weekly workout order" : "Exercise order"} className={styles.list}>
+      <div ref={listRef} aria-label={kind === "workout" ? "Weekly workout order" : "Exercise order"} className={styles.list}>
         {orderedIds.map((id, index) => {
           const item = itemById.get(id);
           if (!item) return null;
@@ -74,6 +81,7 @@ function MoveReorderContent<Id extends ReorderId>({ kind, items, slotLabels, onC
                 aria-label={label}
                 aria-pressed={isSelected}
                 data-reorder-card
+                data-motion-id={id}
                 data-selected={isSelected}
                 className={styles.card}
                 onClick={() => selectOrMove(id, index)}

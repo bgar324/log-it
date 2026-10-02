@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 import { Trash2 } from "lucide-react";
 import type SwiperInstance from "swiper";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -22,17 +23,16 @@ export function WorkoutLoggerSwipeableSet({
   setNumber, canDelete, revealed, onReveal, onDelete, children,
 }: SwipeableSetProps) {
   const swiperRef = useRef<SwiperInstance | null>(null);
-  const [reducedMotion, setReducedMotion] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReducedMotion(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
     const swiper = swiperRef.current;
-    if (swiper && !swiper.destroyed && (!revealed || !canDelete)) swiper.slideTo(0, reducedMotion ? 0 : 180);
+    if (!swiper || swiper.destroyed) return;
+    if (reducedMotion && swiper.animating) {
+      swiper.transitionEnd(false);
+      swiper.setTransition(0);
+      swiper.setTranslate(swiper.translate);
+    }
+    if (!revealed || !canDelete) swiper.slideTo(0, reducedMotion ? 0 : 250);
   }, [revealed, canDelete, reducedMotion]);
 
   return (
@@ -42,7 +42,7 @@ export function WorkoutLoggerSwipeableSet({
         data-swipe-set={setNumber}
         nested
         slidesPerView="auto"
-        speed={reducedMotion ? 0 : 180}
+        speed={reducedMotion ? 0 : 250}
         followFinger={!reducedMotion}
         allowTouchMove={canDelete}
         noSwipingSelector={NON_SWIPE_ACTIONS}
@@ -69,7 +69,7 @@ export function WorkoutLoggerSwipeableSet({
               aria-label={`Delete set ${setNumber}`}
               tabIndex={revealed ? 0 : -1}
               onClick={() => {
-                swiperRef.current?.slideTo(0, reducedMotion ? 0 : 180);
+                swiperRef.current?.slideTo(0, reducedMotion ? 0 : 250);
                 onDelete();
               }}
             >

@@ -54,6 +54,7 @@ export function NutritionCaloriesChart({ chartRows }: { chartRows: CalorieRow[] 
           tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
         />
         <Tooltip
+          isAnimationActive={false}
           cursor={TOOLTIP_CURSOR}
           contentStyle={TOOLTIP_CONTENT_STYLE}
           labelStyle={TOOLTIP_LABEL_STYLE}
@@ -63,8 +64,9 @@ export function NutritionCaloriesChart({ chartRows }: { chartRows: CalorieRow[] 
             return [`${value}${suffix}`, label];
           }}
         />
-        <Bar dataKey="calories" fill="var(--text)" radius={[4, 4, 0, 0]} />
+        <Bar isAnimationActive={false} dataKey="calories" fill="var(--text)" radius={[4, 4, 0, 0]} />
         <Line
+          isAnimationActive={false}
           type="monotone"
           dataKey="calorieTarget"
           dot={false}
@@ -103,6 +105,7 @@ export function BodyWeightChart({
           tick={{ fill: "var(--muted)", fontSize: "0.65rem" }}
         />
         <Tooltip
+          isAnimationActive={false}
           cursor={TOOLTIP_CURSOR}
           contentStyle={TOOLTIP_CONTENT_STYLE}
           labelStyle={TOOLTIP_LABEL_STYLE}
@@ -114,6 +117,7 @@ export function BodyWeightChart({
           ]}
         />
         <Line
+          isAnimationActive={false}
           type="monotone"
           dataKey="weight"
           stroke="var(--text)"

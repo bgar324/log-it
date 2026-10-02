@@ -108,7 +108,8 @@ export function AppTabBar({ activeView, onNavigate, benEnabled = false }: {
         data-app-nav-indicator="true"
         className={navStyles.tabIndicator}
         style={{
-          clipPath: `inset(2px calc(${100 - ((indicatorIndex + 1) * 100) / tabs.length}% + 2px) 2px calc(${(indicatorIndex * 100) / tabs.length}% + 2px) round 999px)`,
+          width: `calc((100% - 0.5rem) / ${tabs.length} - 4px)`,
+          transform: `translateX(calc(${indicatorIndex} * (100% + 4px)))`,
           opacity: activeIndex < 0 ? 0 : 1,
         }}
       />

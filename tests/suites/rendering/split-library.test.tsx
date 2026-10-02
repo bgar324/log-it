@@ -57,7 +57,6 @@ test("the split library is the root, with creation last and opening separate fro
     assert.equal(mounted.container.querySelector('button[aria-label="Back to week"]'), null);
     const save = mounted.all('button[aria-label="Save split"]');
     assert.equal(save.length, 1);
-    assert.equal(save[0].textContent, "Saved");
     assert.equal((save[0] as HTMLButtonElement).disabled, true);
 
     const back = mounted.container.querySelector<HTMLButtonElement>('header button[aria-label="Back to splits"]');
@@ -81,7 +80,6 @@ test("day edits stay dirty across a trip back to the library and only the open s
     const exerciseCount = mounted.all('input[aria-label="Exercise name"]').length;
     assert.equal(exerciseCount, 1);
     const save = mounted.all('button[aria-label="Save split"]')[0] as HTMLButtonElement;
-    assert.equal(save.textContent, "Save");
     assert.equal(save.disabled, false);
 
     await mounted.click(mounted.container.querySelector<HTMLButtonElement>('header button[aria-label="Back to splits"]')!);
@@ -95,6 +93,6 @@ test("day edits stay dirty across a trip back to the library and only the open s
 
     await mounted.click(mounted.container.querySelector<HTMLButtonElement>('[data-split-folder="plan-b"]')!);
     assert.equal(mounted.all('input[aria-label="Exercise name"]').length, exerciseCount);
-    assert.equal((mounted.all('button[aria-label="Save split"]')[0] as HTMLButtonElement).textContent, "Save");
+    assert.equal((mounted.all('button[aria-label="Save split"]')[0] as HTMLButtonElement).disabled, false);
   } finally { mounted.unmount(); }
 });

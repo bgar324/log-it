@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpDown, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { MotionState } from "@/app/components/motion-state";
 import { styles } from "../workout-logger.styles";
 
 type WorkoutLoggerActionsProps = {
@@ -42,8 +43,10 @@ export function WorkoutLoggerActions({
       ) : null}
       <button type="button" className={styles.toolSave} aria-label={submitLabel} title={submitLabel}
         disabled={isSaving} onPointerDown={event => event.preventDefault()} onClick={onSave}>
-        {isSaving ? <Loader2 className={styles.spinningIcon} /> : <Save className={styles.toolIcon} strokeWidth={1.9} />}
-        <span>{isSaving ? "Saving…" : "Save"}</span>
+        <MotionState stateKey={isSaving ? "saving" : "save"}>
+          {isSaving ? <Loader2 className={styles.spinningIcon} /> : <Save className={styles.toolIcon} strokeWidth={1.9} />}
+          <span>{isSaving ? "Saving" : "Save"}</span>
+        </MotionState>
       </button>
     </div>
   );

@@ -14,13 +14,15 @@ type DashboardViewSkeletonProps = {
 function SkeletonLine({
   className = "",
   style,
+  static: isStatic = false,
 }: {
   className?: string;
   style?: CSSProperties;
+  static?: boolean;
 }) {
   return (
     <span
-      className={`${styles.skeletonBlock} ${className}`}
+      className={`${isStatic ? "block rounded-[0.42rem] motion-skeleton-static" : styles.skeletonBlock} ${className}`}
       style={style}
     />
   );
@@ -98,7 +100,7 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
                 <div key={month} className={calendarStyles.miniMonth}>
                   <SkeletonLine className="mb-[14px] h-3 w-12" />
                   <div className={calendarStyles.miniGrid}>
-                    {Array.from({ length: 42 }, (_, day) => <SkeletonLine key={day} className="h-1.5 w-1.5 self-center justify-self-center rounded-full" />)}
+                    {Array.from({ length: 42 }, (_, day) => <SkeletonLine key={day} static className="h-1.5 w-1.5 self-center justify-self-center rounded-full" />)}
                   </div>
                 </div>
               ))}

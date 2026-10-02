@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AppNavUser } from "@/app/components/app-nav";
+import { MotionReveal } from "@/app/components/motion-reveal";
 import { useIdentifyPostHogUser } from "@/app/hooks/use-posthog-user";
 import { SplitManager } from "./split-manager";
 import { VIEW_TITLES, toViewHref } from "./dashboard-client.shared";
@@ -518,7 +519,7 @@ export function DashboardClient({
       }
     >
       {activeView === "dashboard" ? (
-        <div key="dashboard" className={viewClassName}>
+        <MotionReveal key="dashboard" className={viewClassName} loading={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("dashboard")} label="home">
           {activeViewError ? (
             <ViewError message={activeViewError} onRetry={() => void loadViewData("dashboard", { showError: true, showLoading: true })} />
           ) : activeViewIsLoading && !loadedViews.has("dashboard") ? (
@@ -533,11 +534,11 @@ export function DashboardClient({
               onNavigateToView={navigateToView}
             />
           )}
-        </div>
+        </MotionReveal>
       ) : null}
 
       {activeView === "workouts" ? (
-        <div key="workouts" className={viewClassName}>
+        <MotionReveal key="workouts" className={viewClassName} loading={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("workouts")} label="history">
           <WorkoutsView
             workoutMonths={dashboardData.workoutMonths}
             asOfDate={dashboardData.overview.asOfDate}
@@ -565,7 +566,7 @@ export function DashboardClient({
               })
             }
           />
-        </div>
+        </MotionReveal>
       ) : null}
 
       {workspaceEnabled && activeView === "progress" ? (
@@ -583,7 +584,7 @@ export function DashboardClient({
       ) : null}
 
       {activeView === "nutrition" ? (
-        <div key="nutrition" className={viewClassName}>
+        <MotionReveal key="nutrition" className={viewClassName} loading={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("nutrition")} label="nutrition">
           {activeViewError ? (
             <ViewError message={activeViewError} onRetry={() => void loadViewData("nutrition", { showError: true, showLoading: true })} />
           ) : activeViewIsLoading && !loadedViews.has("nutrition") ? (
@@ -595,14 +596,11 @@ export function DashboardClient({
               onNutritionChange={handleNutritionChange}
             />
           )}
-        </div>
+        </MotionReveal>
       ) : null}
 
       {activeView === "split" ? (
-        <div
-          key="split"
-          className={viewClassName}
-        >
+        <MotionReveal key="split" className={viewClassName} loading={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("split")} label="splits">
           <section className={workspaceEnabled ? "min-w-0" : styles.plainSection}>
             {activeViewError ? (
               <ViewError message={activeViewError} onRetry={() => void loadViewData("split", { showError: true, showLoading: true })} />
@@ -617,7 +615,7 @@ export function DashboardClient({
               />
             )}
           </section>
-        </div>
+        </MotionReveal>
       ) : null}
 
       {activeView === "profile" ? (

@@ -4,9 +4,9 @@ The authenticated app uses an ink-and-ivory palette, Geist typography, and soft 
 
 ## Authenticated design status
 
-The owner authorized the reference-driven redesign behind the existing PostHog `Ben` flag. The rules below describe that design. Unflagged users and public previews retain the previous UI; Nova and Ionic remain disabled.
+The training design is the default for every authenticated account. The PostHog `Ben` capability controls Nutrition, rest timing, and optional logger fields, not design selection. Public previews retain their baseline snapshot; Nova and Ionic remain disabled.
 
-The latest monochrome, Home, Profile, and folder refinements are local-only until the owner requests publication.
+The motion language is derived from [Transitions.dev](https://transitions.dev/library.html), using its easing, scale/fade overlays, sliding indicators, text swaps, resizing, and loading handoffs rather than a separate in-house animation style.
 
 `training-theme.css` scopes the new palette to documents containing `[data-training-design="true"]`. Public pages retain their existing warm palette. Portalled controls inherit the authenticated document tokens.
 
@@ -92,7 +92,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 ### Logger and split editing
 
 - The logger works like flashcards. History's circular arrows and the position/jump control sit at thumb level in a fixed row above the floating workout actions. No visible Previous/Next labels. Shared styles keep the controls coherent; sufficient bottom padding lets the entire form scroll clear of both rows. Swiper owns button-driven exercise transitions; dragging does not switch exercises.
-- The workout title uses primary text with a nearby pencil. Set numbers are plain 1, 2, and so on; input headers replace repeated placeholders. Guidance sits directly below the logging card with a 16px gap, in a matching soft container. The two containers slide as one unit over 280ms with gentle deceleration, no tilt or bounce, and a 20px gap between exercise pages. Muted date/Suggested headings and emphasized values keep guidance quiet. No estimate footer; low-confidence targets are withheld.
+- The workout title uses primary text with a nearby pencil. Set numbers are plain 1, 2, and so on; input headers replace repeated placeholders. Guidance sits directly below the logging card with a 16px gap, in a matching soft container. The two containers slide as one unit over 250ms with the reference smooth-out curve and a 20px gap between exercise pages. Card height follows actual content-size changes over 300ms. Muted date/Suggested headings and emphasized values keep guidance readable. No estimate footer; low-confidence targets are withheld.
 - Set numbers sit close to the inputs while retaining 44px tap targets. The input row follows left swipes, including gestures over fields; taps edit and vertical gestures scroll. A 56px reveal holds a 44px red circle with a white trash icon, centered vertically with 12px between the inputs and button. Only one row stays open. No blocking overlay or permanent trash-can column. Delete confirms before removal; the set-number menu is the non-swipe alternative.
 - Logger actions float separately along the bottom at the navigation dock's safe-area offset, without an enclosing bar or scrim. The red trash circle is farthest left and confirms deletion of the focused exercise. Add exercise, Reorder, and available Reset from split follow; Save remains on the right. Circles retain 44px targets, and all actions disable while saving. The last exercise cannot be deleted.
 - The logger metadata line shows the date and workout type. Its heading is the actual workout name with an adjacent pencil for inline editing. Existing-workout dates and types remain editable by tapping the metadata. Add set sits at the logging card's bottom. The floating plus is the only Add exercise action; the exercise ellipsis menu is removed.
@@ -120,7 +120,25 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - Light background: `#f6f5f2`; raised surface: white; text: `#1c1d21`.
 - Accents are monochrome except for completed-workout feedback: Home's Open workout button uses the existing forest green `#21834d` with warm white text. Start and Resume remain neutral. The text color supplies chart marks, selected controls, and the filled active folder; soft states use a neutral tint, not blue.
 - Grouped surfaces use 24px corners, fields use 14px, and general actions remain pills. Avoid nested frames and decorative glows.
-- View changes use short, small movements. Exercise navigation uses Swiper's horizontal slide motion; the floating action row stays stationary. Reduced motion preserves the same states without animated movement.
+- Motion follows the reference recipes below. Exercise navigation uses Swiper's horizontal slide motion; the floating action row stays stationary. Reduced motion preserves the same states without animated movement.
+
+## Motion recipes
+
+`app/components/interaction.css` owns reference-derived timing and easing. Default movement uses `cubic-bezier(0.22, 1, 0.36, 1)`. CSS recipes remain local under the [Transitions.dev product-use terms](https://transitions.dev/terms.html); no remote scripts, fonts, agent tools, or paid recipes are loaded.
+
+| Interaction | Recipe |
+| --- | --- |
+| Menus | Origin-aware scale `.97` to `1`, 250ms in; `.99` exit over 150ms |
+| Dialogs | Scale `.96` to `1`, 250ms in and 150ms out; Radix retains presence |
+| Tabs and exercise paging | 250ms smooth-out; the dock moves a real pill with `transform` |
+| Split folder/editor | 8px directional entry over 250ms; 3px blur only on noneditable content |
+| Save and rest-action state | 150ms, 4px vertical text/icon swap with 2px blur; semantic state changes immediately |
+| Card and sidebar sizing | 300ms, with one geometry owner per container |
+| Reorder | Commit immediately, then interpolate stable keyed rows; a later move interrupts the current one |
+| Loading | 1s opacity pulse; static tiny calendar dots; readiness triggers a 400ms reveal, not a timer |
+| Toasts | 350ms entry with a 16px move, `.97` scale and 2px blur; 200ms exit matches Sonner's removal clock |
+
+Do not blur editable values, roll weights/reps/rest digits, wait for a skeleton cycle, or delay Back/save cleanup for animation. Reduced motion cancels JavaScript movement as well as CSS movement. Active charts and their tooltips render without data-reveal animation. Theme palette interpolation must not override component transition properties.
 
 ## Public Landing System
 

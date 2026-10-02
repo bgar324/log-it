@@ -10,11 +10,12 @@ const THEME_PREFERENCE_CHANGE_EVENT = "logit-theme-preference-change";
 const THEME_TRANSITION_ATTRIBUTE = "data-theme-transition";
 const COLOR_SCHEME_ATTRIBUTE = "data-color-scheme";
 const THEME_STORAGE_KEY = "logit-theme";
-const THEME_TRANSITION_DURATION_MS = 280;
+const THEME_TRANSITION_DURATION_MS = 250;
 
 let themeTransitionCleanupTimer: number | undefined;
 let themeTransitionFrameOne: number | undefined;
 let themeTransitionFrameTwo: number | undefined;
+let themeMotionCleanup: (() => void) | undefined;
 let requestedTheme: Theme | undefined;
 
 function resolveTheme(preference: ThemePreference): Theme {
@@ -77,17 +78,26 @@ function commitTheme(theme: Theme) {
     }),
   );
 
-  themeTransitionCleanupTimer = window.setTimeout(() => {
+  const finish = () => {
     root.setAttribute(COLOR_SCHEME_ATTRIBUTE, theme);
     root.removeAttribute(THEME_TRANSITION_ATTRIBUTE);
     themeTransitionCleanupTimer = undefined;
-  }, THEME_TRANSITION_DURATION_MS);
+    themeMotionCleanup?.();
+    themeMotionCleanup = undefined;
+  };
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    finish();
+  } else {
+    themeTransitionCleanupTimer = window.setTimeout(finish, THEME_TRANSITION_DURATION_MS);
+  }
 }
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
 
   requestedTheme = theme;
+  themeMotionCleanup?.();
+  themeMotionCleanup = undefined;
 
   if (themeTransitionCleanupTimer !== undefined) {
     window.clearTimeout(themeTransitionCleanupTimer);
@@ -103,6 +113,17 @@ function applyTheme(theme: Theme) {
     window.cancelAnimationFrame(themeTransitionFrameTwo);
     themeTransitionFrameTwo = undefined;
   }
+
+  const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+  if (motionPreference.matches) {
+    commitTheme(theme);
+    return;
+  }
+  const settleOnReducedMotion = () => {
+    if (motionPreference.matches) applyTheme(theme);
+  };
+  motionPreference.addEventListener("change", settleOnReducedMotion);
+  themeMotionCleanup = () => motionPreference.removeEventListener("change", settleOnReducedMotion);
 
   if (root.getAttribute(THEME_TRANSITION_ATTRIBUTE) === "true") {
     commitTheme(theme);

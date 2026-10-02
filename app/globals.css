@@ -11,8 +11,8 @@
   --theme-toggle-transition-duration: 180ms;
   --theme-toggle-slot-transition-duration: 200ms;
   --theme-toggle-transition-easing: ease;
-  --theme-color-transition-duration: 280ms;
-  --theme-color-transition-easing: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --theme-color-transition-duration: 250ms;
+  --theme-color-transition-easing: var(--ui-motion-ease);
   --bg: #f1f0eb;
   --surface: #f1f0eb;
   --text: #17150f;
@@ -115,88 +115,19 @@ body {
 }
 
 
-@keyframes dashboard-modal-panel {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 0.38rem, 0) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes dashboard-modal-panel-exit {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  to {
-    opacity: 0;
-    transform: translate3d(0, 0.28rem, 0) scale(0.99);
-  }
-}
-
-@keyframes logit-menu-panel-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, -0.3rem, 0) scale(0.97);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes logit-menu-panel-out {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  to {
-    opacity: 0;
-    transform: translate3d(0, -0.24rem, 0) scale(0.98);
-  }
-}
-
-@keyframes logit-menu-item-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, -0.28rem, 0);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes logit-menu-item-out {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-
-  to {
-    opacity: 0;
-    transform: translate3d(0, -0.2rem, 0);
-  }
-}
 
 @keyframes dashboard-skeleton {
-  0% {
-    background-position: 120% 0;
+  0%, 100% {
+    opacity: 0.5;
   }
 
-  100% {
-    background-position: -120% 0;
+  50% {
+    opacity: 1;
   }
 }
 
+/* Palette interpolation is a base default, never an override of local motion. */
+@layer base {
 :root[data-theme-transition="true"],
 :root[data-theme-transition="true"] *,
 :root[data-theme-transition="true"] *::before,
@@ -211,6 +142,7 @@ body {
     stroke var(--theme-color-transition-duration) var(--theme-color-transition-easing),
     box-shadow var(--theme-color-transition-duration)
       var(--theme-color-transition-easing);
+}
 }
 
 :root[data-theme-transition="true"] .theme-toggle {

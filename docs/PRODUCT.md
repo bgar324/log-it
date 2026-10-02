@@ -8,6 +8,8 @@ The approved training interface is available to every authenticated user. Public
 
 Home is personal and plan-first. History browses recorded days. There is no separate Analysis page. Existing per-exercise detail graphs remain available; no replacement Home graph has been added. The logger shows one exercise at a time without requiring set completion. Saved splits use folders with separate Open and Set active actions.
 
+Motion follows Transitions.dev across menus, confirmations, navigation indicators, Split folders, row movement, save feedback, and loading. It explains changes without delaying actions. Inputs and recorded numbers remain readable; reduced motion preserves identical state and behavior. Logger Back and save navigation do not wait for an exit animation.
+
 ## Dormant Nova workspace
 
 The owner disabled this rollout. The following rules describe its retained code, not the default interface.

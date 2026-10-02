@@ -20,7 +20,7 @@ const dashboardBorder =
 const dashboardSurface =
   "rounded-[var(--app-radius)] border border-[var(--app-line)] bg-[var(--surface)] shadow-none";
 const buttonMotion =
-  "transition-[transform,border-color,background-color,color,box-shadow] duration-150 active:translate-y-[1px]";
+  "transition-[translate,border-color,background-color,color,box-shadow] duration-[var(--ui-motion-state)] ease-[var(--ui-motion-ease)] active:translate-y-[1px]";
 
 // Every button-like key below is a constant from `app/components/action.styles`
 // plus layout-only extras (width, order, overflow, positioning). Radius, height,
@@ -34,7 +34,7 @@ const buttonMotion =
 // utilities are safe to append.
 export const styles = {
   shell:
-    `dashboard-theme-scope flex min-h-dvh bg-[var(--bg)] ${dashboardBorder} min-[900px]:grid min-[900px]:h-dvh min-[900px]:grid-cols-[12.4rem_minmax(0,1fr)] min-[900px]:overflow-hidden min-[900px]:transition-[grid-template-columns] min-[900px]:duration-200 min-[900px]:ease-[var(--ui-motion-ease)]`,
+    `dashboard-theme-scope flex min-h-dvh bg-[var(--bg)] ${dashboardBorder} min-[900px]:grid min-[900px]:h-dvh min-[900px]:grid-cols-[12.4rem_minmax(0,1fr)] min-[900px]:overflow-hidden min-[900px]:transition-[grid-template-columns] min-[900px]:duration-[var(--ui-motion-resize)] min-[900px]:ease-[var(--ui-motion-ease)]`,
   shellSidebarCollapsed:
     "min-[900px]:!grid-cols-[5rem_minmax(0,1fr)]",
   sidebar:
@@ -42,7 +42,7 @@ export const styles = {
   sidebarCollapsed:
     "min-[900px]:items-center min-[900px]:px-[0.48rem]",
   sidebarTop:
-    "flex items-center justify-between gap-[0.5rem] transition-[justify-content] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)]",
+    "flex items-center justify-between gap-[0.5rem]",
   sidebarTopCollapsed:
     "justify-center",
   sidebarToggle:
@@ -50,9 +50,9 @@ export const styles = {
   sidebarCollapsedLogoToggle:
     `group relative ${actionIcon} hover:bg-[color-mix(in_srgb,var(--text)_7%,transparent)]`,
   sidebarCollapsedLogo:
-    "absolute inset-0 flex items-center justify-center opacity-100 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-90 group-hover:opacity-0",
+    "absolute inset-0 flex items-center justify-center opacity-100 transition-[opacity,scale,filter] duration-[var(--ui-motion-icon)] ease-in-out group-hover:scale-90 group-hover:blur-[2px] group-hover:opacity-0",
   sidebarCollapsedToggleIconWrap:
-    "absolute inset-0 flex scale-110 items-center justify-center opacity-0 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-100 group-hover:opacity-100",
+    "absolute inset-0 flex scale-110 items-center justify-center opacity-0 blur-[2px] transition-[opacity,scale,filter] duration-[var(--ui-motion-icon)] ease-in-out group-hover:scale-100 group-hover:blur-0 group-hover:opacity-100",
   sidebarToggleIcon: "h-[1rem] w-[1rem]",
   brand: "text-[2.2rem] leading-[0.92] tracking-[-0.03em] font-[520]",
   sideNav: "flex flex-col gap-3",
@@ -312,5 +312,5 @@ export const styles = {
     "flex flex-col gap-[0.5rem] min-[520px]:flex-row min-[520px]:justify-end",
   empty: "m-[0.68rem_0_0] text-[0.84rem] text-[var(--muted)]",
   skeletonBlock:
-    "block rounded-[0.42rem] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--text)_7%,transparent),color-mix(in_srgb,var(--text)_15%,transparent),color-mix(in_srgb,var(--text)_7%,transparent))] bg-[length:220%_100%] animate-[dashboard-skeleton_1.25s_ease-in-out_infinite]",
+    "block rounded-[0.42rem] motion-skeleton",
 } as const;
