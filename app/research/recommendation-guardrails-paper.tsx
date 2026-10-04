@@ -6,7 +6,7 @@ type RecommendationGuardrailsPaperProps = {
 };
 
 export const RECOMMENDATION_GUARDRAILS_TITLE = "recommendation guardrails";
-export const RECOMMENDATION_GUARDRAILS_UPDATED_AT = "Apr 22, 2026";
+export const RECOMMENDATION_GUARDRAILS_UPDATED_AT = "Oct 4, 2026";
 export const RECOMMENDATION_GUARDRAILS_CATEGORY = "prediction system";
 export const RECOMMENDATION_GUARDRAILS_SUMMARY =
   "A safety layer that rounds targets to real gym increments, clamps them to recent anchors, and widens ranges when confidence is low.";
@@ -47,8 +47,7 @@ export function RecommendationGuardrailsPaper({
             note={
               <>
                 <strong>Interpretation.</strong> <em>g</em> is the available gym increment in
-                display units. The raw predicted load is rounded to the nearest loadable step
-                before any clamp is applied.
+                display units. The final constrained load is rounded to the nearest loadable step.
               </>
             }
           />
@@ -62,16 +61,17 @@ export function RecommendationGuardrailsPaper({
         <section className="legal-section">
           <h2 className="legal-heading">2. Anchor clamp around recent reality</h2>
           <p>
-            After rounding, the anchor recommendation is still not free to drift arbitrarily.
-            Upward movement is limited to one increment above the most recent anchor. Downward
-            movement gets a little more room because under-shooting is safer than over-shooting,
-            especially after a layoff.
+            The learned forecast is limited to a 10% strength change, then converted to load
+            at the last anchor&apos;s rep count. The load clamp uses the rounded previous
+            anchor. Upward movement is limited to one increment. Downward movement allows
+            two increments, or three after more than 28 days away. Positive loads have a
+            one-increment floor.
           </p>
           <DisplayEquation
             latex={[
               String.raw`\Delta_+ = g`,
               String.raw`\Delta_- = \begin{cases}2g & d \le 28\\3g & d > 28\end{cases}`,
-              String.raw`\tilde{w} = \operatorname{clamp}(w_{\mathrm{round}}, w_{\mathrm{recent}} - \Delta_-, w_{\mathrm{recent}} + \Delta_+)`,
+              String.raw`\tilde{w} = g\,\operatorname{round}\!\left(\frac{\operatorname{clamp}(w_{\mathrm{pred}}, \max(g,w_{\mathrm{recent}}-\Delta_-), \max(g,w_{\mathrm{recent}}+\Delta_+))}{g}\right)`,
             ]}
             note={
               <>
@@ -87,9 +87,8 @@ export function RecommendationGuardrailsPaper({
         <section className="legal-section">
           <h2 className="legal-heading">3. Later-set shape constraints</h2>
           <p>
-            Later visible sets are rebuilt from the anchor prediction using historical median
-            backoff ratios and rep deltas. If a stable historical profile is missing, logit uses
-            a conservative fallback structure instead of pretending the later sets are known.
+            Later visible sets use the latest five matching sessions&apos; median
+            backoff ratios and rep deltas. Missing offsets use the fallback values below.
           </p>
           <DisplayEquation
             latex={[
@@ -124,11 +123,11 @@ export function RecommendationGuardrailsPaper({
         </section>
 
         <section className="legal-section">
-          <h2 className="legal-heading">4. Confidence-linked uncertainty bands</h2>
+          <h2 className="legal-heading">4. Confidence-linked rep guidance</h2>
           <p>
-            The surfaced recommendation is not just a single number. logit also shows a rep
-            range whose width depends on the confidence label. Low confidence gets a wider band;
-            medium and high confidence get a tighter one.
+            The API includes a rep range whose width depends on the history-quality label.
+            Low confidence gets a wider range. These ranges are not calibrated
+            prediction intervals, and the labels are not probabilities.
           </p>
           <DisplayEquation
             latex={[
@@ -137,8 +136,8 @@ export function RecommendationGuardrailsPaper({
             ]}
             note={
               <>
-                <strong>Interpretation.</strong> The range is a product-facing uncertainty band,
-                not a second prediction target. It widens when the evidence is weak.
+                <strong>Interpretation.</strong> This is a product rule, not an uncertainty
+                estimate learned by the regression.
               </>
             }
           />
@@ -152,8 +151,8 @@ export function RecommendationGuardrailsPaper({
             landed higher. Bodyweight-only predictions also cannot rise above medium confidence.
           </p>
           <p>
-            These rules are deliberate product choices. Sparse history can still be useful, but
-            the interface should not dress a thin sample in high-certainty language.
+            Sparse history repeats the last anchor. A learned forecast requires at least
+            14 usable sessions and must beat repeat-last on four chronological checks.
           </p>
         </section>
       </div>

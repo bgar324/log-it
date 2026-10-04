@@ -48,6 +48,8 @@ export async function loadTodaySession(
           FROM "WorkoutExercise" we
           JOIN "WorkoutLog" wl ON wl.id = we."workoutLogId"
           WHERE wl."userId" = ${userId}
+            AND wl.status = 'COMPLETED'
+            AND wl."performedAt" <= ${now}
             AND we."normalizedName" = ANY(${normalizedNames})
         ) recent
         WHERE recency <= ${MAX_RECENT_SESSIONS}

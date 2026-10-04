@@ -28,33 +28,6 @@ export function median(values: number[]) {
   return (left + right) / 2;
 }
 
-export function weightedAverage(values: number[], weights: number[]) {
-  if (values.length === 0 || values.length !== weights.length) {
-    return null;
-  }
-
-  let weightedTotal = 0;
-  let totalWeight = 0;
-
-  for (let index = 0; index < values.length; index += 1) {
-    const value = values[index];
-    const weight = weights[index];
-
-    if (value === undefined || weight === undefined) {
-      continue;
-    }
-
-    weightedTotal += value * weight;
-    totalWeight += weight;
-  }
-
-  if (totalWeight <= 0) {
-    return null;
-  }
-
-  return weightedTotal / totalWeight;
-}
-
 export function standardDeviation(values: number[]) {
   if (values.length === 0) {
     return 0;

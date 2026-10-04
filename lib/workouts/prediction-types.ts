@@ -7,12 +7,21 @@ export type PredictedSet = {
   repRange: { min: number; max: number } | null;
 };
 
+export type PredictionModelAssessment = {
+  source: "ridge" | "repeat";
+  trainingExamples: number;
+  validationExamples: number;
+  modelMae: number | null;
+  baselineMae: number | null;
+};
+
 export type ExercisePrediction = {
   basedOnSessions: number;
   daysSinceLastPerformed: number | null;
   confidence: "low" | "medium" | "high";
   rationale: string[];
   predictedSets: PredictedSet[];
+  model: PredictionModelAssessment;
 };
 
 export type PredictionSessionSet = {
@@ -63,5 +72,4 @@ export type PredictExercisePerformanceOptions = {
   weightUnit: WeightUnit;
 };
 
-export const MAX_RECENT_SESSIONS = 5;
-export const RECENCY_DECAY = 0.35;
+export const MAX_RECENT_SESSIONS = 60;

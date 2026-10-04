@@ -1,5 +1,4 @@
 import { clamp, median, roundToTenth, standardDeviation } from "./prediction-math";
-import { RECENCY_DECAY } from "./prediction-types";
 import type { ConfidenceAssessment, ExercisePrediction } from "./prediction-types";
 
 export function createRepRange(
@@ -12,10 +11,6 @@ export function createRepRange(
     min: Math.max(1, reps - spread),
     max: Math.max(1, reps + spread),
   };
-}
-
-export function getRecencyWeights(count: number) {
-  return Array.from({ length: count }, (_, index) => Math.exp(-RECENCY_DECAY * index));
 }
 
 function assessHistoryScore(sessionCount: number) {
@@ -141,50 +136,3 @@ export function scorePredictionConfidence(options: {
   } satisfies ConfidenceAssessment;
 }
 
-export function buildPredictionRationale(options: {
-  basedOnSessions: number;
-  daysSinceLastPerformed: number | null;
-  recoveryFactor: number;
-  positionAdjustment: number;
-  trendAdjustment: number;
-}) {
-  const lines = [
-    `Based on ${options.basedOnSessions} recent session${
-      options.basedOnSessions === 1 ? "" : "s"
-    }`,
-  ];
-
-  if (options.positionAdjustment <= 0.985) {
-    lines.push("slightly reduced because this exercise is later in the workout");
-  } else if (options.positionAdjustment >= 1.015) {
-    lines.push("slightly increased because this exercise is earlier in the workout");
-  }
-
-  if (options.recoveryFactor >= 0.995 && options.recoveryFactor <= 1.005) {
-    lines.push("recovery window looks good");
-  } else if (
-    options.daysSinceLastPerformed !== null &&
-    options.daysSinceLastPerformed <= 1
-  ) {
-    lines.push("slightly reduced because recovery is short");
-  } else if (
-    options.daysSinceLastPerformed !== null &&
-    options.daysSinceLastPerformed > 14
-  ) {
-    lines.push("slightly reduced because the layoff is longer than usual");
-  } else if (options.recoveryFactor < 0.995) {
-    lines.push("recovery is a little off peak");
-  }
-
-  if (lines.length < 3) {
-    if (options.trendAdjustment >= 1.015) {
-      lines.push("recent performance has been nudging upward");
-    } else if (options.trendAdjustment <= 0.985) {
-      lines.push("recent performance has cooled slightly");
-    } else {
-      lines.push("recent performance looks steady");
-    }
-  }
-
-  return lines.slice(0, 3);
-}

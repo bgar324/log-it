@@ -75,6 +75,26 @@ Run only the feature suite:
 npm run test:features
 ```
 
+## Recommendation evaluations
+
+Run tests first to compile the production predictor, then evaluate:
+
+```bash
+npm test
+npm run eval:recommendations
+```
+
+The default evaluation generates 84 deterministic exercise histories and replays their final third in date order. Each forecast trains only on earlier sessions and performs its own chronological model-selection checks. The report compares final rounded predictions with repeat-last and reports learned-model selection rate. Synthetic scenarios do not establish real-user accuracy.
+
+To evaluate recorded history with your explicitly configured database environment:
+
+```bash
+node --env-file=.env --env-file=.env.local scripts/eval-recommendations.mjs --database --output /tmp/logit-recommendations.json
+```
+
+PostgreSQL enforces a read-only transaction. The runner selects completed workouts, groups histories by user and exercise, and exports aggregate metrics only. Never commit raw workout records or credentials. Both modes fail on target/future leakage or invalid load outputs. They also fail if aggregate relative-strength error exceeds repeat-last by more than 2%; that tolerance is not a statistical significance test. Parameters are fixed before evaluating the outer targets.
+
+
 ## Adding More Integrity Tests
 
 Put new files in `tests/suites/integrity/` when the test validates a critical invariant, for example:

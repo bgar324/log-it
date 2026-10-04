@@ -118,6 +118,8 @@ export async function GET(request: NextRequest) {
         normalizedName,
         workoutLog: {
           userId: user.id,
+          status: "COMPLETED",
+          ...(performedAt ? { performedAt: { lt: performedAt } } : {}),
           ...(excludeWorkoutId ? { id: { not: excludeWorkoutId } } : {}),
         },
       },
@@ -127,6 +129,7 @@ export async function GET(request: NextRequest) {
             performedAt: "desc",
           },
         },
+        { workoutLog: { id: "desc" } },
         {
           order: "asc",
         },

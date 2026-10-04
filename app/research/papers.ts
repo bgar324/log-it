@@ -11,10 +11,10 @@ import {
   RECOMMENDATION_GUARDRAILS_UPDATED_AT,
 } from "./recommendation-guardrails-paper";
 import {
-  SCORED_HEURISTIC_PREDICTOR_SUMMARY,
-  SCORED_HEURISTIC_PREDICTOR_TITLE,
-  SCORED_HEURISTIC_PREDICTOR_UPDATED_AT,
-} from "./scored-heuristic-predictor-paper";
+  RECOMMENDATION_MODEL_SUMMARY,
+  RECOMMENDATION_MODEL_TITLE,
+  RECOMMENDATION_MODEL_UPDATED_AT,
+} from "./recommendation-model-paper";
 import {
   SPLIT_CALENDAR_MATH_CATEGORY,
   SPLIT_CALENDAR_MATH_SUMMARY,
@@ -32,9 +32,9 @@ export const RESEARCH_PAPERS = [
   {
     href: "/research/shp",
     category: "prediction model",
-    title: SCORED_HEURISTIC_PREDICTOR_TITLE,
-    updatedAt: SCORED_HEURISTIC_PREDICTOR_UPDATED_AT,
-    summary: SCORED_HEURISTIC_PREDICTOR_SUMMARY,
+    title: RECOMMENDATION_MODEL_TITLE,
+    updatedAt: RECOMMENDATION_MODEL_UPDATED_AT,
+    summary: RECOMMENDATION_MODEL_SUMMARY,
   },
   {
     href: "/research/guardrails",

@@ -1,0 +1,177 @@
+{
+  "evaluatedAt": "2026-10-04",
+  "synthetic": {
+    "protocol": "v1: fixed lambda=1, four features, inner four-fold walk-forward gate, outer last-third walk-forward evaluation; no tuning on outer targets",
+    "dataSource": "deterministic synthetic, not evidence of real-user accuracy",
+    "users": null,
+    "availableSeries": 84,
+    "evaluatedSeries": 84,
+    "skippedModeChanges": 0,
+    "aggregate": {
+      "targets": 2520,
+      "ridgeTargets": 719,
+      "ridgeRate": 0.2853174603174603,
+      "strengthRelativeMae": 0.013003132751438143,
+      "repeatStrengthRelativeMae": 0.02114063807303313,
+      "weightedTargets": 2160,
+      "weightMaeLb": 2.050925925925926,
+      "repeatWeightMaeLb": 3.2222222222222223,
+      "bodyweightTargets": 360,
+      "bodyweightRepMae": 0.34444444444444444,
+      "repeatBodyweightRepMae": 0.34444444444444444
+    },
+    "macroStrengthRelativeMae": 0.013003132751438077,
+    "macroRepeatStrengthRelativeMae": 0.021140638073032937,
+    "cohorts": {
+      "stable": {
+        "targets": 360,
+        "ridgeTargets": 0,
+        "ridgeRate": 0,
+        "strengthRelativeMae": 0.00858957227524477,
+        "repeatStrengthRelativeMae": 0.00858957227524477,
+        "weightedTargets": 360,
+        "weightMaeLb": 1.1388888888888888,
+        "repeatWeightMaeLb": 1.1388888888888888,
+        "bodyweightTargets": 0,
+        "bodyweightRepMae": null,
+        "repeatBodyweightRepMae": null
+      },
+      "progression": {
+        "targets": 360,
+        "ridgeTargets": 1,
+        "ridgeRate": 0.002777777777777778,
+        "strengthRelativeMae": 0.006204004126506965,
+        "repeatStrengthRelativeMae": 0.006204004126506965,
+        "weightedTargets": 360,
+        "weightMaeLb": 1.5694444444444444,
+        "repeatWeightMaeLb": 1.5694444444444444,
+        "bodyweightTargets": 0,
+        "bodyweightRepMae": null,
+        "repeatBodyweightRepMae": null
+      },
+      "regression": {
+        "targets": 360,
+        "ridgeTargets": 4,
+        "ridgeRate": 0.011111111111111112,
+        "strengthRelativeMae": 0.01013250657230289,
+        "repeatStrengthRelativeMae": 0.01013250657230289,
+        "weightedTargets": 360,
+        "weightMaeLb": 1.5972222222222223,
+        "repeatWeightMaeLb": 1.5972222222222223,
+        "bodyweightTargets": 0,
+        "bodyweightRepMae": null,
+        "repeatBodyweightRepMae": null
+      },
+      "position": {
+        "targets": 360,
+        "ridgeTargets": 356,
+        "ridgeRate": 0.9888888888888889,
+        "strengthRelativeMae": 0.03122922554882166,
+        "repeatStrengthRelativeMae": 0.06451783871748612,
+        "weightedTargets": 360,
+        "weightMaeLb": 3.9722222222222223,
+        "repeatWeightMaeLb": 8,
+        "bodyweightTargets": 0,
+        "bodyweightRepMae": null,
+        "repeatBodyweightRepMae": null
+      },
+      "gap": {
+        "targets": 360,
+        "ridgeTargets": 358,
+        "ridgeRate": 0.9944444444444445,
+        "strengthRelativeMae": 0.015743779142059936,
+        "repeatStrengthRelativeMae": 0.03941770322455965,
+        "weightedTargets": 360,
+        "weightMaeLb": 2.0833333333333335,
+        "repeatWeightMaeLb": 5.083333333333333,
+        "bodyweightTargets": 0,
+        "bodyweightRepMae": null,
+        "repeatBodyweightRepMae": null
+      },
+      "regime-change": {
+        "targets": 360,
+        "ridgeTargets": 0,
+        "ridgeRate": 0,
+        "strengthRelativeMae": 0.009611982486472964,
+        "repeatStrengthRelativeMae": 0.009611982486472964,
+        "weightedTargets": 360,
+        "weightMaeLb": 1.9444444444444444,
+        "repeatWeightMaeLb": 1.9444444444444444,
+        "bodyweightTargets": 0,
+        "bodyweightRepMae": null,
+        "repeatBodyweightRepMae": null
+      },
+      "bodyweight": {
+        "targets": 360,
+        "ridgeTargets": 0,
+        "ridgeRate": 0,
+        "strengthRelativeMae": 0.009510859108657376,
+        "repeatStrengthRelativeMae": 0.009510859108657376,
+        "weightedTargets": 0,
+        "weightMaeLb": null,
+        "repeatWeightMaeLb": null,
+        "bodyweightTargets": 360,
+        "bodyweightRepMae": 0.34444444444444444,
+        "repeatBodyweightRepMae": 0.34444444444444444
+      }
+    },
+    "runtime": {
+      "meanMs": 0.0510200460317462,
+      "maxMs": 0.947416999999998
+    },
+    "checks": {
+      "futureAndTargetLeakage": "passed",
+      "gymIncrementsAndBounds": "passed",
+      "nonInferiorityWithinTwoPercent": true
+    },
+    "limitations": "Predicts logged choices, not safe capacity or causal training benefit. Historical edits cannot be reconstructed. Synthetic cases are diagnostics, not a real-user benchmark. Confidence remains an uncalibrated history-quality label. No raw records are exported."
+  },
+  "recorded": {
+    "protocol": "v1: fixed lambda=1, four features, inner four-fold walk-forward gate, outer last-third walk-forward evaluation; no tuning on outer targets",
+    "dataSource": "recorded completed workouts, read-only retrospective replay",
+    "users": 3,
+    "availableSeries": 156,
+    "evaluatedSeries": 79,
+    "skippedModeChanges": 0,
+    "aggregate": {
+      "targets": 277,
+      "ridgeTargets": 24,
+      "ridgeRate": 0.08664259927797834,
+      "strengthRelativeMae": 0.29651712469702834,
+      "repeatStrengthRelativeMae": 0.29629354717477846,
+      "weightedTargets": 266,
+      "weightMaeLb": 13.005451127819548,
+      "repeatWeightMaeLb": 12.873872180451126,
+      "bodyweightTargets": 11,
+      "bodyweightRepMae": 3.1818181818181817,
+      "repeatBodyweightRepMae": 3.5454545454545454
+    },
+    "macroStrengthRelativeMae": 0.20491504391737775,
+    "macroRepeatStrengthRelativeMae": 0.20423032796364035,
+    "cohorts": {
+      "recorded": {
+        "targets": 277,
+        "ridgeTargets": 24,
+        "ridgeRate": 0.08664259927797834,
+        "strengthRelativeMae": 0.29651712469702834,
+        "repeatStrengthRelativeMae": 0.29629354717477846,
+        "weightedTargets": 266,
+        "weightMaeLb": 13.005451127819548,
+        "repeatWeightMaeLb": 12.873872180451126,
+        "bodyweightTargets": 11,
+        "bodyweightRepMae": 3.1818181818181817,
+        "repeatBodyweightRepMae": 3.5454545454545454
+      }
+    },
+    "runtime": {
+      "meanMs": 0.04444119494584543,
+      "maxMs": 1.3617910000000393
+    },
+    "checks": {
+      "futureAndTargetLeakage": "passed",
+      "gymIncrementsAndBounds": "passed",
+      "nonInferiorityWithinTwoPercent": true
+    },
+    "limitations": "Predicts logged choices, not safe capacity or causal training benefit. Historical edits cannot be reconstructed. Synthetic cases are diagnostics, not a real-user benchmark. Confidence remains an uncalibrated history-quality label. No raw records are exported."
+  }
+}

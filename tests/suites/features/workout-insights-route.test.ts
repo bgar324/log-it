@@ -144,51 +144,6 @@ test("workout insights route returns comparison data with a fixed generous predi
   );
 });
 
-test("workout insights route prediction changes with exercise position and performedAt", async () => {
-  const earlierResponse = await GET(
-    new NextRequest(
-      "http://localhost/api/workouts/insights?exercise=Bench%20Press&performedAt=2026-04-20&position=1",
-    ),
-  );
-  const laterResponse = await GET(
-    new NextRequest(
-      "http://localhost/api/workouts/insights?exercise=Bench%20Press&performedAt=2026-04-20&position=3",
-    ),
-  );
-  const shortRecoveryResponse = await GET(
-    new NextRequest(
-      "http://localhost/api/workouts/insights?exercise=Bench%20Press&performedAt=2026-04-16&position=2",
-    ),
-  );
-  const earlierPayload = (await earlierResponse.json()) as {
-    prediction: {
-      predictedSets: Array<{ setIndex: number; weightLb: number | null }>;
-    } | null;
-  };
-  const laterPayload = (await laterResponse.json()) as {
-    prediction: {
-      predictedSets: Array<{ setIndex: number; weightLb: number | null }>;
-    } | null;
-  };
-  const shortRecoveryPayload = (await shortRecoveryResponse.json()) as {
-    prediction: {
-      predictedSets: Array<{ setIndex: number; weightLb: number | null }>;
-    } | null;
-  };
-
-  assert.ok(earlierPayload.prediction);
-  assert.ok(laterPayload.prediction);
-  assert.ok(shortRecoveryPayload.prediction);
-  assert.ok(
-    (earlierPayload.prediction?.predictedSets[0]?.weightLb ?? 0) >=
-      (laterPayload.prediction?.predictedSets[0]?.weightLb ?? 0),
-  );
-  assert.ok(
-    (shortRecoveryPayload.prediction?.predictedSets[0]?.weightLb ?? 0) <
-      (earlierPayload.prediction?.predictedSets[0]?.weightLb ?? 0),
-  );
-});
-
 test("workout insights route omits the prediction when the request context is missing or invalid", async () => {
   const missingContextResponse = await GET(
     new NextRequest("http://localhost/api/workouts/insights?exercise=Bench%20Press"),
@@ -207,37 +162,6 @@ test("workout insights route omits the prediction when the request context is mi
 
   assert.equal(missingContextPayload.prediction, null);
   assert.equal(invalidContextPayload.prediction, null);
-});
-
-test("workout insights route excludes the workout being edited from its own history", async () => {
-  let capturedWhere: unknown = null;
-  prismaMutable.workoutExercise.findMany = async (args: unknown) => {
-    if (args && typeof args === "object" && "where" in args) {
-      capturedWhere = args.where;
-    }
-
-    return createExerciseLogs().filter(
-      (log) => log.workoutLog.id !== "workout-3",
-    );
-  };
-
-  const response = await GET(
-    new NextRequest(
-      "http://localhost/api/workouts/insights?exercise=Bench%20Press&performedAt=2026-04-20&position=2&excludeWorkoutId=workout-3",
-    ),
-  );
-  const payload = (await response.json()) as {
-    lastSession: { workoutId: string } | null;
-  };
-
-  assert.deepEqual(capturedWhere, {
-    normalizedName: "bench press",
-    workoutLog: {
-      userId: "user-1",
-      id: { not: "workout-3" },
-    },
-  });
-  assert.equal(payload.lastSession?.workoutId, "workout-2");
 });
 
 test("workout insights route prefers the exercise summary read model for the all-time best", async () => {

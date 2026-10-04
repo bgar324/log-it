@@ -2,10 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   computeBackoffProfile,
-  computePositionAdjustment,
-  computeRecoveryFactor,
   computeSetStrength,
-  computeTrendAdjustment,
   findAnchorSet,
   predictExercisePerformance,
   scorePredictionConfidence,
@@ -90,20 +87,6 @@ test("findAnchorSet prefers the strongest weighted set and falls back to bodywei
       kind: "bodyweight",
     },
   );
-});
-
-test("recovery, position, and trend adjustments follow the configured heuristics", () => {
-  assert.equal(computeRecoveryFactor(1), 0.94);
-  assert.equal(computeRecoveryFactor(4), 1);
-  assert.equal(computeRecoveryFactor(40), 0.9);
-
-  assert.equal(computePositionAdjustment(3, 2), 0.985);
-  assert.equal(computePositionAdjustment(1, 4), 1.045);
-  assert.equal(computePositionAdjustment(8, 1), 0.92);
-
-  assert.equal(computeTrendAdjustment([260, 250, 200]), 1.03);
-  assert.equal(computeTrendAdjustment([180, 190, 200]), 0.97);
-  assert.equal(computeTrendAdjustment([220, 215]), 1);
 });
 
 test("computeBackoffProfile derives median ratios and rep deltas from recent sessions", () => {

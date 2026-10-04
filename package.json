@@ -12,6 +12,7 @@
     "test:features": "node scripts/run-tests.mjs features",
     "test:integrity": "node scripts/run-tests.mjs integrity",
     "test:rendering": "node scripts/run-tests.mjs rendering",
+    "eval:recommendations": "node scripts/eval-recommendations.mjs",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",

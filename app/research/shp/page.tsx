@@ -1,22 +1,22 @@
 import { ResearchPaperPageShell } from "../paper-page-shell";
 import {
-  SCORED_HEURISTIC_PREDICTOR_SUMMARY,
-  SCORED_HEURISTIC_PREDICTOR_TITLE,
-  SCORED_HEURISTIC_PREDICTOR_UPDATED_AT,
-  ScoredHeuristicPredictorPaper,
-} from "../scored-heuristic-predictor-paper";
+  RECOMMENDATION_MODEL_SUMMARY,
+  RECOMMENDATION_MODEL_TITLE,
+  RECOMMENDATION_MODEL_UPDATED_AT,
+  RecommendationModelPaper,
+} from "../recommendation-model-paper";
 
-export default function ScoredHeuristicPredictorPage() {
+export default function RecommendationModelPage() {
   return (
     <ResearchPaperPageShell
       ariaLabel="logit research paper"
-      title={SCORED_HEURISTIC_PREDICTOR_TITLE}
+      title={RECOMMENDATION_MODEL_TITLE}
       category="prediction model"
-      updatedAt={SCORED_HEURISTIC_PREDICTOR_UPDATED_AT}
+      updatedAt={RECOMMENDATION_MODEL_UPDATED_AT}
       art="/art/card-composition.webp"
-      lede={SCORED_HEURISTIC_PREDICTOR_SUMMARY}
+      lede={RECOMMENDATION_MODEL_SUMMARY}
     >
-      <ScoredHeuristicPredictorPaper id="scored-heuristic-predictor" />
+      <RecommendationModelPaper id="recommendation-model" />
     </ResearchPaperPageShell>
   );
 }
