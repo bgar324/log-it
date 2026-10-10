@@ -3,6 +3,7 @@
 import { ListOrdered, Pencil, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import {
   getSplitWeekdayLabel,
   isRestDayWorkoutTypeSlug,
@@ -21,6 +22,7 @@ type SplitEditorProps = {
   exerciseSearchResults: Record<string, string[]>;
   isMobileOpen: boolean;
   isSaving: boolean;
+  feedback: Feedback | null;
   onMobileClose: () => void;
   onSelectWeekday: (weekday: SplitWeekdayValue) => void;
   onSave: () => void;
@@ -41,6 +43,7 @@ export function SplitEditor({
   exerciseSearchResults,
   isMobileOpen,
   isSaving,
+  feedback,
   onMobileClose,
   onSelectWeekday,
   onSave,
@@ -113,6 +116,7 @@ export function SplitEditor({
           {isSaving ? "Saving..." : "Save"}
         </button>
       </header>
+      <InlineFeedback feedback={feedback} className="px-4" />
 
       <nav aria-label="Choose a day to edit" className={splitStyles.editorDayTabs}>
         {days.map((item) => {

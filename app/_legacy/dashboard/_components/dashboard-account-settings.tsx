@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
 
 type DashboardAccountSettingsProps = {
@@ -29,13 +29,15 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordPending, setPasswordPending] = useState(false);
+  const [emailFeedback, setEmailFeedback] = useState<Feedback | null>(null);
+  const [passwordFeedback, setPasswordFeedback] = useState<Feedback | null>(null);
 
   async function handleEmailSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (emailPending) return;
 
     setEmailPending(true);
-    const toastId = toast.loading("Updating email...");
+    setEmailFeedback(null);
 
     try {
       const response = await fetch("/api/profile/email", {
@@ -50,10 +52,10 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
       }
 
       setEmailPassword("");
-      toast.success("Email updated.", { id: toastId });
+      setOpenSection(null);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to change email.", { id: toastId });
+      setEmailFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to change email." });
     } finally {
       setEmailPending(false);
     }
@@ -62,14 +64,14 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
   async function handlePasswordSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (passwordPending) return;
+    setPasswordFeedback(null);
 
     if (newPassword !== confirmPassword) {
-      toast.error("New passwords do not match.");
+      setPasswordFeedback({ tone: "error", message: "New passwords do not match." });
       return;
     }
 
     setPasswordPending(true);
-    const toastId = toast.loading("Updating password...");
 
     try {
       const response = await fetch("/api/profile/password", {
@@ -86,9 +88,9 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.success("Password updated.", { id: toastId });
+      setOpenSection(null);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to change password.", { id: toastId });
+      setPasswordFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to change password." });
     } finally {
       setPasswordPending(false);
     }
@@ -104,7 +106,11 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
         <button
           type="button"
           className={styles.accountRowAction}
-          onClick={() => setOpenSection(openSection === "email" ? null : "email")}
+          disabled={emailPending || passwordPending}
+          onClick={() => {
+            setEmailFeedback(null);
+            setOpenSection(openSection === "email" ? null : "email");
+          }}
         >
           {openSection === "email" ? "Cancel" : "Change"}
         </button>
@@ -119,6 +125,7 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
               type="email"
               autoComplete="email"
               value={emailValue}
+              disabled={emailPending}
               onChange={(event) => setEmailValue(event.target.value)}
             />
           </label>
@@ -129,15 +136,17 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
               type="password"
               autoComplete="current-password"
               value={emailPassword}
+              disabled={emailPending}
               onChange={(event) => setEmailPassword(event.target.value)}
             />
           </label>
+          <InlineFeedback feedback={emailFeedback} />
           <button
             type="submit"
             className={styles.profileSaveButton}
             disabled={emailPending}
           >
-            Update email
+            {emailPending ? "Updating email..." : "Update email"}
           </button>
         </form>
       ) : null}
@@ -148,7 +157,11 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
         <button
           type="button"
           className={styles.accountRowAction}
-          onClick={() => setOpenSection(openSection === "password" ? null : "password")}
+          disabled={emailPending || passwordPending}
+          onClick={() => {
+            setPasswordFeedback(null);
+            setOpenSection(openSection === "password" ? null : "password");
+          }}
         >
           {openSection === "password" ? "Cancel" : "Change"}
         </button>
@@ -163,6 +176,7 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
               type="password"
               autoComplete="current-password"
               value={currentPassword}
+              disabled={passwordPending}
               onChange={(event) => setCurrentPassword(event.target.value)}
             />
           </label>
@@ -173,6 +187,7 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
               type="password"
               autoComplete="new-password"
               value={newPassword}
+              disabled={passwordPending}
               onChange={(event) => setNewPassword(event.target.value)}
             />
           </label>
@@ -183,16 +198,18 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
               type="password"
               autoComplete="new-password"
               value={confirmPassword}
+              disabled={passwordPending}
               onChange={(event) => setConfirmPassword(event.target.value)}
             />
           </label>
           <p className={styles.statLineMuted}>Use at least 8 characters.</p>
+          <InlineFeedback feedback={passwordFeedback} />
           <button
             type="submit"
             className={styles.profileSaveButton}
             disabled={passwordPending}
           >
-            Update password
+            {passwordPending ? "Updating password..." : "Update password"}
           </button>
         </form>
       ) : null}

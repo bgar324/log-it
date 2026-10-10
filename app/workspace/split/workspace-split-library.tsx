@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  AlertCircle,
   Check,
   Copy,
   MoreHorizontal,
@@ -10,11 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/app/components/workspace-ui/alert";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import { Button } from "@/app/components/workspace-ui/button";
 import {
   Dialog,
@@ -53,9 +48,7 @@ export type WorkspaceSplitLibraryProps = {
   activeSplitId: string | null;
   isSaving: boolean;
   hasUnsavedChanges: boolean;
-  /** The last write that failed, kept visible until it is dealt with. */
-  errorMessage: string;
-  onDismissError: () => void;
+  feedback: Feedback | null;
   onSelectSplit: (splitId: string | null) => void;
   onCreateSplit: () => void;
   onRenameSplit: (name: string) => void;
@@ -75,8 +68,7 @@ export function WorkspaceSplitLibrary({
   activeSplitId,
   isSaving,
   hasUnsavedChanges,
-  errorMessage,
-  onDismissError,
+  feedback,
   onSelectSplit,
   onCreateSplit,
   onRenameSplit,
@@ -208,24 +200,7 @@ export function WorkspaceSplitLibrary({
         </p>
       </div>
 
-      {errorMessage ? (
-        <Alert variant="destructive">
-          <AlertCircle />
-          <AlertTitle>That change did not stick</AlertTitle>
-          <AlertDescription>
-            <p>{errorMessage}</p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={onDismissError}
-            >
-              Dismiss
-            </Button>
-          </AlertDescription>
-        </Alert>
-      ) : null}
+      <InlineFeedback feedback={feedback} />
 
       <Dialog
         open={isRenameOpen}

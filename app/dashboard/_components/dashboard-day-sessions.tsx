@@ -6,6 +6,7 @@ import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { MotionReveal } from "@/app/components/motion-reveal";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { workoutReturnQueryForDay } from "@/app/workouts/workout-return";
+import { WorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
 import { styles } from "../dashboard.styles";
 import { useWorkoutDetails } from "../_hooks/use-workout-details";
 import type { WorkoutDetailState } from "../workout-detail-cache";
@@ -55,6 +56,7 @@ export function DashboardDaySessions({ day, weightUnit, userId }: DashboardDaySe
                 <LinkPendingOverlay />
               </Link>
             </header>
+            <WorkoutPersonalRecords userId={userId} workoutId={workout.id} weightUnit={weightUnit} />
 
             <MotionReveal loading={!details[workout.id] || details[workout.id].status === "loading"} label="session details">
             <SessionDetail

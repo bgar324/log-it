@@ -27,6 +27,7 @@ import {
   useState,
   type FormEventHandler,
 } from "react";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import {
   Alert,
   AlertDescription,
@@ -73,6 +74,8 @@ export type WorkspaceWorkoutLoggerProps = {
   contextSentence: string;
   submitLabel: string;
   isSaving: boolean;
+  saveFeedback?: Feedback | null;
+  onDiscardSaveConflict?: () => void;
   /**
    * Leaving would lose typed work. A new workout autosaves its draft, so this
    * is the edit-mode case: nothing is stored until Save succeeds.
@@ -112,6 +115,8 @@ export function WorkspaceWorkoutLogger({
   contextSentence,
   submitLabel,
   isSaving,
+  saveFeedback = null,
+  onDiscardSaveConflict,
   hasUnsavedChanges,
   onDiscardChanges,
   exercises,
@@ -233,7 +238,6 @@ export function WorkspaceWorkoutLogger({
       <div
         data-workspace-logger="true"
         className="flex flex-col gap-5"
-        inert={isSaving}
         aria-busy={isSaving}
       >
         <header className="flex flex-col gap-1">
@@ -255,11 +259,11 @@ export function WorkspaceWorkoutLogger({
             </AlertDescription>
             <div className="col-start-2 mt-2 flex flex-wrap gap-2">
               {onDiscardDraft ? (
-                <Button type="button" variant="outline" onClick={onDiscardDraft}>
+                <Button type="button" variant="outline" onClick={onDiscardDraft} disabled={isSaving}>
                   Discard draft
                 </Button>
               ) : null}
-              <Button type="button" onClick={staleDraft.onMoveToToday}>
+              <Button type="button" onClick={staleDraft.onMoveToToday} disabled={isSaving}>
                 Move to today
               </Button>
             </div>
@@ -285,6 +289,7 @@ export function WorkspaceWorkoutLogger({
             onSubmit(event);
           }}
         >
+          <div className="contents" inert={isSaving}>
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -323,7 +328,9 @@ export function WorkspaceWorkoutLogger({
             <Plus />
             Add exercise
           </Button>
+          </div>
 
+          <InlineFeedback feedback={saveFeedback} action={onDiscardSaveConflict && !isSaving ? { label: "Discard draft", onClick: onDiscardSaveConflict } : undefined} />
           <div className="sticky bottom-[var(--workspace-nav-height)] z-20 -mx-1 flex items-center gap-2 border-t border-border bg-background/95 px-1 py-3 backdrop-blur">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -332,6 +339,7 @@ export function WorkspaceWorkoutLogger({
                   variant="outline"
                   size="icon-lg"
                   aria-label="Workout tools"
+                  disabled={isSaving}
                 >
                   <Ellipsis />
                 </Button>
@@ -388,7 +396,7 @@ export function WorkspaceWorkoutLogger({
               disabled={isSaving}
             >
               {isSaving ? <Loader2 className="animate-spin" /> : null}
-              {submitLabel}
+              {isSaving ? "Saving..." : submitLabel}
             </Button>
           </div>
         </form>

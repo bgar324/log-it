@@ -2,6 +2,7 @@
 
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +51,7 @@ export type WorkspaceSplitDayEditorProps = {
   todayWeekday: SplitWeekdayValue;
   searchResults: Record<string, string[]>;
   isSaving: boolean;
+  feedback: Feedback | null;
   hasUnsavedChanges: boolean;
   /** True for a plan the server has never stored: its first Save creates it. */
   isUnsavedPlan: boolean;
@@ -92,6 +94,7 @@ export function WorkspaceSplitDayEditor({
   todayWeekday,
   searchResults,
   isSaving,
+  feedback,
   hasUnsavedChanges,
   isUnsavedPlan,
   variant,
@@ -320,6 +323,7 @@ export function WorkspaceSplitDayEditor({
       >
         {saveHint}
       </p>
+      <InlineFeedback feedback={feedback} />
       <div className="flex items-center gap-2">
         {hasUnsavedChanges ? (
           <Button

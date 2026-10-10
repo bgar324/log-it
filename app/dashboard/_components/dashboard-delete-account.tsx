@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import { X } from "lucide-react";
 import posthog from "posthog-js";
 import { LegacyDialog } from "@/app/components/ui/legacy-dialog";
@@ -20,10 +20,11 @@ export function DashboardDeleteAccount({
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   async function handleDelete(confirmValue: string) {
     setIsDeleting(true);
-    const toastId = toast.loading("Deleting account...");
+    setFeedback(null);
 
     try {
       const response = await fetch("/api/profile/account", {
@@ -41,13 +42,10 @@ export function DashboardDeleteAccount({
 
       posthog.capture("account_deleted");
       posthog.reset();
-      toast.success("Account deleted.", { id: toastId });
       router.replace("/");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to delete account.", {
-        id: toastId,
-      });
+      setFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to delete account." });
       setIsDeleting(false);
     }
   }
@@ -59,6 +57,7 @@ export function DashboardDeleteAccount({
       return;
     }
 
+    if (next) setFeedback(null);
     setIsOpen(next);
   }
 
@@ -67,7 +66,7 @@ export function DashboardDeleteAccount({
       <button
         type="button"
         className={className ?? styles.dangerButton}
-        onClick={() => setIsOpen(true)}
+        onClick={() => requestOpenChange(true)}
       >
         Delete account
       </button>
@@ -85,6 +84,7 @@ export function DashboardDeleteAccount({
         <DashboardDeleteAccountForm
           username={username}
           isDeleting={isDeleting}
+          feedback={feedback}
           onCancel={() => requestOpenChange(false)}
           onDelete={(confirmValue) => void handleDelete(confirmValue)}
         />
@@ -100,11 +100,13 @@ export function DashboardDeleteAccount({
 function DashboardDeleteAccountForm({
   username,
   isDeleting,
+  feedback,
   onCancel,
   onDelete,
 }: {
   username: string;
   isDeleting: boolean;
+  feedback: Feedback | null;
   onCancel: () => void;
   onDelete: (confirmValue: string) => void;
 }) {
@@ -157,9 +159,11 @@ function DashboardDeleteAccountForm({
             autoCapitalize="none"
             spellCheck={false}
             value={confirmValue}
+            disabled={isDeleting}
             onChange={(event) => setConfirmValue(event.target.value)}
           />
         </label>
+        <InlineFeedback feedback={feedback} />
         <div className={styles.avatarModalFooter}>
           <button
             type="button"
@@ -174,7 +178,7 @@ function DashboardDeleteAccountForm({
             className={styles.dangerButton}
             disabled={!matches || isDeleting}
           >
-            Permanently delete
+            {isDeleting ? "Deleting account..." : "Permanently delete"}
           </button>
         </div>
       </form>

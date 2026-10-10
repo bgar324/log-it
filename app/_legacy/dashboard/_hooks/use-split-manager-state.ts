@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import type { Feedback } from "@/app/components/inline-feedback";
 import posthog from "posthog-js";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
 import {
@@ -30,11 +30,13 @@ export type SplitManagerState = {
   selectedDay: WorkoutSplitTemplate["days"][number] | null;
   selectedWeekday: SplitWeekdayValue;
   saveState: SplitManagerSaveState;
+  feedback: Feedback | null;
+  clearFeedback: () => void;
   selectedDayExerciseSearchResults: Record<string, string[]>;
   setSplitName: (value: string) => void;
   selectSplit: (splitId: string | null) => void;
   createSplit: () => Promise<void>;
-  deleteSplit: (splitId: string) => Promise<void>;
+  deleteSplit: (splitId: string) => Promise<boolean>;
   activateSplit: (splitId: string) => Promise<void>;
   selectWeekday: (weekday: SplitWeekdayValue) => void;
   setWorkoutType: (value: string) => void;
@@ -62,6 +64,9 @@ export function useSplitManagerState(
 ): SplitManagerState {
   const persistChanges = options.persistChanges ?? true;
   const router = useRouter();
+  const [feedback, setFeedback] = useState<Feedback | null>(
+    persistChanges ? null : { tone: "info", message: "Changes stay in this preview and are not saved." },
+  );
   const [mutationState, setMutationState] = useState<SplitManagerSaveState>({
     kind: "idle",
   });
@@ -126,6 +131,7 @@ export function useSplitManagerState(
     setSplits,
     clearAllExerciseSuggestions,
     persistChanges,
+    setFeedback,
   });
 
   useEffect(() => {
@@ -139,7 +145,7 @@ export function useSplitManagerState(
 
   async function createSplit() {
     if (!persistChanges) {
-      toast.message("Creating splits is disabled in this preview.");
+      setFeedback({ tone: "info", message: "Creating splits is disabled in this preview." });
       return;
     }
 
@@ -147,7 +153,7 @@ export function useSplitManagerState(
       return;
     }
 
-    const toastId = toast.loading("Creating split...");
+    setFeedback(null);
     setMutationState({ kind: "saving" });
 
     try {
@@ -155,12 +161,9 @@ export function useSplitManagerState(
       setSplits((current) => [created, ...current]);
       setSelectedSplitId(created.id);
       posthog.capture("workout_split_created");
-      toast.success("Split created.", { id: toastId });
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to create split.", {
-        id: toastId,
-      });
+      setFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to create split." });
     } finally {
       setMutationState({ kind: "idle" });
     }
@@ -168,15 +171,15 @@ export function useSplitManagerState(
 
   async function deleteSplit(splitId: string) {
     if (!persistChanges) {
-      toast.message("Deleting splits is disabled in this preview.");
-      return;
+      setFeedback({ tone: "info", message: "Deleting splits is disabled in this preview." });
+      return false;
     }
 
     if (mutationState.kind === "saving" || persistence.saveState.kind === "saving") {
-      return;
+      return false;
     }
 
-    const toastId = toast.loading("Deleting split...");
+    setFeedback(null);
     setMutationState({ kind: "saving" });
     try {
       const deleted = await deleteWorkoutSplit(splitId);
@@ -197,12 +200,11 @@ export function useSplitManagerState(
           : [createUnsavedWorkoutSplitDraft(initialSplit)];
       });
       posthog.capture("workout_split_deleted");
-      toast.success("Split deleted.", { id: toastId });
       router.refresh();
+      return true;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to delete split.", {
-        id: toastId,
-      });
+      setFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to delete split." });
+      return false;
     } finally {
       setMutationState({ kind: "idle" });
     }
@@ -210,7 +212,7 @@ export function useSplitManagerState(
 
   async function activateSplit(splitId: string) {
     if (!persistChanges) {
-      toast.message("Changing the active split is disabled in this preview.");
+      setFeedback({ tone: "info", message: "Changing the active split is disabled in this preview." });
       return;
     }
 
@@ -218,7 +220,7 @@ export function useSplitManagerState(
       return;
     }
 
-    const toastId = toast.loading("Setting active split...");
+    setFeedback(null);
     setMutationState({ kind: "saving" });
 
     try {
@@ -235,15 +237,9 @@ export function useSplitManagerState(
       );
       setSelectedSplitId(activated.id);
       posthog.capture("workout_split_activated");
-      toast.success("Active split updated.", {
-        id: toastId,
-        description: "The logger will use this split.",
-      });
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to activate split.", {
-        id: toastId,
-      });
+      setFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to activate split." });
     } finally {
       setMutationState({ kind: "idle" });
     }
@@ -293,6 +289,8 @@ export function useSplitManagerState(
     selectedWeekday,
     saveState:
       mutationState.kind === "saving" ? mutationState : persistence.saveState,
+    feedback,
+    clearFeedback: () => setFeedback(null),
     selectedDayExerciseSearchResults: exerciseActions.selectedDayExerciseSearchResults,
     setSplitName: exerciseActions.setSplitName,
     selectSplit,

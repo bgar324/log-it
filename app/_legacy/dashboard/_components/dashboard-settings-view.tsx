@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { ThemeToggle } from "@/app/components/theme-toggle";
+import { InlineFeedback } from "@/app/components/inline-feedback";
 import type { DashboardProfileFormState } from "@/app/dashboard/_hooks/use-dashboard-profile-form";
 import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
 
@@ -20,6 +22,8 @@ export type DashboardSettingsViewProps = {
  * behaves, not who they are.
  */
 export function DashboardSettingsView({ state }: DashboardSettingsViewProps) {
+  const { clearPreferenceFeedback } = state;
+  useEffect(() => { clearPreferenceFeedback(); }, [clearPreferenceFeedback]);
   // Persisted through a preference-only action: it PATCHes the saved profile
   // plus this unit, so it can never commit unsaved Profile edits or a pending
   // avatar from the shared form state.
@@ -65,6 +69,8 @@ export function DashboardSettingsView({ state }: DashboardSettingsViewProps) {
             ))}
           </select>
         </div>
+        <InlineFeedback feedback={state.preferenceFeedback} />
+        {state.isSaving ? <p role="status" className={styles.statLineMuted}>Saving preference...</p> : null}
         <p className={styles.statLineMuted}>
           Switching units changes what you see. Nothing you have already logged
           is rewritten.

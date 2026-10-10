@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import posthog from "posthog-js";
-import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/workspace-ui/alert";
 import { Button } from "@/app/components/workspace-ui/button";
 import {
@@ -300,7 +299,6 @@ export function WorkspaceNutritionPanel({
       return;
     }
 
-    const toastId = toast.loading("Saving nutrition...");
     setIsSaving(true);
     setSaveError(null);
 
@@ -328,14 +326,12 @@ export function WorkspaceNutritionPanel({
 
       onNutritionChange(payload.nutrition);
       posthog.capture("nutrition_targets_updated");
-      toast.success("Nutrition saved.", { id: toastId });
     } catch (error) {
       // Typed numbers stay exactly where they are: a failed request must never
       // cost someone the day they just counted.
       const message =
         error instanceof Error ? error.message : "Unable to save nutrition.";
       setSaveError(message);
-      toast.error(message, { id: toastId });
     } finally {
       setIsSaving(false);
     }

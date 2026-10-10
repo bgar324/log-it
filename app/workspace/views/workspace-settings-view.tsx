@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { Label } from "@/app/components/workspace-ui/label";
+import { InlineFeedback } from "@/app/components/inline-feedback";
 import {
   Select,
   SelectContent,
@@ -28,6 +30,8 @@ const WEIGHT_UNIT_OPTIONS: Array<{ value: WeightUnit; label: string }> = [
  * and signing out belongs to the account menu in the frame.
  */
 export function WorkspaceSettingsView({ state }: DashboardSettingsViewProps) {
+  const { clearPreferenceFeedback } = state;
+  useEffect(() => { clearPreferenceFeedback(); }, [clearPreferenceFeedback]);
   // The shared hook stays the only writer of the stored theme, so this screen
   // and the rest of the app can never disagree about which theme is set.
   const { preference, setPreference } = useThemePreference();
@@ -116,6 +120,8 @@ export function WorkspaceSettingsView({ state }: DashboardSettingsViewProps) {
             </SelectContent>
           </Select>
         </div>
+        <InlineFeedback feedback={state.preferenceFeedback} />
+        {state.isSaving ? <p role="status" className="text-sm text-muted-foreground">Saving preference...</p> : null}
       </section>
     </div>
   );

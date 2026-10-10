@@ -3,6 +3,7 @@
 import { Download, ImagePlus, Trash2, Upload, X } from "lucide-react";
 import { useRef } from "react";
 import { LegacyDialog } from "@/app/components/ui/legacy-dialog";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import { useDashboardProfileAvatarCrop } from "@/app/dashboard/_hooks/use-dashboard-profile-avatar-crop";
 import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
 
@@ -10,14 +11,18 @@ type DashboardProfileAvatarEditorProps = {
   displayedAvatarUrl: string | null;
   hasAvatar: boolean;
   isSaving: boolean;
-  onAvatarDelete: () => void;
-  onAvatarFileChange: (file: File | null) => void;
+  feedback?: Feedback | null;
+  onClearFeedback?: () => void;
+  onAvatarDelete: () => void | Promise<boolean>;
+  onAvatarFileChange: (file: File | null) => void | Promise<boolean>;
 };
 
 export function DashboardProfileAvatarEditor({
   displayedAvatarUrl,
   hasAvatar,
   isSaving,
+  feedback = null,
+  onClearFeedback,
   onAvatarDelete,
   onAvatarFileChange,
 }: DashboardProfileAvatarEditorProps) {
@@ -25,6 +30,8 @@ export function DashboardProfileAvatarEditor({
   const modalAvatarInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
+    cropFeedback,
+    cropAction,
     cropFrameRef,
     cropImageRef,
     cropMetrics,
@@ -48,6 +55,7 @@ export function DashboardProfileAvatarEditor({
     onAvatarDelete,
     onAvatarFileChange,
   });
+  const busy = isSaving || cropAction !== null;
 
   return (
     <>
@@ -57,10 +65,11 @@ export function DashboardProfileAvatarEditor({
         className={styles.profileFileInput}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
-        disabled={isSaving}
+        disabled={busy}
         onChange={(event) => {
           const nextFile = event.currentTarget.files?.[0] ?? null;
           event.currentTarget.value = "";
+          onClearFeedback?.();
           handleAvatarFile(nextFile);
         }}
       />
@@ -72,8 +81,9 @@ export function DashboardProfileAvatarEditor({
         aria-label={hasAvatar ? "Edit profile photo" : "Upload profile photo"}
         className={styles.profilePhotoButton}
         data-has-image={hasAvatar}
-        disabled={isSaving}
+        disabled={busy}
         onClick={() => {
+          onClearFeedback?.();
           if (hasAvatar) {
             openAvatarEditor();
           } else {
@@ -88,18 +98,25 @@ export function DashboardProfileAvatarEditor({
       >
         {displayedAvatarUrl ? null : <ImagePlus strokeWidth={1.9} />}
         <span className={styles.profilePhotoSliver}>
-          {hasAvatar ? "Edit" : "Upload"}
+          {busy ? "Updating..." : hasAvatar ? "Edit" : "Upload"}
         </span>
       </button>
+      {!isAvatarModalOpen ? <InlineFeedback feedback={feedback} /> : null}
 
       <LegacyDialog
         open={isAvatarModalOpen}
-        onOpenChange={(next) => next ? openAvatarEditor() : handleCancelCrop()}
+        onOpenChange={(next) => {
+          if (busy) return;
+          if (next) {
+            onClearFeedback?.();
+            openAvatarEditor();
+          } else handleCancelCrop();
+        }}
         title="Edit profile photo"
         overlayClassName={styles.avatarModalOverlay}
         contentClassName={styles.avatarModal}
         // An editor that is still open cannot be dismissed during a save.
-        busy={isSaving}
+        busy={busy}
       >
         <div className={styles.avatarModalHead}>
           <h2 className={styles.avatarModalTitle}>
@@ -109,7 +126,7 @@ export function DashboardProfileAvatarEditor({
             type="button"
             aria-label="Close profile photo editor"
             className={styles.avatarModalClose}
-            disabled={isSaving}
+            disabled={busy}
             onClick={handleCancelCrop}
           >
             <X className={styles.buttonInlineIcon} strokeWidth={1.9} />
@@ -121,10 +138,11 @@ export function DashboardProfileAvatarEditor({
           className={styles.profileFileInput}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
-          disabled={isSaving}
+          disabled={busy}
           onChange={(event) => {
             const nextFile = event.currentTarget.files?.[0] ?? null;
             event.currentTarget.value = "";
+            onClearFeedback?.();
             handleAvatarFile(nextFile);
           }}
         />
@@ -167,7 +185,7 @@ export function DashboardProfileAvatarEditor({
                 step="0.05"
                 value={cropZoom}
                 onChange={(event) => handleZoomChange(Number(event.target.value))}
-                disabled={!cropSourceUrl}
+                disabled={!cropSourceUrl || busy}
               />
             </label>
 
@@ -176,7 +194,7 @@ export function DashboardProfileAvatarEditor({
                 type="button"
                 className={styles.avatarModalButton}
                 onClick={() => modalAvatarInputRef.current?.click()}
-                disabled={isSaving}
+                disabled={busy}
               >
                 <Upload className={styles.buttonInlineIcon} strokeWidth={1.9} />
                 Upload new
@@ -184,32 +202,42 @@ export function DashboardProfileAvatarEditor({
               <button
                 type="button"
                 className={styles.avatarModalButton}
-                onClick={() => void handleDownloadAvatar()}
-                disabled={!cropSourceUrl}
+                onClick={() => {
+                  onClearFeedback?.();
+                  void handleDownloadAvatar();
+                }}
+                disabled={!cropSourceUrl || busy}
               >
                 <Download className={styles.buttonInlineIcon} strokeWidth={1.9} />
-                Download
+                {cropAction === "download" ? "Preparing photo..." : "Download"}
               </button>
             </div>
           </div>
         </div>
+        <InlineFeedback feedback={cropFeedback ?? feedback} />
         <div className={styles.avatarModalFooter}>
           <button
             type="button"
             className={styles.avatarModalRemove}
-            onClick={handleRemoveAvatar}
-            disabled={!hasAvatar || isSaving}
+            onClick={() => {
+              onClearFeedback?.();
+              void handleRemoveAvatar();
+            }}
+            disabled={!hasAvatar || busy}
           >
             <Trash2 className={styles.buttonInlineIcon} strokeWidth={1.9} />
-            Remove
+            {cropAction === "remove" ? "Removing..." : "Remove"}
           </button>
           <button
             type="button"
             className={styles.avatarModalApply}
-            onClick={() => void handleApplyCrop()}
-            disabled={!cropSourceUrl || isSaving}
+            onClick={() => {
+              onClearFeedback?.();
+              void handleApplyCrop();
+            }}
+            disabled={!cropSourceUrl || busy}
           >
-            Apply photo
+            {cropAction === "apply" ? "Saving photo..." : "Apply photo"}
           </button>
         </div>
       </LegacyDialog>

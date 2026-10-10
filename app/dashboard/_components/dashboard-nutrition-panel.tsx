@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { Loader2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import posthog from "posthog-js";
 import {
   formatWeightWithUnit,
@@ -171,6 +171,7 @@ export function DashboardNutritionPanel({
   );
   const [chartMode, setChartMode] = useState<ChartMode>("day");
   const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [activeRecallKey, setActiveRecallKey] = useState<string | null>(null);
   const unitLabel = getWeightUnitLabel(weightUnit);
   const chartRows = nutrition.chart[chartMode];
@@ -208,7 +209,7 @@ export function DashboardNutritionPanel({
       return;
     }
 
-    const toastId = toast.loading("Saving nutrition...");
+    setFeedback(null);
     setIsSaving(true);
 
     try {
@@ -235,11 +236,8 @@ export function DashboardNutritionPanel({
 
       onNutritionChange(payload.nutrition);
       posthog.capture("nutrition_targets_updated");
-      toast.success("Nutrition saved.", { id: toastId });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save nutrition.", {
-        id: toastId,
-      });
+      setFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to save nutrition." });
     } finally {
       setIsSaving(false);
     }
@@ -293,6 +291,7 @@ export function DashboardNutritionPanel({
                 className={styles.nutritionRecallRow}
                 data-nutrition-recall-row={option.key}
                 data-active={activeRecallKey === option.key}
+                disabled={isSaving}
                 onClick={() => applyRecall(option)}
               >
                 <span className={styles.nutritionRecallLabel}>{option.label}</span>
@@ -311,6 +310,7 @@ export function DashboardNutritionPanel({
               className={styles.nutritionInput}
               inputMode="numeric"
               value={caloriesInput}
+              disabled={isSaving}
               onChange={(event) => {
                 setCaloriesInput(event.target.value.replace(/\D/g, ""));
                 setActiveRecallKey(null);
@@ -323,6 +323,7 @@ export function DashboardNutritionPanel({
               className={styles.nutritionInput}
               inputMode="decimal"
               value={proteinInput}
+              disabled={isSaving}
               onChange={(event) => {
                 setProteinInput(event.target.value.replace(/[^0-9.]/g, ""));
                 setActiveRecallKey(null);
@@ -335,6 +336,7 @@ export function DashboardNutritionPanel({
               className={styles.nutritionInput}
               inputMode="numeric"
               value={bmrInput}
+              disabled={isSaving}
               onChange={(event) => setBmrInput(event.target.value.replace(/\D/g, ""))}
             />
           </label>
@@ -344,10 +346,12 @@ export function DashboardNutritionPanel({
               className={styles.nutritionInput}
               inputMode="decimal"
               value={bodyWeightInput}
+              disabled={isSaving}
               onChange={(event) => setBodyWeightInput(event.target.value.replace(/[^0-9.]/g, ""))}
             />
           </label>
         </div>
+        <InlineFeedback feedback={feedback} />
 
         <div className={styles.nutritionFormActions}>
           <button
@@ -361,7 +365,7 @@ export function DashboardNutritionPanel({
             ) : (
               <Save className={styles.nutritionButtonIcon} />
             )}
-            Save
+            {isSaving ? "Saving..." : "Save"}
           </button>
         </div>
       </section>

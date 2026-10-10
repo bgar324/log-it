@@ -39,6 +39,8 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
           isSaving={state.isSaving}
           onAvatarDelete={state.handleAvatarDelete}
           onAvatarFileChange={state.handleAvatarFileChange}
+          feedback={state.avatarFeedback}
+          onClearFeedback={state.clearAvatarFeedback}
         />
 
         <div className={styles.profileIdentityText}>
@@ -48,7 +50,10 @@ export function DashboardProfileView({ state }: DashboardProfileViewProps) {
               type="button"
               aria-label="Edit profile"
               className={styles.profileEditButton}
-              onClick={() => setIsEditOpen(true)}
+              onClick={() => {
+                state.clearIdentityFeedback();
+                setIsEditOpen(true);
+              }}
             >
               <Pencil className={styles.buttonInlineIcon} strokeWidth={1.9} />
             </button>

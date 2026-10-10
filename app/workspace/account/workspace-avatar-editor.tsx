@@ -3,6 +3,7 @@
 import { Download, ImagePlus, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/app/components/workspace-ui/button";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import {
   Dialog,
   DialogContent,
@@ -18,8 +19,10 @@ export type WorkspaceAvatarEditorProps = {
   displayedAvatarUrl: string | null;
   hasAvatar: boolean;
   isSaving: boolean;
-  onAvatarDelete: () => void;
-  onAvatarFileChange: (file: File | null) => void;
+  feedback?: Feedback | null;
+  onClearFeedback?: () => void;
+  onAvatarDelete: () => void | Promise<boolean>;
+  onAvatarFileChange: (file: File | null) => void | Promise<boolean>;
 };
 
 type CropFrameGeometry = {
@@ -40,12 +43,16 @@ export function WorkspaceAvatarEditor({
   displayedAvatarUrl,
   hasAvatar,
   isSaving,
+  feedback = null,
+  onClearFeedback,
   onAvatarDelete,
   onAvatarFileChange,
 }: WorkspaceAvatarEditorProps) {
   const pickerInputRef = useRef<HTMLInputElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement | null>(null);
   const {
+    cropFeedback,
+    cropAction,
     cropFrameRef,
     cropImageRef,
     cropMetrics,
@@ -69,6 +76,7 @@ export function WorkspaceAvatarEditor({
     onAvatarDelete,
     onAvatarFileChange,
   });
+  const busy = isSaving || cropAction !== null;
 
   const [retainedFrame, setRetainedFrame] = useState<CropFrameGeometry>({
     height: 0,
@@ -107,6 +115,7 @@ export function WorkspaceAvatarEditor({
   function readFileInput(event: React.ChangeEvent<HTMLInputElement>) {
     const nextFile = event.currentTarget.files?.[0] ?? null;
     event.currentTarget.value = "";
+    onClearFeedback?.();
     handleAvatarFile(nextFile);
   }
 
@@ -118,7 +127,7 @@ export function WorkspaceAvatarEditor({
         className="sr-only"
         type="file"
         accept={ACCEPTED_IMAGE_TYPES}
-        disabled={isSaving}
+        disabled={busy}
         onChange={readFileInput}
       />
 
@@ -132,8 +141,9 @@ export function WorkspaceAvatarEditor({
             ? { backgroundImage: `url(${displayedAvatarUrl})` }
             : undefined
         }
-        disabled={isSaving}
+        disabled={busy}
         onClick={() => {
+          onClearFeedback?.();
           if (hasAvatar) {
             openAvatarEditor();
             return;
@@ -146,18 +156,27 @@ export function WorkspaceAvatarEditor({
           {displayedAvatarUrl ? null : <ImagePlus strokeWidth={1.8} />}
         </span>
         <span className="absolute inset-x-0 bottom-0 bg-foreground/70 py-1 text-[0.7rem] font-medium text-background">
-          {hasAvatar ? "Edit" : "Upload"}
+          {busy ? "Updating..." : hasAvatar ? "Edit" : "Upload"}
         </span>
       </button>
+      {!isAvatarModalOpen ? <InlineFeedback feedback={feedback} /> : null}
 
-      {/* Nothing is uploaded from inside this dialog: applying a crop closes it
-          and the request runs behind the avatar, which is why dismissal is not
-          locked here. Every action still disables while a request is in flight. */}
       <Dialog
         open={isAvatarModalOpen}
-        onOpenChange={(next) => next ? openAvatarEditor() : closeDialog()}
+        onOpenChange={(next) => {
+          if (busy) return;
+          if (next) {
+            onClearFeedback?.();
+            openAvatarEditor();
+          } else closeDialog();
+        }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          showCloseButton={!busy}
+          onEscapeKeyDown={(event) => { if (busy) event.preventDefault(); }}
+          onInteractOutside={(event) => { if (busy) event.preventDefault(); }}
+        >
           <DialogHeader>
             <DialogTitle>Profile photo</DialogTitle>
             <DialogDescription>
@@ -171,7 +190,7 @@ export function WorkspaceAvatarEditor({
             className="sr-only"
             type="file"
             accept={ACCEPTED_IMAGE_TYPES}
-            disabled={isSaving}
+            disabled={busy}
             onChange={readFileInput}
           />
 
@@ -215,7 +234,7 @@ export function WorkspaceAvatarEditor({
                 max="3"
                 step="0.05"
                 value={cropZoom}
-                disabled={!frame.sourceUrl || isSaving}
+                disabled={!frame.sourceUrl || busy}
                 className="h-11 w-full accent-primary disabled:opacity-50"
                 onChange={(event) => handleZoomChange(Number(event.target.value))}
               />
@@ -225,7 +244,7 @@ export function WorkspaceAvatarEditor({
               <Button
                 type="button"
                 variant="outline"
-                disabled={isSaving}
+                disabled={busy}
                 onClick={() => replaceInputRef.current?.click()}
               >
                 <Upload />
@@ -234,45 +253,51 @@ export function WorkspaceAvatarEditor({
               <Button
                 type="button"
                 variant="outline"
-                disabled={!frame.sourceUrl || isSaving}
-                onClick={() => void handleDownloadAvatar()}
+                disabled={!frame.sourceUrl || busy}
+                onClick={() => {
+                  onClearFeedback?.();
+                  void handleDownloadAvatar();
+                }}
               >
                 <Download />
-                Download
+                {cropAction === "download" ? "Preparing photo..." : "Download"}
               </Button>
               <Button
                 type="button"
                 variant="destructive"
-                disabled={!hasAvatar || isSaving}
+                disabled={!hasAvatar || busy}
                 onClick={() => {
+                  onClearFeedback?.();
                   retainFrame();
-                  handleRemoveAvatar();
+                  void handleRemoveAvatar();
                 }}
               >
                 <Trash2 />
-                Remove
+                {cropAction === "remove" ? "Removing..." : "Remove"}
               </Button>
             </div>
           </div>
+          <InlineFeedback feedback={cropFeedback ?? feedback} />
 
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              disabled={isSaving}
+              disabled={busy}
               onClick={closeDialog}
             >
               Cancel
             </Button>
             <Button
               type="button"
-              disabled={!frame.sourceUrl || isSaving}
+              disabled={!frame.sourceUrl || busy}
               onClick={() => {
+                onClearFeedback?.();
                 retainFrame();
                 void handleApplyCrop();
               }}
             >
-              {isSaving ? "Saving photo…" : "Apply photo"}
+              {cropAction === "apply" ? "Saving photo..." : "Apply photo"}
             </Button>
           </DialogFooter>
         </DialogContent>

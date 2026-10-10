@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { DeleteConfirmDialog } from "@/app/components/delete-confirm-dialog";
+import type { Feedback } from "@/app/components/inline-feedback";
 import { ExerciseOrderSheet } from "@/app/components/exercise-order-sheet";
 import { useWorkspaceUnsavedChanges } from "@/app/components/workspace-navigation";
 import {
@@ -38,9 +39,7 @@ import {
   useIsNarrowViewport,
 } from "./workspace-split.shared";
 
-type PlanPrompt =
-  | { kind: "switch"; splitId: string | null }
-  | { kind: "delete"; splitId: string };
+type PlanPrompt = { splitId: string | null };
 
 /**
  * The plan: the library of saved splits, the week they lay out, and the day
@@ -54,7 +53,11 @@ export function WorkspaceSplitManager({
   persistChanges = true,
 }: SplitManagerProps) {
   const router = useRouter();
-  const [errorMessage, setErrorMessage] = useState("");
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; unsaved: boolean } | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deletingRef = useRef(false);
   const [isDayOpen, setIsDayOpen] = useState(false);
   const [isMoveWorkoutsOpen, setIsMoveWorkoutsOpen] = useState(false);
   const [prompt, setPrompt] = useState<PlanPrompt | null>(null);
@@ -62,20 +65,7 @@ export function WorkspaceSplitManager({
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   const isNarrow = useIsNarrowViewport();
   const notify = useCallback((message: string, tone: SplitLibraryNoticeTone) => {
-    if (tone === "error") {
-      setErrorMessage(message);
-      toast.error(message);
-      return;
-    }
-
-    setErrorMessage("");
-
-    if (tone === "info") {
-      toast.message(message);
-      return;
-    }
-
-    toast.success(message);
+    setFeedback(tone === "success" ? null : { tone, message });
   }, []);
   const onRefresh = useCallback(() => router.refresh(), [router]);
   const state = useSplitLibraryState({
@@ -126,7 +116,7 @@ export function WorkspaceSplitManager({
     }
 
     if (state.hasUnsavedChanges) {
-      setPrompt({ kind: "switch", splitId });
+      setPrompt({ splitId });
       setIsPromptOpen(true);
       return;
     }
@@ -137,12 +127,32 @@ export function WorkspaceSplitManager({
   }
 
   function requestDeleteSplit() {
-    if (!state.split.id || state.isSaving) {
+    if (!state.split.id || state.isSaving || deletingRef.current) {
       return;
     }
 
-    setPrompt({ kind: "delete", splitId: state.split.id });
-    setIsPromptOpen(true);
+    setFeedback(null);
+    setDeleteTarget({
+      id: state.split.id,
+      name: state.split.name.trim() || "this plan",
+      unsaved: state.hasUnsavedChanges,
+    });
+    setIsDeleteOpen(true);
+  }
+
+  async function confirmDeleteSplit() {
+    if (!deleteTarget || state.isSaving || deletingRef.current) return;
+    deletingRef.current = true;
+    setIsDeleting(true);
+    setFeedback(null);
+    try {
+      if (await state.deleteSplit(deleteTarget.id)) {
+        setIsDeleteOpen(false);
+      }
+    } finally {
+      deletingRef.current = false;
+      setIsDeleting(false);
+    }
   }
 
   function switchTo(splitId: string | null) {
@@ -151,18 +161,10 @@ export function WorkspaceSplitManager({
     setIsMoveWorkoutsOpen(false);
   }
 
-  function resolvePrompt(resolution: "save" | "discard" | "delete") {
+  function resolvePrompt(resolution: "save" | "discard") {
     setIsPromptOpen(false);
 
     if (!prompt) {
-      return;
-    }
-
-    if (prompt.kind === "delete") {
-      if (resolution === "delete") {
-        void state.deleteSplit(prompt.splitId);
-      }
-
       return;
     }
 
@@ -187,6 +189,7 @@ export function WorkspaceSplitManager({
     todayWeekday: state.todayWeekday,
     searchResults: state.exerciseSearchResults,
     isSaving: state.isSaving,
+    feedback: isNarrow && isDayOpen ? feedback : null,
     hasUnsavedChanges: state.hasUnsavedChanges,
     isUnsavedPlan: !state.split.id,
     onSelectWeekday: state.selectWeekday,
@@ -202,7 +205,6 @@ export function WorkspaceSplitManager({
     onSave: state.saveSplit,
     onDiscard: state.discardChanges,
   };
-  const planName = state.split.name.trim() || "this plan";
   const selectedWeekdayLabel = getSplitWeekdayLabel(selectedDay.weekday);
 
   return (
@@ -213,8 +215,7 @@ export function WorkspaceSplitManager({
         activeSplitId={state.activeSplitId}
         isSaving={state.isSaving}
         hasUnsavedChanges={state.hasUnsavedChanges}
-        errorMessage={errorMessage}
-        onDismissError={() => setErrorMessage("")}
+        feedback={isNarrow && isDayOpen ? null : feedback}
         onSelectSplit={requestSelectSplit}
         onCreateSplit={() => void state.createSplit()}
         onRenameSplit={(name) => void state.renameSplit(name)}
@@ -297,48 +298,36 @@ export function WorkspaceSplitManager({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {prompt?.kind === "delete"
-                ? `Delete ${planName}?`
-                : "You have unsaved changes"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>You have unsaved changes</AlertDialogTitle>
             <AlertDialogDescription>
-              {prompt?.kind === "delete"
-                ? `${planName} and the week it lays out go away, and that cannot be undone.${
-                    state.hasUnsavedChanges
-                      ? " Anything you have not saved goes with it."
-                      : ""
-                  }`
-                : `Your changes to ${selectedWeekdayLabel} are not saved. Save them before you switch plans, or throw them away.`}
+              {`Your changes to ${selectedWeekdayLabel} are not saved. Save them before you switch plans, or throw them away.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>
-              {prompt?.kind === "delete" ? "Keep the plan" : "Keep editing"}
-            </AlertDialogCancel>
-            {prompt?.kind === "delete" ? (
-              <AlertDialogAction
-                variant="destructive"
-                onClick={() => resolvePrompt("delete")}
-              >
-                Delete plan
-              </AlertDialogAction>
-            ) : (
-              <>
-                <AlertDialogAction
-                  variant="destructive"
-                  onClick={() => resolvePrompt("discard")}
-                >
-                  Discard and switch
-                </AlertDialogAction>
-                <AlertDialogAction onClick={() => resolvePrompt("save")}>
-                  Save and switch
-                </AlertDialogAction>
-              </>
-            )}
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => resolvePrompt("discard")}
+            >
+              Discard and switch
+            </AlertDialogAction>
+            <AlertDialogAction onClick={() => resolvePrompt("save")}>
+              Save and switch
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        title={`Delete ${deleteTarget?.name ?? "this plan"}?`}
+        description={`${deleteTarget?.name ?? "This plan"} and the week it lays out go away. This cannot be undone.${deleteTarget?.unsaved ? " Unsaved changes go with it." : ""}`}
+        busy={isDeleting || state.isSaving}
+        error={feedback?.message}
+        onCancel={() => {
+          if (!deletingRef.current && !state.isSaving) setIsDeleteOpen(false);
+        }}
+        onConfirm={() => void confirmDeleteSplit()}
+      />
     </div>
   );
 }

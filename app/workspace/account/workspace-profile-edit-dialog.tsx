@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/app/components/workspace-ui/button";
+import { InlineFeedback } from "@/app/components/inline-feedback";
 import {
   Dialog,
   DialogContent,
@@ -175,6 +176,7 @@ function WorkspaceProfileEditForm({ onClose, state }: WorkspaceProfileEditFormPr
             : "Only you can see your training."}
         </p>
       </div>
+      <InlineFeedback feedback={state.identityFeedback} />
 
       <DialogFooter>
         <Button

@@ -13,11 +13,7 @@ export type IonicAccountProps = {
 
 export type IonicNotifyTone = "success" | "error";
 
-/**
- * Every account mutation reports through this instead of sonner: the /ionic
- * shell has no <Toaster />, so a sonner toast here would be invisible and a
- * failed save would look like a silent success.
- */
+/** Account mutations report through Ionic's own feedback controls. */
 export type IonicNotify = (message: string, tone: IonicNotifyTone) => void;
 
 export type IonicProfileIdentityInput = {

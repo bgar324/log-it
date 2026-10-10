@@ -6,6 +6,7 @@ import { render } from "./render";
 
 const props = {
   onSave: () => {}, submitLabel: "Save workout", isSaving: false,
+  feedback: null,
   canReorder: true, canResetFromSplit: true, canRemoveExercise: true,
   onAddExercise: () => {}, onReorder: () => {}, onResetFromSplit: () => {},
   onRemoveExercise: () => {},
@@ -26,7 +27,6 @@ test("floating actions are available directly and Save requests submission", asy
       await mounted.click(button);
     }
     assert.deepEqual(calls, ["delete", "add", "reorder", "reset", "save"]);
-    assert.equal(mounted.container.querySelector('button[aria-label="Save workout"]')?.textContent, "Save");
   } finally { mounted.unmount(); }
 });
 

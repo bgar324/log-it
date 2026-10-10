@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 
 export const REST_PRESETS_SECONDS = [30, 60, 90, 120, 180];
 
@@ -9,6 +8,7 @@ export type RestTimer = {
   remaining: number | null;
   isRunning: boolean;
   isPaused: boolean;
+  isComplete: boolean;
   start: (seconds: number) => void;
   addSeconds: (seconds: number) => void;
   togglePause: () => void;
@@ -32,6 +32,7 @@ export function useRestTimer(): RestTimer {
   const intervalRef = useRef<number | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current !== null) {
@@ -49,7 +50,7 @@ export function useRestTimer(): RestTimer {
       clearTimer();
       setRemaining(null);
       setIsPaused(false);
-      toast.success("Rest complete", { description: "Time for your next set." });
+      setIsComplete(true);
       navigator.vibrate?.([120, 60, 120]);
     } else {
       setRemaining(Math.ceil(milliseconds / 1000));
@@ -77,12 +78,14 @@ export function useRestTimer(): RestTimer {
   }, [clearTimer, syncClock]);
 
   function start(seconds: number) {
+    setIsComplete(false);
     clockRef.current = { kind: "running", deadline: Date.now() + seconds * 1000 };
     setIsPaused(false);
     runTimer();
   }
 
   function stop() {
+    setIsComplete(false);
     clockRef.current = null;
     clearTimer();
     setIsPaused(false);
@@ -115,5 +118,5 @@ export function useRestTimer(): RestTimer {
     }
   }
 
-  return { remaining, isRunning: remaining !== null, isPaused, start, addSeconds, togglePause, stop };
+  return { remaining, isRunning: remaining !== null, isPaused, isComplete, start, addSeconds, togglePause, stop };
 }

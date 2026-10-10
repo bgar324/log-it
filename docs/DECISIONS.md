@@ -148,7 +148,7 @@ The visual direction is monochrome. Home loses the day dot, unfinished-session s
 
 ## Use Transitions.dev as the motion reference
 
-The owner requested a predominantly Transitions.dev motion language instead of the prior in-house treatment. Its free recipes provide easing, timing, scales, distances, status swaps, and loading handoffs. Existing Radix, Swiper, and Sonner components retain lifecycle and interaction ownership; no additional animation runtime is needed.
+The owner requested a predominantly Transitions.dev motion language instead of the prior in-house treatment. Its free recipes provide easing, timing, scales, distances, status swaps, and loading handoffs. Existing Radix and Swiper components retain lifecycle and interaction ownership; no additional animation runtime is needed.
 
 The reference demonstrations are not application state machines. Current request state updates immediately, outgoing status visuals are inaccessible and transient, and loading handoffs follow real readiness rather than a mandatory pulse. Reduced-motion preferences suppress JavaScript animation as well as CSS. Editable values and recorded numbers do not blur or roll. Overlay focus remains unchanged on open and close to preserve phone keyboard behavior.
 
@@ -161,3 +161,9 @@ The recommendation engine replaces hand-authored recovery, position, and trend m
 Repeat-last is both the zero-change prior and the sparse/unvalidated fallback. The fixed ridge penalty is one, including the intercept. Four walk-forward checks must improve absolute relative-change error by more than 5% before the learned forecast is selected. At least eight training transitions precede those checks. The model never trains on the target date or later data. Gym increments, asymmetric load limits, recent backoff shape, and heuristic confidence remain explicit product rules.
 
 The October 4, 2026 recorded-data replay had 277 held-out targets across 79 exercise histories. Ridge was selected for 24 targets. Load MAE was 13.01 lb versus 12.87 lb for rounded repeat-last; bodyweight rep MAE was 3.18 versus 3.55 across only 11 targets. These results do not establish an overall accuracy gain. The public article reports that limitation rather than treating the synthetic improvement as evidence about users. The evaluation's 2% relative-error tolerance is an engineering check, not statistical non-inferiority.
+
+## Keep feedback with the action
+
+The owner removed Sonner after reviewing the top-positioned workout-save feedback. Request progress belongs on the initiating control, ordinary success is visible in updated data or the unchanged return navigation, and errors remain beside the relevant form. Workout and split deletion use the existing dialog boundary instead of transient confirmation notifications; pending requests block dismissal and failed deletion remains retryable.
+
+PR feedback survives successful navigation as one compact account/workout-associated browser-session summary. It uses the API's actual returned records, converts pounds only for display, and cannot make an accepted save fail when storage is unavailable. The next accepted save replaces it even when there are no new records. This adds no backend model or durable PR history.

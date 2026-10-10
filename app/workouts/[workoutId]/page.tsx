@@ -19,6 +19,7 @@ import { WorkspaceWorkoutDetail } from "@/app/workspace/details/workspace-workou
 import { WorkspaceWorkoutDetailActions } from "@/app/workspace/details/workspace-workout-detail-actions";
 import { loadWorkspaceWorkoutDetail } from "@/app/workspace/details/workspace-workout-detail.data";
 import { WorkoutDetailActions } from "./workout-detail-actions";
+import { WorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
 import { styles } from "./workout-detail.styles";
 import {
   resolveWorkoutReturn,
@@ -69,13 +70,16 @@ export default async function WorkoutDetailPage({
         backHref={workoutReturn.href}
         accessory={
           <WorkspaceWorkoutDetailActions
+            key={detail.id}
             editHref={`${detail.editHref}${workoutReturn.query}`}
             workoutId={detail.id}
             workoutExport={detail.exportText}
+            workoutLabel={`${detail.title}, ${detail.summaryMeta}`}
           />
         }
       >
         <WorkspaceWorkoutDetail detail={detail} />
+        <WorkoutPersonalRecords userId={user.id} workoutId={detail.id} weightUnit={user.preferredWeightUnit} />
       </WorkspaceFrame>
     );
   }
@@ -178,9 +182,11 @@ export default async function WorkoutDetailPage({
           </div>
           <div className={styles.topActions}>
             <WorkoutDetailActions
+              key={workout.id}
               editHref={`/workouts/${workout.id}/edit${workoutReturn.query}`}
               workoutId={workout.id}
               workoutExport={workoutExport}
+              workoutLabel={`${workout.title}, ${formatDate(workout.performedAt)}`}
             />
           </div>
         </header>
@@ -192,6 +198,7 @@ export default async function WorkoutDetailPage({
           <h1 className={styles.title}>{workout.title}</h1>
           <p className={styles.summaryLine}>{summarySentence}</p>
           <p className={styles.summaryMeta}>{summaryMeta}</p>
+          <WorkoutPersonalRecords userId={user.id} workoutId={workout.id} weightUnit={unit} />
         </section>
 
         <section className={styles.exerciseList}>

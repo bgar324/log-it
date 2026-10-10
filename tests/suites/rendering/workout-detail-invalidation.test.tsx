@@ -3,8 +3,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import posthog from "posthog-js";
 import { act } from "react";
-import { Toaster } from "sonner";
-import { render, type Mounted } from "./render";
+import { render } from "./render";
 import {
   DashboardWorkoutsView,
   emptyWorkoutFilters,
@@ -181,17 +180,15 @@ async function saveEdit() {
   });
 }
 
-/** The detail page's real delete path, driven through its confirmation toast. */
+/** The detail page's real delete path, driven through its confirmation dialog. */
 async function deleteFromDetailPage() {
   const mounted = await render(
-    <>
-      <WorkoutDetailActions
-        editHref={`/workouts/${WORKOUT_ID}/edit`}
-        workoutId={WORKOUT_ID}
-        workoutExport=""
-      />
-      <Toaster />
-    </>,
+    <WorkoutDetailActions
+      editHref={`/workouts/${WORKOUT_ID}/edit`}
+      workoutId={WORKOUT_ID}
+      workoutExport=""
+      workoutLabel="Push Day, Dec 10, 2025"
+    />,
   );
 
   const trash = mounted
@@ -201,17 +198,16 @@ async function deleteFromDetailPage() {
   await mounted.click(trash);
   await settle();
 
-  const confirm = confirmButton(mounted);
-  assert.ok(confirm, "expected the confirmation toast to offer Delete");
+  const confirm = confirmButton();
+  assert.ok(confirm, "expected the confirmation dialog to offer Delete");
   await mounted.click(confirm);
   await settle();
 
   mounted.unmount();
 }
 
-function confirmButton(mounted: Mounted) {
-  return mounted
-    .all("button")
+function confirmButton() {
+  return Array.from(document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button'))
     .find((button) => (button.textContent ?? "").trim() === "Delete");
 }
 

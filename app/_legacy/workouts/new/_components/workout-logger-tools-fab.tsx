@@ -21,6 +21,7 @@ import {
   formatRestPreset,
   useRestTimer,
 } from "@/app/workouts/new/_hooks/use-rest-timer";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import { styles } from "@/app/_legacy/workouts/new/workout-logger.styles";
 
 const STAGGER_MS = 45;
@@ -41,6 +42,8 @@ type WorkoutLoggerToolsFabProps = {
   onSave: () => void;
   submitLabel: string;
   isSaving: boolean;
+  feedback: Feedback | null;
+  feedbackAction?: { label: string; onClick: () => void };
   canReorder: boolean;
   canResetFromSplit: boolean;
   isOpen: boolean;
@@ -63,6 +66,8 @@ export function WorkoutLoggerToolsFab({
   onSave,
   submitLabel,
   isSaving,
+  feedback,
+  feedbackAction,
   canReorder,
   canResetFromSplit,
   isOpen,
@@ -216,6 +221,8 @@ export function WorkoutLoggerToolsFab({
       ) : null}
 
       <div className={styles.fabDial}>
+        <InlineFeedback feedback={isSaving ? { tone: "info", message: "Saving..." } : feedback} action={feedbackAction}
+          className="max-h-[30vh] w-[min(24rem,calc(100vw-2rem))] overflow-y-auto rounded-xl bg-[var(--bg)] px-3 py-2" />
         {isOpen ? (
           <div className={styles.fabStack}>
             {actions.map((action, index) => {
@@ -272,6 +279,7 @@ export function WorkoutLoggerToolsFab({
         <button
           type="button"
           className={styles.fabTrigger}
+          disabled={isSaving}
           data-state={state}
           data-timing={timer.isRunning ? "true" : undefined}
           data-fab-trigger="true"
@@ -299,6 +307,8 @@ export function WorkoutLoggerToolsFab({
             <span className={styles.fabTriggerClock}>
               {formatRestClock(timer.remaining ?? 0)}
             </span>
+          ) : timer.isComplete ? (
+            <span aria-live="polite" className="text-xs">Rest complete</span>
           ) : (
             <Ellipsis className={styles.fabTriggerIcon} strokeWidth={1.9} />
           )}

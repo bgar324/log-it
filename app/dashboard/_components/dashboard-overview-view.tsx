@@ -7,6 +7,7 @@ import { toDatabaseDateFromInput } from "@/lib/workout-utils";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { MonthlyActivityCalendar } from "@/app/components/activity-calendar";
 import { useStoredWorkoutDraft } from "@/app/workouts/new/_hooks/use-stored-workout-draft";
+import { WorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
 import type { DashboardClientData, DashboardView } from "../dashboard-types";
 import { countLabel } from "../dashboard-client.shared";
 import styles from "../home.module.css";
@@ -38,13 +39,14 @@ export type DashboardOverviewViewProps = {
   todayPlan: DashboardClientData["overview"]["todayPlan"];
   greetingName: string;
   weightUnit: WeightUnit;
+  userId?: string;
   onNavigateToView: (view: DashboardView) => void;
 };
 
 const weekdayFormat = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" });
 const dateFormat = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
 
-export function DashboardOverviewView({ overview, todayPlan, greetingName, weightUnit, onNavigateToView }: DashboardOverviewViewProps) {
+export function DashboardOverviewView({ overview, todayPlan, greetingName, weightUnit, onNavigateToView, userId }: DashboardOverviewViewProps) {
   const draft = useStoredWorkoutDraft(weightUnit);
   const date = toDatabaseDateFromInput(overview.asOfDate);
   const hasPlan = todayPlan.workoutTypeSlug !== null && !todayPlan.isRestDay;
@@ -90,6 +92,7 @@ export function DashboardOverviewView({ overview, todayPlan, greetingName, weigh
             <button type="button" className={styles.quiet} onClick={() => onNavigateToView("split")}>Set up a split <ArrowRight size={16} /></button>
           ) : null}
         </section>
+        {userId ? <WorkoutPersonalRecords userId={userId} weightUnit={weightUnit} /> : null}
 
         <section className={styles.activity} aria-label="Recorded activity">
           <div className={styles.sectionHead}>

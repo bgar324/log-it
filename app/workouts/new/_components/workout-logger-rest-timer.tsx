@@ -31,8 +31,8 @@ export function WorkoutLoggerRestTimer({ timer }: { timer: RestTimer }) {
           anything reading the tree. */}
       <PopoverTrigger className={styles.restTimerButton} aria-label="Rest timer">
         <Timer className={styles.icon} strokeWidth={1.9} />
-        <span className={timer.isRunning ? styles.restTimerClock : undefined}>
-          {timer.remaining === null ? "Rest" : formatRestClock(timer.remaining)}
+        <span aria-live="polite" className={timer.isRunning ? styles.restTimerClock : undefined}>
+          {timer.remaining === null ? timer.isComplete ? "Rest complete" : "Rest" : formatRestClock(timer.remaining)}
         </span>
       </PopoverTrigger>
       <PopoverContent align="end" className={styles.exerciseMenu}>

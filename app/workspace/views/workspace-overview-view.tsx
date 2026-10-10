@@ -16,6 +16,7 @@ import type { DashboardClientData } from "@/app/dashboard/dashboard-types";
 import type { DashboardOverviewViewProps } from "@/app/dashboard/_components/dashboard-overview-view";
 import { formatWorkoutLoggerDateLabel } from "@/app/workouts/new/workout-logger.utils";
 import { useStoredWorkoutDraft } from "@/app/workouts/new/_hooks/use-stored-workout-draft";
+import { WorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
 import { WorkspaceDetailSheetProvider } from "@/app/workspace/details/workspace-detail-sheet";
 import { WorkspaceWorkoutHistoryList } from "./workspace-workout-history-list";
 import { WorkspaceLinkPending } from "./workspace-link-pending";
@@ -58,6 +59,7 @@ export function WorkspaceOverviewView({
   weightUnit,
   workouts,
   onNavigateToView,
+  userId,
 }: WorkspaceOverviewViewProps) {
   const draft = useStoredWorkoutDraft(weightUnit);
   const loggedWorkoutId = overview.loggedWorkoutId;
@@ -111,6 +113,7 @@ export function WorkspaceOverviewView({
             <p className="mt-2 text-sm text-muted-foreground">{status}</p>
           ) : null}
         </section>
+        {userId ? <WorkoutPersonalRecords userId={userId} weightUnit={weightUnit} /> : null}
 
         <section className="flex flex-col gap-2">
           <div className="flex min-h-8 items-center justify-between gap-3">

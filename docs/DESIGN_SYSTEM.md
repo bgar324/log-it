@@ -18,7 +18,7 @@ Status: disabled in production at the owner's request. These rules describe the 
 
 The owner-only workspace uses the reference application's shadcn `radix-nova` system: neutral tokens, Geist, standard buttons and fields, visible tabs, and ordinary sheets, dialogs, and menus. `app/components/workspace-ui/` is the control source of truth. Do not mix legacy pill controls into these screens.
 
-On phones, primary navigation is a fixed bottom tab bar with icons and labels. Account actions live at its right edge. Desktop keeps the header tabs. Search stays above the content. The shared `--workspace-nav-height` reserves space for the bar and the home-indicator inset; pinned workout actions sit above it. Feedback appears at the top rather than covering either bottom action area.
+On phones, primary navigation is a fixed bottom tab bar with icons and labels. Account actions live at its right edge. Desktop keeps the header tabs. Search stays above the content. The shared `--workspace-nav-height` reserves space for the bar and the home-indicator inset; pinned workout actions sit above it. Feedback stays with the affected form or action.
 
 Home is the first tab, not the logger. Its hierarchy is today's plan and one contextual workout action, recent sessions, then the planned exercises. Home only reads unfinished drafts; the logger owns restoring, saving, and discarding them. Do not replace this overview with an Already logged notice or add KPI tiles.
 
@@ -108,7 +108,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - Popovers and dialogs do not move focus on open or close. Tab remains available to enter and traverse them. Editing-menu pointer presses preserve the current input.
 - Exercise suggestions complete a tap on pointer release, even if input blur has already closed the list. Dragging, canceled gestures, and unmounting the picker component cancel selection. Selection preserves the name field's focus and existing set values.
 - Menus and dialogs retain outgoing content for their actual exit animation, then unmount. Outgoing content is immediately inert. Do not add per-page exit timers.
-- Feedback sits below the phone utility row, leaving Back and the dock reachable. Informational toast bodies pass pointer events through; explicit toast actions remain interactive.
+- Feedback belongs beside the affected control, not in floating toasts. Pending controls state progress; updated visible data or return navigation confirms ordinary saves. Errors persist until retry, dismissal, or a relevant state change. Logger errors sit above its fixed action rows without covering Save or the pager, and explicit recovery actions remain clickable.
 - Profile and Settings use rows with focused editing dialogs. Destructive actions remain distinct and confirmed. A preference write uses saved profile values, never another form's unsaved draft.
 - Data rows do not gain hover-only affordances. Numeric fields have no native steppers. Selects use the shared inset caret.
 - Tailwind arbitrary values must be literal strings. State variants such as `aria-pressed:` and `data-selected:` must win through selector specificity, not class-string order.
@@ -136,7 +136,6 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 | Card and sidebar sizing | 300ms, with one geometry owner per container |
 | Reorder | Commit immediately, then interpolate stable keyed rows; a later move interrupts the current one |
 | Loading | 1s opacity pulse; static tiny calendar dots; readiness triggers a 400ms reveal, not a timer |
-| Toasts | 350ms entry with a 16px move, `.97` scale and 2px blur; 200ms exit matches Sonner's removal clock |
 
 Do not blur editable values, roll weights/reps/rest digits, wait for a skeleton cycle, or delay Back/save cleanup for animation. Reduced motion cancels JavaScript movement as well as CSS movement. Active charts and their tooltips render without data-reveal animation. Theme palette interpolation must not override component transition properties.
 
@@ -168,11 +167,12 @@ Public tokens (`--landing-*`) live on the shared `.publicRoot` class at the top 
 
 ## State And Feedback
 
-- Toast feedback uses `sonner` through `app/components/ui/toaster.tsx`.
-- Sonner confirmation toasts should keep action buttons visually grouped; `app/components/ui/toaster.tsx` overrides Sonner's default button auto-margin.
+- `InlineFeedback` renders persistent local errors with `role="alert"` and useful action results with `role="status"`. Do not add a global notification queue or routine save confirmation.
+- Workout and split deletion use `DeleteConfirmDialog`, with the target identified before confirmation, disabled controls while pending, dismissal protection, and inline failure/retry. Account deletion keeps its typed-username confirmation.
 - Loading states exist for route-level loading files and dashboard lazy-view skeletons.
 - Dashboard client view errors render retry actions.
 - Destructive or irreversible actions should keep clear confirmation/error affordances. Existing destructive color references include red tones such as `#b13d48`.
+- New workout PRs share one account/workout-associated summary on the return surface; no stack of individual notifications. Rest completion appears in its timer control.
 - Dashboard profile photo editing renders its modal through a body portal with `dashboard-theme-scope`, blurred backdrop, and enter/exit animations defined in `app/globals.css`.
 
 ## Known Drift / Needs Verification

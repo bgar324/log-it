@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/workspace-ui/alert";
 import { Button } from "@/app/components/workspace-ui/button";
 import {
@@ -172,7 +171,6 @@ function ChangeEmailForm({
 
     onPendingChange(true);
     setFailure(null);
-    const toastId = toast.loading("Updating email...");
 
     try {
       const response = await fetch("/api/profile/email", {
@@ -187,7 +185,6 @@ function ChangeEmailForm({
       }
 
       setPassword("");
-      toast.success("Email updated.", { id: toastId });
       router.refresh();
       onClose();
     } catch (error) {
@@ -196,7 +193,6 @@ function ChangeEmailForm({
       const message =
         error instanceof Error ? error.message : "Unable to change email.";
       setFailure(message);
-      toast.error(message, { id: toastId });
     } finally {
       onPendingChange(false);
     }
@@ -323,13 +319,11 @@ function ChangePasswordForm({
     if (newPassword !== confirmPassword) {
       const message = "New passwords do not match.";
       setFailure(message);
-      toast.error(message);
       return;
     }
 
     onPendingChange(true);
     setFailure(null);
-    const toastId = toast.loading("Updating password...");
 
     try {
       const response = await fetch("/api/profile/password", {
@@ -346,13 +340,11 @@ function ChangePasswordForm({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.success("Password updated.", { id: toastId });
       onClose();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to change password.";
       setFailure(message);
-      toast.error(message, { id: toastId });
     } finally {
       onPendingChange(false);
     }

@@ -30,7 +30,6 @@ const ROOTS = [
   "app/exercises/[exerciseKey]/page.tsx",
   "app/exercises/[exerciseKey]/loading.tsx",
   "app/preview/[view]/product-preview.tsx",
-  "app/components/ui/toaster.tsx",
 ];
 
 // Never cloned: duplicating any of these would fork server behaviour, fork a React

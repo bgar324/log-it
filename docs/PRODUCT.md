@@ -74,6 +74,8 @@ Ionic account, nutrition, split, history, and progress screens use the existing 
 - Bodyweight sets count toward workout volume: each workout snapshots the user's tracked body weight for its date, and bodyweight sets are credited as body weight times reps. Movements still display as "Bodyweight"; per-exercise best weight stays external-load only.
 - The logger accepts the user's preferred unit, but the database stores weights in pounds.
 - Create-mode workout drafts are autosaved client-side, but only after the user changes something: opening the logger and leaving it stores nothing. A saved workout deletes its draft, and nothing — including the page-hide flush — puts it back.
+- Saves report progress on the initiating control, without loading or success toasts. Failed validation, network requests, and duplicate conflicts remain visible beside Save and retain entered data. Duplicate conflicts keep an explicit `Discard draft` action; only that action clears the draft.
+- A saved workout's new personal records appear together on its return surface, showing each exercise and estimated 1RM in the current unit. This summary lasts for the browser session and is replaced by the next accepted save, including a save with no records.
 - A recovered draft keeps its own date, because it is unfinished work from that day rather than a template. When that date is not today, the logger says so and offers exactly two resolutions: move the draft to today, or discard it and return to the seeded form. The create form has no date field, so without that notice a draft from an earlier day can neither be saved nor cleared.
 - The owner logger leaves empty fields blank. Directly beneath the logging card, a quiet guidance container separates the dated last session from suggested sets for today. Exercise navigation stays near the thumb above the floating bottom actions. Guidance uses the existing predictor, shows targets only at medium/high confidence, and never changes entered values. Suggestions follow the planned set count; prior sets remain visible. Loading/error states do not present stale guidance as current.
 - Adding a set never refetches the comparison, and editing an existing workout never compares it against itself.
@@ -99,7 +101,7 @@ Ionic account, nutrition, split, history, and progress screens use the existing 
 - Split exercises have display names, slugs, set targets, and one-based ordering.
 - Saving a split replaces existing split days/exercises for that split.
 - Deleting the active split activates the most recently updated remaining split when one exists.
-- Split deletion uses a Sonner confirmation toast rather than `window.confirm`.
+- Split and workout deletion require an explicit dialog confirmation. Failed deletion remains in the dialog with a retryable error; an in-flight request prevents dismissal and repeated confirmation.
 - Split data is cached by user and invalidated after writes.
 
 ## Progress And History

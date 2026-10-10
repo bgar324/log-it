@@ -37,6 +37,8 @@ export function WorkspaceProfileView({ state }: DashboardProfileViewProps) {
           isSaving={state.isSaving}
           onAvatarDelete={state.handleAvatarDelete}
           onAvatarFileChange={state.handleAvatarFileChange}
+          feedback={state.avatarFeedback}
+          onClearFeedback={state.clearAvatarFeedback}
         />
 
         <div className="flex min-w-0 flex-col gap-1">
@@ -49,7 +51,10 @@ export function WorkspaceProfileView({ state }: DashboardProfileViewProps) {
               variant="ghost"
               size="icon"
               aria-label="Edit profile"
-              onClick={() => setIsEditOpen(true)}
+              onClick={() => {
+                state.clearIdentityFeedback();
+                setIsEditOpen(true);
+              }}
             >
               <Pencil strokeWidth={1.9} />
             </Button>

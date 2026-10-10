@@ -9,7 +9,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { DeleteConfirmDialog } from "@/app/components/delete-confirm-dialog";
+import { InlineFeedback } from "@/app/components/inline-feedback";
 import {
   isRestDayWorkoutTypeSlug,
   type SplitWeekdayValue,
@@ -40,6 +41,10 @@ export function SplitManager({
   const [isReorderDaysOpen, setIsReorderDaysOpen] = useState(false);
   const [isMobileEditorOpen, setIsMobileEditorOpen] = useState(false);
   const [todayWeekday] = useState<SplitWeekdayValue>(getInitialSelectedWeekday);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deletingRef = useRef(false);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") {
@@ -106,22 +111,28 @@ export function SplitManager({
   const activeSplitId = state.splits.find((split) => split.isActive)?.id ?? null;
 
   function handleDeleteSplit() {
-    if (!state.split.id || state.saveState.kind === "saving") {
+    if (!state.split.id || state.saveState.kind === "saving" || deletingRef.current) {
       return;
     }
 
-    const splitId = state.split.id;
-    const toastId = toast("Delete this split?", {
-      description: "This cannot be undone.",
-      action: {
-        label: "Delete",
-        onClick: () => void state.deleteSplit(splitId),
-      },
-      cancel: {
-        label: "Cancel",
-        onClick: () => toast.dismiss(toastId),
-      },
-    });
+    state.clearFeedback();
+    setDeleteTarget({ id: state.split.id, name: state.split.name.trim() || "this split" });
+    setIsDeleteOpen(true);
+  }
+
+  async function confirmDeleteSplit() {
+    if (!deleteTarget || state.saveState.kind === "saving" || deletingRef.current) return;
+    deletingRef.current = true;
+    setIsDeleting(true);
+    state.clearFeedback();
+    try {
+      if (await state.deleteSplit(deleteTarget.id)) {
+        setIsDeleteOpen(false);
+      }
+    } finally {
+      deletingRef.current = false;
+      setIsDeleting(false);
+    }
   }
 
   const selectedSplitMeta = (() => {
@@ -286,6 +297,7 @@ export function SplitManager({
             </SplitActionMenu>
           </div>
           <p className={splitStyles.splitSelectMeta}>{selectedSplitMeta}</p>
+          <InlineFeedback feedback={isMobileEditorOpen ? null : state.feedback} />
         </div>
 
         {/* The week itself has nothing to save: reordering commits from its own
@@ -328,6 +340,7 @@ export function SplitManager({
         onMobileClose={() => setIsMobileEditorOpen(false)}
         onSelectWeekday={state.selectWeekday}
         onSave={() => void state.handleSave()}
+        feedback={isMobileEditorOpen ? state.feedback : null}
         onWorkoutTypeChange={state.setWorkoutType}
         onExerciseNameChange={state.handleExerciseNameChange}
         onExerciseNameFocus={state.handleExerciseNameFocus}
@@ -347,6 +360,17 @@ export function SplitManager({
           void state.saveDayOrder(orderedWeekdays);
           setIsReorderDaysOpen(false);
         }}
+      />
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        title={`Delete ${deleteTarget?.name ?? "this split"}?`}
+        description="This cannot be undone."
+        busy={isDeleting || state.saveState.kind === "saving"}
+        error={state.feedback?.message}
+        onCancel={() => {
+          if (!deletingRef.current && state.saveState.kind !== "saving") setIsDeleteOpen(false);
+        }}
+        onConfirm={() => void confirmDeleteSplit()}
       />
     </div>
   );

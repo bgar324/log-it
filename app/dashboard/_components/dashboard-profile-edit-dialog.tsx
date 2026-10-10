@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 import { LegacyDialog } from "@/app/components/ui/legacy-dialog";
+import { InlineFeedback } from "@/app/components/inline-feedback";
 import { USERNAME_RULE_MESSAGE } from "@/lib/username";
 import { styles } from "../dashboard.styles";
 import type { DashboardProfileFormState } from "../_hooks/use-dashboard-profile-form";
@@ -139,6 +140,7 @@ function DashboardProfileEditForm({
             <option value="private">Private profile</option>
           </select>
         </label>
+        <InlineFeedback feedback={state.identityFeedback} />
 
         <div className={styles.avatarModalFooter}>
           <button
@@ -146,7 +148,7 @@ function DashboardProfileEditForm({
             className={styles.profileSaveButton}
             disabled={state.isSaving}
           >
-            Save changes
+            {state.isSaving ? "Saving..." : "Save changes"}
           </button>
         </div>
       </form>

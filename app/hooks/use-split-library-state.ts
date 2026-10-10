@@ -43,7 +43,8 @@ export type SplitLibraryState = {
   selectWeekday: (weekday: SplitWeekdayValue) => void;
   renameSplit: (name: string, target?: WorkoutSplitTemplate) => Promise<void>;
   createSplit: () => Promise<void>;
-  deleteSplit: (splitId: string) => Promise<void>;
+  /** Resolves true only when the server deleted the captured split. */
+  deleteSplit: (splitId: string) => Promise<boolean>;
   activateSplit: (splitId: string) => Promise<void>;
   copySplit: (target?: WorkoutSplitTemplate) => Promise<void>;
   /** Resolves true only when the server stored the split. */
@@ -321,11 +322,11 @@ export function useSplitLibraryState({
 
   async function deleteSplit(splitId: string) {
     if (isSaving) {
-      return;
+      return false;
     }
 
     if (refuseInPreview("Deleting splits is disabled in this preview.")) {
-      return;
+      return false;
     }
 
     setIsSaving(true);
@@ -360,11 +361,13 @@ export function useSplitLibraryState({
       posthog.capture("workout_split_deleted");
       notify("Split deleted.", "success");
       onRefresh();
+      return true;
     } catch (error) {
       notify(
         error instanceof Error ? error.message : "Unable to delete split.",
         "error",
       );
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -416,7 +419,7 @@ export function useSplitLibraryState({
     try {
       const message = await copyWorkoutSplit(target ?? split);
       posthog.capture("workout_split_copied");
-      notify(message, "success");
+      notify(message, "info");
     } catch (error) {
       notify(
         error instanceof Error ? error.message : "Unable to copy split.",

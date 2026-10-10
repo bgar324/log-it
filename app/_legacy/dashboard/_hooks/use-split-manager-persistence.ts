@@ -2,7 +2,7 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import type { Feedback } from "@/app/components/inline-feedback";
 import posthog from "posthog-js";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
 import {
@@ -17,6 +17,7 @@ type UseSplitManagerPersistenceOptions = {
   setSplits: Dispatch<SetStateAction<WorkoutSplitTemplate[]>>;
   clearAllExerciseSuggestions: () => void;
   persistChanges: boolean;
+  setFeedback: Dispatch<SetStateAction<Feedback | null>>;
 };
 
 export function useSplitManagerPersistence({
@@ -25,6 +26,7 @@ export function useSplitManagerPersistence({
   setSplits,
   clearAllExerciseSuggestions,
   persistChanges,
+  setFeedback,
 }: UseSplitManagerPersistenceOptions) {
   const router = useRouter();
   const [saveState, setSaveState] = useState<SplitManagerSaveState>({
@@ -36,12 +38,12 @@ export function useSplitManagerPersistence({
   // until the next render.
   async function handleSave(nextSplit?: WorkoutSplitTemplate) {
     if (!persistChanges) {
-      toast.message("Changes stay in this preview and are not saved.");
+      setFeedback({ tone: "info", message: "Changes stay in this preview and are not saved." });
       return;
     }
 
     const splitToSave = nextSplit ?? split;
-    const toastId = toast.loading("Saving split...");
+    setFeedback(null);
     setSaveState({ kind: "saving" });
 
     try {
@@ -58,15 +60,9 @@ export function useSplitManagerPersistence({
           0,
         ),
       });
-      toast.success("Workout split saved.", {
-        id: toastId,
-        description: "Calendar and logger autofill are updated.",
-      });
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save split.", {
-        id: toastId,
-      });
+      setFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to save split." });
     } finally {
       setSaveState({ kind: "idle" });
     }
@@ -74,22 +70,18 @@ export function useSplitManagerPersistence({
 
   async function handleCopySplit() {
     if (!persistChanges) {
-      toast.message("Copying splits is disabled in this preview.");
+      setFeedback({ tone: "info", message: "Copying splits is disabled in this preview." });
       return;
     }
 
-    const toastId = toast.loading("Copying split...");
+    setFeedback(null);
 
     try {
       const message = await copyWorkoutSplit(split);
       posthog.capture("workout_split_copied");
-      toast.success(message, {
-        id: toastId,
-      });
+      setFeedback({ tone: "info", message });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to copy split.", {
-        id: toastId,
-      });
+      setFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to copy split." });
     }
   }
 

@@ -2,12 +2,15 @@
 
 import { ArrowUpDown, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { MotionState } from "@/app/components/motion-state";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import { styles } from "../workout-logger.styles";
 
 type WorkoutLoggerActionsProps = {
   onSave: () => void;
   submitLabel: string;
   isSaving: boolean;
+  feedback: Feedback | null;
+  feedbackAction?: { label: string; onClick: () => void };
   canReorder: boolean;
   canResetFromSplit: boolean;
   canRemoveExercise: boolean;
@@ -20,9 +23,11 @@ type WorkoutLoggerActionsProps = {
 export function WorkoutLoggerActions({
   onSave, submitLabel, isSaving, canReorder, canResetFromSplit,
   onAddExercise, onReorder, onResetFromSplit, canRemoveExercise, onRemoveExercise,
+  feedback, feedbackAction,
 }: WorkoutLoggerActionsProps) {
   return (
     <div role="group" aria-label="Workout actions" className={styles.toolsRow}>
+      <InlineFeedback feedback={feedback} action={feedbackAction} className="pointer-events-auto absolute bottom-[calc(100%+3.75rem)] max-h-[30vh] w-full overflow-y-auto rounded-xl bg-[var(--bg)] px-3 py-2" />
       <button type="button" className={styles.toolDelete} aria-label="Delete current exercise" title="Delete current exercise"
         disabled={isSaving || !canRemoveExercise} onPointerDown={event => event.preventDefault()} onClick={onRemoveExercise}>
         <Trash2 className={styles.toolIcon} strokeWidth={1.9} />

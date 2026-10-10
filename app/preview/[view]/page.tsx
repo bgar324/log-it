@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { preload } from "react-dom";
 import { notFound } from "next/navigation";
-import { Toaster } from "@/app/_legacy/components/ui/toaster";
 import {
   ProductPreview,
   ProductPreviewShell,
@@ -49,19 +48,9 @@ export default async function ProductPreviewPage({
   }
 
   if (shell) {
-    return (
-      <>
-        <ProductPreviewShell view={view as ProductPreviewView} />
-        <Toaster />
-      </>
-    );
+    return <ProductPreviewShell view={view as ProductPreviewView} />;
   }
 
   preload(VIEW_ART[view as ProductPreviewView], { as: "image" });
-  return (
-    <>
-      <ProductPreview view={view as ProductPreviewView} />
-      <Toaster />
-    </>
-  );
+  return <ProductPreview view={view as ProductPreviewView} />;
 }

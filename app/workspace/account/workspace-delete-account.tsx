@@ -4,7 +4,6 @@ import { TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import posthog from "posthog-js";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -110,7 +109,6 @@ function WorkspaceDeleteAccountForm({
 
     onDeletingChange(true);
     setFailure(null);
-    const toastId = toast.loading("Deleting account...");
 
     try {
       const response = await fetch("/api/profile/account", {
@@ -128,14 +126,12 @@ function WorkspaceDeleteAccountForm({
 
       posthog.capture("account_deleted");
       posthog.reset();
-      toast.success("Account deleted.", { id: toastId });
       router.replace("/");
       router.refresh();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to delete account.";
       setFailure(message);
-      toast.error(message, { id: toastId });
       onDeletingChange(false);
     }
   }

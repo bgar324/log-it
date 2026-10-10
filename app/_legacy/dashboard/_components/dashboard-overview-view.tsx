@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
+import { WorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
 import type { DashboardClientData, DashboardView } from "@/app/dashboard/dashboard-types";
 import { countLabel } from "@/app/_legacy/dashboard/dashboard-client.shared";
 import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
@@ -12,6 +13,7 @@ export type DashboardOverviewViewProps = {
   todayPlan: TodayPlan;
   greetingName: string;
   weightUnit: WeightUnit;
+  userId?: string;
   onNavigateToView: (view: DashboardView) => void;
 };
 
@@ -37,6 +39,7 @@ export function DashboardOverviewView({
   greetingName,
   weightUnit,
   onNavigateToView,
+  userId,
 }: DashboardOverviewViewProps) {
   const hasSplit = todayPlan.workoutTypeSlug !== null;
   const actionLabel =
@@ -81,6 +84,7 @@ export function DashboardOverviewView({
           )}
         </div>
       </section>
+      {userId ? <WorkoutPersonalRecords userId={userId} weightUnit={weightUnit} /> : null}
 
       {overview.todaySession.length > 0 ? (
         <section className={styles.panel}>

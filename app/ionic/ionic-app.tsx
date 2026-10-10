@@ -7,7 +7,6 @@ import { IonReactRouter } from "@ionic/react-router";
 import { homeOutline, barbellOutline, restaurantOutline, listOutline, trendingUpOutline, calendarOutline, personOutline, settingsOutline, logOutOutline } from "ionicons/icons";
 import posthog from "posthog-js";
 import { useIdentifyPostHogUser } from "@/app/hooks/use-posthog-user";
-import { Toaster } from "@/app/components/ui/toaster";
 import { VIEW_TITLES } from "@/app/dashboard/dashboard-client.shared";
 import type { DashboardClientData, DashboardView } from "@/app/dashboard/dashboard-types";
 import type { IonicLoggerData, IonicSessionUser } from "./ionic-types";
@@ -37,7 +36,7 @@ export function IonicApp({ user }: { user: IonicSessionUser }) {
     observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
     return () => { observer.disconnect(); root.classList.remove("ion-palette-dark"); };
   }, []);
-  return <IonApp className="ionic-app" data-ionic-app="true"><IonReactRouter><IonicRoutes user={user} /></IonReactRouter><Toaster position="bottom-right" /></IonApp>;
+  return <IonApp className="ionic-app" data-ionic-app="true"><IonReactRouter><IonicRoutes user={user} /></IonReactRouter></IonApp>;
 }
 
 function IonicRoutes({ user }: { user: IonicSessionUser }) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent, SyntheticEvent } from "react";
-import { toast } from "sonner";
+import type { Feedback } from "@/app/components/inline-feedback";
 
 const AVATAR_OUTPUT_SIZE = 640;
 
@@ -21,8 +21,8 @@ type CropSize = {
 
 type UseDashboardProfileAvatarCropArgs = {
   displayedAvatarUrl: string | null;
-  onAvatarDelete: () => void;
-  onAvatarFileChange: (file: File | null) => void;
+  onAvatarDelete: () => void | Promise<boolean>;
+  onAvatarFileChange: (file: File | null) => void | Promise<boolean>;
 };
 
 export function useDashboardProfileAvatarCrop({
@@ -40,6 +40,8 @@ export function useDashboardProfileAvatarCrop({
   const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
   const [cropFrameSize, setCropFrameSize] = useState(0);
   const [cropImageSize, setCropImageSize] = useState<CropSize>({ width: 0, height: 0 });
+  const [cropFeedback, setCropFeedback] = useState<Feedback | null>(null);
+  const [cropAction, setCropAction] = useState<"apply" | "download" | "remove" | null>(null);
   const cropSourceUrl = avatarEditorSourceUrl ?? displayedAvatarUrl;
 
   useEffect(() => {
@@ -109,6 +111,8 @@ export function useDashboardProfileAvatarCrop({
   // profile right now. Closing changes nothing, which is what keeps the image
   // painted while the panel animates away.
   function openAvatarEditor() {
+    if (cropAction) return;
+    setCropFeedback(null);
     clearEditorSource();
     resetCrop();
     setIsAvatarModalOpen(true);
@@ -156,10 +160,11 @@ export function useDashboardProfileAvatarCrop({
   }
 
   function handleAvatarFile(file: File | null) {
-    if (!file) {
+    if (!file || cropAction) {
       return;
     }
 
+    setCropFeedback(null);
     if (avatarEditorObjectUrlRef.current) {
       URL.revokeObjectURL(avatarEditorObjectUrlRef.current);
     }
@@ -227,19 +232,28 @@ export function useDashboardProfileAvatarCrop({
   }
 
   async function handleApplyCrop() {
+    if (cropAction) return;
+    setCropFeedback(null);
+    setCropAction("apply");
     try {
       const blob = await createCroppedAvatarBlob();
       const file = new File([blob], "profile-photo.jpg", { type: "image/jpeg" });
-      onAvatarFileChange(file);
-      setIsAvatarModalOpen(false);
+      const saved = await onAvatarFileChange(file);
+      if (saved !== false) setIsAvatarModalOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to crop this profile photo.");
+      setCropFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Unable to crop this profile photo.",
+      });
+    } finally {
+      setCropAction(null);
     }
   }
 
   async function handleDownloadAvatar() {
-    const toastId = toast.loading("Preparing profile photo...");
-
+    if (cropAction) return;
+    setCropFeedback(null);
+    setCropAction("download");
     try {
       const blob = await createCroppedAvatarBlob();
       const url = URL.createObjectURL(blob);
@@ -250,18 +264,19 @@ export function useDashboardProfileAvatarCrop({
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      toast.success("Profile photo downloaded.", {
-        id: toastId,
-      });
+      setCropFeedback({ tone: "info", message: "Profile photo download started." });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to download this profile photo.", {
-        id: toastId,
+      setCropFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Unable to download this profile photo.",
       });
+    } finally {
+      setCropAction(null);
     }
   }
 
   function handleCropPointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (!cropSourceUrl) {
+    if (!cropSourceUrl || cropAction) {
       return;
     }
 
@@ -278,7 +293,7 @@ export function useDashboardProfileAvatarCrop({
   function handleCropPointerMove(event: PointerEvent<HTMLDivElement>) {
     const dragState = cropDragRef.current;
 
-    if (!dragState || dragState.pointerId !== event.pointerId) {
+    if (cropAction || !dragState || dragState.pointerId !== event.pointerId) {
       return;
     }
 
@@ -316,17 +331,31 @@ export function useDashboardProfileAvatarCrop({
   }
 
   function handleCancelCrop() {
-    setIsAvatarModalOpen(false);
+    if (!cropAction) setIsAvatarModalOpen(false);
   }
 
-  function handleRemoveAvatar() {
-    onAvatarDelete();
-    setIsAvatarModalOpen(false);
+  async function handleRemoveAvatar() {
+    if (cropAction) return;
+    setCropFeedback(null);
+    setCropAction("remove");
+    try {
+      const removed = await onAvatarDelete();
+      if (removed !== false) setIsAvatarModalOpen(false);
+    } catch (error) {
+      setCropFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Unable to remove this profile photo.",
+      });
+    } finally {
+      setCropAction(null);
+    }
   }
 
   const cropMetrics = getCropMetrics();
 
   return {
+    cropFeedback,
+    cropAction,
     cropFrameRef,
     cropImageRef,
     cropMetrics,

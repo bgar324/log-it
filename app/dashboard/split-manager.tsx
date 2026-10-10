@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { DeleteConfirmDialog } from "@/app/components/delete-confirm-dialog";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import { useWorkspaceUnsavedChanges } from "@/app/components/workspace-navigation";
 import { MotionState } from "@/app/components/motion-state";
 import {
@@ -55,18 +56,13 @@ export function SplitManager({
   onLibraryOpenChange: setIsLibraryOpen,
 }: SplitManagerProps & { libraryOpen: boolean; onLibraryOpenChange: (open: boolean) => void }) {
   const router = useRouter();
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deletingRef = useRef(false);
   const notify = useCallback((message: string, tone: SplitLibraryNoticeTone) => {
-    if (tone === "error") {
-      toast.error(message);
-      return;
-    }
-
-    if (tone === "info") {
-      toast.message(message);
-      return;
-    }
-
-    toast.success(message);
+    setFeedback(tone === "success" ? null : { tone, message });
   }, []);
   const onRefresh = useCallback(() => router.refresh(), [router]);
   const state = useSplitLibraryState({
@@ -170,24 +166,43 @@ export function SplitManager({
   }
 
   function requestDeleteSplit(target: WorkoutSplitTemplate) {
-    const splitId = target.id;
-
-    if (!splitId || state.isSaving) {
+    if (!target.id || state.isSaving || deletingRef.current) {
       return;
     }
 
-    const toastId = toast(`Delete ${target.name.trim() || "this split"}?`, {
-      description: "This cannot be undone.",
-      action: {
-        label: "Delete",
-        onClick: () => void state.deleteSplit(splitId),
-      },
-      cancel: {
-        label: "Cancel",
-        onClick: () => toast.dismiss(toastId),
-      },
-    });
+    setFeedback(null);
+    setDeleteTarget({ id: target.id, name: target.name.trim() || "this split" });
+    setIsDeleteOpen(true);
   }
+
+  async function confirmDeleteSplit() {
+    if (!deleteTarget || state.isSaving || deletingRef.current) return;
+    deletingRef.current = true;
+    setIsDeleting(true);
+    setFeedback(null);
+    try {
+      if (await state.deleteSplit(deleteTarget.id)) {
+        setIsDeleteOpen(false);
+      }
+    } finally {
+      deletingRef.current = false;
+      setIsDeleting(false);
+    }
+  }
+
+  const deleteDialog = (
+    <DeleteConfirmDialog
+      open={isDeleteOpen}
+      title={`Delete ${deleteTarget?.name ?? "this split"}?`}
+      description="This cannot be undone."
+      busy={isDeleting || state.isSaving}
+      error={feedback?.message}
+      onCancel={() => {
+        if (!deletingRef.current && !state.isSaving) setIsDeleteOpen(false);
+      }}
+      onConfirm={() => void confirmDeleteSplit()}
+    />
+  );
 
   function openSplit(target: WorkoutSplitTemplate) {
     cancelRename();
@@ -206,6 +221,7 @@ export function SplitManager({
     return (
       <div ref={layoutRef}>
       <div className="motion-page" data-direction="back" key="library">
+      <InlineFeedback feedback={feedback} className="mb-4" />
       <SplitLibrary
         splits={state.splits}
         activeSplitId={state.activeSplitId}
@@ -219,6 +235,7 @@ export function SplitManager({
         onCreate={() => void state.createSplit()}
       />
       </div>
+      {deleteDialog}
       </div>
     );
   }
@@ -382,6 +399,7 @@ export function SplitManager({
             )}
           </SplitActionMenu>
         </div>
+        <InlineFeedback feedback={feedback} />
 
         {state.hasUnsavedChanges && !isSelectedActive ? (
           <p className={splitStyles.planDirtyText}>
@@ -419,6 +437,7 @@ export function SplitManager({
           setIsReorderDaysOpen(false);
         }}
       />
+      {deleteDialog}
     </div>
   );
 }

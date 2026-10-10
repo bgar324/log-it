@@ -19,6 +19,7 @@ import { WorkspaceWorkoutDetail } from "@/app/workspace/details/workspace-workou
 import { WorkspaceWorkoutDetailActions } from "@/app/workspace/details/workspace-workout-detail-actions";
 import { loadWorkspaceWorkoutDetail } from "@/app/workspace/details/workspace-workout-detail.data";
 import { WorkoutDetailActions } from "@/app/_legacy/workouts/[workoutId]/workout-detail-actions";
+import { WorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
 import { styles } from "@/app/_legacy/workouts/[workoutId]/workout-detail.styles";
 
 type WorkoutPageParams = Promise<{ workoutId: string }>;
@@ -61,13 +62,16 @@ export default async function WorkoutDetailPage({
         backHref="/dashboard?view=workouts"
         accessory={
           <WorkspaceWorkoutDetailActions
+            key={detail.id}
             editHref={detail.editHref}
             workoutId={detail.id}
             workoutExport={detail.exportText}
+            workoutLabel={`${detail.title}, ${detail.summaryMeta}`}
           />
         }
       >
         <WorkspaceWorkoutDetail detail={detail} />
+        <WorkoutPersonalRecords userId={user.id} workoutId={detail.id} weightUnit={user.preferredWeightUnit} />
       </WorkspaceFrame>
     );
   }
@@ -169,9 +173,11 @@ export default async function WorkoutDetailPage({
           </div>
           <div className={styles.topActions}>
             <WorkoutDetailActions
+              key={workout.id}
               editHref={`/workouts/${workout.id}/edit`}
               workoutId={workout.id}
               workoutExport={workoutExport}
+              workoutLabel={`${workout.title}, ${formatDate(workout.performedAt)}`}
             />
           </div>
         </header>
@@ -183,6 +189,7 @@ export default async function WorkoutDetailPage({
           <h1 className={styles.title}>{workout.title}</h1>
           <p className={styles.summaryLine}>{summarySentence}</p>
           <p className={styles.summaryMeta}>{summaryMeta}</p>
+          <WorkoutPersonalRecords userId={user.id} workoutId={workout.id} weightUnit={user.preferredWeightUnit} />
         </section>
 
         <section className={styles.exerciseList}>

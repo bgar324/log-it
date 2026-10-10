@@ -9,7 +9,8 @@ import type {
   WorkspaceRestDayNoticeProps,
 } from "@/app/workspace/logger/workspace-logger-notices";
 import type { WorkspaceWorkoutLoggerProps } from "@/app/workspace/logger/workspace-workout-logger";
-import { toast } from "sonner";
+import type { Feedback } from "@/app/components/inline-feedback";
+import { rememberWorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
 import posthog from "posthog-js";
 import { BackButton } from "@/app/components/back-button";
 import { useExerciseSuggestions } from "@/app/hooks/use-exercise-suggestions";
@@ -19,8 +20,6 @@ import {
 } from "@/app/hooks/use-posthog-user";
 import { normalizeExerciseDisplayName } from "@/lib/exercise-autofill";
 import {
-  convertStoredWeightToDisplay,
-  formatWeightWithUnit,
   getWeightUnitLabel,
   type WeightUnit,
 } from "@/lib/weight-unit";
@@ -110,6 +109,8 @@ export function WorkoutLogger({
   // it, so a rest started on bench is still running on rows.
   const restTimer = useRestTimer();
   const [isSaving, setIsSaving] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState<Feedback | null>(null);
+  const [hasSaveConflict, setHasSaveConflict] = useState(false);
   const saveControllerRef = useRef<AbortController | null>(null);
   useEffect(() => () => saveControllerRef.current?.abort(), []);
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
@@ -340,7 +341,6 @@ export function WorkoutLogger({
     clearAll();
     clearAllExerciseInsights();
     draft.resetExercisesFromSnapshot(splitTemplateData.exercises);
-    toast.success("Workout reset from split.");
   }
 
   // The draft is the user's unfinished work, so it is never silently dropped or
@@ -350,11 +350,12 @@ export function WorkoutLogger({
     clearAll();
     clearAllExerciseInsights();
     draft.discardDraft();
+    setSaveFeedback(null);
+    setHasSaveConflict(false);
   }
 
   function handleDiscardDraft() {
     discardUnsavedChanges();
-    toast.success("Draft discarded.");
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -376,11 +377,11 @@ export function WorkoutLogger({
     });
 
     if ("error" in payload) {
-      toast.error(payload.error ?? "Unable to validate workout.");
+      setSaveFeedback({ tone: "error", message: payload.error ?? "Unable to validate workout." });
       return;
     }
 
-    const toastId = toast.loading(isEditMode ? "Saving changes..." : "Saving workout...");
+    if (!hasSaveConflict) setSaveFeedback(null);
     setIsSaving(true);
     const controller = new AbortController();
     saveControllerRef.current = controller;
@@ -405,21 +406,8 @@ export function WorkoutLogger({
         // discarded so the already-logged notice can take over with a link to
         // the saved workout. Refreshing before that would re-seed the form
         // from the server and throw away what the user typed.
-        if (!isEditMode && response.status === 409) {
-          toast.error(message, {
-            id: toastId,
-            action: {
-              label: "Discard draft",
-              onClick: () => {
-                handleDiscardDraft();
-                router.refresh();
-              },
-            },
-          });
-          return;
-        }
-
-        toast.error(message, { id: toastId });
+        setHasSaveConflict(!isEditMode && response.status === 409);
+        setSaveFeedback({ tone: "error", message });
         return;
       }
 
@@ -435,18 +423,12 @@ export function WorkoutLogger({
         personal_record_count: data.personalRecords?.length ?? 0,
         used_rest_day_override: hasRestDayOverride,
       });
-      toast.success(isEditMode ? "Workout updated." : "Workout saved.", {
-        id: toastId,
+      rememberWorkoutPersonalRecords({
+        userId: analyticsUser.id,
+        workoutId: resolvedWorkoutId ?? "",
+        title: draft.title.trim() || draft.workoutType.trim() || "Untitled workout",
+        records: resolvedWorkoutId ? data.personalRecords ?? [] : [],
       });
-
-      for (const record of (data.personalRecords ?? []).slice(0, 3)) {
-        const e1rmDisplay = convertStoredWeightToDisplay(record.e1rmLb, weightUnit) ?? 0;
-        toast.success(`New PR — ${record.name}`, {
-          description: `${formatWeightWithUnit(e1rmDisplay, weightUnit, {
-            maximumFractionDigits: 0,
-          })} estimated 1RM`,
-        });
-      }
 
       if (isEditMode && resolvedWorkoutId) {
         router.replace(returnHref);
@@ -455,16 +437,11 @@ export function WorkoutLogger({
       }
       router.refresh();
     } catch {
-      if (controller.signal.aborted) {
-        toast.dismiss(toastId);
-        return;
-      }
-      toast.error(
-        isEditMode ? "Unable to update workout." : "Unable to save workout.",
-        {
-          id: toastId,
-        },
-      );
+      if (controller.signal.aborted) return;
+      setSaveFeedback({
+        tone: "error",
+        message: isEditMode ? "Unable to update workout. Try saving again." : "Unable to save workout. Try saving again.",
+      });
     } finally {
       saveControllerRef.current = null;
       setIsSaving(false);
@@ -536,6 +513,8 @@ export function WorkoutLogger({
 
     return (
       <WorkspaceWorkoutLogger
+        saveFeedback={saveFeedback}
+        onDiscardSaveConflict={hasSaveConflict ? () => { handleDiscardDraft(); router.refresh(); } : undefined}
         benEnabled={benEnabled}
         backHref={backHref}
         heading={heading}
@@ -575,8 +554,9 @@ export function WorkoutLogger({
   }
 
   return (
-    <main className={styles.loggerShell} inert={isSaving} aria-busy={isSaving}>
+    <main className={styles.loggerShell} aria-busy={isSaving}>
       <section className={styles.loggerStage}>
+        <div className="contents" inert={isSaving}>
         <div className={styles.topRow}>
           <BackButton
             fallbackHref={backHref}
@@ -680,6 +660,7 @@ export function WorkoutLogger({
             }}
           />
         </form>
+        </div>
 
 
         <WorkoutLoggerActions
@@ -687,6 +668,8 @@ export function WorkoutLogger({
           submitLabel={submitLabel}
           isSaving={isSaving}
           canReorder={draft.exercises.length > 1}
+          feedback={saveFeedback}
+          feedbackAction={hasSaveConflict && !isSaving ? { label: "Discard draft", onClick: () => { handleDiscardDraft(); router.refresh(); } } : undefined}
           canResetFromSplit={hasSplitReset}
           canRemoveExercise={draft.exercises.length > 1}
           onRemoveExercise={() => {

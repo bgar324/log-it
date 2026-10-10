@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useCallback, useEffect, useState } from "react";
+import type { Feedback } from "@/app/components/inline-feedback";
 import posthog from "posthog-js";
 import type { WeightUnit } from "@/lib/weight-unit";
 import type { DashboardClientData } from "../dashboard-types";
@@ -53,6 +53,12 @@ export type DashboardProfileFormState = {
   avatarPreviewUrl: string | null;
   avatarRemovalPending: boolean;
   saveState: SaveState;
+  identityFeedback: Feedback | null;
+  preferenceFeedback: Feedback | null;
+  avatarFeedback: Feedback | null;
+  clearIdentityFeedback: () => void;
+  clearPreferenceFeedback: () => void;
+  clearAvatarFeedback: () => void;
   setFirstNameInput: (value: string) => void;
   setLastNameInput: (value: string) => void;
   setPreferredWeightUnitInput: (value: WeightUnit) => void;
@@ -68,8 +74,8 @@ export type DashboardProfileFormState = {
     preferredWeightUnit?: WeightUnit;
     publicProfileEnabled?: boolean;
   }) => Promise<void>;
-  handleAvatarFileChange: (file: File | null) => void;
-  handleAvatarDelete: () => void;
+  handleAvatarFileChange: (file: File | null) => Promise<boolean>;
+  handleAvatarDelete: () => Promise<boolean>;
 };
 
 export function useDashboardProfileForm(
@@ -91,6 +97,10 @@ export function useDashboardProfileForm(
   const [saveState, setSaveState] = useState<SaveState>({
     kind: "idle",
   });
+  const [identityFeedback, setIdentityFeedback] = useState<Feedback | null>(null);
+  const [preferenceFeedback, setPreferenceFeedback] = useState<Feedback | null>(null);
+  const [avatarFeedback, setAvatarFeedback] = useState<Feedback | null>(null);
+  const clearPreferenceFeedback = useCallback(() => setPreferenceFeedback(null), []);
 
   useEffect(() => {
     setProfile(user);
@@ -141,7 +151,8 @@ export function useDashboardProfileForm(
     preferredWeightUnit?: WeightUnit;
     publicProfileEnabled?: boolean;
   }) {
-    const toastId = toast.loading("Saving preference...");
+    if (saveState.kind === "saving") return;
+    setPreferenceFeedback(null);
     setSaveState({ kind: "saving" });
 
     try {
@@ -166,14 +177,14 @@ export function useDashboardProfileForm(
       }));
       setPreferredWeightUnitInput(payload.user.preferredWeightUnit);
       setPublicProfileEnabledInput(payload.user.publicProfileEnabled);
-      toast.success("Preference saved.", { id: toastId });
       onProfileSaved();
     } catch (error) {
       // Roll the optimistic control back to what is actually stored.
       setPreferredWeightUnitInput(profile.preferredWeightUnit);
       setPublicProfileEnabledInput(profile.publicProfileEnabled);
-      toast.error(error instanceof Error ? error.message : "Unable to save preference.", {
-        id: toastId,
+      setPreferenceFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Unable to save preference.",
       });
     } finally {
       setSaveState({ kind: "idle" });
@@ -189,7 +200,8 @@ export function useDashboardProfileForm(
     username: string;
     publicProfileEnabled: boolean;
   }) {
-    const toastId = toast.loading("Saving profile...");
+    if (saveState.kind === "saving") return false;
+    setIdentityFeedback(null);
     setSaveState({ kind: "saving" });
 
     try {
@@ -220,12 +232,12 @@ export function useDashboardProfileForm(
       posthog.capture("profile_updated", {
         public_profile_enabled: payload.user.publicProfileEnabled,
       });
-      toast.success("Profile updated.", { id: toastId });
       onProfileSaved();
       return true;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save profile.", {
-        id: toastId,
+      setIdentityFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Unable to save profile.",
       });
       return false;
     } finally {
@@ -234,7 +246,8 @@ export function useDashboardProfileForm(
   }
 
   async function commitAvatar(file: File | null) {
-    const toastId = toast.loading(file ? "Uploading photo..." : "Removing photo...");
+    if (saveState.kind === "saving") return false;
+    setAvatarFeedback(null);
     setSaveState({ kind: "saving" });
 
     try {
@@ -259,15 +272,16 @@ export function useDashboardProfileForm(
       }));
       setAvatarFileInput(null);
       setAvatarRemovalPending(false);
-      toast.success(file ? "Photo updated." : "Photo removed.", { id: toastId });
       onProfileSaved();
+      return true;
     } catch (error) {
       setAvatarFileInput(null);
       setAvatarRemovalPending(false);
-      toast.error(
-        error instanceof Error ? error.message : "Unable to update profile picture.",
-        { id: toastId },
-      );
+      setAvatarFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Unable to update profile picture.",
+      });
+      return false;
     } finally {
       setSaveState({ kind: "idle" });
     }
@@ -275,28 +289,24 @@ export function useDashboardProfileForm(
 
   // A photo choice applies straight away: with the name form gone there is no
   // other control that would have committed it.
-  function handleAvatarFileChange(file: File | null) {
-    if (!file) {
-      return;
+  async function handleAvatarFileChange(file: File | null) {
+    if (!file || saveState.kind === "saving") {
+      return false;
     }
 
     setAvatarFileInput(file);
     setAvatarRemovalPending(false);
-    void commitAvatar(file);
+    return commitAvatar(file);
   }
 
-  function handleAvatarDelete() {
-    if (avatarFileInput) {
-      setAvatarFileInput(null);
-      return;
-    }
-
+  async function handleAvatarDelete() {
+    if (saveState.kind === "saving") return false;
     if (!profile.profileImageUpdatedAt) {
-      return;
+      return false;
     }
 
     setAvatarRemovalPending(true);
-    void commitAvatar(null);
+    return commitAvatar(null);
   }
 
   return {
@@ -309,6 +319,12 @@ export function useDashboardProfileForm(
     avatarPreviewUrl,
     avatarRemovalPending,
     saveState,
+    identityFeedback,
+    preferenceFeedback,
+    avatarFeedback,
+    clearIdentityFeedback: () => setIdentityFeedback(null),
+    clearPreferenceFeedback,
+    clearAvatarFeedback: () => setAvatarFeedback(null),
     setFirstNameInput,
     setLastNameInput,
     setPreferredWeightUnitInput,

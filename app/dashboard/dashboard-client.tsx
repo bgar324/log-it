@@ -531,6 +531,7 @@ export function DashboardClient({
               todayPlan={todayPlan}
               greetingName={greetingName}
               weightUnit={displayWeightUnit}
+              userId={userId}
               onNavigateToView={navigateToView}
             />
           )}

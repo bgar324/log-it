@@ -3,13 +3,16 @@
 import { Copy, Ellipsis, SquarePen, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/app/components/ui/popover";
-import { toast } from "sonner";
+import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
+import { DeleteConfirmDialog } from "@/app/components/delete-confirm-dialog";
+import { forgetWorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
+import { invalidateWorkoutDetails } from "@/app/dashboard/workout-detail-cache";
 import posthog from "posthog-js";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
@@ -19,15 +22,21 @@ type WorkoutDetailActionsProps = {
   editHref: string;
   workoutId: string;
   workoutExport: string;
+  workoutLabel: string;
 };
 
 export function WorkoutDetailActions({
   editHref,
   workoutId,
   workoutExport,
+  workoutLabel,
 }: WorkoutDetailActionsProps) {
   const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "deleting">("idle");
+  const [status, setStatus] = useState<"idle" | "copying" | "deleting">("idle");
+  const busyRef = useRef(false);
+  const [copyFeedback, setCopyFeedback] = useState<Feedback | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -40,89 +49,61 @@ export function WorkoutDetailActions({
   }, []);
 
   async function handleCopy() {
-    if (status !== "idle") {
-      return;
-    }
-
-    const toastId = toast.loading("Copying workout...");
-
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setStatus("copying");
+    setCopyFeedback({ tone: "info", message: "Copying workout..." });
+    setIsMenuOpen(false);
     try {
-      setIsMenuOpen(false);
       const result = await copyTextToClipboard(workoutExport);
       posthog.capture("workout_exported");
-      toast.success(
-        result === "clipboard"
-          ? "Copied workout to clipboard."
-          : "Clipboard blocked. Workout text opened for manual copy.",
-        { id: toastId },
-      );
-    } catch (caughtError) {
-      toast.error(
-          caughtError instanceof Error
-            ? caughtError.message
-            : "Unable to copy workout.",
-        { id: toastId },
-      );
+      setCopyFeedback({
+        tone: "success",
+        message: result === "clipboard" ? "Copied workout to clipboard." : "Clipboard blocked. Workout text opened for manual copy.",
+      });
+    } catch (error) {
+      setCopyFeedback({ tone: "error", message: error instanceof Error ? error.message : "Unable to copy workout." });
+    } finally {
+      busyRef.current = false;
+      setStatus("idle");
     }
   }
 
-  async function deleteWorkout(toastId: string | number) {
-    if (status !== "idle") {
-      return;
-    }
-
-    toast.loading("Deleting workout...", { id: toastId });
+  async function deleteWorkout() {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setStatus("deleting");
-    setIsMenuOpen(false);
-
+    setDeleteError(null);
     try {
-      const response = await fetch(`/api/workouts/${workoutId}`, {
-        method: "DELETE",
-      });
-      const payload = (await response.json()) as { error?: string };
-
+      const response = await fetch(`/api/workouts/${workoutId}`, { method: "DELETE" });
+      const payload: unknown = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error ?? "Unable to delete workout.");
+        throw new Error(payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string" ? payload.error : "Unable to delete workout.");
       }
-
+      invalidateWorkoutDetails(workoutId);
+      forgetWorkoutPersonalRecords(workoutId);
       posthog.capture("workout_deleted");
-      toast.success("Workout deleted.", { id: toastId });
       router.push("/dashboard?view=workouts");
       router.refresh();
-    } catch (caughtError) {
-      toast.error(
-          caughtError instanceof Error
-            ? caughtError.message
-            : "Unable to delete workout.",
-        { id: toastId },
-      );
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Unable to delete workout.");
+      busyRef.current = false;
       setStatus("idle");
     }
   }
 
   function handleDelete() {
-    if (status !== "idle") {
-      return;
-    }
-
+    if (busyRef.current) return;
     setIsMenuOpen(false);
-    const toastId = toast("Delete this workout?", {
-      description: "This cannot be undone.",
-      action: {
-        label: "Delete",
-        onClick: () => void deleteWorkout(toastId),
-      },
-      cancel: {
-        label: "Cancel",
-        onClick: () => toast.dismiss(toastId),
-      },
-    });
+    setDeleteError(null);
+    setConfirmOpen(true);
   }
 
   return (
-    <>
+    <div className="flex min-w-0 max-w-full flex-col items-end gap-2">
       <div className={styles.detailActionsGroup}>
-        <Link href={editHref} className={`relative ${styles.actionButton}`}>
+        <Link href={editHref} className={`relative ${styles.actionButton}`} aria-disabled={status !== "idle"}
+          onClick={event => { if (busyRef.current) event.preventDefault(); }}>
           <SquarePen className={styles.actionButtonIcon} strokeWidth={1.9} />
           <span className={styles.actionButtonLabel}>Edit workout</span>
           <LinkPendingOverlay />
@@ -151,6 +132,7 @@ export function WorkoutDetailActions({
           <PopoverTrigger
             aria-label="Workout options"
             className={styles.mobileActionToggle}
+            disabled={status !== "idle"}
           >
             <Ellipsis className={styles.actionButtonIcon} strokeWidth={1.9} />
           </PopoverTrigger>
@@ -158,7 +140,8 @@ export function WorkoutDetailActions({
             <Link
               href={editHref}
               className={`relative ${styles.mobileActionMenuItem}`}
-              onClick={() => setIsMenuOpen(false)}
+              aria-disabled={status !== "idle"}
+              onClick={event => { if (busyRef.current) event.preventDefault(); else setIsMenuOpen(false); }}
             >
               <SquarePen className={styles.actionButtonIcon} strokeWidth={1.9} />
               <span>Edit workout</span>
@@ -185,6 +168,16 @@ export function WorkoutDetailActions({
           </PopoverContent>
         </Popover>
       </div>
-    </>
+      <InlineFeedback feedback={copyFeedback} className="w-[min(16rem,55vw)] text-left" />
+      <DeleteConfirmDialog
+        open={confirmOpen}
+        title={`Delete ${workoutLabel}?`}
+        description="This permanently removes the workout and all its sets from your history."
+        busy={status === "deleting"}
+        error={deleteError}
+        onCancel={() => { if (!busyRef.current) setConfirmOpen(false); }}
+        onConfirm={() => void deleteWorkout()}
+      />
+    </div>
   );
 }

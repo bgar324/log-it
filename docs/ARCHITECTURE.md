@@ -1,6 +1,6 @@
 # Architecture
 
-Logit is a Next.js 16 App Router application using React 19, Prisma 6, PostgreSQL, Tailwind CSS v4, Recharts, Geist fonts, Lucide icons, Radix Popover, `sonner`, `bcryptjs`, and `jose`.
+Logit is a Next.js 16 App Router application using React 19, Prisma 6, PostgreSQL, Tailwind CSS v4, Recharts, Geist fonts, Lucide icons, Radix Popover, `bcryptjs`, and `jose`.
 
 ## Top-Level Structure
 
@@ -48,7 +48,7 @@ The owner Analysis page, its components/model, and the abandoned `/api/exercises
 
 The default split manager consumes `use-split-library-state.ts`. A folder opens directly into the inline `SplitEditor`, keyed by split identity and weekday to reset disclosures without losing parent-held draft values. The manager owns the single Save action and split-level menus; the editor owns day selection and exercise controls. There is no intermediate week grid, mobile day portal, or body scroll lock. Saved snapshots and per-split dirty keys survive folder switches; navigation warns about the whole dirty library and discards drafts only after confirmation.
 
-`app/_legacy/` preserves the `1d7c93d` snapshot used by public previews. Protected dashboard, logger, detail pages, loading states, and toasts no longer select that snapshot. `scripts/snapshot-legacy-ui.mjs` regenerates its files and rebases imports without copying backend services.
+`app/_legacy/` preserves the `1d7c93d` layout snapshot used by public previews, with shared feedback fixes applied. Protected dashboard, logger, detail pages, and loading states no longer select that snapshot. `scripts/snapshot-legacy-ui.mjs` regenerates its files and rebases imports without copying backend services.
 
 ## Owner-only authenticated workspace
 
@@ -102,11 +102,15 @@ Owner view changes reset the document scroll in a layout effect. `DashboardShell
 
 ## Shared authenticated interactions
 
-`app/components/interaction.css` owns the Transitions.dev-derived motion recipes. Radix remains responsible for menu/dialog presence, Swiper for gestures/paging, and Sonner for toast lifecycle. `MotionState` swaps noninteractive labels/icons without delaying semantic state, retaining an inert, aria-hidden outgoing visual only until actual animations settle or cancel. `MotionReveal` starts a readiness-driven reveal only after a mounted pending state, not for an already-cached first render. `useReducedMotion` supplies a shared JavaScript preference subscription. Existing `action.styles.ts`, `data-list.styles.ts`, and `field.styles.ts` retain geometry and field feedback ownership.
+`app/components/interaction.css` owns the Transitions.dev-derived motion recipes. Radix remains responsible for menu/dialog presence and Swiper for gestures/paging. `MotionState` swaps noninteractive labels/icons without delaying semantic state, retaining an inert, aria-hidden outgoing visual only until actual animations settle or cancel. `MotionReveal` starts a readiness-driven reveal only after a mounted pending state, not for an already-cached first render. `useReducedMotion` supplies a shared JavaScript preference subscription. Existing `action.styles.ts`, `data-list.styles.ts`, and `field.styles.ts` retain geometry and field feedback ownership.
 
 `ui/popover.tsx` wraps the installed Radix popover for legacy anchored disclosures. Controlled or uncontrolled open state also makes closing content inert. All callers prevent open/close autofocus; editing action rows additionally preserve input focus on pointer presses. `exercise-suggestions.tsx` composes the same anchor/portal positioning to share collision-aware results between logger and Split without scrolling the form.
 
 `ui/legacy-dialog.tsx` supplies controlled Radix dialog presence, Escape/outside dismissal, scroll locking, no automatic focus transfer, and pending-request dismissal guards. Form and reorder drafts live inside the mounted content, surviving exit and resetting on the next complete opening. Callers keep the boundary mounted and pass `open`; they do not conditionally remove it at the start of exit. Close buttons also honor busy state.
+
+`inline-feedback.tsx` renders screen-local errors and useful action results; pending controls own request progress. `delete-confirm-dialog.tsx` composes the existing dialog boundary for workout and split deletion, keeping failures retryable and preventing dismissal during a request. Account deletion retains its typed confirmation. Sonner and its mounts, dependency, and motion recipes are removed across active, preview, and dormant callers.
+
+`workouts/workout-personal-records.tsx` hands the latest accepted save's PRs to Home, History, or workout detail without changing the return route. The browser-session result is account/workout scoped, stored in pounds, and converted at display time. Storage denial falls back to memory without changing save success. A successful save with no PRs clears the earlier summary; deleting its workout clears it too. This is session feedback, not a persisted PR history.
 
 `useReorderMotion` captures keyed row positions before a committed move and animates their displacement afterward. It reads CSS time tokens with explicit seconds-to-milliseconds conversion because production CSS can normalize `250ms` to `.25s`. Split draft exercises receive stable client-only IDs before editing, including seeded unsaved templates. The split save serializer omits exercise IDs, so these never become database identifiers.
 

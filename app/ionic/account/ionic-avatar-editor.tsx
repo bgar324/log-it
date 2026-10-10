@@ -23,6 +23,7 @@ import {
 } from "ionicons/icons";
 import { useRef, useState } from "react";
 import { useDashboardProfileAvatarCrop } from "@/app/dashboard/_hooks/use-dashboard-profile-avatar-crop";
+import { InlineFeedback } from "@/app/components/inline-feedback";
 
 type IonicAvatarEditorProps = {
   displayedAvatarUrl: string | null;
@@ -50,6 +51,8 @@ export function IonicAvatarEditor({
   const [isImageReady, setIsImageReady] = useState(false);
 
   const {
+    cropFeedback,
+    cropAction,
     cropFrameRef,
     cropImageRef,
     cropMetrics,
@@ -73,6 +76,7 @@ export function IonicAvatarEditor({
     onAvatarDelete,
     onAvatarFileChange,
   });
+  const busy = isSaving || cropAction !== null;
 
   return (
     <>
@@ -81,7 +85,7 @@ export function IonicAvatarEditor({
         type="file"
         accept={ACCEPTED_IMAGE_TYPES}
         hidden
-        disabled={isSaving}
+        disabled={busy}
         onChange={(event) => {
           const nextFile = event.currentTarget.files?.[0] ?? null;
           event.currentTarget.value = "";
@@ -93,7 +97,7 @@ export function IonicAvatarEditor({
       <button
         type="button"
         aria-label={hasAvatar ? "Edit profile photo" : "Upload a profile photo"}
-        disabled={isSaving}
+        disabled={busy}
         onClick={() => {
           if (hasAvatar) {
             setIsImageReady(false);
@@ -135,7 +139,7 @@ export function IonicAvatarEditor({
 
       <IonModal
         isOpen={isAvatarModalOpen}
-        canDismiss={!isSaving}
+        canDismiss={!busy}
         onIonModalDidDismiss={() => {
           handleCancelCrop();
           setIsImageReady(false);
@@ -145,14 +149,14 @@ export function IonicAvatarEditor({
           <IonToolbar>
             <IonTitle>Profile photo</IonTitle>
             <IonButtons slot="end">
-              <IonButton disabled={isSaving} onClick={handleCancelCrop}>
+              <IonButton disabled={busy} onClick={handleCancelCrop}>
                 Cancel
               </IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
 
-        <IonContent className="ion-padding" inert={isSaving}>
+        <IonContent className="ion-padding" inert={busy}>
           <p>Drag to reposition, then resize until the crop looks right.</p>
 
           <div
@@ -214,7 +218,7 @@ export function IonicAvatarEditor({
             <IonLabel>Resize</IonLabel>
             <IonRange
               aria-label="Resize profile photo"
-              disabled={!cropSourceUrl}
+              disabled={!cropSourceUrl || busy}
               max={3}
               min={1}
               step={0.05}
@@ -232,7 +236,7 @@ export function IonicAvatarEditor({
           <IonButton
             expand="block"
             fill="outline"
-            disabled={isSaving}
+            disabled={busy}
             onClick={() => pickerRef.current?.click()}
           >
             <IonIcon slot="start" icon={cloudUploadOutline} />
@@ -242,33 +246,34 @@ export function IonicAvatarEditor({
           <IonButton
             expand="block"
             fill="clear"
-            disabled={!cropSourceUrl || !isImageReady}
+            disabled={!cropSourceUrl || !isImageReady || busy}
             onClick={() => void handleDownloadAvatar()}
           >
             <IonIcon slot="start" icon={downloadOutline} />
-            Download this crop
+            {cropAction === "download" ? "Preparing photo..." : "Download this crop"}
           </IonButton>
 
           <IonButton
             expand="block"
             fill="clear"
             color="danger"
-            disabled={!hasAvatar || isSaving}
-            onClick={handleRemoveAvatar}
+            disabled={!hasAvatar || busy}
+            onClick={() => void handleRemoveAvatar()}
           >
             <IonIcon slot="start" icon={trashOutline} />
-            Remove photo
+            {cropAction === "remove" ? "Removing..." : "Remove photo"}
           </IonButton>
+          <InlineFeedback feedback={cropFeedback} />
         </IonContent>
 
         <IonFooter>
           <IonToolbar>
             <IonButton
               expand="block"
-              disabled={!cropSourceUrl || !isImageReady || isSaving}
+              disabled={!cropSourceUrl || !isImageReady || busy}
               onClick={() => void handleApplyCrop()}
             >
-              Save photo
+              {cropAction === "apply" ? "Preparing photo..." : "Save photo"}
             </IonButton>
           </IonToolbar>
         </IonFooter>
