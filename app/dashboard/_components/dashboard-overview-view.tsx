@@ -76,11 +76,10 @@ export function DashboardOverviewView({ overview, todayPlan, greetingName, weigh
                   : hasPlan ? <>You have <strong>{todayPlan.workoutType}</strong> today.</>
                     : <>Your next workout <strong>starts here.</strong></>}
           </p>
-          {!draft && !completed ? (
+          {!draft && !completed && !todayPlan.isRestDay ? (
             <p className={styles.context}>
               {hasPlan ? <><strong>{countLabel(overview.todaySession.length, "exercise")}</strong> and <strong>{countLabel(plannedSets, "planned set")}</strong> from your split.</>
-                  : todayPlan.isRestDay ? "No training is scheduled in your split today."
-                    : "Choose a split, or log without one."}
+                  : "Choose a split, or log without one."}
             </p>
           ) : null}
           <Link href={primary.href} className={styles.primary} data-completed={Boolean(completed) && !draft}>
