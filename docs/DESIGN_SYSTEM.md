@@ -172,7 +172,7 @@ Public tokens (`--landing-*`) live on the shared `.publicRoot` class at the top 
 - Loading states exist for route-level loading files and dashboard lazy-view skeletons.
 - Dashboard client view errors render retry actions.
 - Destructive or irreversible actions should keep clear confirmation/error affordances. Existing destructive color references include red tones such as `#b13d48`.
-- New workout PRs share one account/workout-associated summary on the return surface; no stack of individual notifications. Rest completion appears in its timer control.
+- New workout PRs share one account/workout-associated summary on the return surface; no stack of individual notifications. Rest completion appears in its timer control and a completion-only status region. Countdown ticks are not live announcements.
 - Dashboard profile photo editing renders its modal through a body portal with `dashboard-theme-scope`, blurred backdrop, and enter/exit animations defined in `app/globals.css`.
 
 ## Known Drift / Needs Verification

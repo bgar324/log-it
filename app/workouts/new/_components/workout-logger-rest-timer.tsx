@@ -25,13 +25,15 @@ export function WorkoutLoggerRestTimer({ timer }: { timer: RestTimer }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
+    <>
+    <span role="status" className="sr-only">{timer.isComplete ? "Rest complete" : ""}</span>
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       {/* One stable accessible name: the visible text already reports state,
           and a label that renames itself mid-rest is a different control to
           anything reading the tree. */}
       <PopoverTrigger className={styles.restTimerButton} aria-label="Rest timer">
         <Timer className={styles.icon} strokeWidth={1.9} />
-        <span aria-live="polite" className={timer.isRunning ? styles.restTimerClock : undefined}>
+        <span className={timer.isRunning ? styles.restTimerClock : undefined}>
           {timer.remaining === null ? timer.isComplete ? "Rest complete" : "Rest" : formatRestClock(timer.remaining)}
         </span>
       </PopoverTrigger>
@@ -76,5 +78,6 @@ export function WorkoutLoggerRestTimer({ timer }: { timer: RestTimer }) {
         )}
       </PopoverContent>
     </Popover>
+    </>
   );
 }
