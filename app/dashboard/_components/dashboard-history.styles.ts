@@ -66,8 +66,5 @@ export const historyStyles = {
   // Loading keeps the same geometry the real month uses, so nothing jumps when
   // the data lands.
   skeletonMonthButton: "h-[2.75rem] w-[2.75rem] shrink-0 rounded-full",
-  skeletonStrip: "flex gap-[0.45rem] overflow-hidden",
-  skeletonDay: `h-[3.75rem] w-[2.9rem] shrink-0 rounded-[0.875rem]`,
-  skeletonSession:
-    `flex flex-col gap-[0.7rem] rounded-[var(--app-radius)] border border-[color:var(--app-line)] p-[1rem]`,
+  skeletonStrip: `${daySelectorStyles.strip} !overflow-hidden`,
 } as const;

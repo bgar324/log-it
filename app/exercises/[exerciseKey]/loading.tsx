@@ -13,10 +13,16 @@ import { styles } from "./exercise-detail.styles";
 
 function SkeletonBlock({
   className = "",
+  text = "\u00a0",
 }: {
   className?: string;
+  text?: string;
 }) {
-  return <span className={`${styles.skeletonBlock} ${className}`} />;
+  return (
+    <span className={`${styles.skeletonBlock} ${className}`}>
+      <span className="invisible">{text}</span>
+    </span>
+  );
 }
 
 // The shipped row's own layout keys, so the skeleton cannot drift into a
@@ -25,12 +31,12 @@ function SessionRowSkeleton() {
   return (
     <div className={styles.listRow}>
       <div className={styles.listRowMain}>
-        <SkeletonBlock className="h-[1.1rem] w-[6.4rem]" />
-        <SkeletonBlock className="mt-[0.24rem] h-[1rem] w-[7.6rem]" />
+        <SkeletonBlock className={`${styles.listRowTitle} w-[6.4rem] max-w-full`} />
+        <SkeletonBlock className={`${styles.listRowMeta} w-[7.6rem] max-w-full`} />
       </div>
       <div className={styles.listRowStats}>
-        <SkeletonBlock className="h-[1.25rem] w-[4.4rem]" />
-        <SkeletonBlock className="mt-[0.24rem] h-[1rem] w-[8.2rem]" />
+        <SkeletonBlock className={`${styles.listRowValue} w-[4.4rem]`} />
+        <SkeletonBlock className={`${styles.listRowMeta} w-[8.2rem]`} />
       </div>
     </div>
   );
@@ -69,24 +75,33 @@ export default function ExerciseDetailLoading() {
           />
         </header>
 
-        <section className={styles.summaryCard}>
-          <SkeletonBlock className="h-[2rem] w-[min(100%,21rem)]" />
-          <SkeletonBlock className="mt-[0.66rem] h-[0.95rem] w-[min(100%,22rem)]" />
-          <SkeletonBlock className="mt-[0.28rem] h-[0.82rem] w-[min(100%,16rem)]" />
+        <section className={styles.summaryCard} aria-hidden="true">
+          <SkeletonBlock className={`${styles.title} w-[min(100%,21rem)]`} />
+          <SkeletonBlock className={`${styles.summaryLine} w-[min(100%,22rem)]`} />
+          <SkeletonBlock className={`${styles.summaryMeta} w-[min(100%,16rem)]`} />
         </section>
 
-        <section className={styles.panelGrid}>
-          {Array.from({ length: 2 }, (_, index) => (
-            <section key={index} className={styles.panel}>
-              <SkeletonBlock className="h-[1rem] w-[9rem]" />
-              <SkeletonBlock className="mt-[0.38rem] h-[0.8rem] w-[min(100%,20rem)]" />
-              <SkeletonBlock className="mt-[0.7rem] h-[15rem] w-full" />
+        <section className={styles.panelGrid} aria-hidden="true">
+          {[
+            {
+              title: "Weight over time",
+              subtitle: "Best top-set weight each time this exercise was trained.",
+            },
+            {
+              title: "Strength trend",
+              subtitle: "Top-set estimated 1RM, so extra reps at the same weight still count as progress.",
+            },
+          ].map(({ title, subtitle }) => (
+            <section key={title} className={styles.panel}>
+              <SkeletonBlock className={`${styles.panelTitle} w-fit max-w-full`} text={title} />
+              <SkeletonBlock className={styles.panelSubtitle} text={subtitle} />
+              <SkeletonBlock className={styles.chartFrame} />
             </section>
           ))}
         </section>
 
-        <section className={styles.panel}>
-          <SkeletonBlock className="h-[1rem] w-[9rem]" />
+        <section className={styles.panel} aria-hidden="true">
+          <SkeletonBlock className={`${styles.panelTitle} w-fit max-w-full`} text="Session breakdown" />
           <div className={styles.listStack}>
             {/* One page of the session list, which pages five at a time. */}
             {Array.from({ length: 5 }, (_, index) => (
@@ -97,7 +112,7 @@ export default function ExerciseDetailLoading() {
               keeps the panel from growing a row taller on arrival. */}
           <div className={styles.pagerRow}>
             <SkeletonBlock className="h-[2.75rem] w-[2.75rem] rounded-full" />
-            <SkeletonBlock className="h-[1.2rem] w-[4.4rem]" />
+            <SkeletonBlock className={`${styles.pagerRange} w-[4.4rem]`} />
             <SkeletonBlock className="h-[2.75rem] w-[2.75rem] rounded-full" />
           </div>
         </section>

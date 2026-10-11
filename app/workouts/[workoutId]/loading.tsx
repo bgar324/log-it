@@ -15,18 +15,24 @@ import { styles } from "./workout-detail.styles";
 
 function SkeletonBlock({
   className = "",
+  text = "\u00a0",
 }: {
   className?: string;
+  text?: string;
 }) {
-  return <span className={`${styles.skeletonBlock} ${className}`} />;
+  return (
+    <span className={`${styles.skeletonBlock} ${className}`}>
+      <span className="invisible">{text}</span>
+    </span>
+  );
 }
 
 function SetRowSkeleton() {
   return (
     <div className={styles.setRow}>
-      <SkeletonBlock className="h-[0.8rem] w-[2.6rem]" />
-      <SkeletonBlock className="h-[0.8rem] w-[min(100%,8.4rem)]" />
-      <SkeletonBlock className="h-[0.8rem] w-[2rem]" />
+      <SkeletonBlock className={`${styles.setOrder} w-[2.6rem]`} />
+      <SkeletonBlock className={`${styles.setDetail} w-[min(100%,8.4rem)]`} />
+      <SkeletonBlock className={`${styles.setDuration} w-[2rem]`} />
     </div>
   );
 }
@@ -69,27 +75,34 @@ export default function WorkoutDetailLoading() {
               iconClassName={styles.backButtonIcon}
             />
           </div>
-          <div className={styles.topActions}>
-            <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
-            <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
-            <SkeletonBlock className="h-[2rem] w-[5.2rem] rounded-full max-[759px]:hidden" />
-            <SkeletonBlock className="hidden h-[2.75rem] w-[2.75rem] rounded-full max-[759px]:block" />
+          <div className={styles.topActions} aria-hidden="true">
+            <div className={styles.detailActionsGroup}>
+              {["Edit workout", "Copy workout", "Delete workout"].map((label) => (
+                <span key={label} className={styles.actionButton}>
+                  <SkeletonBlock className={styles.actionButtonIcon} />
+                  <SkeletonBlock text={label} className={styles.actionButtonLabel} />
+                </span>
+              ))}
+            </div>
+            <div className={styles.mobileActionMenu}>
+              <SkeletonBlock className="h-[2.75rem] w-[2.75rem] rounded-full" />
+            </div>
           </div>
         </header>
 
-        <section className={styles.summaryCard}>
-          <SkeletonBlock className="h-[0.75rem] w-[5.8rem]" />
-          <SkeletonBlock className="mt-[0.5rem] h-[2rem] w-[min(100%,24rem)]" />
-          <SkeletonBlock className="mt-[0.66rem] h-[0.95rem] w-[min(100%,18rem)]" />
-          <SkeletonBlock className="mt-[0.28rem] h-[0.82rem] w-[min(100%,12rem)]" />
+        <section className={styles.summaryCard} aria-hidden="true">
+          <SkeletonBlock className={`${styles.titleMeta} w-[5.8rem]`} />
+          <SkeletonBlock className={`${styles.title} w-[min(100%,24rem)]`} />
+          <SkeletonBlock className={`${styles.summaryLine} w-[min(100%,22rem)]`} />
+          <SkeletonBlock className={`${styles.summaryMeta} w-[min(100%,12rem)]`} />
         </section>
 
-        <section className={styles.exerciseList}>
+        <section className={styles.exerciseList} aria-hidden="true">
           {Array.from({ length: 3 }, (_, exerciseIndex) => (
             <article key={exerciseIndex} className={styles.exerciseCard}>
               <header className={styles.exerciseHead}>
-                <SkeletonBlock className="h-[1.05rem] w-[min(100%,16rem)]" />
-                <SkeletonBlock className="mt-[0.22rem] h-[0.77rem] w-[min(100%,11rem)]" />
+                <SkeletonBlock className={`${styles.exerciseName} w-[min(100%,16rem)]`} />
+                <SkeletonBlock className={`${styles.exerciseMeta} w-[min(100%,18rem)]`} />
               </header>
 
               <div className={styles.setList}>

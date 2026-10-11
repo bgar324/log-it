@@ -112,7 +112,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - Profile and Settings use rows with focused editing dialogs. Destructive actions remain distinct and confirmed. A preference write uses saved profile values, never another form's unsaved draft.
 - Data rows do not gain hover-only affordances. Numeric fields have no native steppers. Selects use the shared inset caret.
 - Tailwind arbitrary values must be literal strings. State variants such as `aria-pressed:` and `data-selected:` must win through selector specificity, not class-string order.
-- Skeletons use the resolved view's layout classes. Update the skeleton whenever a surface changes. Verify geometry in the browser rather than pinning class strings in tests.
+- Skeletons reuse the resolved view's layout and typography classes, including text line boxes, field columns, card footers, chart frames, and fixed controls. The logger fallback respects optional-field/rest-timer capabilities and the edit screen's taller metadata controls. Create reserves the split-reset action slot; edit omits it. History detail loading preserves known exercise/set totals; route fallbacks use representative counts until data arrives. Placeholders are noninteractive and hidden from assistive technology; real detail-page Back and navigation remain available. Verify phone/desktop geometry in both themes rather than pinning class strings in tests.
 
 ## Visual language
 

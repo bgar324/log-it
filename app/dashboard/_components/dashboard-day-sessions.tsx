@@ -20,8 +20,6 @@ type DashboardDaySessionsProps = {
   userId: string;
 };
 
-const MAX_SKELETON_EXERCISES = 6;
-const MAX_SKELETON_SETS = 5;
 
 /** The selected day's sessions, with title links for details and direct edit pencils. */
 export function DashboardDaySessions({ day, weightUnit, userId }: DashboardDaySessionsProps) {
@@ -140,26 +138,25 @@ function SessionDetailSkeleton({
   exerciseCount: number;
   setCount: number;
 }) {
-  const exercises = Math.min(Math.max(exerciseCount, 1), MAX_SKELETON_EXERCISES);
-  const setsPerExercise = Math.min(
-    Math.max(Math.round(setCount / exercises) || 1, 1),
-    MAX_SKELETON_SETS,
-  );
+  const exercises = Math.max(exerciseCount, 0);
+  const sets = Math.max(setCount, 0);
 
   return (
     <div className={historyStyles.exerciseList} aria-hidden="true">
       {Array.from({ length: exercises }, (_, exercise) => (
         <div key={exercise} className={historyStyles.exercise}>
-          <span className={`${styles.skeletonBlock} h-[1.05rem] w-[8.5rem]`} />
-          <div className={historyStyles.setList}>
-            {Array.from({ length: setsPerExercise }, (_, set) => (
-              <div key={set} className={historyStyles.setRow}>
-                <span className={`${styles.skeletonBlock} h-[0.7rem] w-[2.2rem]`} />
-                <span className={`${styles.skeletonBlock} h-[0.9rem] w-[7.5rem]`} />
-                <span />
-              </div>
+          <p className={historyStyles.exerciseName}>
+            <span className={`${styles.skeletonBlock} h-[1lh] w-[8.5rem] max-w-full`} />
+          </p>
+          <ul className={historyStyles.setList}>
+            {Array.from({ length: Math.floor(sets / exercises) + (exercise < sets % exercises ? 1 : 0) }, (_, set) => (
+              <li key={set} className={historyStyles.setRow}>
+                <span className={historyStyles.setOrder}><span className={`${styles.skeletonBlock} h-[1lh] w-[2.2rem]`} /></span>
+                <span className={historyStyles.setDetail}><span className={`${styles.skeletonBlock} h-[1lh] w-[7.5rem] max-w-full`} /></span>
+                <span className={historyStyles.setDuration} />
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       ))}
     </div>
