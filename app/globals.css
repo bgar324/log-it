@@ -781,3 +781,19 @@ select:not([multiple]) {
   }
 }
 
+/* Phone focus stays functional without visual rings, including native inputs. */
+@media (width < 52rem) {
+  :root,
+  * {
+    --focus-ring: transparent !important;
+  }
+
+  :focus,
+  :focus-visible,
+  :focus-within {
+    outline: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-inset-ring-shadow: 0 0 #0000 !important;
+  }
+}
+

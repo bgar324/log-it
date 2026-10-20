@@ -190,6 +190,6 @@ Two of those are different in kind, and the distinction matters when changing th
 
 Other facts worth knowing before editing here:
 
-- Public appearance and navigation remain separate from this authenticated interaction layer. `app/globals.css` retains public focus-visible and reduced-motion rules.
+- Below 52rem, all surfaces suppress focus outlines and box-shadow rings, including native input focus. Focus behavior is unchanged; desktop focus-visible indicators remain. The global override intentionally takes precedence over component focus styles.
 - **What remains because it is interaction rather than semantics:** `[touch-action:manipulation]`, pointer capture where direct manipulation still requires it, body scroll locks, `Escape`-to-close, scrim click-to-dismiss, `tabIndex={-1}` on invisible scrim buttons, and the 44px/16px phone minimums.
 - **Move workouts is the reorder canon.** Weekday and exercise ordering use the same shared dialog: select an item, choose its destination, then Save order. Selected rows offer Deselect and other rows offer Move here. No drag handles or pointer-capture reordering.
