@@ -39,6 +39,10 @@
   --focus-ring: color-mix(in srgb, var(--app-accent) 20%, transparent);
   --button-bg: #f2f2ef;
   --button-text: #111216;
+  --toggle-bg: var(--app-surface);
+  --toggle-icon: var(--muted);
+  --toggle-active-bg: var(--button-bg);
+  --toggle-active-icon: var(--button-text);
 }
 
 .training-app {

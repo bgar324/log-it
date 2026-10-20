@@ -56,6 +56,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - Core tokens include `--bg`, `--surface`, `--text`, `--muted`, `--field-bg`, `--field-line`, `--button-bg`, `--button-text`, `--focus-ring`, `--shadow`, and font variables.
 - The theme toggle sets `data-theme` and `data-color-scheme`; `app/layout.tsx` initializes the stored or system theme before rendering.
 - Theme controls read the saved preference on their first client-side mount, not from an initial System selection corrected by an effect. Selection updates immediately; page-color transitions run separately.
+- The authenticated palette maps all four theme-toggle tokens in both light and dark scopes. The dark mapping must live in the dark authenticated selector so the later public dark defaults cannot win the cascade; public controls retain their warm palette.
 - Tailwind v4 utilities are used heavily, often through exported `styles` objects.
 
 ## Surfaces
