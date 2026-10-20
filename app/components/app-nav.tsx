@@ -57,8 +57,16 @@ function viewClickHandler(onNavigate: NavigateHandler, view: DashboardView) {
 
 function Avatar({ user }: { user: AppNavUser }) {
   return user.avatarUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element -- avatar bytes come from our own API route
-    <img className={navStyles.headerAvatar} src={user.avatarUrl} alt="" />
+    // eslint-disable-next-line @next/next/no-img-element -- private API serves a 120px WebP; Next's image proxy does not forward session cookies
+    <img
+      className={navStyles.headerAvatar}
+      src={`${user.avatarUrl}${user.avatarUrl.includes("?") ? "&" : "?"}thumbnail=1`}
+      width={40}
+      height={40}
+      fetchPriority="high"
+      decoding="async"
+      alt=""
+    />
   ) : (
     <span className={navStyles.headerAvatarFallback}>{initialsFor(user.displayName, user.username)}</span>
   );

@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import sharp from "sharp";
 import { getSessionUser } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { validateProfileImageFile } from "../../../../lib/profile-avatar";
@@ -51,7 +52,7 @@ function toAvatarErrorResponse(error: unknown) {
   );
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await getSessionUser();
 
   if (!user) {
@@ -71,16 +72,23 @@ export async function GET() {
     return new NextResponse(null, { status: 404 });
   }
 
-  const imageBuffer = new ArrayBuffer(profile.profileImageBytes.byteLength);
-  new Uint8Array(imageBuffer).set(profile.profileImageBytes);
-  const imageBody = new Blob([imageBuffer], {
-    type: profile.profileImageMimeType,
-  });
+  const thumbnail = request.nextUrl.searchParams.get("thumbnail") === "1";
+  const imageBytes = thumbnail
+    ? await sharp(profile.profileImageBytes, { animated: true })
+        .rotate()
+        .resize(120, 120, { fit: "cover", withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer()
+    : profile.profileImageBytes;
+  const contentType = thumbnail ? "image/webp" : profile.profileImageMimeType;
+  const imageBuffer = new ArrayBuffer(imageBytes.byteLength);
+  new Uint8Array(imageBuffer).set(imageBytes);
+  const imageBody = new Blob([imageBuffer], { type: contentType });
 
   return new NextResponse(imageBody, {
     status: 200,
     headers: {
-      "Content-Type": profile.profileImageMimeType,
+      "Content-Type": contentType,
       "Cache-Control": "private, max-age=31536000, immutable",
       "Last-Modified": profile.profileImageUpdatedAt?.toUTCString() ?? new Date().toUTCString(),
     },

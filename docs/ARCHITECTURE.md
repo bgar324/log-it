@@ -94,6 +94,8 @@ The Ionic screens reuse existing secured mutation endpoints and business service
 
 Workout and exercise detail pages retain the bottom navigation and their quiet Back link. Loading screens use the same destinations. Logger routes remain task screens without the browsing dock.
 
+The header requests `/api/profile/avatar?thumbnail=1&v=...`: an authenticated, privately cached 120px WebP for its 40px avatar, including 3× displays. Sharp applies orientation and cover-cropping without enlarging small uploads; animated uploads retain animation. The header gives the request high fetch priority and explicit dimensions. The unmodified endpoint and public-profile endpoint still serve original uploads; stored image bytes are unchanged. Keep this private image off Next's public image optimizer, which does not forward session cookies.
+
 Profile and desktop sign-out use the shared unsaved-navigation boundary before resetting PostHog and submitting the native `POST /auth/signout` form. Cancel leaves the session and analytics identity intact; an in-flight registered editor save prevents sign-out.
 
 The original drawer remains only in the `_legacy` snapshot used by public previews. Authenticated accounts use the training navigation. PostHog identification and server-evaluated Ben capabilities remain unchanged.
