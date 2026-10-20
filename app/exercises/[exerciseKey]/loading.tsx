@@ -77,8 +77,14 @@ export default function ExerciseDetailLoading() {
 
         <section className={styles.summaryCard} aria-hidden="true">
           <SkeletonBlock className={`${styles.title} w-[min(100%,21rem)]`} />
-          <SkeletonBlock className={`${styles.summaryLine} w-[min(100%,22rem)]`} />
-          <SkeletonBlock className={`${styles.summaryMeta} w-[min(100%,16rem)]`} />
+          <div className={styles.summaryLine}>
+            <SkeletonBlock className="h-[1lh] w-full max-w-[22rem]" />
+            <SkeletonBlock className="h-[1lh] w-3/4 min-[760px]:hidden" />
+          </div>
+          <div className={styles.summaryMeta}>
+            <SkeletonBlock className="h-[1lh] w-full max-w-[16rem]" />
+            <SkeletonBlock className="h-[1lh] w-3/4 min-[380px]:hidden" />
+          </div>
         </section>
 
         <section className={styles.panelGrid} aria-hidden="true">

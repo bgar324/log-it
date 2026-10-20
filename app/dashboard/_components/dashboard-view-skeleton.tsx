@@ -82,7 +82,10 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
               <SkeletonLine className="h-[1lh] w-3/5" />
               <SkeletonLine className="h-[1lh] w-full" />
             </p>
-            <p className={homeStyles.context}><SkeletonLine className="h-[1lh] w-4/5" /></p>
+            <p className={homeStyles.context}>
+              <SkeletonLine className="h-[1lh] w-4/5" />
+              <SkeletonLine className="h-[1lh] w-1/3 min-[380px]:hidden" />
+            </p>
             <SkeletonLine className={`${homeStyles.primary} w-full !rounded-full min-[900px]:w-[220px]`} />
           </section>
           <section className={homeStyles.activity}>
@@ -100,7 +103,10 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
                 </div>
               ))}
             </div>
-            <p className={homeStyles.activityNote}><SkeletonLine className="h-[1lh] w-full" /><SkeletonLine className="h-[1lh] w-1/3" /></p>
+            <p className={homeStyles.activityNote}>
+              <SkeletonLine className="h-[1lh] w-full" />
+              <SkeletonLine className="h-[1lh] w-1/3 min-[380px]:hidden" />
+            </p>
           </section>
         </div>
         <section className={homeStyles.plan}>
@@ -112,7 +118,7 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
                 <p className={`${homeStyles.exerciseSentence} w-full`}>
                   <SkeletonLine className="h-[1lh] w-full" />
                   <SkeletonLine className="h-[1lh] w-full" />
-                  <SkeletonLine className="h-[1lh] w-4/5" />
+                  <SkeletonLine className="h-[1lh] w-4/5 min-[900px]:hidden" />
                 </p>
               </div>
             ))}

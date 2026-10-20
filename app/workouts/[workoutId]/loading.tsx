@@ -91,7 +91,6 @@ export default function WorkoutDetailLoading() {
         </header>
 
         <section className={styles.summaryCard} aria-hidden="true">
-          <SkeletonBlock className={`${styles.titleMeta} w-[5.8rem]`} />
           <SkeletonBlock className={`${styles.title} w-[min(100%,24rem)]`} />
           <SkeletonBlock className={`${styles.summaryLine} w-[min(100%,22rem)]`} />
           <SkeletonBlock className={`${styles.summaryMeta} w-[min(100%,12rem)]`} />
