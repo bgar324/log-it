@@ -39,10 +39,25 @@ export default async function NewWorkoutPage({
     redirect(`/ionic/workouts/new${query.size ? `?${query}` : ""}`);
   }
   const selectedDate = parseDateKey(params.date ?? "") ?? getCurrentPacificDate();
-  const [splitSeed, bodyWeightLb, benEnabled] = await Promise.all([
-    getWorkoutLoggerInitialDataForDate(user.id, selectedDate),
+  const splitSeedPromise = getWorkoutLoggerInitialDataForDate(user.id, selectedDate);
+  const loggedWorkoutPromise = splitSeedPromise.then((seed) => {
+    const hasSplit = Boolean(seed.split.id);
+    const isRestDay = Boolean(
+      hasSplit && isRestDayWorkoutTypeSlug(seed.day.workoutTypeSlug),
+    );
+    return isRestDay
+      ? null
+      : findLoggedWorkoutForDateAndType(
+          user.id,
+          selectedDate,
+          hasSplit ? seed.day.workoutTypeSlug : null,
+        );
+  });
+  const [splitSeed, bodyWeightLb, benEnabled, loggedWorkout] = await Promise.all([
+    splitSeedPromise,
     resolveBodyWeightLbForDate(prisma, user.id, selectedDate),
     isBenFeatureEnabled(user),
+    loggedWorkoutPromise,
   ]);
   const bodyWeightDisplay = convertStoredWeightToDisplay(
     bodyWeightLb,
@@ -52,19 +67,6 @@ export default async function NewWorkoutPage({
   const isRestDay = Boolean(
     hasSplit && isRestDayWorkoutTypeSlug(splitSeed.day.workoutTypeSlug),
   );
-  // The identity a save would collide with: the planned workout type, or none
-  // at all when there is no split, because the create form cannot set one.
-  const plannedWorkoutTypeSlug = hasSplit ? splitSeed.day.workoutTypeSlug : null;
-  // The workout for this date may already be saved. The logger states that
-  // instead of redirecting: a redirect would also strand a recovered draft, and
-  // logging a second workout of a different type stays valid.
-  const loggedWorkout = isRestDay
-    ? null
-    : await findLoggedWorkoutForDateAndType(
-        user.id,
-        selectedDate,
-        plannedWorkoutTypeSlug,
-      );
   const plannedInitialData =
     !hasSplit || (isRestDay && splitSeed.day.exercises.length === 0)
       ? undefined

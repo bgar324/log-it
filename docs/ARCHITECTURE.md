@@ -98,6 +98,10 @@ The header requests `/api/profile/avatar?thumbnail=1&v=...`: an authenticated, p
 
 Profile and desktop sign-out use the shared unsaved-navigation boundary before resetting PostHog and submitting the native `POST /auth/signout` form. Cancel leaves the session and analytics identity intact; an in-flight registered editor save prevents sign-out.
 
+The active dashboard lazy-loads dormant workspace views and Nutrition rather than importing their render graphs into Home. Intercepted phone tab/Profile/Settings links do not prefetch unused RSC routes; ordinary route links retain Next prefetch. The unfiltered first History page includes up to four detail projections for its newest recorded date, seeding the existing account/unit/workout cache before client view rendering. Pagination/filter reads keep their smaller summary contract. Browser hydration defers cache-backed detail rendering until mount, and invalidation generations reject pre-save history seeds and disown old view responses on refresh/unmount.
+
+The carousel logger requests automatic guidance only for its focused exercise; retained all-exercise interfaces keep their original demand policy. Editing/resetting an exercise invalidates its pending guidance request, and cached replacements take ownership before rendering. Logger entry starts the duplicate lookup as soon as the split seed resolves, independently of capability evaluation. Ben presentation results use Next's shared data cache with 60-second revalidation, keyed by provider configuration and account ID/email/username; failed provider evaluations do not create cached false results. Authentication itself remains request-scoped.
+
 The original drawer remains only in the `_legacy` snapshot used by public previews. Authenticated accounts use the training navigation. PostHog identification and server-evaluated Ben capabilities remain unchanged.
 
 Owner view changes reset the document scroll in a layout effect. `DashboardShell` separately resets its desktop content scroller, including repeated destination clicks. Browser restoration is set to manual while the dashboard is mounted so Back cannot overwrite the reset. Split-library and plan navigation reset independently. The folder library is the initial Split view; `split-folder-artwork.tsx` shares its active, inactive, and dashed-create geometry with loading states.
@@ -191,7 +195,7 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 
 - `ExerciseSummary` and `WorkoutCalendarDay` are read models maintained by `lib/workout-read-models.*`.
 - `syncWorkoutReadModels()` incrementally syncs affected exercise names and performed dates.
-- Adding a field to a cached section payload requires bumping that entry's cache key. `loadCachedWorkoutHistorySection` carries a version segment (currently `"v4-lifetime"`) for exactly this reason: without it, entries written before the field existed keep being served and the view reads `undefined` off a cached object — a runtime crash that a typecheck and a fresh build both pass. `withLifetimeTotals()` backstops the same boundary by filling the field when an older entry lacks it.
+- Adding a field to a cached section payload requires bumping that entry's cache key. `loadCachedWorkoutHistorySection` carries `"v5-initial-details"` so older history payloads do not omit detail hydration. `withLifetimeTotals()` also backstops older lifetime-count payloads.
 - `ensureWorkoutReadModels()` / `rebuildWorkoutReadModelsForUser()` are available for rebuild paths.
 - Dashboard and split data use `unstable_cache` with user-scoped cache tags from `lib/cache-tags.ts`.
 - Nutrition view data uses a user-scoped cache tag and is invalidated after nutrition writes.

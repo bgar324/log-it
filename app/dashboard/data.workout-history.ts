@@ -1,3 +1,4 @@
+import { loadWorkspaceWorkoutDetail } from "@/app/workspace/details/workspace-workout-detail.data";
 import { parseDateKey } from "@/lib/workout-splits/shared";
 import { prisma } from "@/lib/prisma";
 import {
@@ -94,17 +95,32 @@ export async function loadWorkoutHistorySection(
   weightUnit: WeightUnit,
   request: WorkoutHistoryRequest = EMPTY_WORKOUT_HISTORY_REQUEST,
 ) {
-  const page = await loadWorkoutLogPage(userId, {
-    offset: request.offset,
-    limit: WORKOUT_HISTORY_PAGE_SIZE,
-    filters: request.filters,
-  });
+  const [page, lifetime] = await Promise.all([
+    loadWorkoutLogPage(userId, {
+      offset: request.offset,
+      limit: WORKOUT_HISTORY_PAGE_SIZE,
+      filters: request.filters,
+    }),
+    loadWorkoutLifetimeTotals(userId),
+  ]);
   const logSummaries = mapWorkoutSummaries(page.logs, weightUnit, {
     monthLabel,
     monthDateLabel,
     timelineDateLabel,
     convertStoredWeightToDisplay,
   });
+  const newestDate = logSummaries.reduce(
+    (newest, log) => log.performedAtDate > newest ? log.performedAtDate : newest,
+    "",
+  );
+  const initialWorkoutDetails = request.offset === 0 && !hasWorkoutHistoryFilters(request.filters) ? await Promise.all(
+    logSummaries
+      .filter((log) => log.performedAtDate === newestDate)
+      .slice(0, 4)
+      .map((log) => loadWorkspaceWorkoutDetail(userId, log.id, weightUnit)),
+  )
+    .then((details) => details.filter((detail) => detail !== null))
+    .catch(() => []) : [];
   const workoutMonthMap = new Map<
     string,
     DashboardClientData["workoutMonths"][number]["entries"]
@@ -128,6 +144,7 @@ export async function loadWorkoutHistorySection(
   const nextOffset = request.offset + page.logs.length;
 
   return {
+    initialWorkoutDetails,
     workoutMonths: Array.from(workoutMonthMap.entries()).map(([month, entries]) => ({
       month,
       entries,
@@ -139,7 +156,7 @@ export async function loadWorkoutHistorySection(
       workoutTypes: page.workoutTypes,
       // Lifetime totals travel with this view so the workouts summary is never
       // blank on a direct link; `totalCount` above follows the active filters.
-      lifetime: await loadWorkoutLifetimeTotals(userId),
+      lifetime,
     },
   };
 }

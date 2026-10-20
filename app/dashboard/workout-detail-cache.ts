@@ -43,6 +43,11 @@ type PendingRead = {
  */
 const entries = new Map<string, CacheEntry>();
 const pending = new Map<string, PendingRead>();
+let invalidationGeneration = 0;
+
+export function workoutDetailGeneration(): number {
+  return invalidationGeneration;
+}
 
 function cacheKey(userId: string, unit: WeightUnit, workoutId: string) {
   return `${userId}\u0000${unit}\u0000${workoutId}`;
@@ -67,6 +72,25 @@ export function readWorkoutDetail(
   }
 
   return entry.state;
+}
+
+/** Fill untouched cache keys without replacing a newer read or cached answer. */
+export function seedWorkoutDetails(
+  userId: string,
+  unit: WeightUnit,
+  details: WorkspaceWorkoutDetailProjection[],
+  generation = invalidationGeneration,
+): void {
+  if (generation !== invalidationGeneration) return;
+  for (const detail of details) {
+    const key = cacheKey(userId, unit, detail.id);
+
+    if (readWorkoutDetail(userId, unit, detail.id) || pending.has(key)) {
+      continue;
+    }
+
+    store(key, detail.id, { status: "ready", detail });
+  }
 }
 
 /**
@@ -125,6 +149,7 @@ export function loadWorkoutDetail(
  * the whole cache goes.
  */
 export function invalidateWorkoutDetails(workoutId?: string): void {
+  invalidationGeneration += 1;
   if (!workoutId) {
     entries.clear();
     pending.clear();

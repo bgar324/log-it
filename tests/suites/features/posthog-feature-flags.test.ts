@@ -1,13 +1,31 @@
+import "next/dist/server/node-environment";
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { afterEach, beforeEach } from "node:test";
 import { isBenFeatureEnabled } from "../../../lib/posthog-feature-flags";
 
-test("the server evaluates Ben with authenticated user properties", async (context) => {
+let restore: () => void;
+
+beforeEach(() => {
   const previousToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
   const previousHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
   const previousFetch = globalThis.fetch;
-  let requestBody: Record<string, unknown> | null = null;
-  context.after(() => {
+  const previousIncrementalCache = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "__incrementalCache",
+  );
+  const entries = new Map<string, unknown>();
+  Object.defineProperty(globalThis, "__incrementalCache", {
+    configurable: true,
+    value: {
+      generateCacheKey: async (key: string) => key,
+      get: async (key: string) =>
+        entries.has(key) ? { value: entries.get(key), isStale: false } : null,
+      set: async (key: string, value: unknown) => {
+        entries.set(key, value);
+      },
+    },
+  });
+  restore = () => {
     if (previousToken === undefined) {
       delete process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
     } else {
@@ -19,32 +37,87 @@ test("the server evaluates Ben with authenticated user properties", async (conte
       process.env.NEXT_PUBLIC_POSTHOG_HOST = previousHost;
     }
     globalThis.fetch = previousFetch;
-  });
+    if (previousIncrementalCache) {
+      Object.defineProperty(globalThis, "__incrementalCache", previousIncrementalCache);
+    } else {
+      Reflect.deleteProperty(globalThis, "__incrementalCache");
+    }
+  };
 
   process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN = "test-token";
   process.env.NEXT_PUBLIC_POSTHOG_HOST = "https://posthog.example";
-  globalThis.fetch = async (_input, init) => {
-    requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
-    return new Response(
-      JSON.stringify({ flags: { Ben: { enabled: true } } }),
-      { status: 200, headers: { "content-type": "application/json" } },
-    );
+});
+
+afterEach(() => restore());
+
+const user = {
+  id: "user-1",
+  email: "ben@example.com",
+  username: "ben",
+};
+
+function flagResponse(enabled: boolean) {
+  return new Response(JSON.stringify({ flags: { Ben: { enabled } } }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+test("repeated evaluations for the same user reuse the cached provider result", async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return flagResponse(true);
   };
 
-  const enabled = await isBenFeatureEnabled({
-    id: "user-1",
-    email: "ben@example.com",
-    username: "ben",
-  });
-
-  assert.equal(enabled, true);
-  assert.deepEqual(requestBody, {
-    token: "test-token",
-    distinct_id: "user-1",
-    groups: {},
-    person_properties: {
-      email: "ben@example.com",
-      username: "ben",
-    },
-  });
+  assert.equal(await isBenFeatureEnabled({ ...user }), true);
+  assert.equal(await isBenFeatureEnabled({ ...user }), true);
+  assert.equal(calls, 1);
 });
+
+test("a different user cannot inherit an enabled flag", async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return flagResponse(calls === 1);
+  };
+
+  assert.equal(await isBenFeatureEnabled({ ...user }), true);
+  assert.equal(
+    await isBenFeatureEnabled({
+      id: "user-2",
+      email: "other@example.com",
+      username: "other",
+    }),
+    false,
+  );
+  assert.equal(await isBenFeatureEnabled({ ...user }), true);
+  assert.equal(calls, 2);
+});
+
+for (const failure of ["thrown", "non-OK", "malformed"] as const) {
+  test(`${failure} provider failures fail closed without caching false`, async () => {
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      if (calls === 1) {
+        if (failure === "thrown") {
+          throw new Error("Provider unavailable");
+        }
+        if (failure === "non-OK") {
+          return new Response(null, { status: 503 });
+        }
+        return new Response(JSON.stringify({ flags: { Ben: { enabled: "yes" } } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return flagResponse(true);
+    };
+
+    assert.equal(await isBenFeatureEnabled({ ...user }), false);
+    assert.equal(await isBenFeatureEnabled({ ...user }), true);
+    assert.equal(await isBenFeatureEnabled({ ...user }), true);
+    assert.equal(calls, 2);
+  });
+}

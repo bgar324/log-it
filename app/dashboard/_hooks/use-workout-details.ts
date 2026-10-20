@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { WeightUnit } from "@/lib/weight-unit";
 import {
   loadWorkoutDetail,
   readWorkoutDetail,
   type WorkoutDetailState,
 } from "../workout-detail-cache";
+
+// Hydration is a one-way React transition; there are no subsequent external changes.
+const subscribeToHydration = () => () => {};
 
 /** Cache-owned requests survive navigation; this hook only tracks the current selection. */
 export function useWorkoutDetails(
@@ -21,6 +24,7 @@ export function useWorkoutDetails(
     states: Record<string, WorkoutDetailState>;
   }>(() => ({ key: selectionKey, states: {} }));
   const [attempt, setAttempt] = useState(0);
+  const hydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
   if (selection.key !== selectionKey) {
     setSelection({ key: selectionKey, states: {} });
@@ -65,12 +69,13 @@ export function useWorkoutDetails(
 
   const details = useMemo(() => {
     const byWorkout: Record<string, WorkoutDetailState> = {};
+    if (!hydrated) return byWorkout;
     for (const id of idsKey ? idsKey.split(",") : []) {
       const state = readWorkoutDetail(userId, unit, id) ?? selection.states[`${userId}|${unit}|${id}`];
       if (state) byWorkout[id] = state;
     }
     return byWorkout;
-  }, [idsKey, selection, unit, userId]);
+  }, [hydrated, idsKey, selection, unit, userId]);
 
   return { details, retry };
 }

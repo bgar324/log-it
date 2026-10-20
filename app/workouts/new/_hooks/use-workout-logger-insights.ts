@@ -15,12 +15,14 @@ type UseWorkoutLoggerInsightsOptions = {
   exercises: ExerciseDraft[];
   performedAt: string;
   excludeWorkoutId?: string | null;
+  requestedExerciseIds?: readonly string[];
 };
 
 export function useWorkoutLoggerInsights({
   exercises,
   performedAt,
   excludeWorkoutId = null,
+  requestedExerciseIds,
 }: UseWorkoutLoggerInsightsOptions) {
   const insightCacheRef = useRef<Record<string, ExerciseInsight>>({});
   const latestInsightLookupRef = useRef<Record<string, string>>({});
@@ -47,9 +49,12 @@ export function useWorkoutLoggerInsights({
           ): item is {
             exerciseId: string;
             context: ExerciseInsightRequestContext;
-          } => item.context !== null,
+          } =>
+            item.context !== null &&
+            (requestedExerciseIds === undefined ||
+              requestedExerciseIds.includes(item.exerciseId)),
         ),
-    [excludeWorkoutId, exercises, performedAt],
+    [excludeWorkoutId, exercises, performedAt, requestedExerciseIds],
   );
 
   const getExerciseInsightContext = useCallback(
@@ -99,6 +104,9 @@ export function useWorkoutLoggerInsights({
       const cached = insightCacheRef.current[lookupKey];
 
       if (cached) {
+        requestAbortRef.current[exerciseId]?.abort();
+        delete requestAbortRef.current[exerciseId];
+        latestInsightLookupRef.current[exerciseId] = lookupKey;
         setExerciseInsightById((current) => ({
           ...current,
           [exerciseId]: {
@@ -220,6 +228,9 @@ export function useWorkoutLoggerInsights({
   // Typing a name parks the exercise until blur or a picked suggestion, so the
   // logger never fires a request per keystroke.
   const resetExerciseInsightState = useCallback((exerciseId: string) => {
+    requestAbortRef.current[exerciseId]?.abort();
+    delete requestAbortRef.current[exerciseId];
+    delete latestInsightLookupRef.current[exerciseId];
     setExerciseInsightById((current) => {
       if (current[exerciseId]?.status === "idle") {
         return current;
@@ -247,10 +258,8 @@ export function useWorkoutLoggerInsights({
   }, [exerciseInsightById, exerciseInsightContexts, fetchExerciseInsight]);
 
   useEffect(() => {
-    const controllers = requestAbortRef.current;
-
     return () => {
-      for (const controller of Object.values(controllers)) {
+      for (const controller of Object.values(requestAbortRef.current)) {
         controller.abort();
       }
     };

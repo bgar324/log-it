@@ -77,10 +77,10 @@ export function AppTopBar({ title, accessory, onBack }: { title: string; accesso
   return (
     <header className={navStyles.topBar}>
       <div className={navStyles.utilityRow}>
-        <Link href={toViewHref("profile")} className={navStyles.identityLink} aria-label="Profile" onClick={viewClickHandler(nav?.onNavigate, "profile")}>
+        <Link href={toViewHref("profile")} prefetch={nav?.onNavigate ? false : undefined} className={navStyles.identityLink} aria-label="Profile" onClick={viewClickHandler(nav?.onNavigate, "profile")}>
           {nav?.user ? <Avatar user={nav.user} /> : <UserRound className={navStyles.utilityIcon} />}
         </Link>
-        <Link href={toViewHref("settings")} className={navStyles.utilityButton} aria-label="Settings" aria-current={nav?.activeView === "settings" ? "page" : undefined} onClick={viewClickHandler(nav?.onNavigate, "settings")}>
+        <Link href={toViewHref("settings")} prefetch={nav?.onNavigate ? false : undefined} className={navStyles.utilityButton} aria-label="Settings" aria-current={nav?.activeView === "settings" ? "page" : undefined} onClick={viewClickHandler(nav?.onNavigate, "settings")}>
           <Settings className={navStyles.utilityIcon} strokeWidth={1.7} />
         </Link>
       </div>
@@ -127,6 +127,7 @@ export function AppTabBar({ activeView, onNavigate, benEnabled = false }: {
           <Link
             key={item.view}
             href={toViewHref(item.view)}
+            prefetch={onNavigate ? false : undefined}
             className={navStyles.tabItem}
             data-active={activeView === item.view}
             aria-current={activeView === item.view ? "page" : undefined}

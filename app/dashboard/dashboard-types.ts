@@ -1,3 +1,4 @@
+import type { WorkspaceWorkoutDetailProjection } from "@/app/workspace/details/workspace-workout-detail.data";
 import type { WeightUnit } from "@/lib/weight-unit";
 import type { WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
 import type { ExercisePrediction } from "@/lib/workouts/prediction";
@@ -134,6 +135,7 @@ export type DashboardClientData = {
       volume: number;
     }>;
   }>;
+  initialWorkoutDetails?: WorkspaceWorkoutDetailProjection[];
   workoutHistory: {
     totalCount: number;
     nextOffset: number;

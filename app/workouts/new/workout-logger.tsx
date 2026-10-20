@@ -134,6 +134,10 @@ export function WorkoutLogger({
     isEditMode,
     weightUnit,
   });
+  // One exercise is on screen at a time, so which one is a first-class piece of
+  // state. Every value stays in the draft controller above, which is what makes
+  // switching, adding and deleting exercises lossless.
+  const exerciseFocus = useFocusedExercise(draft.exercises.map((exercise) => exercise.id));
   const {
     clearAllExerciseInsights,
     clearExerciseInsight,
@@ -143,16 +147,13 @@ export function WorkoutLogger({
     resetExerciseInsightState,
   } = useWorkoutLoggerInsights({
     exercises: draft.exercises,
+    requestedExerciseIds: workspaceEnabled ? undefined : exerciseFocus.focusedId === null ? [] : [exerciseFocus.focusedId],
     performedAt: draft.performedAt,
     // In edit mode the workout being edited is not history: excluding it stops
     // the logger from comparing a session against itself.
     excludeWorkoutId: isEditMode ? (workoutId ?? null) : null,
   });
 
-  // One exercise is on screen at a time, so which one is a first-class piece of
-  // state. Every value stays in the draft controller above, which is what makes
-  // switching, adding and deleting exercises lossless.
-  const exerciseFocus = useFocusedExercise(draft.exercises.map((exercise) => exercise.id));
   useEffect(() => {
     if (!workspaceEnabled) clearAll();
   }, [clearAll, exerciseFocus.focusedId, workspaceEnabled]);

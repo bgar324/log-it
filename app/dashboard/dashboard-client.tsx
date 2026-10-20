@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AppNavUser } from "@/app/components/app-nav";
@@ -14,8 +15,8 @@ import type {
   DashboardWorkoutFilters,
 } from "./dashboard-types";
 import { normalizeDashboardView } from "./data.view-helpers";
+import { seedWorkoutDetails, workoutDetailGeneration } from "./workout-detail-cache";
 import { DashboardOverviewView } from "./_components/dashboard-overview-view";
-import { DashboardNutritionPanel } from "./_components/dashboard-nutrition-panel";
 import { DashboardProfileView } from "./_components/dashboard-profile-view";
 import { DashboardSettingsView } from "./_components/dashboard-settings-view";
 import { DashboardShell } from "./_components/dashboard-shell";
@@ -33,15 +34,38 @@ import { useDashboardProgress } from "./_hooks/use-dashboard-progress";
 import { useDashboardTodayPlan } from "./_hooks/use-dashboard-today-plan";
 import { useWorkspaceDesign } from "@/app/components/workspace-design-context";
 import { useWorkspaceNavigation } from "@/app/components/workspace-navigation";
-import { WorkspaceDashboardShell } from "@/app/components/workspace-frame";
 import { WorkspaceViewError, WorkspaceViewSkeleton } from "@/app/components/workspace-view-state";
-import { WorkspaceOverviewView } from "@/app/workspace/views/workspace-overview-view";
-import { WorkspaceWorkoutsView, WorkspaceWorkoutFiltersControl } from "@/app/workspace/views/workspace-workouts-view";
-import { WorkspaceProgressView } from "@/app/workspace/views/workspace-progress-view";
-import { WorkspaceProfileView } from "@/app/workspace/views/workspace-profile-view";
-import { WorkspaceSettingsView } from "@/app/workspace/views/workspace-settings-view";
-import { WorkspaceNutritionPanel } from "@/app/workspace/views/workspace-nutrition-panel";
-import { WorkspaceSplitManager } from "@/app/workspace/split/workspace-split-manager";
+
+const WorkspaceDashboardShell = dynamic(() =>
+  import("@/app/components/workspace-frame").then((m) => m.WorkspaceDashboardShell),
+);
+const WorkspaceOverviewView = dynamic(() =>
+  import("@/app/workspace/views/workspace-overview-view").then((m) => m.WorkspaceOverviewView),
+);
+const WorkspaceWorkoutsView = dynamic(() =>
+  import("@/app/workspace/views/workspace-workouts-view").then((m) => m.WorkspaceWorkoutsView),
+);
+const WorkspaceWorkoutFiltersControl = dynamic(() =>
+  import("@/app/workspace/views/workspace-workouts-view").then((m) => m.WorkspaceWorkoutFiltersControl),
+);
+const WorkspaceProgressView = dynamic(() =>
+  import("@/app/workspace/views/workspace-progress-view").then((m) => m.WorkspaceProgressView),
+);
+const WorkspaceProfileView = dynamic(() =>
+  import("@/app/workspace/views/workspace-profile-view").then((m) => m.WorkspaceProfileView),
+);
+const WorkspaceSettingsView = dynamic(() =>
+  import("@/app/workspace/views/workspace-settings-view").then((m) => m.WorkspaceSettingsView),
+);
+const WorkspaceNutritionPanel = dynamic(() =>
+  import("@/app/workspace/views/workspace-nutrition-panel").then((m) => m.WorkspaceNutritionPanel),
+);
+const WorkspaceSplitManager = dynamic(() =>
+  import("@/app/workspace/split/workspace-split-manager").then((m) => m.WorkspaceSplitManager),
+);
+const DashboardNutritionPanel = dynamic(() =>
+  import("./_components/dashboard-nutrition-panel").then((m) => m.DashboardNutritionPanel),
+);
 
 function LegacyViewError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return <div className={styles.panel}><p className={styles.empty}>{message}</p><button type="button" className={styles.retryButton} onClick={onRetry}>Retry</button></div>;
@@ -143,7 +167,12 @@ export function DashboardClient({
   const [activeView, setActiveView] = useState(resolvedInitialView);
   const [splitLibraryOpen, setSplitLibraryOpen] = useState(true);
   if (activeView !== "split" && !splitLibraryOpen) setSplitLibraryOpen(true);
-  const [dashboardData, setDashboardData] = useState(data);
+  const [dashboardData, setDashboardData] = useState(() => {
+    if (typeof window !== "undefined") {
+      seedWorkoutDetails(userId, data.user.preferredWeightUnit, data.initialWorkoutDetails ?? []);
+    }
+    return data;
+  });
   const [loadedViews, setLoadedViews] = useState<ReadonlySet<DashboardView>>(
     () => createInitialLoadedDashboardViews(resolvedInitialView),
   );
@@ -155,6 +184,7 @@ export function DashboardClient({
     createInitialLoadedDashboardViews(resolvedInitialView),
   );
   const inFlightViewsRef = useRef<Set<DashboardView>>(new Set());
+  const viewGenerationRef = useRef(0);
   const workoutHistoryRequestRef = useRef(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [workoutFilters, setWorkoutFilters] = useState(emptyWorkoutFilters);
@@ -228,6 +258,9 @@ export function DashboardClient({
     // Server refreshes are authoritative. Keeping this cache instance-local and
     // resetting it here prevents one account or old unit conversion from being
     // merged into another account's dashboard payload.
+    viewGenerationRef.current += 1;
+    inFlightViewsRef.current.clear();
+    seedWorkoutDetails(userId, data.user.preferredWeightUnit, data.initialWorkoutDetails ?? []);
     loadedViewsRef.current = createInitialLoadedDashboardViews(resolvedInitialView);
     workoutHistoryRequestRef.current += 1;
     setDashboardData(data);
@@ -236,7 +269,13 @@ export function DashboardClient({
     setViewErrors({});
     setAppliedWorkoutFilters(emptyWorkoutFilters);
     setWorkoutHistoryLoading(false);
-  }, [data, resolvedInitialView]);
+  }, [data, resolvedInitialView, userId]);
+
+  useEffect(() => () => {
+    viewGenerationRef.current += 1;
+    inFlightViewsRef.current.clear();
+    workoutHistoryRequestRef.current += 1;
+  }, []);
 
   const loadViewData = useCallback(async (
     view: DashboardView,
@@ -251,6 +290,8 @@ export function DashboardClient({
     ) {
       return;
     }
+    const generation = viewGenerationRef.current;
+    const detailGeneration = workoutDetailGeneration();
 
     const hasCachedData = loadedViewsRef.current.has(view);
     const showLoading = options.showLoading ?? !hasCachedData;
@@ -288,6 +329,8 @@ export function DashboardClient({
         );
       }
 
+      if (generation !== viewGenerationRef.current) return;
+      seedWorkoutDetails(userId, displayWeightUnit, payload.data.initialWorkoutDetails ?? [], detailGeneration);
       setDashboardData((current) => mergeDashboardViewData(current, payload.data ?? {}));
       loadedViewsRef.current.add(view);
       setLoadedViews((current) => {
@@ -301,6 +344,7 @@ export function DashboardClient({
         return next;
       });
     } catch (error) {
+      if (generation !== viewGenerationRef.current) return;
       if (showError) {
         setViewErrors((current) => ({
           ...current,
@@ -308,6 +352,7 @@ export function DashboardClient({
         }));
       }
     } finally {
+      if (generation !== viewGenerationRef.current) return;
       inFlightViewsRef.current.delete(view);
       setLoadingViews((current) => {
         const next = new Set(current);
@@ -315,12 +360,13 @@ export function DashboardClient({
         return next;
       });
     }
-  }, []);
+  }, [displayWeightUnit, userId]);
 
   const loadWorkoutHistoryPage = useCallback(
     async (options: LoadWorkoutHistoryPageOptions) => {
       const requestId = workoutHistoryRequestRef.current + 1;
       workoutHistoryRequestRef.current = requestId;
+      const detailGeneration = workoutDetailGeneration();
       setWorkoutHistoryLoading(true);
       setViewErrors((current) => {
         const next = { ...current };
@@ -361,6 +407,9 @@ export function DashboardClient({
         if (requestId !== workoutHistoryRequestRef.current) {
           return;
         }
+        if (payload && "data" in payload) {
+          seedWorkoutDetails(userId, displayWeightUnit, payload.data?.initialWorkoutDetails ?? [], detailGeneration);
+        }
 
         setDashboardData((current) => ({
           ...current,
@@ -392,7 +441,7 @@ export function DashboardClient({
         }
       }
     },
-    [],
+    [displayWeightUnit, userId],
   );
 
   useEffect(() => {
