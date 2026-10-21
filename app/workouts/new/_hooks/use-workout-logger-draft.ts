@@ -377,7 +377,7 @@ export function useWorkoutLoggerDraft({
       ...exercise,
       sets: [
         ...exercise.sets,
-        createSetDraft(nextSetId(), exercise.sets[exercise.sets.length - 1]),
+        createSetDraft(nextSetId()),
       ],
     }));
   }

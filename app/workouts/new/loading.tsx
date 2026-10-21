@@ -6,6 +6,7 @@ import {
 } from "@/app/components/workspace-design-context";
 import { WorkspaceLoggerSkeleton } from "@/app/workspace/logger/workspace-logger-skeleton";
 import { styles } from "./workout-logger.styles";
+import { WorkoutLoggerGuidanceSkeleton } from "./_components/workout-logger-guidance-skeleton";
 
 const skeleton = "block motion-skeleton";
 const skeletonFill = { background: "color-mix(in srgb, var(--text) 10%, transparent)" };
@@ -100,34 +101,7 @@ export default function NewWorkoutLoading({ editMode = false }: { editMode?: boo
                 </div> : null}
               </div>
             </article>
-            <section className={styles.guidance}>
-              <table className={styles.guidanceTable}>
-                <colgroup><col className={styles.guidanceSetColumn} /><col /><col /></colgroup>
-                <thead>
-                  <tr>
-                    <th className={styles.guidanceSetNumber} />
-                    <th className={styles.guidanceHeading}>
-                      <span className={`${skeleton} h-[1.4em] w-20 max-w-full rounded`} />
-                    </th>
-                    <th className={styles.guidanceHeading}>
-                      <span className={`${skeleton} h-[1.4em] w-16 max-w-full rounded`} />
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: 3 }, (_, index) => (
-                    <tr key={index}>
-                      <th className={styles.guidanceSetNumber}>
-                        <span className={`${skeleton} h-[1.5em] w-2 rounded`} />
-                      </th>
-                      {[0, 1].map(column => <td key={column} className={styles.guidanceValue}>
-                        <span className={`${skeleton} h-[1.35em] w-20 max-w-full rounded`} />
-                      </td>)}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
+            <WorkoutLoggerGuidanceSkeleton />
           </div>
           <div className={styles.pagerRow}>
             <span className={`${skeleton} h-11 w-11 shrink-0 rounded-full`} />

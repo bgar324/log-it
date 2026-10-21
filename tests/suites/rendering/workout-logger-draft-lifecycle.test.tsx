@@ -30,6 +30,10 @@ function DraftProbe({ initialData, weightUnit = "LB", isEditMode = false }: { in
       <p id="date">{draft.performedAt}</p>
       <p id="exercises">{draft.exercises.map((exercise) => exercise.name).join(",")}</p>
       <p id="dirty">{String(draft.hasUnsavedEdits)}</p>
+      <output id="sets">{JSON.stringify(draft.exercises[0]?.sets)}</output>
+      <button type="button" onClick={() => draft.addSet(draft.exercises[0]!.id)}>
+        add set
+      </button>
       <button type="button" onClick={() => draft.setExerciseName(draft.exercises[0]!.id, draft.exercises[0]!.name)}>
         unchanged
       </button>
@@ -265,5 +269,34 @@ test("StrictMode effect replay cannot replace a recovered draft", async () => {
   } finally {
     mounted.unmount();
     window.localStorage.clear();
+  }
+});
+
+test("adding sets leaves entered results unchanged and starts distinct blank rows", async () => {
+  for (const usesBodyweight of [false, true]) {
+    window.localStorage.clear();
+    const entered = { reps: "8", weightLb: usesBodyweight ? "" : "135", durationSeconds: "30", usesBodyweight };
+    const mounted = await render(<DraftProbe initialData={{
+      title: "Gym session", workoutType: "", performedAt: TODAY,
+      exercises: [{ name: "Bench press", sets: [entered] }],
+    }} />);
+    try {
+      await mounted.click(button(mounted, "add set"));
+      await mounted.click(button(mounted, "add set"));
+      await act(async () => { window.dispatchEvent(new window.Event("pagehide")); });
+      assert.deepEqual(storedDraft()?.exercises, [{
+        name: "Bench press",
+        sets: [
+          entered,
+          { reps: "", weightLb: "", durationSeconds: "", usesBodyweight: false },
+          { reps: "", weightLb: "", durationSeconds: "", usesBodyweight: false },
+        ],
+      }]);
+      const sets = JSON.parse(mounted.container.querySelector("#sets")!.textContent!) as Array<{ id: string }>;
+      assert.equal(new Set(sets.map(set => set.id)).size, 3);
+    } finally {
+      mounted.unmount();
+      window.localStorage.clear();
+    }
   }
 });

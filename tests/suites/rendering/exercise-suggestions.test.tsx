@@ -53,6 +53,20 @@ test("a touch selection survives the input blurring before pointer-up", async ()
   } finally { mounted.unmount(); }
 });
 
+test("a blur immediately after pointer release cannot overwrite the selected name", async () => {
+  const selected: string[] = [];
+  const { mounted, input, option } = await openPicker(selected);
+  try {
+    await act(async () => {
+      option.dispatchEvent(pointer("pointerdown"));
+      document.dispatchEvent(pointer("pointerup"));
+      input.blur();
+    });
+    assert.equal(input.value, "Bicep Curls");
+    assert.deepEqual(selected, ["Bicep Curls"]);
+  } finally { mounted.unmount(); }
+});
+
 test("keyboard and assistive click activation still selects a suggestion", async () => {
   const selected: string[] = [];
   const { mounted, input, option } = await openPicker(selected);

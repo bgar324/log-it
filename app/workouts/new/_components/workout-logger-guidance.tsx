@@ -4,6 +4,7 @@ import type { WorkoutLoggerExerciseEntry } from "../workout-logger.types";
 import { MotionReveal } from "@/app/components/motion-reveal";
 import { formatCompareDayLabel, formatLoggedSetSnapshot } from "../workout-logger.formatters";
 import { styles } from "../workout-logger.styles";
+import { WorkoutLoggerGuidanceSkeleton } from "./workout-logger-guidance-skeleton";
 
 type GuidanceProps = Pick<WorkoutLoggerExerciseEntry, "exercise" | "insightState" | "weightUnit"> & {
   onRetry: () => void;
@@ -21,9 +22,7 @@ export function WorkoutLoggerGuidance({ exercise, insightState, weightUnit, onRe
 function GuidanceContent({ exercise, insightState, weightUnit, onRetry }: GuidanceProps) {
   if (!insightState) return null;
   if (insightState.status === "loading") {
-    return <section aria-label="Exercise guidance" className={styles.guidance} aria-busy="true">
-      <p className={styles.guidanceNote}>Loading session guidance…</p>
-    </section>;
+    return <WorkoutLoggerGuidanceSkeleton rows={Math.max(exercise.sets.length, insightState.data?.lastSession?.sets.length ?? 0)} />;
   }
   if (insightState.status === "error" || !insightState.data) {
     return <section aria-label="Exercise guidance" className={styles.guidance}>

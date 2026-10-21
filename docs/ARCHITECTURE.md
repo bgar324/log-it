@@ -112,6 +112,8 @@ Owner view changes reset the document scroll in a layout effect. `DashboardShell
 
 `ui/popover.tsx` wraps the installed Radix popover for legacy anchored disclosures. Controlled or uncontrolled open state also makes closing content inert. All callers prevent open/close autofocus; editing action rows additionally preserve input focus on pointer presses. `exercise-suggestions.tsx` composes the same anchor/portal positioning to share collision-aware results between logger and Split without scrolling the form.
 
+Exercise suggestions commit pointer-release selection synchronously before a following native blur can read the field. Otherwise the blur handler can restore the pre-selection query over the chosen name. Canceled or scrolling gestures still do not select.
+
 `ui/legacy-dialog.tsx` supplies controlled Radix dialog presence, Escape/outside dismissal, scroll locking, no automatic focus transfer, and pending-request dismissal guards. Form and reorder drafts live inside the mounted content, surviving exit and resetting on the next complete opening. Callers keep the boundary mounted and pass `open`; they do not conditionally remove it at the start of exit. Close buttons also honor busy state.
 
 `inline-feedback.tsx` renders screen-local errors and useful action results; pending controls own request progress. `delete-confirm-dialog.tsx` composes the existing dialog boundary for workout and split deletion, keeping failures retryable and preventing dismissal during a request. Account deletion retains its typed confirmation. Sonner and its mounts, dependency, and motion recipes are removed across active, preview, and dormant callers.

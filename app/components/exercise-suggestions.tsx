@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
 import { suggestionStyles } from "./exercise-suggestions.styles";
 
@@ -66,7 +67,9 @@ export function ExerciseSuggestions({
       // Blur may already have removed the option. Complete the original tap,
       // restoring focus before selection cancels any lookup caused by focus.
       if (input?.isConnected && document.activeElement !== input) input.focus({ preventScroll: true });
-      selectSuggestion(suggestion);
+      // A native blur can follow this document listener before React commits.
+      // It must read the selected name, not write the old query back.
+      flushSync(() => selectSuggestion(suggestion));
     }
     function cancel(pointer: PointerEvent) {
       if (pointer.pointerId === pointerId) stop();
