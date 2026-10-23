@@ -457,14 +457,15 @@ export function DashboardClient({
     if (workspaceEnabled || activeView !== "dashboard" || !loadedViews.has("dashboard")) {
       return;
     }
-    const warmHistory = () => {
+    const warmPrimaryViews = () => {
       void loadViewData("workouts", { showLoading: false, showError: true });
+      void loadViewData("split", { showLoading: false, showError: true });
     };
     if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(warmHistory);
+      const id = window.requestIdleCallback(warmPrimaryViews);
       return () => window.cancelIdleCallback(id);
     }
-    const id = window.setTimeout(warmHistory, 0);
+    const id = window.setTimeout(warmPrimaryViews, 0);
     return () => window.clearTimeout(id);
   }, [activeView, loadedViews, loadViewData, workspaceEnabled]);
 
