@@ -197,7 +197,7 @@ Cascade behavior is part of the model: deleting a user deletes workouts, exercis
 
 - `ExerciseSummary` and `WorkoutCalendarDay` are read models maintained by `lib/workout-read-models.*`.
 - `syncWorkoutReadModels()` incrementally syncs affected exercise names and performed dates.
-- Adding a field to a cached section payload requires bumping that entry's cache key. `loadCachedWorkoutHistorySection` carries `"v5-initial-details"` so older history payloads do not omit detail hydration. `withLifetimeTotals()` also backstops older lifetime-count payloads.
+- Changing a cached section's payload coverage requires bumping that entry's cache key. History's page-detail cache namespace separates full-page detail hydration from older newest-day-only payloads. `withLifetimeTotals()` also backstops older lifetime-count payloads.
 - `ensureWorkoutReadModels()` / `rebuildWorkoutReadModelsForUser()` are available for rebuild paths.
 - Dashboard and split data use `unstable_cache` with user-scoped cache tags from `lib/cache-tags.ts`.
 - Nutrition view data uses a user-scoped cache tag and is invalidated after nutrition writes.
