@@ -71,10 +71,6 @@ export function DashboardSettingsView({ state }: DashboardSettingsViewProps) {
         </div>
         <InlineFeedback feedback={state.preferenceFeedback} />
         {state.isSaving ? <p role="status" className={styles.statLineMuted}>Saving preference...</p> : null}
-        <p className={styles.statLineMuted}>
-          Switching units changes what you see. Nothing you have already logged
-          is rewritten.
-        </p>
       </section>
     </>
   );

@@ -94,10 +94,6 @@ export function WorkspaceSettingsView({ state }: DashboardSettingsViewProps) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           <div className="flex flex-col gap-0.5">
             <Label htmlFor="workspaceWeightUnit">Weight</Label>
-            <p className="text-sm text-muted-foreground">
-              Switching units changes what you see. Nothing you have already
-              logged is rewritten.
-            </p>
           </div>
           <Select
             value={state.preferredWeightUnitInput}

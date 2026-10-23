@@ -109,10 +109,6 @@ export function IonicAccountSettings({ state }: IonicAccountSettingsProps) {
         </IonSegment>
       </div>
 
-      <IonNote className="ion-margin-start">
-        Switching units changes what you see. Nothing you have already logged is
-        rewritten.
-      </IonNote>
     </>
   );
 }
