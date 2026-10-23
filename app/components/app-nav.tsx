@@ -16,6 +16,7 @@ import type { DashboardView } from "@/app/dashboard/dashboard-types";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { type PostHogUser, useIdentifyPostHogUser } from "@/app/hooks/use-posthog-user";
 import { navStyles } from "./app-nav.styles";
+import { useHeaderAvatar } from "./workspace-design-context";
 
 const HOME_TAB = { view: "dashboard", label: "Home", icon: House } as const;
 const HISTORY_TAB = { view: "workouts", label: "History", icon: CalendarDays } as const;
@@ -56,15 +57,17 @@ function viewClickHandler(onNavigate: NavigateHandler, view: DashboardView) {
 }
 
 function Avatar({ user }: { user: AppNavUser }) {
+  const avatar = useHeaderAvatar();
+  const embedded = avatar?.url === user.avatarUrl ? avatar.dataUrl : null;
   return user.avatarUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element -- private API serves a 120px WebP; Next's image proxy does not forward session cookies
+    // eslint-disable-next-line @next/next/no-img-element -- inline private thumbnail; API remains available for a newly changed photo
     <img
       className={navStyles.headerAvatar}
-      src={`${user.avatarUrl}${user.avatarUrl.includes("?") ? "&" : "?"}thumbnail=1`}
+      src={embedded ?? `${user.avatarUrl}${user.avatarUrl.includes("?") ? "&" : "?"}thumbnail=1`}
       width={40}
       height={40}
       fetchPriority="high"
-      decoding="async"
+      decoding={embedded ? "sync" : "async"}
       alt=""
     />
   ) : (

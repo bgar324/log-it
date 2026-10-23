@@ -1,9 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
 import { getSessionUser } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { validateProfileImageFile } from "../../../../lib/profile-avatar";
+import { createProfileAvatarThumbnail } from "../../../../lib/profile-avatar-thumbnail";
 import {
   getInvalidRequestOriginError,
   isTrustedMutationRequest,
@@ -74,11 +74,7 @@ export async function GET(request: NextRequest) {
 
   const thumbnail = request.nextUrl.searchParams.get("thumbnail") === "1";
   const imageBytes = thumbnail
-    ? await sharp(profile.profileImageBytes, { animated: true })
-        .rotate()
-        .resize(120, 120, { fit: "cover", withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toBuffer()
+    ? await createProfileAvatarThumbnail(profile.profileImageBytes)
     : profile.profileImageBytes;
   const contentType = thumbnail ? "image/webp" : profile.profileImageMimeType;
   const imageBuffer = new ArrayBuffer(imageBytes.byteLength);
