@@ -1,4 +1,4 @@
-import { loadWorkspaceWorkoutDetail } from "@/app/workspace/details/workspace-workout-detail.data";
+import { projectWorkoutDetail } from "@/app/workspace/details/workspace-workout-detail.data";
 import { parseDateKey } from "@/lib/workout-splits/shared";
 import { prisma } from "@/lib/prisma";
 import {
@@ -109,18 +109,9 @@ export async function loadWorkoutHistorySection(
     timelineDateLabel,
     convertStoredWeightToDisplay,
   });
-  const newestDate = logSummaries.reduce(
-    (newest, log) => log.performedAtDate > newest ? log.performedAtDate : newest,
-    "",
+  const initialWorkoutDetails = page.detailRecords.map((workout) =>
+    projectWorkoutDetail(workout, weightUnit),
   );
-  const initialWorkoutDetails = request.offset === 0 && !hasWorkoutHistoryFilters(request.filters) ? await Promise.all(
-    logSummaries
-      .filter((log) => log.performedAtDate === newestDate)
-      .slice(0, 4)
-      .map((log) => loadWorkspaceWorkoutDetail(userId, log.id, weightUnit)),
-  )
-    .then((details) => details.filter((detail) => detail !== null))
-    .catch(() => []) : [];
   const workoutMonthMap = new Map<
     string,
     DashboardClientData["workoutMonths"][number]["entries"]

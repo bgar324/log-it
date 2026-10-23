@@ -85,7 +85,7 @@ async function loadCachedWorkoutHistorySection(
 
   const section = await unstable_cache(
     async () => loadWorkoutHistorySection(userId, weightUnit, request),
-    ["workout-history", "v5-initial-details", userId, weightUnit, String(request.offset)],
+    ["workout-history", "v6-page-details", userId, weightUnit, String(request.offset)],
     {
       revalidate: VIEW_CACHE_REVALIDATE_SECONDS,
       tags: [getWorkoutDataTag(userId)],

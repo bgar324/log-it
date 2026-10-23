@@ -1,3 +1,4 @@
+import { workoutDetailSelect } from "@/app/workspace/details/workspace-workout-detail.data";
 import { Prisma } from "@prisma/client";
 import { requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -137,22 +138,7 @@ export async function loadWorkoutLogPage(
       ],
       skip: options.offset,
       take: options.limit,
-      select: {
-        id: true,
-        title: true,
-        workoutType: true,
-        totalWeightLb: true,
-        performedAt: true,
-        exercises: {
-          select: {
-            _count: {
-              select: {
-                sets: true,
-              },
-            },
-          },
-        },
-      },
+      select: workoutDetailSelect,
     }),
     prisma.workoutLog.count({ where }),
     prisma.workoutLog.groupBy({
@@ -170,6 +156,7 @@ export async function loadWorkoutLogPage(
   ]);
 
   return {
+    detailRecords: logs,
     logs: logs.map((log) => ({
       id: log.id,
       title: log.title,
@@ -178,7 +165,7 @@ export async function loadWorkoutLogPage(
       performedAt: log.performedAt,
       exerciseCount: log.exercises.length,
       setCount: log.exercises.reduce(
-        (sum, exercise) => sum + exercise._count.sets,
+        (sum, exercise) => sum + exercise.sets.length,
         0,
       ),
     })),

@@ -454,6 +454,21 @@ export function DashboardClient({
   }, [activeView, loadViewData]);
 
   useEffect(() => {
+    if (workspaceEnabled || activeView !== "dashboard" || !loadedViews.has("dashboard")) {
+      return;
+    }
+    const warmHistory = () => {
+      void loadViewData("workouts", { showLoading: false, showError: true });
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(warmHistory);
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(warmHistory, 0);
+    return () => window.clearTimeout(id);
+  }, [activeView, loadedViews, loadViewData, workspaceEnabled]);
+
+  useEffect(() => {
     if (
       !loadedViews.has("workouts") ||
       workoutFiltersMatch(workoutFilters, appliedWorkoutFilters)

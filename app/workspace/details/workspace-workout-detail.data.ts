@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatWorkoutForClipboard } from "@/lib/workout-export";
 import {
@@ -47,6 +48,37 @@ function formatDate(value: Date) {
   });
 }
 
+export const workoutDetailSelect = {
+  id: true,
+  title: true,
+  workoutType: true,
+  performedAt: true,
+  totalWeightLb: true,
+  bodyWeightLb: true,
+  exercises: {
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      order: true,
+      name: true,
+      sets: {
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          order: true,
+          reps: true,
+          weightLb: true,
+          durationSeconds: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.WorkoutLogSelect;
+
+type WorkoutDetailRecord = Prisma.WorkoutLogGetPayload<{
+  select: typeof workoutDetailSelect;
+}>;
+
 export async function loadWorkspaceWorkoutDetail(
   userId: string,
   workoutId: string,
@@ -57,41 +89,20 @@ export async function loadWorkspaceWorkoutDetail(
       id: workoutId,
       userId,
     },
-    select: {
-      id: true,
-      title: true,
-      workoutType: true,
-      performedAt: true,
-      totalWeightLb: true,
-      bodyWeightLb: true,
-      exercises: {
-        orderBy: {
-          order: "asc",
-        },
-        select: {
-          id: true,
-          order: true,
-          name: true,
-          sets: {
-            orderBy: {
-              order: "asc",
-            },
-            select: {
-              id: true,
-              order: true,
-              reps: true,
-              weightLb: true,
-              durationSeconds: true,
-            },
-          },
-        },
-      },
-    },
+    select: workoutDetailSelect,
   });
 
   if (!workout) {
     return null;
   }
+
+  return projectWorkoutDetail(workout, unit);
+}
+
+export function projectWorkoutDetail(
+  workout: WorkoutDetailRecord,
+  unit: WeightUnit,
+): WorkspaceWorkoutDetailProjection {
 
   const totalSets = workout.exercises.reduce(
     (sum, exercise) => sum + exercise.sets.length,
