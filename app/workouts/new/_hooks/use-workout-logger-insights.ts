@@ -1,17 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { WeightUnit } from "@/lib/weight-unit";
+import { loadWorkoutInsight, readWorkoutInsight } from "../workout-insight-cache";
 import {
   createExerciseInsightRequestContext,
   type ExerciseInsightRequestContext,
 } from "@/lib/workouts/insight-request";
 import type {
   ExerciseDraft,
-  ExerciseInsight,
   ExerciseInsightState,
 } from "../workout-logger.utils";
 
 type UseWorkoutLoggerInsightsOptions = {
+  userId: string;
+  weightUnit: WeightUnit;
   exercises: ExerciseDraft[];
   performedAt: string;
   excludeWorkoutId?: string | null;
@@ -19,12 +22,13 @@ type UseWorkoutLoggerInsightsOptions = {
 };
 
 export function useWorkoutLoggerInsights({
+  userId,
+  weightUnit,
   exercises,
   performedAt,
   excludeWorkoutId = null,
   requestedExerciseIds,
 }: UseWorkoutLoggerInsightsOptions) {
-  const insightCacheRef = useRef<Record<string, ExerciseInsight>>({});
   const latestInsightLookupRef = useRef<Record<string, string>>({});
   const requestAbortRef = useRef<Record<string, AbortController>>({});
   const [exerciseInsightById, setExerciseInsightById] = useState<
@@ -88,7 +92,7 @@ export function useWorkoutLoggerInsights({
       exerciseId: string,
       exerciseName: string,
       requestContext = getExerciseInsightContext(exerciseId, exerciseName),
-    ) => {
+    ): Promise<void> => {
       if (!requestContext) {
         setExerciseInsightById((current) => ({
           ...current,
@@ -100,8 +104,8 @@ export function useWorkoutLoggerInsights({
         return;
       }
 
-      const lookupKey = requestContext.lookupKey;
-      const cached = insightCacheRef.current[lookupKey];
+      const lookupKey = JSON.stringify([userId, weightUnit, requestContext.lookupKey]);
+      const cached = readWorkoutInsight(userId, weightUnit, requestContext);
 
       if (cached) {
         requestAbortRef.current[exerciseId]?.abort();
@@ -119,8 +123,8 @@ export function useWorkoutLoggerInsights({
       }
 
       latestInsightLookupRef.current[exerciseId] = lookupKey;
-      // A newer request for the same exercise wins: cancel the one in flight so
-      // a slow response cannot land on top of it.
+      // Cancel this exercise's observation, not the shared transport another
+      // view may still need. Superseded answers cannot replace current guidance.
       requestAbortRef.current[exerciseId]?.abort();
       const abortController = new AbortController();
       requestAbortRef.current[exerciseId] = abortController;
@@ -140,25 +144,14 @@ export function useWorkoutLoggerInsights({
       });
 
       try {
-        const response = await fetch(requestContext.requestPath, {
-          cache: "no-store",
-          signal: abortController.signal,
-        });
-        const payload = (await response.json()) as
-          | ExerciseInsight
-          | { error?: string };
-
-        if (!response.ok || !("normalizedName" in payload)) {
-          throw new Error(
-            "error" in payload
-              ? (payload.error ?? "Unable to compare exercise.")
-              : "Unable to compare exercise.",
-          );
-        }
-
-        insightCacheRef.current[lookupKey] = payload;
-
-        if (latestInsightLookupRef.current[exerciseId] !== lookupKey) {
+        const payload = await loadWorkoutInsight(userId, weightUnit, requestContext);
+        if (
+          abortController.signal.aborted ||
+          latestInsightLookupRef.current[exerciseId] !== lookupKey
+        ) return;
+        if (!payload) {
+          // History changed while this read was pending; ask for the new generation.
+          void fetchExerciseInsight(exerciseId, exerciseName, requestContext);
           return;
         }
 
@@ -196,7 +189,7 @@ export function useWorkoutLoggerInsights({
         });
       }
     },
-    [getExerciseInsightContext],
+    [getExerciseInsightContext, userId, weightUnit],
   );
 
   const clearExerciseInsight = useCallback((exerciseId: string) => {
@@ -249,13 +242,13 @@ export function useWorkoutLoggerInsights({
 
       // No state yet means the exercise arrived prefilled (edit mode, a split
       // template, a recovered draft): compare it right away.
-      if (state?.status === "idle" || state?.lookupKey === context.lookupKey) {
+      if (state?.status === "idle" || state?.lookupKey === JSON.stringify([userId, weightUnit, context.lookupKey])) {
         continue;
       }
 
       void fetchExerciseInsight(exerciseId, context.exerciseName, context);
     }
-  }, [exerciseInsightById, exerciseInsightContexts, fetchExerciseInsight]);
+  }, [exerciseInsightById, exerciseInsightContexts, fetchExerciseInsight, userId, weightUnit]);
 
   useEffect(() => {
     return () => {
@@ -265,10 +258,18 @@ export function useWorkoutLoggerInsights({
     };
   }, []);
 
+  const visibleInsights: Record<string, ExerciseInsightState> = {};
+  for (const { exerciseId, context } of exerciseInsightContexts) {
+    const state = exerciseInsightById[exerciseId];
+    if (state && (state.status === "idle" || state.lookupKey === JSON.stringify([userId, weightUnit, context.lookupKey]))) {
+      visibleInsights[exerciseId] = state;
+    }
+  }
+
   return {
     clearAllExerciseInsights,
     clearExerciseInsight,
-    exerciseInsightById,
+    exerciseInsightById: visibleInsights,
     fetchExerciseInsight,
     getExerciseInsightContext,
     resetExerciseInsightState,

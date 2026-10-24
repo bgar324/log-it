@@ -15,7 +15,9 @@ import type {
   DashboardWorkoutFilters,
 } from "./dashboard-types";
 import { normalizeDashboardView } from "./data.view-helpers";
-import { seedWorkoutDetails, workoutDetailGeneration } from "./workout-detail-cache";
+import { readWorkoutDetail, seedWorkoutDetails, workoutDetailGeneration } from "./workout-detail-cache";
+import { createExerciseInsightRequestContext } from "@/lib/workouts/insight-request";
+import { loadWorkoutInsight } from "@/app/workouts/new/workout-insight-cache";
 import { DashboardOverviewView } from "./_components/dashboard-overview-view";
 import { DashboardProfileView } from "./_components/dashboard-profile-view";
 import { DashboardSettingsView } from "./_components/dashboard-settings-view";
@@ -457,17 +459,34 @@ export function DashboardClient({
     if (workspaceEnabled || activeView !== "dashboard" || !loadedViews.has("dashboard")) {
       return;
     }
+    let cancelled = false;
     const warmPrimaryViews = () => {
-      void loadViewData("workouts", { showLoading: false, showError: true });
+      const history = loadViewData("workouts", { showLoading: false, showError: true });
       void loadViewData("split", { showLoading: false, showError: true });
+      // Only completed workouts need History's saved exercise names/order.
+      // New plans can warm immediately, even while other views are pending.
+      const warmPredictions = () => {
+        if (cancelled) return;
+        const { loggedWorkoutId, todaySession, asOfDate } = dashboardData.overview;
+        const detail = loggedWorkoutId ? readWorkoutDetail(userId, displayWeightUnit, loggedWorkoutId) : null;
+        const exercises = loggedWorkoutId
+          ? detail?.status === "ready" ? detail.detail.exercises : []
+          : todaySession;
+        for (const [index, exercise] of exercises.slice(0, 2).entries()) {
+          const context = createExerciseInsightRequestContext(exercise.name, asOfDate, index + 1, loggedWorkoutId);
+          if (context) void loadWorkoutInsight(userId, displayWeightUnit, context).catch(() => {});
+        }
+      };
+      if (dashboardData.overview.loggedWorkoutId) void history.then(warmPredictions);
+      else warmPredictions();
     };
     if (typeof window.requestIdleCallback === "function") {
       const id = window.requestIdleCallback(warmPrimaryViews);
-      return () => window.cancelIdleCallback(id);
+      return () => { cancelled = true; window.cancelIdleCallback(id); };
     }
     const id = window.setTimeout(warmPrimaryViews, 0);
-    return () => window.clearTimeout(id);
-  }, [activeView, loadedViews, loadViewData, workspaceEnabled]);
+    return () => { cancelled = true; window.clearTimeout(id); };
+  }, [activeView, dashboardData.overview, displayWeightUnit, loadedViews, loadViewData, userId, workspaceEnabled]);
 
   useEffect(() => {
     if (

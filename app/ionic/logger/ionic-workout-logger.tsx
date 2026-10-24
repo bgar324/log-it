@@ -103,6 +103,8 @@ export function IonicWorkoutLogger({ data, onSaved }: IonicWorkoutLoggerProps) {
     getExerciseInsightContext,
     resetExerciseInsightState,
   } = useWorkoutLoggerInsights({
+    userId: data.analyticsUser.id,
+    weightUnit: data.weightUnit,
     exercises: draft.exercises,
     performedAt: draft.performedAt,
     // In edit mode the workout being edited is not history: excluding it stops

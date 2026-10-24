@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
+import { isWeightUnit } from "../../../../lib/weight-unit";
 import { INSIGHT_PREDICTION_SET_COUNT } from "../../../../lib/workouts/insight-request";
 import {
   predictExercisePerformance,
@@ -111,9 +112,11 @@ export async function GET(request: NextRequest) {
   // Editing a workout must never compare it against itself.
   const excludeWorkoutId =
     request.nextUrl.searchParams.get("excludeWorkoutId")?.trim() || null;
+  const requestedUnit = request.nextUrl.searchParams.get("unit");
+  const weightUnit = isWeightUnit(requestedUnit) ? requestedUnit : user.preferredWeightUnit;
 
   try {
-    const exerciseLogs = await prisma.workoutExercise.findMany({
+    const historyPromise = prisma.workoutExercise.findMany({
       where: {
         normalizedName,
         workoutLog: {
@@ -156,6 +159,10 @@ export async function GET(request: NextRequest) {
         },
       },
     });
+    const [exerciseLogs, summaryBestWeight] = await Promise.all([
+      historyPromise,
+      readSummaryBestWeight(user.id, normalizedName),
+    ]);
 
     const sessionsByWorkoutId = new Map<string, SessionAggregate>();
 
@@ -235,8 +242,7 @@ export async function GET(request: NextRequest) {
 
       return Math.max(max, session.bestWeight);
     }, null);
-    const allTimeBestWeight =
-      (await readSummaryBestWeight(user.id, normalizedName)) ?? windowedBestWeight;
+    const allTimeBestWeight = summaryBestWeight ?? windowedBestWeight;
     const prediction =
       performedAt && position
         ? predictExercisePerformance({
@@ -244,7 +250,7 @@ export async function GET(request: NextRequest) {
             performedAt,
             currentPosition: position,
             setCount: INSIGHT_PREDICTION_SET_COUNT,
-            weightUnit: user.preferredWeightUnit,
+            weightUnit,
           })
         : null;
 

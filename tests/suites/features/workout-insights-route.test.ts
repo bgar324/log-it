@@ -191,3 +191,15 @@ test("workout insights route falls back to the scanned window when the read mode
 
   assert.equal(payload.allTimeBestWeight, 190);
 });
+
+test("prediction requests honor display-unit rounding independently of the saved preference", async () => {
+  const path = "http://localhost/api/workouts/insights?exercise=Bench%20Press&performedAt=2026-04-20&position=2";
+  const metric = await GET(new NextRequest(`${path}&unit=KG`));
+  const metricPayload = await metric.json();
+  assert.equal(metric.status, 200);
+  // 190 lb rounds to an 85 kg plate load; values still travel in stored pounds.
+  assert.equal(metricPayload.prediction.predictedSets[0].weightLb, 187.3929);
+  const invalid = await GET(new NextRequest(`${path}&unit=invalid`));
+  const fallbackPayload = await invalid.json();
+  assert.equal(fallbackPayload.prediction.predictedSets[0].weightLb, 190);
+});

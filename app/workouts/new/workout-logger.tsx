@@ -146,8 +146,12 @@ export function WorkoutLogger({
     getExerciseInsightContext,
     resetExerciseInsightState,
   } = useWorkoutLoggerInsights({
+    userId: analyticsUser.id,
+    weightUnit,
     exercises: draft.exercises,
-    requestedExerciseIds: workspaceEnabled ? undefined : exerciseFocus.focusedId === null ? [] : [exerciseFocus.focusedId],
+    requestedExerciseIds: workspaceEnabled ? undefined : draft.exercises
+      .slice(exerciseFocus.focusedIndex, exerciseFocus.focusedIndex + 2)
+      .map((exercise) => exercise.id),
     performedAt: draft.performedAt,
     // In edit mode the workout being edited is not history: excluding it stops
     // the logger from comparing a session against itself.
