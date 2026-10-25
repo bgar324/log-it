@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import type { WorkoutTableRow } from "../dashboard-client.shared";
 import { dayNumberLabel, fullDayLabel, weekdayLabel } from "./dashboard-history.dates";
 import { historyStyles } from "./dashboard-history.styles";
@@ -35,7 +35,7 @@ export function DashboardDayStrip({
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef(new Map<string, HTMLButtonElement>());
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const scroller = scrollerRef.current;
 
     if (!scroller || typeof scroller.scrollTo !== "function") {
@@ -58,13 +58,8 @@ export function DashboardDayStrip({
       return;
     }
 
-    // `scrollTo` on the strip alone: `scrollIntoView` would also drag the page.
-    scroller.scrollTo({
-      left,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth",
-    });
+    // Position before paint without a separate entrance or page scroll.
+    scroller.scrollTo({ left, behavior: "instant" });
   }, [days, selectedDate]);
 
   function moveSelection(offset: number) {
