@@ -70,7 +70,6 @@ function buildProps(overrides: Partial<Props> = {}): Props {
     onExerciseSetsChange: () => {},
     onAddExercise: () => {},
     onRemoveExercise: () => {},
-    onReorderExercises: () => {},
     ...overrides,
   };
 }
@@ -111,16 +110,21 @@ test("a set count can be cleared and retyped without inserting a leading one", a
 });
 
 test("the inline day editor edits the selected day and switches days in place", async () => {
-  const calls: string[] = [];
-  const mounted = await render(
-    createElement(
-      SplitEditor,
-      buildProps({
-        onAddExercise: () => calls.push("add"),
-        onSelectWeekday: (weekday) => calls.push(`day:${weekday}`),
-      }),
-    ),
-  );
+  function EditableDays() {
+    const [days, setDays] = useState(DAYS);
+    const [weekday, setWeekday] = useState(DAYS[0].weekday);
+    const day = days.find(candidate => candidate.weekday === weekday);
+    assert.ok(day);
+    return <SplitEditor {...buildProps({
+      days,
+      day,
+      onSelectWeekday: setWeekday,
+      onAddExercise: () => setDays(current => current.map(candidate => candidate.weekday === weekday
+        ? { ...candidate, exercises: [...candidate.exercises, { id: "new-row", order: candidate.exercises.length + 1, exerciseDisplayName: "", exerciseSlug: "", sets: 3 }] }
+        : candidate)),
+    })} />;
+  }
+  const mounted = await render(<EditableDays />);
 
   const dayButtons = mounted.all('nav[aria-label="Choose a day to edit"] button');
   assert.equal(dayButtons.length, DAYS.length);
@@ -128,10 +132,6 @@ test("the inline day editor edits the selected day and switches days in place", 
   assert.ok(mounted.all('button[aria-label="Monday: Push"]')[0]);
   const tuesday = mounted.all('button[aria-label="Tuesday: Pull"]')[0];
   assert.ok(tuesday);
-
-  // No dialog layer and no editor-owned save: the header above owns both.
-  assert.equal(mounted.all('[role="dialog"]').length, 0);
-  assert.equal(mounted.findByText("button", "Save"), undefined);
 
   const workoutName = mounted.all('input[aria-label="Workout name"]')[0];
   assert.ok(workoutName);
@@ -143,12 +143,18 @@ test("the inline day editor edits the selected day and switches days in place", 
     "3",
   );
 
-  await mounted.click(mounted.findByText("button", "Add exercise")!);
-  await mounted.click(tuesday);
-
-  assert.deepEqual(calls, ["add", "day:TUESDAY"]);
-
-  mounted.unmount();
+  try {
+    await mounted.click(mounted.findByText("button", "Add exercise")!);
+    assert.equal(mounted.all('input[aria-label="Exercise name"]').length, 3);
+    await mounted.click(tuesday);
+    const selectedWorkout = mounted.container.querySelector<HTMLInputElement>('input[aria-label="Workout name"]');
+    assert.equal(selectedWorkout?.value, "Pull");
+    assert.equal(mounted.all('input[aria-label="Exercise name"]').length, 0);
+    await mounted.click(mounted.all('button[aria-label="Monday: Push"]')[0]);
+    assert.equal(mounted.all('input[aria-label="Exercise name"]').length, 3, "switching days preserves the unfinished added exercise");
+  } finally {
+    mounted.unmount();
+  }
 });
 
 function dialogButton(label: string) {
@@ -198,25 +204,6 @@ test("a rest day keeps its exercises and says what saving will drop", async () =
   mounted.unmount();
 });
 
-test("an empty day offers reordering only once there is something to reorder", async () => {
-  const mounted = await render(
-    createElement(SplitEditor, buildProps({ day: DAYS[1] })),
-  );
-
-  assert.ok(mounted.text().includes("No exercises yet."));
-  assert.ok(mounted.findByText("button", "Add exercise"));
-  const emptyReorder = mounted.container.querySelector<HTMLButtonElement>('button[aria-label="Reorder exercises"]');
-  assert.equal(emptyReorder?.disabled, true);
-
-  await mounted.rerender(
-    createElement(SplitEditor, buildProps({ day: DAYS[0] })),
-  );
-  const reorder = mounted.container.querySelector<HTMLButtonElement>('button[aria-label="Reorder exercises"]');
-  assert.ok(reorder);
-  assert.equal(reorder.disabled, false);
-
-  mounted.unmount();
-});
 
 test("a pending save freezes every edit in the day editor", async () => {
   const mounted = await render(

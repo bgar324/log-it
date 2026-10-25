@@ -1,6 +1,5 @@
 import {
   actionChip,
-  actionFilled,
   actionIcon,
   actionIconDanger,
   actionIconQuiet,
@@ -57,18 +56,15 @@ export const splitStyles = {
   // editor, so there is no second column to place and no week page in between.
   splitLayout:
     `${splitTokens} mx-auto flex w-full min-w-0 max-w-[52rem] flex-col gap-[0.85rem]`,
-  // The split's own header, not a panel: title, save state and options sit on
-  // the page background. It sticks so the single Save stays reachable while a
-  // long exercise list scrolls under it.
+  // Split identity and options stay reachable; completed edits autosave.
   splitSummary:
     "sticky top-0 z-20 flex min-w-0 flex-col gap-[0.35rem] bg-[var(--bg)] pb-[0.55rem] pt-[0.3rem]",
-  /** Title (or rename field) left, the one Save right. */
+  /** Title (or rename field) left, options right. */
   splitSummaryHead: "flex min-w-0 items-center justify-between gap-[0.6rem]",
   planTitle:
     "m-0 min-w-0 flex-1 truncate text-[1.75rem] font-[560] leading-[1.1] tracking-[-0.035em] text-[var(--text)] min-[621px]:text-[2rem]",
   planTitleInput:
     `${fieldBoxed} min-h-[2.75rem] w-full min-w-0 rounded-[14px] px-[0.9rem] text-[1.125rem] font-[560] tracking-[-0.03em] max-[980px]:text-base`,
-  planSaveButton: `${actionFilled} w-[7.5rem] px-2`,
   /** Quiet inline save state, never a banner. */
   planDirtyText: "m-0 text-[0.8125rem] leading-[1.3] text-[var(--muted)]",
 

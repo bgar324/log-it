@@ -14,8 +14,7 @@ import { daySelectorStyles } from "@/app/components/day-selector.styles";
 import { cn } from "../classnames";
 
 
-// The logger's one grouping surface: 24px radius, hairline, raised fill. Every
-// panel on the screen is this material, so nothing reads as a second system.
+// Exercise cards use the logger's raised grouping surface.
 const panelSurface = cn(
   "rounded-[var(--app-radius)] border border-[color:var(--app-line)]",
   "bg-[var(--app-surface-raised)]",
@@ -35,13 +34,13 @@ export const styles = {
     "min-[620px]:max-w-[42rem] min-[620px]:gap-[1rem]",
   ),
   // Header scrolls normally; workout actions remain reachable at the bottom.
-  topRow: "flex items-center justify-between gap-[0.6rem] pb-[0.35rem]",
+  topRow: "mb-[-0.5rem] flex items-center justify-between gap-[0.6rem]",
   // Deliberate canon exception: Back is the quietest control on the screen, so
   // it takes the muted variant with no hairline. Pulled left by exactly the
   // quiet variant's own padding, so the label lines up with the title below it.
   backLink: `${actionQuiet} -ml-[1rem]`,
   backButtonIcon: "h-[0.88rem] w-[0.88rem] shrink-0 stroke-current",
-  header: "flex flex-col gap-[0.3rem] [touch-action:pan-y_pinch-zoom]",
+  header: "flex flex-col gap-[0.1rem] [touch-action:pan-y_pinch-zoom]",
   headerMetaRow: "flex min-w-0 flex-wrap items-center gap-2 text-[0.8125rem] text-[var(--muted)]",
   headerMetaButton: "min-h-11 min-w-11 cursor-pointer border-0 bg-transparent p-0 text-left text-inherit [touch-action:manipulation] disabled:cursor-default",
   headerMetaInput: `${fieldBoxed} min-h-11 min-w-0 max-w-full rounded-[14px] px-2 text-base`,
@@ -81,7 +80,7 @@ export const styles = {
   nameInput: cn(
     fieldUnderline,
     "w-full min-h-[2.75rem] rounded-none px-0 py-[0.45rem]",
-    "text-[clamp(1.5rem,6.5vw,1.85rem)] leading-[1.2] tracking-[-0.03em] font-[600]",
+    "text-[clamp(1.375rem,6vw,1.625rem)] leading-[1.2] tracking-[-0.03em] font-[600]",
   ),
 
   // One exercise at a time. The pager is the only way position is shown, so it
@@ -104,7 +103,7 @@ export const styles = {
   pagerJumpCount: "font-[400] text-[var(--muted)]",
   pagerIcon: daySelectorStyles.arrowIcon,
   pagerCaret: "h-[0.85rem] w-[0.85rem] shrink-0 stroke-current text-[var(--muted)]",
-  guidance: cn(panelSurface, "flex min-w-0 flex-col gap-3 p-[1.15rem] max-[380px]:p-[0.85rem]"),
+  guidance: "flex min-w-0 flex-col gap-3 p-[1.15rem] max-[380px]:p-[0.85rem]",
   guidanceTable: "w-full table-fixed border-collapse",
   guidanceSetColumn: "w-7",
   guidanceHeading: "pb-3 text-left align-bottom text-[0.8125rem] font-normal leading-[1.4] text-[var(--muted)]",
@@ -131,7 +130,7 @@ export const styles = {
   exerciseSlideContent: "m-0 flex min-w-0 flex-col gap-4 border-0 p-0",
   exerciseCard: cn(
     panelSurface,
-    "flex flex-col gap-[0.75rem] px-[1.15rem] py-4 max-[380px]:px-[0.85rem]",
+    "flex flex-col gap-[0.75rem] p-[0.875rem]",
   ),
   // Add set sits left; the rest timer, when the account has one, sits opposite
   // it rather than taking a sixth floating circle the 320px row cannot hold.
@@ -164,9 +163,8 @@ export const styles = {
     "min-[620px]:gap-[0.5rem]",
   ),
   setRowWithoutDuration: cn(
-    "grid grid-cols-[2.75rem_minmax(0,1fr)_4.5rem] items-center gap-[0.36rem] bg-transparent",
-    "max-[380px]:grid-cols-[2.75rem_minmax(0,1fr)_4.2rem] max-[380px]:gap-[0.24rem]",
-    "min-[620px]:grid-cols-[2.75rem_minmax(6rem,1fr)_minmax(5rem,0.7fr)]",
+    "grid grid-cols-[2.75rem_minmax(0,1.5fr)_minmax(0,1fr)] items-center gap-[0.36rem] bg-transparent",
+    "max-[380px]:gap-[0.24rem]",
     "min-[620px]:gap-[0.5rem]",
   ),
   setNumber: cn(

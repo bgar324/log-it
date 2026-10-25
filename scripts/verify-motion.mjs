@@ -86,6 +86,8 @@ export async function verifyMotion(page, { origin, sessionToken, artifactDir }) 
     assert.equal(await page.$eval(repsSelector, node => node.value), reps);
     record("reference-card-resize-preserves-values", { frames: heightFrames });
 
+    await page.click('button[aria-label="Workout tools"]');
+    await page.waitForSelector('.auth-popover-content[data-state="open"]');
     const dialogFrames = await sample('.auth-dialog-content[data-state="open"]', () => page.click('button[aria-label="Reorder exercises"]'));
     assert.ok(changing(dialogFrames, "opacity"), "dialog entry must animate");
     const rows = await page.$$('[data-reorder-card]');

@@ -15,7 +15,6 @@
 .activity { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; border-radius: var(--app-radius); background: var(--app-surface); }
 .sectionHead { display: flex; min-height: 32px; align-items: center; justify-content: space-between; gap: 12px; }
 .sectionHead h2 { margin: 0; color: var(--text); font-size: 18px; line-height: 1.2; font-weight: 550; }
-.iconButton { display: inline-flex; width: 44px; height: 44px; flex: 0 0 44px; align-items: center; justify-content: center; margin-right: -10px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; touch-action: manipulation; }
 .activityNote { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .plan { display: flex; min-width: 0; flex-direction: column; gap: 14px; align-self: start; border-radius: var(--app-radius); background: var(--surface); padding: 20px; }
 .planList { display: flex; flex-direction: column; }

@@ -213,7 +213,7 @@ export async function verifyFeedback(page, { origin, sessionToken, workoutId, ar
     await page.click(workoutName);
     await page.$eval(workoutName, node => node.select());
     await page.keyboard.type("Verification split day");
-    await page.click('button[aria-label="Save split"]');
+    await page.$eval(workoutName, node => node.blur());
     await assertFailure();
     assert.equal(await page.$eval(workoutName, node => node.value), "Verification split day");
     evidence.push({ case: "failed-split-save-retains-day-input" });

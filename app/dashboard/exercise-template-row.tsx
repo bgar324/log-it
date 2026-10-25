@@ -1,12 +1,13 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { WorkoutSplitExerciseTemplate } from "@/lib/workout-splits/shared";
 import { splitStyles } from "./split-system.styles";
 import { ExerciseSuggestions } from "@/app/components/exercise-suggestions";
 
 const NO_SUGGESTIONS: string[] = [];
+const SET_COUNT_AUTOSAVE_MS = 400;
 
 type ExerciseTemplateRowProps = {
   exercise: WorkoutSplitExerciseTemplate;
@@ -19,6 +20,7 @@ type ExerciseTemplateRowProps = {
   onNameBlur: (value: string) => void;
   onApplySearchResult: (suggestion: string) => void;
   onSetsChange: (value: number) => void;
+  onSetsCommit?: () => void;
   onRemove: () => void;
 };
 
@@ -37,10 +39,18 @@ export function ExerciseTemplateRow({
   onNameBlur,
   onApplySearchResult,
   onSetsChange,
+  onSetsCommit,
   onRemove,
 }: ExerciseTemplateRowProps) {
   const name = exercise.exerciseDisplayName.trim() || "exercise";
   const [setsEmpty, setSetsEmpty] = useState(false);
+  const commitTimer = useRef<number | undefined>(undefined);
+  const pendingCommit = useRef<(() => void) | null>(null);
+  useEffect(() => () => {
+    window.clearTimeout(commitTimer.current);
+    // Moving to another day/folder must not strand a completed count edit.
+    pendingCommit.current?.();
+  }, []);
 
   return (
     <div data-motion-id={exercise.id} className={`${splitStyles.exerciseRow}${animateEntry ? " motion-insert" : ""}`}>
@@ -78,10 +88,30 @@ export function ExerciseTemplateRow({
           value={setsEmpty ? "" : exercise.sets}
           onChange={(event) => {
             const value = event.target.value;
+            window.clearTimeout(commitTimer.current);
+            commitTimer.current = undefined;
+            pendingCommit.current = null;
             setSetsEmpty(value === "");
-            if (value !== "") onSetsChange(Number.parseInt(value, 10));
+            if (value !== "") {
+              onSetsChange(Number.parseInt(value, 10));
+              if (onSetsCommit) {
+                pendingCommit.current = onSetsCommit;
+                commitTimer.current = window.setTimeout(() => {
+                  const commit = pendingCommit.current;
+                  pendingCommit.current = null;
+                  commitTimer.current = undefined;
+                  commit?.();
+                }, SET_COUNT_AUTOSAVE_MS);
+              }
+            }
           }}
-          onBlur={() => setSetsEmpty(false)}
+          onBlur={() => {
+            window.clearTimeout(commitTimer.current);
+            commitTimer.current = undefined;
+            pendingCommit.current = null;
+            setSetsEmpty(false);
+            onSetsCommit?.();
+          }}
           disabled={isDisabled}
         />
         <span className={splitStyles.exerciseSetsLabel}>sets</span>

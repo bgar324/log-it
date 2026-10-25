@@ -51,7 +51,7 @@ function GuidanceContent({ exercise, insightState, weightUnit, onRetry }: Guidan
           <tr>
             <th scope="col" className={styles.guidanceSetNumber}><span className="sr-only">Set</span></th>
             <th scope="col" className={styles.guidanceHeading}>
-              {lastSession ? formatCompareDayLabel(lastSession.performedAt) : "Last session"}
+              {lastSession ? `Last · ${formatCompareDayLabel(lastSession.performedAt)}` : "Last session"}
             </th>
             <th scope="col" className={styles.guidanceHeading}>Suggested</th>
           </tr>

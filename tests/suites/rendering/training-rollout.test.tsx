@@ -36,12 +36,12 @@ test("all users receive the training dashboard without changing Nutrition access
   }
 });
 
-test("all users receive the focused logger and current-exercise deletion", async () => {
+test("all users receive the focused logger with tools and direct exercise addition", async () => {
   for (const benEnabled of [false, true]) {
     const mounted = await render(shell(benEnabled, <WorkoutLogger weightUnit="LB" analyticsUser={user} workoutTypeOptions={["Pull"]} benEnabled={benEnabled} />));
     try {
       assert.ok(mounted.container.querySelector('button[aria-label="Next exercise"]'));
-      assert.ok(mounted.container.querySelector('button[aria-label="Delete current exercise"]'));
+      assert.ok(mounted.container.querySelector('button[aria-label="Workout tools"]'));
       assert.ok(mounted.container.querySelector('button[aria-label="Add another exercise"]'));
       assert.equal(Boolean(mounted.container.querySelector('[aria-label="Rest timer"]')), !benEnabled);
       assert.equal(Boolean(mounted.container.querySelector('input[aria-label="Set 1 time in seconds"]')), !benEnabled);

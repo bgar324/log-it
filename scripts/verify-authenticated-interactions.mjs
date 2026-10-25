@@ -214,9 +214,9 @@ export async function verifyAuthenticatedInteractions(page, { origin, sessionTok
     await replaceInput(workoutField, `${originalType} check`);
     assert.equal(await page.evaluate(() => document.querySelectorAll('input[aria-label="Exercise name"]').length), originalExerciseCount);
     mode = "hold";
-    await page.click('button[aria-label="Save split"]');
+    await page.$eval(workoutField, node => node.blur());
     await page.waitForFunction(() => document.body.textContent.includes("Saving"));
-    assert.equal(await page.$eval(workoutField, node => node.disabled || Boolean(node.closest("fieldset[disabled]"))), true);
+    assert.equal(await page.$eval(workoutField, node => node.disabled || Boolean(node.closest("fieldset[disabled]"))), false);
     await page.click('button[aria-label="Split options"]');
     await page.waitForSelector('.auth-popover-content[data-state="open"]');
     assert.equal(await page.evaluate(() => [...document.querySelectorAll(".auth-popover-content button")].find(node => node.textContent.includes("Rename split"))?.disabled), true);

@@ -32,27 +32,10 @@ export function WorkoutLoggerHeader({
   }, [editing]);
   const dateLabel = formatWorkoutLoggerDateLabel(performedAt);
   const typeOptions = Array.from(new Set([workoutType, ...workoutTypeOptions].filter(Boolean)));
+  const duplicateWorkoutType = workoutType.trim() === title.trim();
 
   return (
     <header className={styles.header}>
-      <div className={styles.headerMetaRow}>
-        {editing === "date" ? (
-          <input ref={dateRef} type="date" aria-label="Workout date" className={styles.headerMetaInput}
-            value={performedAt} max={latestAllowedDate} onChange={event => onPerformedAtChange(event.target.value)} onBlur={() => setEditing(null)} />
-        ) : canEditMetadata ? (
-          <button type="button" className={styles.headerMetaButton} aria-label="Edit workout date" onClick={() => setEditing("date")}>{dateLabel}</button>
-        ) : <span>{dateLabel}</span>}
-        {workoutType || canEditMetadata ? <span aria-hidden="true">·</span> : null}
-        {editing === "type" ? (
-          <select ref={typeRef} aria-label="Workout type" className={styles.headerMetaInput} value={workoutType}
-            onChange={event => { onWorkoutTypeChange(event.target.value); setEditing(null); }} onBlur={() => setEditing(null)}>
-            {!workoutType ? <option value="" disabled>Workout type</option> : null}
-            {typeOptions.map(type => <option key={type} value={type}>{type}</option>)}
-          </select>
-        ) : canEditMetadata ? (
-          <button type="button" className={styles.headerMetaButton} aria-label="Edit workout type" disabled={typeOptions.length === 0} onClick={() => setEditing("type")}>{workoutType || "No type"}</button>
-        ) : workoutType ? <span>{workoutType}</span> : null}
-      </div>
       <div className={styles.titleRow}>
         {editing === "name" ? (
           <input ref={nameRef} aria-label="Workout name" className={styles.titleInput} value={title}
@@ -65,6 +48,26 @@ export function WorkoutLoggerHeader({
           onClick={() => setEditing(editing === "name" ? null : "name")}>
           {editing === "name" ? <Check className={styles.icon} strokeWidth={1.9} /> : <Pencil className={styles.icon} strokeWidth={1.9} />}
         </button>
+      </div>
+      <div className={styles.headerMetaRow}>
+        {editing === "date" ? (
+          <input ref={dateRef} type="date" aria-label="Workout date" className={styles.headerMetaInput}
+            value={performedAt} max={latestAllowedDate} onChange={event => onPerformedAtChange(event.target.value)} onBlur={() => setEditing(null)} />
+        ) : canEditMetadata ? (
+          <button type="button" className={styles.headerMetaButton} aria-label="Edit workout date" onClick={() => setEditing("date")}>{dateLabel}</button>
+        ) : <span>{dateLabel}</span>}
+        {(!duplicateWorkoutType || editing === "type") && (workoutType || canEditMetadata) ? <span aria-hidden="true">·</span> : null}
+        {editing === "type" ? (
+          <select ref={typeRef} aria-label="Workout type" className={styles.headerMetaInput} value={workoutType}
+            onChange={event => { onWorkoutTypeChange(event.target.value); setEditing(null); }} onBlur={() => setEditing(null)}>
+            {!workoutType ? <option value="" disabled>Workout type</option> : null}
+            {typeOptions.map(type => <option key={type} value={type}>{type}</option>)}
+          </select>
+        ) : canEditMetadata ? (
+          <button type="button" className={duplicateWorkoutType ? styles.titleEditButton : styles.headerMetaButton} aria-label="Edit workout type" disabled={typeOptions.length === 0} onClick={() => setEditing("type")}>
+            {duplicateWorkoutType ? <Pencil className={styles.icon} strokeWidth={1.9} /> : workoutType || "No type"}
+          </button>
+        ) : workoutType && !duplicateWorkoutType ? <span>{workoutType}</span> : null}
       </div>
     </header>
   );

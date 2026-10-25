@@ -1,6 +1,6 @@
 "use client";
 
-import { ListOrdered, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useReorderMotion } from "@/app/hooks/use-reorder-motion";
 import { DeleteConfirmDialog } from "@/app/components/delete-confirm-dialog";
@@ -11,7 +11,6 @@ import {
   type WorkoutSplitDayTemplate,
 } from "@/lib/workout-splits/shared";
 import { ExerciseTemplateRow } from "./exercise-template-row";
-import { SplitExerciseReorderDialog } from "./split-exercise-reorder-dialog";
 import { countLabel, getSplitDayTitle } from "./split-library.shared";
 import { splitStyles } from "./split-system.styles";
 
@@ -29,16 +28,15 @@ type SplitEditorProps = {
   onExerciseSetsChange: (exerciseIndex: number, value: number) => void;
   onAddExercise: () => void;
   onRemoveExercise: (exerciseIndex: number) => void;
-  onReorderExercises: (orderedExerciseOrders: number[]) => void;
+  onCommitChanges?: () => void;
 };
 
 /**
- * The day editor is inline at every width: the split header above it owns the
- * title and the one Save, so this surface is only the week strip and the day
- * you picked. Reorder and removal confirmations do not add another save boundary.
+ * The day editor is inline at every width and reports completed field edits to
+ * its optional commit handler. The manager owns persistence and exercise order.
  *
- * Dialog drafts are per day: the manager keys this component on the selected
- * split and weekday, so switching either dismisses them.
+ * Removal confirmations are per day: the manager keys this component on the
+ * selected split and weekday, so switching either dismisses them.
  */
 export function SplitEditor({
   day,
@@ -54,9 +52,8 @@ export function SplitEditor({
   onExerciseSetsChange,
   onAddExercise,
   onRemoveExercise,
-  onReorderExercises,
+  onCommitChanges,
 }: SplitEditorProps) {
-  const [isReorderOpen, setIsReorderOpen] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<WorkoutSplitDayTemplate["exercises"][number] | null>(null);
   const stripRef = useRef<HTMLElement | null>(null);
   const selectedDayRef = useRef<HTMLButtonElement | null>(null);
@@ -126,21 +123,13 @@ export function SplitEditor({
               className={splitStyles.dayNameInput}
               value={day.workoutType}
               onChange={(event) => onWorkoutTypeChange(event.target.value)}
+              onBlur={() => onCommitChanges?.()}
               placeholder="Rest"
               disabled={isSaving}
               autoComplete="off"
               autoCapitalize="words"
             />
           </div>
-          <button
-            type="button"
-            aria-label="Reorder exercises"
-            className={splitStyles.actionMenuToggle}
-            disabled={day.exercises.length < 2 || isSaving}
-            onClick={() => setIsReorderOpen(true)}
-          >
-            <ListOrdered className={splitStyles.inlineIcon} strokeWidth={1.9} />
-          </button>
         </div>
 
         {hasRestDayExercises ? (
@@ -163,11 +152,16 @@ export function SplitEditor({
                 isDisabled={isSaving}
                 onNameChange={(value) => onExerciseNameChange(index, value)}
                 onNameFocus={(value) => onExerciseNameFocus(index, value)}
-                onNameBlur={(value) => onExerciseNameBlur(index, value)}
-                onApplySearchResult={(suggestion) =>
-                  onApplyExerciseSearchResult(index, suggestion)
-                }
+                onNameBlur={(value) => {
+                  onExerciseNameBlur(index, value);
+                  onCommitChanges?.();
+                }}
+                onApplySearchResult={(suggestion) => {
+                  onApplyExerciseSearchResult(index, suggestion);
+                  onCommitChanges?.();
+                }}
                 onSetsChange={(value) => onExerciseSetsChange(index, value)}
+                onSetsCommit={onCommitChanges}
                 onRemove={() => setRemoveTarget(exercise)}
               />
             ))}
@@ -193,16 +187,6 @@ export function SplitEditor({
         ) : null}
       </div>
 
-      <SplitExerciseReorderDialog
-        exercises={day.exercises}
-        open={isReorderOpen}
-        onCancel={() => setIsReorderOpen(false)}
-        onSave={(orderedExerciseOrders) => {
-          captureMotion();
-          onReorderExercises(orderedExerciseOrders);
-          setIsReorderOpen(false);
-        }}
-      />
       <DeleteConfirmDialog
         open={removeTarget !== null}
         title={`Remove ${removeTarget?.exerciseDisplayName.trim() || "exercise"}?`}
@@ -217,6 +201,7 @@ export function SplitEditor({
           if (index >= 0) {
             captureMotion();
             onRemoveExercise(index);
+            onCommitChanges?.();
           }
           setRemoveTarget(null);
         }}

@@ -91,7 +91,6 @@ export function DashboardViewSkeleton({ kind }: DashboardViewSkeletonProps) {
           <section className={homeStyles.activity}>
             <div className={homeStyles.sectionHead}>
               <h2><SkeletonLine className="h-[1lh] w-32" /></h2>
-              <span className={homeStyles.iconButton}><SkeletonLine className="h-5 w-5" /></span>
             </div>
             <div className={calendarStyles.miniMonths}>
               {Array.from({ length: 3 }, (_, month) => (

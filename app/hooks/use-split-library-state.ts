@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type SetStateAction } from "react";
 import posthog from "posthog-js";
 import { useSplitManagerExerciseActions } from "@/app/dashboard/_hooks/use-split-manager-exercise-actions";
 import {
@@ -30,6 +30,8 @@ export type SplitLibraryState = {
   split: WorkoutSplitTemplate;
   splits: WorkoutSplitTemplate[];
   activeSplitId: string | null;
+  /** Stable while an unsaved template receives its database ID. */
+  editorKey: string;
   selectedDay: WorkoutSplitDayTemplate | null;
   selectedWeekday: SplitWeekdayValue;
   todayWeekday: SplitWeekdayValue;
@@ -48,7 +50,7 @@ export type SplitLibraryState = {
   activateSplit: (splitId: string) => Promise<void>;
   copySplit: (target?: WorkoutSplitTemplate) => Promise<void>;
   /** Resolves true only when the server stored the split. */
-  saveSplit: (nextSplit?: WorkoutSplitTemplate) => Promise<boolean>;
+  saveSplit: (nextSplit?: WorkoutSplitTemplate, options?: { preserveIncomplete?: boolean }) => Promise<boolean>;
   /** Restores the selected split to the last version the server confirmed. */
   discardChanges: () => void;
   /** Discards the entire in-memory library when leaving its editing surface. */
@@ -75,6 +77,28 @@ type UseSplitLibraryStateOptions = {
   persistChanges?: boolean;
 };
 
+// Database saves replace nested rows. Keep the editor's identity for unchanged
+// exercises so an acknowledgement or refresh does not replace focused inputs.
+function retainExerciseIdentity(next: WorkoutSplitTemplate, previous?: WorkoutSplitTemplate): WorkoutSplitTemplate {
+  if (!previous) return next;
+  return {
+    ...next,
+    days: next.days.map(day => {
+      const oldDay = previous.days.find(item => item.weekday === day.weekday);
+      return {
+        ...day,
+        exercises: day.exercises.map(exercise => {
+          const oldExercise = oldDay?.exercises.find(item =>
+            item.order === exercise.order &&
+            item.exerciseDisplayName.toLowerCase() === exercise.exerciseDisplayName.toLowerCase(),
+          );
+          return oldExercise ? { ...exercise, id: oldExercise.id } : exercise;
+        }),
+      };
+    }),
+  };
+}
+
 /**
  * Split library and day editing state: the saved splits, which one is selected,
  * which weekday is being edited, the request payloads, and whether the
@@ -100,9 +124,14 @@ export function useSplitLibraryState({
     [initialSplit, initialSplits],
   );
   const [splits, setSplits] = useState(initialLibrary);
+  const libraryRef = useRef(initialLibrary);
+  const savingRef = useRef(false);
+  const confirmedSplitKeysRef = useRef(new Set<string>());
+  useLayoutEffect(() => { libraryRef.current = splits; }, [splits]);
   const [selectedSplitId, setSelectedSplitId] = useState<string | null>(
     initialSplit.id ?? initialLibrary[0]?.id ?? null,
   );
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   const [selectedWeekday, setSelectedWeekday] = useState<SplitWeekdayValue>(
     getInitialSelectedWeekday(),
   );
@@ -122,6 +151,7 @@ export function useSplitLibraryState({
   );
 
   function rememberSavedSplit(saved: WorkoutSplitTemplate) {
+    confirmedSplitKeysRef.current.add(saved.id ?? DRAFT_SPLIT_KEY);
     const snapshots = getSavedSplits();
     if (saved.isActive) {
       for (const [id, snapshot] of snapshots) {
@@ -162,14 +192,20 @@ export function useSplitLibraryState({
     seededLibraryRef.current = initialLibrary;
 
     for (const item of initialLibrary) {
-      getSavedSplits().set(item.id ?? DRAFT_SPLIT_KEY, item);
+      const key = item.id ?? DRAFT_SPLIT_KEY;
+      // An earlier route refresh must not roll back a write already acknowledged.
+      if (!confirmedSplitKeysRef.current.has(key)) {
+        getSavedSplits().set(key, retainExerciseIdentity(item, getSavedSplits().get(key)));
+      }
     }
 
     if (dirtyKeysRef.current.length > 0) {
       return;
     }
 
-    setSplits(initialLibrary);
+    const refreshed = initialLibrary.map(item => getSavedSplits().get(item.id ?? DRAFT_SPLIT_KEY) ?? item);
+    libraryRef.current = refreshed;
+    setSplits(refreshed);
   }, [initialLibrary, getSavedSplits]);
 
   function markDirty(key: string, isDirty: boolean) {
@@ -188,24 +224,14 @@ export function useSplitLibraryState({
   }
 
   function setSplit(action: SetStateAction<WorkoutSplitTemplate>) {
-    if (isSaving) return;
-    const nextSplit =
-      typeof action === "function"
-        ? (action as (current: WorkoutSplitTemplate) => WorkoutSplitTemplate)(split)
-        : action;
-
+    const current = libraryRef.current.find(item => item.id === split.id) ?? split;
+    const nextSplit = typeof action === "function" ? action(current) : action;
     markDirty(nextSplit.id ?? DRAFT_SPLIT_KEY, true);
-    setSplits((current) => {
-      const index = current.findIndex((item) => item.id === split.id);
-
-      if (index === -1) {
-        return [nextSplit, ...current];
-      }
-
-      return current.map((item, itemIndex) =>
-        itemIndex === index ? nextSplit : item,
-      );
-    });
+    const index = libraryRef.current.findIndex(item => item.id === current.id);
+    const nextLibrary = index === -1 ? [nextSplit, ...libraryRef.current]
+      : libraryRef.current.map((item, position) => position === index ? nextSplit : item);
+    libraryRef.current = nextLibrary;
+    setSplits(nextLibrary);
   }
 
   const exerciseActions = useSplitManagerExerciseActions({
@@ -233,8 +259,8 @@ export function useSplitLibraryState({
     return true;
   }
 
-  async function saveSplit(nextSplit?: WorkoutSplitTemplate) {
-    if (isSaving) {
+  async function saveSplit(nextSplit?: WorkoutSplitTemplate, options: { preserveIncomplete?: boolean } = {}) {
+    if (savingRef.current) {
       return false;
     }
 
@@ -242,19 +268,57 @@ export function useSplitLibraryState({
       return false;
     }
 
-    const splitToSave = nextSplit ?? split;
+    const source = nextSplit ?? libraryRef.current.find(item => item.id === split.id) ?? split;
+    const currentAtStart = libraryRef.current.find(item => item.id === source.id);
+    const savedSnapshot = getSavedSplits().get(source.id ?? DRAFT_SPLIT_KEY);
+    const splitToSave = options.preserveIncomplete ? {
+      ...source,
+      days: source.days.map(day => ({
+        ...day,
+        exercises: day.exercises.flatMap(exercise => {
+          if (exercise.exerciseDisplayName.trim()) return [exercise];
+          if (savedSnapshot) {
+            for (const savedDay of savedSnapshot.days) {
+              const saved = savedDay.exercises.find(item => item.id === exercise.id);
+              if (saved) return [{ ...exercise, exerciseDisplayName: saved.exerciseDisplayName, exerciseSlug: saved.exerciseSlug }];
+            }
+          }
+          return [];
+        }),
+      })),
+    } : source;
+    if (options.preserveIncomplete && savedSnapshot && splitToSave.name.trim() === savedSnapshot.name.trim() &&
+      splitToSave.days.every(day => {
+        const savedDay = savedSnapshot.days.find(item => item.weekday === day.weekday);
+        return savedDay && day.workoutType.trim() === savedDay.workoutType.trim() &&
+          day.exercises.length === savedDay.exercises.length &&
+          day.exercises.every((exercise, index) =>
+            exercise.exerciseDisplayName.trim() === savedDay.exercises[index]?.exerciseDisplayName.trim() &&
+            exercise.sets === savedDay.exercises[index]?.sets);
+      })) {
+      markDirty(source.id ?? DRAFT_SPLIT_KEY,
+        source.days.some(day => day.exercises.some(exercise => !exercise.exerciseDisplayName.trim())));
+      return true;
+    }
+    savingRef.current = true;
     setIsSaving(true);
 
     try {
       const savedSplit = await saveWorkoutSplit(splitToSave);
-      setSplits((current) =>
-        current.map((item) => (item.id === splitToSave.id ? savedSplit : item)),
-      );
-      setSelectedSplitId(savedSplit.id);
-      rememberSavedSplit(savedSplit);
-      markDirty(splitToSave.id ?? DRAFT_SPLIT_KEY, false);
-      markDirty(savedSplit.id ?? DRAFT_SPLIT_KEY, false);
-      clearAllExerciseSuggestions();
+      const current = libraryRef.current.find(item => item.id === splitToSave.id);
+      const hasIncompleteEdits = Boolean(options.preserveIncomplete &&
+        current?.days.some(day => day.exercises.some(exercise => !exercise.exerciseDisplayName.trim())));
+      const hasNewerEdits = current !== currentAtStart || hasIncompleteEdits;
+      const nextLibrary = libraryRef.current.map(item => item.id !== splitToSave.id ? item
+        : hasNewerEdits ? { ...item, id: savedSplit.id, isActive: savedSplit.isActive }
+          : retainExerciseIdentity(savedSplit, splitToSave));
+      libraryRef.current = nextLibrary;
+      setSplits(nextLibrary);
+      if (!splitToSave.id && savedSplit.id) setSavedDraftId(savedSplit.id);
+      if (!splitToSave.id) setSelectedSplitId(selected => selected === null ? savedSplit.id : selected);
+      rememberSavedSplit(retainExerciseIdentity(savedSplit, splitToSave));
+      markDirty(splitToSave.id ?? DRAFT_SPLIT_KEY, hasNewerEdits && splitToSave.id === savedSplit.id);
+      markDirty(savedSplit.id ?? DRAFT_SPLIT_KEY, hasNewerEdits);
       posthog.capture("workout_split_updated", {
         training_day_count: savedSplit.days.filter(
           (day) => day.exercises.length > 0,
@@ -274,6 +338,7 @@ export function useSplitLibraryState({
       );
       return false;
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
     }
   }
@@ -353,6 +418,10 @@ export function useSplitLibraryState({
       });
       getSavedSplits().set(DRAFT_SPLIT_KEY, replacement);
       getSavedSplits().delete(splitId);
+      confirmedSplitKeysRef.current.delete(splitId);
+      for (const [key, snapshot] of getSavedSplits()) {
+        getSavedSplits().set(key, { ...snapshot, isActive: Boolean(snapshot.id && snapshot.id === deleted.activeSplitId) });
+      }
       markDirty(splitId, false);
       posthog.capture("workout_split_deleted");
       notify("Split deleted.", "success");
@@ -497,6 +566,7 @@ export function useSplitLibraryState({
     split,
     splits,
     activeSplitId: splits.find((item) => item.isActive)?.id ?? null,
+    editorKey: split.id && split.id !== savedDraftId ? split.id : DRAFT_SPLIT_KEY,
     selectedDay: exerciseActions.selectedDay,
     selectedWeekday,
     todayWeekday,

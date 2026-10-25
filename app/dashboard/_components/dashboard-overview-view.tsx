@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePacificDay } from "@/app/hooks/use-pacific-day";
-import { ArrowRight, ArrowUpRight, Check, Play } from "lucide-react";
+import { ArrowRight, Check, Play } from "lucide-react";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { toDatabaseDateFromInput } from "@/lib/workout-utils";
 import { MonthlyActivityCalendar } from "@/app/components/activity-calendar";
@@ -112,7 +112,6 @@ export function DashboardOverviewView({ overview, todayPlan, greetingName, weigh
         <section className={styles.activity} aria-label="Recorded activity">
           <div className={styles.sectionHead}>
             <h2>Recent activity</h2>
-            <button type="button" className={styles.iconButton} aria-label="Browse workout history" onClick={() => onNavigateToView("workouts")}><ArrowUpRight size={20} strokeWidth={1.7} /></button>
           </div>
           <MonthlyActivityCalendar days={overview.activityDays} endDate={overview.asOfDate} />
           <p className={styles.activityNote}>{recordedDays ? `${countLabel(recordedDays, "day")} with a recorded workout in the past three months.` : "Your recorded training days will appear here."}</p>

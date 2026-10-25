@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Check,
   Circle,
   Copy,
   ListOrdered,
@@ -10,7 +9,7 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DeleteConfirmDialog } from "@/app/components/delete-confirm-dialog";
 import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
@@ -19,9 +18,10 @@ import {
   useSplitLibraryState,
   type SplitLibraryNoticeTone,
 } from "@/app/hooks/use-split-library-state";
-import { type WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
+import { isRestDayWorkoutTypeSlug, type WorkoutSplitTemplate } from "@/lib/workout-splits/shared";
 import { SplitActionMenu } from "./split-action-menu";
 import { SplitDayReorderDialog } from "./split-day-reorder-dialog";
+import { SplitExerciseReorderDialog } from "./split-exercise-reorder-dialog";
 import { SplitEditor } from "./split-editor";
 import { SplitLibrary } from "./split-library";
 import { DRAFT_SPLIT_LIBRARY_KEY } from "./split-library.shared";
@@ -40,7 +40,7 @@ type RenameDraft = { key: string; value: string };
  * split's day editor on every width; Back returns to the library, which never
  * shows its own Back control. There is no intermediate week page and no
  * stacked overlay: the page header owns Back, this manager owns the split name,
- * Save and options, and the editor owns the day.
+ * and autosave feedback, and the editor owns the day.
  *
  * Opening a split and activating one are deliberately different actions. Only
  * the activate controls call the activation endpoint, and the store refuses to
@@ -56,6 +56,7 @@ export function SplitManager({
 }: SplitManagerProps & { libraryOpen: boolean; onLibraryOpenChange: (open: boolean) => void }) {
   const router = useRouter();
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [refreshPending, setRefreshPending] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -63,7 +64,7 @@ export function SplitManager({
   const notify = useCallback((message: string, tone: SplitLibraryNoticeTone) => {
     setFeedback(tone === "success" ? null : { tone, message });
   }, []);
-  const onRefresh = useCallback(() => router.refresh(), [router]);
+  const onRefresh = useCallback(() => setRefreshPending(true), []);
   const state = useSplitLibraryState({
     initialSplit,
     initialSplits,
@@ -71,6 +72,62 @@ export function SplitManager({
     onRefresh,
     persistChanges,
   });
+  // One writer per library. A later commit survives the earlier acknowledgement.
+  const [saveRequests, setSaveRequests] = useState<{ key: string }[]>([]);
+  const [isAutosaving, setIsAutosaving] = useState(false);
+  const autosaveInFlight = useRef(false);
+  const [failedSaveKey, setFailedSaveKey] = useState<string | null>(null);
+  const [restSaveTarget, setRestSaveTarget] = useState<WorkoutSplitTemplate | null>(null);
+  const approvedRestSave = useRef<WorkoutSplitTemplate | null>(null);
+
+  function requestSave(key = state.split.id ?? DRAFT_SPLIT_LIBRARY_KEY) {
+    if (!persistChanges) return;
+    const request = { key };
+    setSaveRequests(current => current.some(item => item.key === key)
+      ? current.map(item => item.key === key ? request : item)
+      : [...current, request]);
+  }
+
+  const persistNext = useEffectEvent(async () => {
+    if (autosaveInFlight.current) return;
+    const request = saveRequests[0];
+    if (!request) return;
+    const target = state.splits.find(item => (item.id ?? DRAFT_SPLIT_LIBRARY_KEY) === request.key)
+      ?? (request.key === DRAFT_SPLIT_LIBRARY_KEY ? state.split : undefined);
+    const clearRequest = () => setSaveRequests(current => current.filter(item => item !== request));
+    if (!target || !state.unsavedSplitIds.includes(target.id ?? DRAFT_SPLIT_LIBRARY_KEY)) {
+      clearRequest();
+      return;
+    }
+    if (target.days.some(day => isRestDayWorkoutTypeSlug(day.workoutTypeSlug) && day.exercises.length > 0)
+      && approvedRestSave.current !== target) {
+      setRestSaveTarget(target);
+      clearRequest();
+      return;
+    }
+    approvedRestSave.current = null;
+    autosaveInFlight.current = true;
+    setIsAutosaving(true);
+    setFeedback(null);
+    try {
+      const saved = await state.saveSplit(target, { preserveIncomplete: true });
+      setFailedSaveKey(saved ? null : target.id ?? DRAFT_SPLIT_LIBRARY_KEY);
+    } finally {
+      autosaveInFlight.current = false;
+      setIsAutosaving(false);
+      clearRequest();
+    }
+  });
+  useEffect(() => {
+    if (saveRequests.length > 0 && !state.isSaving && !isAutosaving) void persistNext();
+  }, [saveRequests, state.isSaving, isAutosaving]);
+  useEffect(() => {
+    if (!refreshPending || state.isSaving || isAutosaving || saveRequests.length > 0) return;
+    setRefreshPending(false);
+    router.refresh();
+  }, [refreshPending, state.isSaving, isAutosaving, saveRequests.length, router]);
+
+  const [isReorderExercisesOpen, setIsReorderExercisesOpen] = useState(false);
   const [isReorderDaysOpen, setIsReorderDaysOpen] = useState(false);
   // The rename draft never touches the split, so an abandoned rename cannot
   // leave the library dirty or persist a name the person backed out of. The
@@ -125,8 +182,7 @@ export function SplitManager({
     !state.hasUnsavedChanges &&
     !state.isSaving;
   const isRenaming = renameDraft?.key === selectedKey;
-  const pendingName = isRenaming ? renameDraft?.value.trim() : undefined;
-  const hasChanges = state.hasUnsavedChanges || Boolean(pendingName && pendingName !== state.split.name.trim());
+  const editorBusy = state.isSaving && !isAutosaving;
 
   function startRename(target: WorkoutSplitTemplate) {
     if (state.isSaving) return;
@@ -159,7 +215,7 @@ export function SplitManager({
     }
 
     state.renameSplit(nextName, target);
-    return { ...target, name: nextName };
+    requestSave(target.id ?? DRAFT_SPLIT_LIBRARY_KEY);
   }
 
   function cancelRename() {
@@ -218,11 +274,39 @@ export function SplitManager({
     setIsLibraryOpen(false);
     startRename(target);
   }
+  const saveFeedbackAction = failedSaveKey ? {
+    label: feedback?.tone === "info" ? "Review changes" : "Retry",
+    onClick: () => requestSave(failedSaveKey),
+  } : undefined;
+  const restConfirmation = (
+    <DeleteConfirmDialog
+      open={restSaveTarget !== null}
+      title="Remove exercises from rest days?"
+      description="Making these days Rest removes their planned exercises."
+      busy={state.isSaving}
+      onCancel={() => {
+        if (restSaveTarget) {
+          setFailedSaveKey(restSaveTarget.id ?? DRAFT_SPLIT_LIBRARY_KEY);
+          setFeedback({
+            tone: "info",
+            message: "Rest-day changes are not saved. Rename the day to keep its exercises, or review their removal.",
+          });
+        }
+        setRestSaveTarget(null);
+      }}
+      onConfirm={() => {
+        if (!restSaveTarget) return;
+        approvedRestSave.current = restSaveTarget;
+        requestSave(restSaveTarget.id ?? DRAFT_SPLIT_LIBRARY_KEY);
+        setRestSaveTarget(null);
+      }}
+    />
+  );
 
   if (isLibraryOpen) {
     return (
       <div ref={layoutRef}>
-      <InlineFeedback feedback={feedback} className="mb-4" />
+      <InlineFeedback feedback={feedback} action={saveFeedbackAction} className="mb-4" />
       <SplitLibrary
         splits={state.splits}
         activeSplitId={state.activeSplitId}
@@ -236,6 +320,7 @@ export function SplitManager({
         onCreate={() => void state.createSplit()}
       />
       {deleteDialog}
+      {restConfirmation}
       </div>
     );
   }
@@ -243,8 +328,7 @@ export function SplitManager({
   return (
     <div ref={layoutRef} className={splitStyles.splitLayout}>
       <section aria-label="Weekly split" className={splitStyles.splitSummary}>
-        {/* One Save for the whole split: the day editor has none of its own,
-            and the button states double as the only save status there is. */}
+        {/* Completed edits save automatically; the header only reports progress. */}
         <div className={splitStyles.splitSummaryHead}>
           {isRenaming && renameDraft ? (
             <input
@@ -274,19 +358,9 @@ export function SplitManager({
           ) : (
             <h2 className={splitStyles.planTitle}>{selectedName}</h2>
           )}
-          <button
-            type="button"
-            aria-label="Save split"
-            className={splitStyles.planSaveButton}
-            onPointerDown={event => event.preventDefault()}
-            onClick={() => void state.saveSplit(commitRename() ?? state.split)}
-            disabled={state.isSaving || !hasChanges}
-          >
-            <span className="inline-flex items-center justify-center gap-[0.35rem]">
-              {!state.isSaving && !hasChanges ? <Check className="size-4" aria-hidden="true" /> : null}
-              {state.isSaving ? "Saving..." : hasChanges ? "Save" : "Saved"}
-            </span>
-          </button>
+          <span role="status" className={`${splitStyles.planDirtyText} min-w-[3.5rem] text-right`}>
+            {isAutosaving ? "Saving..." : ""}
+          </span>
           <SplitActionMenu label="Split options">
             {(close) => (
               <>
@@ -301,6 +375,15 @@ export function SplitManager({
                 >
                   <Pencil className={splitStyles.inlineIcon} strokeWidth={1.9} />
                   Rename split
+                </button>
+                <button
+                  type="button"
+                  className={splitStyles.actionMenuItem}
+                  disabled={!state.selectedDay || state.selectedDay.exercises.length < 2 || state.isSaving}
+                  onClick={() => { setIsReorderExercisesOpen(true); close(); }}
+                >
+                  <ListOrdered className={splitStyles.inlineIcon} strokeWidth={1.9} />
+                  Reorder exercises
                 </button>
                 <button
                   type="button"
@@ -364,6 +447,8 @@ export function SplitManager({
                       className={splitStyles.actionMenuItem}
                       onClick={() => {
                         state.discardChanges();
+                        setFailedSaveKey(null);
+                        setFeedback(null);
                         close();
                       }}
                       disabled={state.isSaving}
@@ -400,22 +485,16 @@ export function SplitManager({
             )}
           </SplitActionMenu>
         </div>
-        <InlineFeedback feedback={feedback} />
-
-        {state.hasUnsavedChanges && !isSelectedActive ? (
-          <p className={splitStyles.planDirtyText}>
-            Save these changes before making this split active.
-          </p>
-        ) : null}
+        <InlineFeedback feedback={feedback} action={saveFeedbackAction} />
       </section>
 
-      <div key={selectedKey}>
+      <div key={state.editorKey}>
       <SplitEditor
-        key={`${selectedKey}:${state.selectedDay.weekday}`}
+        key={`${state.editorKey}:${state.selectedDay.weekday}`}
         day={state.selectedDay}
         days={state.split.days}
         exerciseSearchResults={state.exerciseSearchResults}
-        isSaving={state.isSaving}
+        isSaving={editorBusy}
         onSelectWeekday={state.selectWeekday}
         onWorkoutTypeChange={state.setWorkoutType}
         onExerciseNameChange={state.handleExerciseNameChange}
@@ -425,7 +504,7 @@ export function SplitManager({
         onExerciseSetsChange={state.setExerciseSets}
         onAddExercise={state.addExercise}
         onRemoveExercise={state.removeExercise}
-        onReorderExercises={state.reorderExercises}
+        onCommitChanges={() => requestSave()}
       />
       </div>
 
@@ -435,9 +514,21 @@ export function SplitManager({
         onCancel={() => setIsReorderDaysOpen(false)}
         onSave={(orderedWeekdays) => {
           state.applyDayOrder(orderedWeekdays);
+          requestSave();
           setIsReorderDaysOpen(false);
         }}
       />
+      <SplitExerciseReorderDialog
+        exercises={state.selectedDay.exercises}
+        open={isReorderExercisesOpen}
+        onCancel={() => setIsReorderExercisesOpen(false)}
+        onSave={order => {
+          state.reorderExercises(order);
+          requestSave();
+          setIsReorderExercisesOpen(false);
+        }}
+      />
+      {restConfirmation}
       {deleteDialog}
     </div>
   );

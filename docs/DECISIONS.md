@@ -156,9 +156,9 @@ The owner subsequently rejected the layered loading treatment. Ready content, ca
 
 Split draft exercise IDs must survive row moves independently of order. These IDs remain client-only because the save serializer sends exercise names and set counts, not exercise IDs. Logger height observation follows actual active-content geometry rather than every entries-array render. Route Back keeps exact-history restoration and never waits for presentation.
 
-## Keep one explicit split save boundary
+## Autosave completed Split edits
 
-Rename, weekday moves, and exercise ordering update local split drafts. Apply order accepts a dialog draft; it does not persist the plan or workout. The main Save is the persistence boundary, so a rename cannot silently commit unrelated edits. Saved snapshots and dirty keys remain per split. Add exercise is visible below the list, and direct row removal requires confirmation instead of a second editing mode.
+The owner replaced the manual split Save with autosave. Counts save after a short pause or on blur; names save on completion, and Apply order persists Split reordering immediately. The workout logger keeps its explicit workout Save. Autosave remains one serialized writer for the library, preserves newer local work and incomplete names, and exposes retryable failures without disabling editable fields. Rest-day conversion confirms removal before persistence. Saved snapshots and dirty keys remain per split, and the editor identity survives initial database-ID assignment.
 
 ## Learn personal anchor changes, retain explicit output limits
 

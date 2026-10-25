@@ -31,17 +31,17 @@ export default function NewWorkoutLoading({ editMode = false }: { editMode?: boo
         </div>
 
         <header className={styles.header}>
-          <div className={styles.headerMetaRow}>
-            <div className={editMode ? `${styles.headerMetaButton} flex items-center` : ""}>
-              <span className={`${skeleton} h-[1lh] w-40 max-w-full rounded`} />
-            </div>
-          </div>
           <div className={styles.titleRow}>
             <div className={styles.title}>
               <span className={`${skeleton} h-[1em] w-[min(14rem,60vw)] rounded`} />
             </div>
             <div className={styles.titleEditButton}>
               <span className={`${skeleton} size-4 rounded`} />
+            </div>
+          </div>
+          <div className={styles.headerMetaRow}>
+            <div className={editMode ? `${styles.headerMetaButton} flex items-center` : ""}>
+              <span className={`${skeleton} h-[1lh] w-40 max-w-full rounded`} />
             </div>
           </div>
         </header>
@@ -111,7 +111,8 @@ export default function NewWorkoutLoading({ editMode = false }: { editMode?: boo
         </div>
 
         <div className={styles.toolsRow}>
-          {Array.from({ length: editMode ? 3 : 4 }, (_, index) => <span key={index} className={`${skeleton} size-11 shrink-0 rounded-full`} />)}
+          <span className={`${skeleton} h-11 min-w-0 flex-1 rounded-full`} />
+          <span className={`${skeleton} size-11 shrink-0 rounded-full`} />
           <span className={`${skeleton} ml-auto h-11 w-[6.5rem] shrink-0 rounded-full`} />
         </div>
       </section>
