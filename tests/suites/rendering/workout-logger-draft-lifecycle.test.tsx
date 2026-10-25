@@ -300,3 +300,42 @@ test("adding sets leaves entered results unchanged and starts distinct blank row
     }
   }
 });
+
+test("saving recovered work releases the old date before a new seed or unit arrives", async () => {
+  seedStaleDraft();
+  const mounted = await render(<DraftProbe />);
+  try {
+    await mounted.click(button(mounted, "saved"));
+    await mounted.rerender(<DraftProbe weightUnit="KG" initialData={{ title: "Lower", workoutType: "Lower", performedAt: TODAY, exercises: [{ name: "Hack Squat", sets: [{ reps: "", weightLb: "", durationSeconds: "" }] }] }} />);
+    assert.equal(mounted.container.querySelector("#date")?.textContent, TODAY);
+    assert.equal(mounted.container.querySelector("#exercises")?.textContent, "Hack Squat");
+    assert.equal(mounted.container.querySelector("#dirty")?.textContent, "false");
+    await act(async () => { window.dispatchEvent(new window.Event("pagehide")); });
+    assert.equal(storedDraft(), null);
+  } finally { mounted.unmount(); window.localStorage.clear(); }
+});
+
+test("a dirty old logger cannot resurrect a copy removed by a later save", async () => {
+  window.localStorage.clear();
+  const mounted = await render(<DraftProbe />);
+  try {
+    await mounted.click(button(mounted, "edit"));
+    assert.ok(storedDraft());
+    window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    await act(async () => { window.dispatchEvent(new window.Event("pagehide")); });
+    assert.equal(storedDraft(), null);
+  } finally { mounted.unmount(); window.localStorage.clear(); }
+});
+
+test("saving one logger cannot delete another window's different unsaved workout", async () => {
+  window.localStorage.clear();
+  const mounted = await render(<DraftProbe />);
+  try {
+    await mounted.click(button(mounted, "edit"));
+    seedStaleDraft();
+    const other = window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY);
+    await mounted.click(button(mounted, "saved"));
+    await act(async () => { window.dispatchEvent(new window.Event("pagehide")); });
+    assert.equal(window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY), other);
+  } finally { mounted.unmount(); window.localStorage.clear(); }
+});

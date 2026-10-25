@@ -61,14 +61,14 @@ export function WorkspaceOverviewView({
   onNavigateToView,
   userId,
 }: WorkspaceOverviewViewProps) {
-  const draft = useStoredWorkoutDraft(weightUnit);
+  const { draft } = useStoredWorkoutDraft(weightUnit, userId);
   const loggedWorkoutId = overview.loggedWorkoutId;
 
   // An open draft outranks a saved session: the draft is unsaved work that only
   // this device holds, and the logger will restore it whichever button is
   // pressed, so the label may as well say so.
   const primaryAction = draft
-    ? { label: "Resume workout", href: LOGGER_HREF }
+    ? { label: "Review workout", href: LOGGER_HREF }
     : loggedWorkoutId
       ? { label: "Open workout", href: `/workouts/${loggedWorkoutId}` }
       : { label: "Start workout", href: LOGGER_HREF };
@@ -76,8 +76,8 @@ export function WorkspaceOverviewView({
   const draftDateLabel = draft ? formatWorkoutLoggerDateLabel(draft.performedAt) : "";
   const status = draft
     ? draftDateLabel
-      ? `Unsaved draft from ${draftDateLabel}.`
-      : "Unsaved draft on this device."
+      ? `Unsaved workout from ${draftDateLabel}.`
+      : "Unsaved workout on this device."
     : loggedWorkoutId
       ? "Logged for today."
       : null;
@@ -85,7 +85,7 @@ export function WorkspaceOverviewView({
   return (
     <WorkspaceDetailSheetProvider>
       <div className="flex flex-col gap-6">
-        <section>
+        <section aria-label="Today's workout">
           <p className="text-sm text-muted-foreground">Hi, {greetingName}.</p>
           <h2 className="mt-1 text-2xl leading-snug font-medium tracking-tight text-foreground">
             {planSentence(todayPlan)}

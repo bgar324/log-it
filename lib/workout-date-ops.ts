@@ -95,6 +95,18 @@ export function getCurrentPacificDate(referenceDate = new Date()) {
   return createDatabaseDate(year, month, day);
 }
 
+/** Schedule the next Pacific date, including 23- and 25-hour DST days. */
+export function millisecondsUntilPacificMidnight(referenceDate = new Date()) {
+  const nextDate = addDaysToDatabaseDate(getCurrentPacificDate(referenceDate), 1);
+  const { year, month, day } = getDatabaseDateParts(nextDate);
+  // Database dates are noon-UTC sentinels. Build the clock instant from parts.
+  // Los Angeles midnight is 07:00 UTC in daylight time, otherwise 08:00 UTC.
+  const early = Date.UTC(year, month - 1, day, 7);
+  const midnight = getCurrentPacificDate(new Date(early)).getTime() === nextDate.getTime() ? early : early + 60 * 60 * 1000;
+  return Math.max(1, midnight - referenceDate.getTime() + 1);
+}
+
+
 export function toDatabaseDateFromInput(
   value: string,
   fallbackDate = getCurrentPacificDate(),

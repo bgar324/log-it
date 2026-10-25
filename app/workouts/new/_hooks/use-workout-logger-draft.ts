@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -10,9 +11,8 @@ import {
 import type { WeightUnit } from "@/lib/weight-unit";
 import { displayWeightToPounds, formatWeightInputValueFromPounds } from "@/lib/weight-unit";
 import { recoverWorkoutDraft } from "@/lib/workouts/draft-recovery";
+import { clearStoredWorkoutDraft, readStoredWorkoutDraft } from "../workout-logger.draft";
 import {
-  WORKOUT_AUTOSAVE_DELAY_MS,
-  WORKOUT_DRAFT_STORAGE_KEY,
   createExerciseDraft,
   createInitialLoggerState,
   createSetDraft,
@@ -37,13 +37,14 @@ type DraftState = {
   workoutType: string;
   performedAt: string;
   exercises: ExerciseDraft[];
-  isRecoveredDraft: boolean;
+  recovery: { status: "pending" | "none" } | { status: "restored"; snapshot: WorkoutDraftSnapshot };
   hasUnsavedEdits: boolean;
 };
 
 type DraftAction =
   | { type: "replace"; value: DraftState }
   | { type: "mark_saved" }
+  | { type: "finish_recovery" }
   | { type: "set_title"; value: string }
   | { type: "set_workout_type"; value: string }
   | { type: "set_performed_at"; value: string }
@@ -57,7 +58,9 @@ function draftStateReducer(state: DraftState, action: DraftAction): DraftState {
     case "replace":
       return action.value;
     case "mark_saved":
-      return { ...state, hasUnsavedEdits: false };
+      return { ...state, recovery: { status: "none" }, hasUnsavedEdits: false };
+    case "finish_recovery":
+      return { ...state, recovery: { status: "none" } };
     case "set_title":
       return { ...state, title: action.value, hasUnsavedEdits: true };
     case "set_workout_type":
@@ -95,20 +98,25 @@ export function useWorkoutLoggerDraft({
   // edit mode has no autosaved draft, so a view has to be able to warn before
   // the user walks away from typed changes.
 
-  const autosaveTimeoutRef = useRef<number | null>(null);
+  const persistedRawRef = useRef<string | null>(null);
   const [draftState, dispatch] = useReducer(
     draftStateReducer,
     initialState,
-    (state) => ({
+    (state): DraftState => ({
       title: state.title,
       workoutType: state.workoutType,
       performedAt: state.performedAt,
       exercises: state.exercises,
-      isRecoveredDraft: false,
+      recovery: { status: isEditMode ? "none" : "pending" },
       hasUnsavedEdits: false,
     }),
   );
   const latestDraftStateRef = useRef(draftState);
+  const persistOwnedSnapshot = useCallback((snapshot: WorkoutDraftSnapshot) => {
+    if (isEditMode || !autosaveReadyRef.current || !hasUnsavedEditsRef.current) return;
+    const raw = persistWorkoutDraft(snapshot, weightUnit, persistedRawRef.current);
+    if (raw !== null) persistedRawRef.current = raw;
+  }, [isEditMode, weightUnit]);
   useLayoutEffect(() => {
     latestDraftStateRef.current = draftState;
   }, [draftState]);
@@ -117,11 +125,11 @@ export function useWorkoutLoggerDraft({
     appliedSeedRef.current = initialState;
     const previousUnit = draftWeightUnitRef.current;
     draftWeightUnitRef.current = weightUnit;
-    if (hasUnsavedEditsRef.current || latestDraftStateRef.current.isRecoveredDraft) {
+    if (hasUnsavedEditsRef.current || latestDraftStateRef.current.recovery.status === "restored") {
       if (previousUnit !== weightUnit) {
         hasUnsavedEditsRef.current = true;
         const current = latestDraftStateRef.current;
-        dispatch({ type: "replace", value: {
+        const next: DraftState = {
           ...current,
           hasUnsavedEdits: true,
           exercises: current.exercises.map(exercise => ({
@@ -133,7 +141,10 @@ export function useWorkoutLoggerDraft({
                 : set.weightLb,
             })),
           })),
-        } });
+        };
+        latestDraftStateRef.current = next;
+        persistOwnedSnapshot(createWorkoutDraftSnapshot(next.title, next.workoutType, next.performedAt, next.exercises));
+        dispatch({ type: "replace", value: next });
       }
       return;
     }
@@ -144,21 +155,22 @@ export function useWorkoutLoggerDraft({
         workoutType: initialState.workoutType,
         performedAt: initialState.performedAt,
         exercises: initialState.exercises,
-        isRecoveredDraft: false,
+        recovery: { status: "none" },
         hasUnsavedEdits: false,
       },
     });
     idCounterRef.current = initialState.counters;
-  }, [initialState, weightUnit]);
+  }, [initialState, persistOwnedSnapshot, weightUnit]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (autosaveReadyRef.current) return;
     if (isEditMode) {
       autosaveReadyRef.current = true;
       return;
     }
 
-    const rawDraft = window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY);
+    const rawDraft = readStoredWorkoutDraft();
+    persistedRawRef.current = rawDraft;
     const storedDraft = parseStoredWorkoutDraft(rawDraft, weightUnit);
 
     if (storedDraft) {
@@ -173,51 +185,20 @@ export function useWorkoutLoggerDraft({
           workoutType: recoveredState.workoutType,
           performedAt: recoveredState.performedAt,
           exercises: recoveredState.exercises,
-          isRecoveredDraft: true,
+          recovery: { status: "restored", snapshot: storedDraft },
           hasUnsavedEdits: false,
         },
       });
       idCounterRef.current = recoveredState.counters;
-    } else if (rawDraft) {
-      window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    } else {
+      if (rawDraft && clearStoredWorkoutDraft(rawDraft)) persistedRawRef.current = null;
+      dispatch({ type: "finish_recovery" });
     }
 
     autosaveReadyRef.current = true;
   }, [initialState.performedAt, initialState.workoutType, isEditMode, weightUnit]);
 
 
-  useEffect(() => {
-    if (isEditMode || !autosaveReadyRef.current || !hasUnsavedEditsRef.current) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      autosaveTimeoutRef.current = null;
-      const snapshot = createWorkoutDraftSnapshot(
-        draftState.title,
-        draftState.workoutType,
-        draftState.performedAt,
-        draftState.exercises,
-      );
-      persistWorkoutDraft(snapshot, weightUnit);
-    }, WORKOUT_AUTOSAVE_DELAY_MS);
-    autosaveTimeoutRef.current = timeoutId;
-
-    return () => {
-      window.clearTimeout(timeoutId);
-
-      if (autosaveTimeoutRef.current === timeoutId) {
-        autosaveTimeoutRef.current = null;
-      }
-    };
-  }, [
-    draftState.exercises,
-    draftState.performedAt,
-    draftState.title,
-    draftState.workoutType,
-    isEditMode,
-    weightUnit,
-  ]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -232,14 +213,13 @@ export function useWorkoutLoggerDraft({
         return;
       }
       const latestDraftState = latestDraftStateRef.current;
-      persistWorkoutDraft(
+      persistOwnedSnapshot(
         createWorkoutDraftSnapshot(
           latestDraftState.title,
           latestDraftState.workoutType,
           latestDraftState.performedAt,
           latestDraftState.exercises,
         ),
-        weightUnit,
       );
     }
 
@@ -249,31 +229,29 @@ export function useWorkoutLoggerDraft({
       window.removeEventListener("pagehide", handlePageHide);
       handlePageHide();
     };
-  }, [isEditMode, weightUnit]);
+  }, [isEditMode, persistOwnedSnapshot]);
 
   // Every user-driven change goes through here. Seeding and recovery use
   // `dispatch` directly, because neither is an edit the user made.
   function commitEdit(action: DraftAction) {
+    const next = draftStateReducer(latestDraftStateRef.current, action);
+    latestDraftStateRef.current = next;
     hasUnsavedEditsRef.current = true;
-    dispatch(action);
+    // Claim real input immediately. A delayed writer must not overwrite a
+    // later save/removal, or leave an edit invisible to another window's check.
+    if (readStoredWorkoutDraft() === null) persistedRawRef.current = null;
+    persistOwnedSnapshot(createWorkoutDraftSnapshot(next.title, next.workoutType, next.performedAt, next.exercises));
+    dispatch({ type: "replace", value: next });
   }
 
-  function cancelPendingAutosave() {
-    if (autosaveTimeoutRef.current === null) {
-      return;
-    }
 
-    window.clearTimeout(autosaveTimeoutRef.current);
-    autosaveTimeoutRef.current = null;
-  }
 
   // Called once the workout is stored server-side: delete the draft and disarm
   // every writer that could put it back.
   function markSaved() {
     hasUnsavedEditsRef.current = false;
     dispatch({ type: "mark_saved" });
-    cancelPendingAutosave();
-    if (!isEditMode) window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    if (!isEditMode && clearStoredWorkoutDraft(persistedRawRef.current)) persistedRawRef.current = null;
   }
 
   // Throw the recovered draft away and fall back to what the server seeded for
@@ -281,8 +259,7 @@ export function useWorkoutLoggerDraft({
   // mutates them in place.
   function discardDraft() {
     hasUnsavedEditsRef.current = false;
-    cancelPendingAutosave();
-    if (!isEditMode) window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    if (!isEditMode && clearStoredWorkoutDraft(persistedRawRef.current)) persistedRawRef.current = null;
     idCounterRef.current = { ...initialState.counters };
     dispatch({
       type: "replace",
@@ -291,7 +268,7 @@ export function useWorkoutLoggerDraft({
         workoutType: initialState.workoutType,
         performedAt: initialState.performedAt,
         exercises: initialState.exercises,
-        isRecoveredDraft: false,
+        recovery: { status: "none" },
         hasUnsavedEdits: false,
       },
     });
@@ -424,8 +401,10 @@ export function useWorkoutLoggerDraft({
     addExercise,
     addSet,
     discardDraft,
+    isRecoveryReady: draftState.recovery.status !== "pending",
     exercises: draftState.exercises,
-    hasRecoveredDraft: draftState.isRecoveredDraft,
+    hasRecoveredDraft: draftState.recovery.status === "restored",
+    recoveredSnapshot: draftState.recovery.status === "restored" ? draftState.recovery.snapshot : null,
     hasUnsavedEdits: draftState.hasUnsavedEdits,
     markSaved,
     performedAt: draftState.performedAt,

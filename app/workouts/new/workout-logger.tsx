@@ -23,7 +23,7 @@ import {
   getWeightUnitLabel,
   type WeightUnit,
 } from "@/lib/weight-unit";
-import { formatDatabaseDateValue, getCurrentPacificDate } from "@/lib/workout-utils";
+import { usePacificDay } from "@/app/hooks/use-pacific-day";
 import { useWorkspaceUnsavedChanges } from "@/app/components/workspace-navigation";
 import { WorkoutLoggerConfirmDialog } from "./_components/workout-logger-confirm-dialog";
 import { WorkoutLoggerExercisePager } from "./_components/workout-logger-exercise-pager";
@@ -34,6 +34,10 @@ import { WorkoutLoggerActions } from "./_components/workout-logger-actions";
 import { useFocusedExercise } from "./_hooks/use-focused-exercise";
 import { useRestTimer } from "./_hooks/use-rest-timer";
 import { useWorkoutLoggerDraft } from "./_hooks/use-workout-logger-draft";
+import { useWorkoutDraftStatus } from "./_hooks/use-workout-draft-status";
+import { WorkoutRecovery } from "./_components/workout-recovery";
+import NewWorkoutLoading from "./loading";
+import { invalidateWorkoutDetails } from "@/app/dashboard/workout-detail-cache";
 import { useWorkoutLoggerInsights } from "./_hooks/use-workout-logger-insights";
 import { styles } from "./workout-logger.styles";
 import {
@@ -42,9 +46,11 @@ import {
 } from "./workout-logger.submit";
 import {
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
+  createWorkoutDraftSnapshot,
   formatWorkoutLoggerDateLabel,
   type WorkoutLoggerExerciseEntry,
   type WorkoutLoggerInitialData,
+  type WorkoutDraftSnapshot,
 } from "./workout-logger.utils";
 
 export type { WorkoutLoggerInitialData } from "./workout-logger.utils";
@@ -67,6 +73,8 @@ type WorkoutLoggerProps = {
   mode?: WorkoutLoggerMode;
   workoutId?: string;
   initialData?: WorkoutLoggerInitialData;
+  /** Only the new-workout route follows today; explicitly dated seeds stay put. */
+  followToday?: boolean;
   splitTemplateData?: WorkoutLoggerInitialData;
   workoutTypeOptions?: string[];
   weightUnit: WeightUnit;
@@ -99,6 +107,7 @@ export function WorkoutLogger({
   analyticsUser,
   benEnabled,
   workspaceEnabled = false,
+  followToday = false,
 }: WorkoutLoggerProps) {
   const isEditMode = mode === "edit" && Boolean(workoutId);
   const returnHref = suppliedReturnHref ?? (isEditMode && workoutId ? `/workouts/${workoutId}` : "/dashboard");
@@ -120,6 +129,9 @@ export function WorkoutLogger({
   const [hasRestDayOverride, setHasRestDayOverride] = useState(false);
   const [isLoggedNoticeDismissed, setIsLoggedNoticeDismissed] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const [acceptedRecoveryDate, setAcceptedRecoveryDate] = useState<string | null>(null);
+  const [conflictSnapshot, setConflictSnapshot] = useState<WorkoutDraftSnapshot | null>(null);
+  const [requestedToday, setRequestedToday] = useState<string | null>(null);
   const {
     clearAll,
     clearPendingLookup: clearPendingSuggestionLookup,
@@ -134,6 +146,42 @@ export function WorkoutLogger({
     isEditMode,
     weightUnit,
   });
+  const todayDateKey = usePacificDay();
+  const recoverySnapshot = conflictSnapshot ?? (!isEditMode && !draft.hasUnsavedEdits && acceptedRecoveryDate !== draft.performedAt ? draft.recoveredSnapshot : null);
+  const recovery = useWorkoutDraftStatus(recoverySnapshot, weightUnit, analyticsUser.id);
+  const requiresFreshSeed = followToday && !isEditMode && draft.isRecoveryReady && !draft.hasRecoveredDraft && !draft.hasUnsavedEdits &&
+    draft.performedAt === initialData?.performedAt && draft.performedAt !== todayDateKey;
+  if (requiresFreshSeed && requestedToday !== todayDateKey) setRequestedToday(todayDateKey);
+  useEffect(() => {
+    if (requiresFreshSeed && requestedToday === todayDateKey) router.refresh();
+  }, [requestedToday, requiresFreshSeed, router, todayDateKey]);
+  useEffect(() => {
+    if (conflictSnapshot && recovery.state.status === "unsaved") {
+      setConflictSnapshot(null);
+      setHasSaveConflict(false);
+      return;
+    }
+    if (recovery.state.status !== "saved") return;
+    if (conflictSnapshot) {
+      const current = createWorkoutDraftSnapshot(draft.title, draft.workoutType, draft.performedAt, draft.exercises);
+      if (JSON.stringify(current) !== JSON.stringify(conflictSnapshot)) {
+        setConflictSnapshot(current);
+        return;
+      }
+      draft.markSaved();
+      invalidateWorkoutDetails(recovery.state.workoutId);
+      setConflictSnapshot(null);
+      setSaveFeedback(null);
+      setHasSaveConflict(false);
+      router.push(returnHref);
+      router.refresh();
+    } else if (draft.hasRecoveredDraft && !draft.hasUnsavedEdits) {
+      draft.discardDraft();
+      invalidateWorkoutDetails(recovery.state.workoutId);
+      setSaveFeedback(null);
+      setHasSaveConflict(false);
+    }
+  }, [conflictSnapshot, draft, recovery.state, returnHref, router]);
   // One exercise is on screen at a time, so which one is a first-class piece of
   // state. Every value stays in the draft controller above, which is what makes
   // switching, adding and deleting exercises lossless.
@@ -149,7 +197,7 @@ export function WorkoutLogger({
     userId: analyticsUser.id,
     weightUnit,
     exercises: draft.exercises,
-    requestedExerciseIds: workspaceEnabled ? undefined : draft.exercises
+    requestedExerciseIds: !draft.isRecoveryReady || requiresFreshSeed ? [] : workspaceEnabled ? undefined : draft.exercises
       .slice(exerciseFocus.focusedIndex, exerciseFocus.focusedIndex + 2)
       .map((exercise) => exercise.id),
     performedAt: draft.performedAt,
@@ -174,11 +222,29 @@ export function WorkoutLogger({
     discardUnsavedChanges,
   );
 
+  if (!draft.isRecoveryReady || requiresFreshSeed || (requestedToday === todayDateKey && draft.performedAt !== todayDateKey)) return <NewWorkoutLoading />;
   const hasSplitReset =
     !isEditMode &&
     Boolean(splitTemplateData) &&
     (splitTemplateData?.workoutType.trim() !== "" ||
       splitTemplateData?.exercises.length !== 0);
+  const olderRecovery = !isEditMode && draft.hasRecoveredDraft && draft.performedAt !== todayDateKey && acceptedRecoveryDate !== draft.performedAt;
+  const needsRecovery = !isEditMode && (olderRecovery || recovery.state.status === "checking" || recovery.state.status === "saved" || recovery.state.status === "conflict" || recovery.state.status === "error");
+  if (needsRecovery) {
+    return <WorkoutRecovery
+      recovery={recovery.state.status === "conflict" ? { kind: "conflict", workoutId: recovery.state.workoutId }
+        : recovery.state.status === "error" ? { kind: "error", message: recovery.state.message, onRetry: recovery.retry, onContinue: handleContinueRecovered }
+        : recovery.state.status === "unsaved" && olderRecovery
+          ? { kind: "older", onContinue: handleContinueRecovered }
+          : { kind: "checking" }}
+      workoutName={draft.workoutType.trim() || draft.title.trim() || "workout"}
+      dateLabel={formatWorkoutLoggerDateLabel(draft.performedAt)}
+      todayLabel={formatWorkoutLoggerDateLabel(todayDateKey)}
+      todayWorkoutName={initialData?.performedAt === todayDateKey ? initialData.workoutType.trim() : ""}
+      todayWorkoutId={initialData?.performedAt === todayDateKey ? loggedWorkoutId : null}
+      backHref={returnHref} onStartToday={handleStartToday}
+    />;
+  }
 
   if (isRestDay && !draft.hasRecoveredDraft && !hasRestDayOverride) {
     if (workspaceEnabled) {
@@ -357,10 +423,30 @@ export function WorkoutLogger({
     draft.discardDraft();
     setSaveFeedback(null);
     setHasSaveConflict(false);
+    setConflictSnapshot(null);
   }
 
   function handleDiscardDraft() {
     discardUnsavedChanges();
+  }
+
+  function handleContinueRecovered() {
+    setAcceptedRecoveryDate(draft.performedAt);
+    setConflictSnapshot(null);
+    setHasSaveConflict(false);
+    setSaveFeedback(null);
+  }
+
+  function handleStartToday() {
+    setRequestedToday(todayDateKey);
+    discardUnsavedChanges();
+    if (initialData?.performedAt === todayDateKey && loggedWorkoutId) {
+      router.replace(`/workouts/${loggedWorkoutId}`);
+      return;
+    }
+    const from = new URL(returnHref, window.location.origin).searchParams.get("view") ?? "dashboard";
+    router.replace(`/workouts/new?from=${encodeURIComponent(from)}`);
+    router.refresh();
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -406,12 +492,13 @@ export function WorkoutLogger({
           data.error ??
           (isEditMode ? "Unable to update workout." : "Unable to save workout.");
 
-        // That day's workout already exists, so retrying this draft can never
-        // succeed. Offer the way out, and refresh once the draft is actually
-        // discarded so the already-logged notice can take over with a link to
-        // the saved workout. Refreshing before that would re-seed the form
-        // from the server and throw away what the user typed.
+        // Reconcile a rejected create before calling it unfinished: the server
+        // may already hold these exact sets after a lost save acknowledgement.
         setHasSaveConflict(!isEditMode && response.status === 409);
+        if (!isEditMode && response.status === 409) {
+          recovery.retry();
+          setConflictSnapshot(createWorkoutDraftSnapshot(draft.title, draft.workoutType, draft.performedAt, draft.exercises));
+        }
         setSaveFeedback({ tone: "error", message });
         return;
       }
@@ -457,13 +544,6 @@ export function WorkoutLogger({
   const backLabel = "Back";
   const workoutTypeLabel = draft.workoutType.trim();
   const dateMeta = formatWorkoutLoggerDateLabel(draft.performedAt);
-  const todayDateKey = formatDatabaseDateValue(getCurrentPacificDate());
-  // A recovered draft carrying an older date is the one state the create form
-  // cannot resolve on its own: it has no date field, so saving either collides
-  // with that day's workout or backdates today's session. A deliberately
-  // selected date (`?date=`) is not this case.
-  const isDraftDateStale =
-    !isEditMode && draft.hasRecoveredDraft && draft.performedAt !== todayDateKey;
   const submitLabel = isEditMode ? "Save changes" : "Save workout";
 
   const exerciseEntries: WorkoutLoggerExerciseEntry[] = draft.exercises.map((exercise, exerciseIndex) => ({
@@ -546,14 +626,6 @@ export function WorkoutLogger({
         onReorderExercises={draft.reorderExercisesById}
         onResetFromSplit={hasSplitReset ? handleResetFromSplit : undefined}
         onDiscardDraft={isEditMode ? undefined : handleDiscardDraft}
-        staleDraft={
-          isDraftDateStale
-            ? {
-                dateLabel: dateMeta,
-                onMoveToToday: () => draft.setPerformedAt(todayDateKey),
-              }
-            : undefined
-        }
       />
     );
   }
@@ -583,29 +655,6 @@ export function WorkoutLogger({
           onWorkoutTypeChange={draft.setWorkoutType}
         />
 
-        {isDraftDateStale ? (
-          <section className={styles.card} aria-label="Unfinished draft">
-            <p className={styles.confirmBody}>
-              {`This unfinished draft is dated ${dateMeta}, not today. Move it to today or discard it.`}
-            </p>
-            <div className={styles.confirmActions}>
-              <button
-                type="button"
-                className={styles.confirmSecondaryButton}
-                onClick={handleDiscardDraft}
-              >
-                Discard draft
-              </button>
-              <button
-                type="button"
-                className={styles.saveButton}
-                onClick={() => draft.setPerformedAt(todayDateKey)}
-              >
-                Move to today
-              </button>
-            </div>
-          </section>
-        ) : null}
         <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
 
           {/* One editable exercise card, with navigation underneath it. */}
@@ -674,7 +723,7 @@ export function WorkoutLogger({
           isSaving={isSaving}
           canReorder={draft.exercises.length > 1}
           feedback={saveFeedback}
-          feedbackAction={hasSaveConflict && !isSaving ? { label: "Discard draft", onClick: () => { handleDiscardDraft(); router.refresh(); } } : undefined}
+          feedbackAction={hasSaveConflict && !isSaving ? { label: "Discard unsaved sets", onClick: () => { handleDiscardDraft(); router.refresh(); } } : undefined}
           canResetFromSplit={hasSplitReset}
           canRemoveExercise={draft.exercises.length > 1}
           onRemoveExercise={() => {

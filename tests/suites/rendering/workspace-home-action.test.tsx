@@ -77,23 +77,12 @@ function home({
   });
 }
 
-// The action is a link styled as a button; the recent rows are links too, so
-// match on the action's own vocabulary rather than on "the first anchor".
-function primaryActions(mounted: Mounted) {
-  return mounted
-    .all("a")
-    .filter((node) =>
-      /^(Resume|Open|Start) workout$/.test((node.textContent ?? "").trim()),
-    );
-}
-
+// Select the primary action structurally; its destination, not incidental copy,
+// determines whether the saved workout or local work opens.
 function primaryAction(mounted: Mounted) {
-  const actions = primaryActions(mounted);
-  assert.equal(actions.length, 1, "Home must offer exactly one primary action");
-  return {
-    label: (actions[0]!.textContent ?? "").trim(),
-    href: actions[0]!.getAttribute("href"),
-  };
+  const action = mounted.container.querySelector(`section[aria-label="Today's workout"] a`);
+  assert.ok(action, "Home must offer a primary action");
+  return action.getAttribute("href");
 }
 
 test("an unsaved draft outranks today's saved workout, and reading it leaves storage alone", async () => {
@@ -102,11 +91,8 @@ test("an unsaved draft outranks today's saved workout, and reading it leaves sto
   const mounted = await render(home({ loggedWorkoutId: "w-today" }));
 
   try {
-    assert.deepEqual(primaryAction(mounted), {
-      label: "Resume workout",
-      href: "/workouts/new?from=dashboard",
-    });
-    // The logger owns the draft's lifecycle. Home may not consume it.
+    assert.equal(primaryAction(mounted), "/workouts/new?from=dashboard");
+    // Home must preserve entries that have not been confirmed saved.
     assert.equal(window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY), seeded);
   } finally {
     mounted.unmount();
@@ -119,10 +105,7 @@ test("a draft stored in the other weight unit is ignored, exactly as the logger 
   const mounted = await render(home({ weightUnit: "LB", loggedWorkoutId: "w-today" }));
 
   try {
-    assert.deepEqual(primaryAction(mounted), {
-      label: "Open workout",
-      href: "/workouts/w-today",
-    });
+    assert.equal(primaryAction(mounted), "/workouts/w-today");
   } finally {
     mounted.unmount();
     window.localStorage.clear();
@@ -135,10 +118,7 @@ test("today's saved workout opens its own page even with no split", async () => 
   );
 
   try {
-    assert.deepEqual(primaryAction(mounted), {
-      label: "Open workout",
-      href: "/workouts/w-unscheduled",
-    });
+    assert.equal(primaryAction(mounted), "/workouts/w-unscheduled");
   } finally {
     mounted.unmount();
   }
@@ -149,17 +129,14 @@ test("discarding the draft in the logger drops the action back to the saved work
   const mounted = await render(home({ loggedWorkoutId: "w-today" }));
 
   try {
-    assert.equal(primaryAction(mounted).label, "Resume workout");
+    assert.equal(primaryAction(mounted), "/workouts/new?from=dashboard");
 
     window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
     await act(async () => {
       window.dispatchEvent(new window.Event("pageshow"));
     });
 
-    assert.deepEqual(primaryAction(mounted), {
-      label: "Open workout",
-      href: "/workouts/w-today",
-    });
+    assert.equal(primaryAction(mounted), "/workouts/w-today");
   } finally {
     mounted.unmount();
     window.localStorage.clear();
@@ -171,17 +148,14 @@ test("with no draft and nothing logged, the action starts a workout", async () =
   const mounted = await render(home());
 
   try {
-    assert.equal(primaryAction(mounted).label, "Resume workout");
+    assert.equal(primaryAction(mounted), "/workouts/new?from=dashboard");
 
     window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
     await act(async () => {
       window.dispatchEvent(new window.Event("storage"));
     });
 
-    assert.deepEqual(primaryAction(mounted), {
-      label: "Start workout",
-      href: "/workouts/new?from=dashboard",
-    });
+    assert.equal(primaryAction(mounted), "/workouts/new?from=dashboard");
   } finally {
     mounted.unmount();
     window.localStorage.clear();

@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { usePacificDay } from "@/app/hooks/use-pacific-day";
 import { ArrowRight, ArrowUpRight, Check, Play } from "lucide-react";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { toDatabaseDateFromInput } from "@/lib/workout-utils";
 import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { MonthlyActivityCalendar } from "@/app/components/activity-calendar";
 import { useStoredWorkoutDraft } from "@/app/workouts/new/_hooks/use-stored-workout-draft";
+import { formatWorkoutLoggerDateLabel } from "@/app/workouts/new/workout-logger.formatters";
 import { WorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
 import type { DashboardClientData, DashboardView } from "../dashboard-types";
 import { countLabel } from "../dashboard-client.shared";
@@ -47,14 +51,21 @@ const weekdayFormat = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZo
 const dateFormat = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", timeZone: "UTC" });
 
 export function DashboardOverviewView({ overview, todayPlan, greetingName, weightUnit, onNavigateToView, userId }: DashboardOverviewViewProps) {
-  const draft = useStoredWorkoutDraft(weightUnit);
+  const currentDay = usePacificDay();
+  const router = useRouter();
+  useEffect(() => {
+    if (userId && overview.asOfDate !== currentDay) router.refresh();
+  }, [currentDay, overview.asOfDate, router, userId]);
+  const { draft, state: recovery } = useStoredWorkoutDraft(weightUnit, userId);
+  const draftDate = draft ? formatWorkoutLoggerDateLabel(draft.performedAt) : "";
+  const draftName = draft?.workoutType.trim() || draft?.title.trim() || "workout";
   const date = toDatabaseDateFromInput(overview.asOfDate);
   const hasPlan = todayPlan.workoutTypeSlug !== null && !todayPlan.isRestDay;
   const completed = overview.loggedWorkoutId;
   const plannedSets = overview.todaySession.reduce((sum, exercise) => sum + exercise.plannedSets, 0);
   const recordedDays = new Set(overview.activityDays.filter((day) => day.count > 0).map((day) => day.date)).size;
   const primary = draft
-    ? { label: "Resume workout", href: "/workouts/new?from=dashboard" }
+    ? { label: recovery.status === "unsaved" ? `Continue ${draftDate}` : "Review workout", href: "/workouts/new?from=dashboard" }
     : completed
       ? { label: "Open workout", href: `/workouts/${completed}?from=dashboard` }
       : { label: todayPlan.isRestDay ? "Log an unscheduled workout" : "Start workout", href: "/workouts/new?from=dashboard" };
@@ -70,12 +81,19 @@ export function DashboardOverviewView({ overview, todayPlan, greetingName, weigh
         <section className={styles.today} aria-label="Today's workout">
           <p className={styles.lead}>
             Hi, <strong>{greetingName}</strong>.<br />
-            {draft ? <>You have a workout <strong>to finish.</strong></>
+            {draft ? recovery.status === "checking"
+              ? <>Checking your <strong>{draftName}</strong> workout from {draftDate}.</>
+              : recovery.status === "conflict"
+                ? <><strong>{draftName}</strong> is saved for {draftDate}. You also have unsaved changes.</>
+                : recovery.status === "error"
+                  ? <>Review your <strong>{draftName}</strong> workout from {draftDate}.</>
+                : <>You have unsaved <strong>{draftName}</strong> sets from {draftDate}.</>
               : completed ? <>Your training is <strong>logged for today.</strong></>
                 : todayPlan.isRestDay ? <>Today is a <strong>rest day.</strong></>
                   : hasPlan ? <>You have <strong>{todayPlan.workoutType}</strong> today.</>
                     : <>Your next workout <strong>starts here.</strong></>}
           </p>
+          {draft && hasPlan ? <p className={styles.context}>Today&apos;s plan is <strong>{todayPlan.workoutType}</strong>.</p> : null}
           {!draft && !completed && !todayPlan.isRestDay ? (
             <p className={styles.context}>
               {hasPlan ? <><strong>{countLabel(overview.todaySession.length, "exercise")}</strong> and <strong>{countLabel(plannedSets, "planned set")}</strong> from your split.</>

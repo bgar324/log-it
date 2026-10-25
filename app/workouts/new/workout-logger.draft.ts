@@ -108,9 +108,27 @@ export function createWorkoutDraftSnapshot(
   };
 }
 
+export const WORKOUT_DRAFT_CHANGE_EVENT = "logit-workout-draft-change";
+
+export function readStoredWorkoutDraft() {
+  try { return window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY); }
+  catch { return null; }
+}
+
+/** Remove only the version this reader owns, never another window's newer work. */
+export function clearStoredWorkoutDraft(expectedRaw: string | null) {
+  try {
+    if (window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY) !== expectedRaw) return false;
+    window.localStorage.removeItem(WORKOUT_DRAFT_STORAGE_KEY);
+    window.dispatchEvent(new Event(WORKOUT_DRAFT_CHANGE_EVENT));
+    return true;
+  } catch { return false; }
+}
+
 export function persistWorkoutDraft(
   snapshot: WorkoutDraftSnapshot,
   weightUnit: WeightUnit,
+  expectedRaw: string | null,
 ) {
   const payload: WorkoutDraftStoragePayload = {
     ...snapshot,
@@ -118,13 +136,14 @@ export function persistWorkoutDraft(
   };
 
   try {
-    window.localStorage.setItem(
-      WORKOUT_DRAFT_STORAGE_KEY,
-      JSON.stringify(payload),
-    );
-    return true;
+    if (window.localStorage.getItem(WORKOUT_DRAFT_STORAGE_KEY) !== expectedRaw) return null;
+    const raw = JSON.stringify(payload);
+    if (raw === expectedRaw) return raw;
+    window.localStorage.setItem(WORKOUT_DRAFT_STORAGE_KEY, raw);
+    window.dispatchEvent(new Event(WORKOUT_DRAFT_CHANGE_EVENT));
+    return raw;
   } catch {
-    return false;
+    return null;
   }
 }
 

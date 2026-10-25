@@ -122,5 +122,4 @@ export type WorkoutSubmitResponse = {
 };
 
 export const WORKOUT_DRAFT_STORAGE_KEY = "logit-workout-draft-v2";
-export const WORKOUT_AUTOSAVE_DELAY_MS = 350;
 export const EXERCISE_SUGGESTION_DEBOUNCE_MS = 140;

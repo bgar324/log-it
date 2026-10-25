@@ -21,7 +21,6 @@ export {
 
 export {
   EXERCISE_SUGGESTION_DEBOUNCE_MS,
-  WORKOUT_AUTOSAVE_DELAY_MS,
   WORKOUT_DRAFT_STORAGE_KEY,
   type ExerciseDraft,
   type ExerciseInsight,

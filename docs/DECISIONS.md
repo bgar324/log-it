@@ -28,9 +28,11 @@ The dashboard `Logged!` state and the workout duplicate guard use the same ident
 
 ## A Draft Is Written Only On Intent And Deleted Only Once
 
-The create-mode logger draft exists to protect typing, so it is written only after the user changes something and is deleted the moment the workout is stored. Both the debounced autosave and the `pagehide` flush check the same edit flag, which closes two failures that were live together: opening the logger stamped a draft with that day's date even when the user typed nothing, and the flush during post-save navigation resurrected the draft `markSaved()` had just deleted. A resurrected or unwanted draft pinned the logger to a past date, where every save either collided with that day's workout (`409`) or backdated the new session.
+Create-mode storage protects real input, not an empty server seed. Each user edit is persisted immediately so another window cannot clear a previously saved-looking copy while newer entered sets are still waiting in a debounce timer. Writes and removals compare the exact source value owned by the reader. Save disarms writers and clears recovery state; old page-hide handlers cannot resurrect a removed copy or delete a different workout.
 
-A recovered draft keeps its own date rather than being silently re-dated or discarded — both would destroy or falsify the user's work — and the logger resolves the conflict in the open with `Move to today` and `Discard draft`. That also covers a session that crosses midnight.
+A local copy does not prove a workout is unfinished: the server can commit before the acknowledgement reaches the phone. The private read-only status endpoint compares complete normalized contents against the owner's saved workout for that original date/type. Only an unchanged exact saved copy may be removed automatically. Different or incomplete entered sets are preserved.
+
+Recovery uses workouts and dates rather than draft jargon. Continuing old work retains its original date; starting today's plan explicitly confirms discarding old unsaved sets and loads today's template. It never re-dates yesterday's Upper session as today's Lower session. A network failure leaves entered work available and never masquerades as a successful save.
 
 ## Rest Days Require An Explicit Workout Override
 
@@ -120,7 +122,7 @@ Next.js keeps routing ownership. Home replaces Workout as the default workspace.
 
 All exercise blocks remain open. dnd-kit handles ordering without mandatory completion or a second save step for inline exercise order. Radix owns overlays. Unsaved workout/plan edits are guarded at the shared navigation boundary, and confirmed discard clears local changes before navigation. Edit cleanup must not remove a separate create-mode draft.
 
-The logger returns to its originating view, defaulting to Home. This applies to Back and successful create saves; edits still return to the saved workout. Home no longer redirects into the logger, so this exit cannot recreate the previous Already logged loop. A valid unfinished draft takes precedence over today's saved session when choosing Home's action.
+The logger returns to its originating view, defaulting to Home. This applies to Back and successful create saves; edits still return to the saved workout. Home no longer redirects into the logger. Genuinely unsaved or reviewable local work takes precedence over today's saved session, but a confirmed saved copy is cleared rather than shown as unfinished.
 
 Draft recovery remains StrictMode-safe and does not replace dirty work on server refresh. Available timer code remains clock-based; it is not reintroduced into the owner's disabled feature set.
 

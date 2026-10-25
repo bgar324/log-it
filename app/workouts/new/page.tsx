@@ -13,7 +13,7 @@ import {
   isRestDayWorkoutTypeSlug,
   parseDateKey,
 } from "@/lib/workout-splits/shared";
-import { getCurrentPacificDate } from "@/lib/workout-utils";
+import { formatDatabaseDateValue, getCurrentPacificDate } from "@/lib/workout-utils";
 import { toViewHref } from "@/app/dashboard/dashboard-client.shared";
 import { normalizeDashboardView } from "@/app/dashboard/data.view-helpers";
 
@@ -38,7 +38,8 @@ export default async function NewWorkoutPage({
     if (params.from) query.set("from", normalizeDashboardView(params.from));
     redirect(`/ionic/workouts/new${query.size ? `?${query}` : ""}`);
   }
-  const selectedDate = parseDateKey(params.date ?? "") ?? getCurrentPacificDate();
+  const explicitDate = parseDateKey(params.date ?? "");
+  const selectedDate = explicitDate ?? getCurrentPacificDate();
   const splitSeedPromise = getWorkoutLoggerInitialDataForDate(user.id, selectedDate);
   const loggedWorkoutPromise = splitSeedPromise.then((seed) => {
     const hasSplit = Boolean(seed.split.id);
@@ -76,7 +77,7 @@ export default async function NewWorkoutPage({
   // today.
   const initialData = loggedWorkout
     ? { ...splitSeed.initialData, title: "", workoutType: "", exercises: [] }
-    : plannedInitialData;
+    : plannedInitialData ?? { title: "Gym session", workoutType: "", performedAt: formatDatabaseDateValue(selectedDate), exercises: [] };
 
   // Return to the originating view, with Home as the default task exit.
   const workspaceEnabled = isWorkspaceEnabled(user);
@@ -90,6 +91,7 @@ export default async function NewWorkoutPage({
   return (
     <WorkoutLogger
       initialData={initialData}
+      followToday={explicitDate === null}
       splitTemplateData={hasSplit ? splitSeed.initialData : undefined}
       weightUnit={user.preferredWeightUnit}
       bodyWeightDisplay={bodyWeightDisplay}
