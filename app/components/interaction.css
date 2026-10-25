@@ -7,9 +7,6 @@
   --ui-motion-state: 150ms;
   --ui-motion-icon: 250ms;
   --ui-motion-resize: 300ms;
-  --ui-motion-page: 250ms;
-  --ui-motion-reveal: 400ms;
-  --ui-motion-panel-enter: 400ms;
   --ui-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 .auth-popover-content { transform-origin: var(--radix-popover-content-transform-origin); }
@@ -25,30 +22,14 @@
 @keyframes t-modal-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.96); } }
 @keyframes t-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes t-overlay-out { from { opacity: 1; } to { opacity: 0; } }
-.motion-state { display: inline-grid; align-items: center; justify-items: center; vertical-align: middle; }
-.motion-state > span { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: .35rem; }
-.motion-state-enter { animation: t-state-in var(--ui-motion-state) ease-in-out both; }
-.motion-state-exit { pointer-events: none; animation: t-state-out var(--ui-motion-state) ease-in-out both; }
-@keyframes t-state-in { from { opacity: 0; transform: translateY(4px); filter: blur(2px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
-@keyframes t-state-out { from { opacity: 1; transform: translateY(0); filter: blur(0); } to { opacity: 0; transform: translateY(-4px); filter: blur(2px); } }
-.motion-page { animation: t-page-in var(--ui-motion-page) var(--ui-motion-ease) both; }
-.motion-page[data-direction="back"] { --motion-page-x: -8px; }
-.motion-page[data-editable] { animation-name: t-form-page-in; }
-@keyframes t-form-page-in { from { opacity: 0; transform: translateX(var(--motion-page-x, 8px)); } to { opacity: 1; transform: translateX(0); } }
-@keyframes t-page-in { from { opacity: 0; transform: translateX(var(--motion-page-x, 8px)); filter: blur(3px); } to { opacity: 1; transform: translateX(0); filter: blur(0); } }
 .motion-skeleton { background: color-mix(in srgb, var(--text) 10%, transparent); animation: t-skeleton-pulse 1000ms ease-in-out infinite; }
 .motion-skeleton-static { background: color-mix(in srgb, var(--text) 10%, transparent); }
 @keyframes t-skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
 .motion-insert { animation: t-insert-in var(--ui-motion-enter) var(--ui-motion-ease) both; }
-.motion-reveal-values { animation: t-overlay-in var(--ui-motion-reveal) var(--ui-motion-ease) both; }
-.motion-panel { animation: t-panel-in var(--ui-motion-panel-enter) var(--ui-motion-ease) both; }
 .motion-check polyline, .motion-check path { animation: t-check-draw 500ms var(--ui-motion-ease) both; }
 @keyframes t-insert-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes t-panel-in { from { opacity: 0; transform: translateY(12px); filter: blur(2px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 @keyframes t-check-draw { from { stroke-dasharray: 24; stroke-dashoffset: 24; } to { stroke-dasharray: 24; stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .motion-state-enter, .motion-state-exit, .motion-page,
-  .motion-skeleton, .motion-insert, .motion-reveal-values, .motion-panel,
+  .motion-skeleton, .motion-insert,
   .motion-check polyline, .motion-check path { animation: none !important; }
-  .motion-state-exit { display: none; }
 }

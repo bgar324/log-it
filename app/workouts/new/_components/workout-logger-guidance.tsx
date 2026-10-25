@@ -1,7 +1,6 @@
 "use client";
 
 import type { WorkoutLoggerExerciseEntry } from "../workout-logger.types";
-import { MotionReveal } from "@/app/components/motion-reveal";
 import { formatCompareDayLabel, formatLoggedSetSnapshot } from "../workout-logger.formatters";
 import { styles } from "../workout-logger.styles";
 import { WorkoutLoggerGuidanceSkeleton } from "./workout-logger-guidance-skeleton";
@@ -13,9 +12,10 @@ type GuidanceProps = Pick<WorkoutLoggerExerciseEntry, "exercise" | "insightState
 export function WorkoutLoggerGuidance({ exercise, insightState, weightUnit, onRetry }: GuidanceProps) {
   if (!exercise.name.trim() || !insightState || insightState.status === "idle") return null;
   return (
-    <MotionReveal loading={insightState.status === "loading"} label="exercise guidance">
+    <div aria-busy={insightState.status === "loading"}>
+      {insightState.status === "loading" ? <span role="status" className="sr-only">Loading exercise guidance…</span> : null}
       <GuidanceContent exercise={exercise} insightState={insightState} weightUnit={weightUnit} onRetry={onRetry} />
-    </MotionReveal>
+    </div>
   );
 }
 

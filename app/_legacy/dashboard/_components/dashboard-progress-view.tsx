@@ -2,7 +2,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { countLabel, daysAgoLabel } from "@/app/_legacy/dashboard/dashboard-client.shared";
 import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
 import type { DashboardClientData } from "@/app/dashboard/dashboard-types";
@@ -157,7 +156,6 @@ export function DashboardProgressView({
                       {daysAgoLabel(exercise.daysSinceLastHit)}
                     </p>
                   </div>
-                  <LinkPendingOverlay />
                 </Link>
               ))}
             </div>

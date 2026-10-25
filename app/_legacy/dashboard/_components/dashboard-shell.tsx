@@ -18,7 +18,6 @@ import { type ComponentType, type ReactNode } from "react";
 import type { DashboardView } from "@/app/dashboard/dashboard-types";
 import { AppShell, AppTopBar, type AppNavUser } from "@/app/_legacy/components/app-nav";
 import { AppBrand } from "@/app/components/ui";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
 
 type SidebarIcon = ComponentType<{
@@ -156,7 +155,6 @@ export function DashboardShell({
           >
             <Plus className={styles.sidebarActionIcon} strokeWidth={1.9} />
             <span className={sidebarCollapsed ? styles.navLabelCollapsed : ""}>Log workout</span>
-            <LinkPendingOverlay />
           </Link>
 
           <div className={styles.sidebarDivider} />

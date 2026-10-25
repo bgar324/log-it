@@ -66,17 +66,15 @@ test("week reordering moves a workout with two taps", async () => {
     );
     assert.ok(source);
     await mounted.click(source);
-    assert.match(dialog.textContent ?? "", /Push selected\. Choose a day\./);
 
     const destination = dialog.querySelector<HTMLElement>(
       'button[aria-label="Move Push to Tuesday"]',
     );
     assert.ok(destination);
     await mounted.click(destination);
-    assert.match(dialog.textContent ?? "", /Choose a workout to move\./);
 
     const save = Array.from(dialog.querySelectorAll<HTMLElement>("button")).find(
-      (button) => button.textContent?.trim() === "Save order",
+      (button) => button.textContent?.trim() === "Apply order",
     );
     assert.ok(save);
     await mounted.click(save);

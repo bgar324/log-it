@@ -427,9 +427,7 @@ export function DashboardWorkoutsView({
       ) : null}
 
       {selectedDay ? (
-        // Deliberately unkeyed: the day's own section restarts the entrance,
-        // while the sets already read stay in the detail cache, so stepping
-        // back a day costs nothing.
+        // Keep the controller mounted while cached day details switch in place.
         <DashboardDaySessions
           day={selectedDay}
           weightUnit={displayWeightUnit}

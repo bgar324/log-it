@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { LinkPendingOverlay } from "./components/link-pending";
 import { PublicFooter, PublicHeader } from "./components/public-site";
 import { getSessionClaims } from "@/lib/auth";
 import styles from "./landing.module.css";
@@ -33,7 +32,6 @@ export default async function Home() {
               >
                 Start a workout
                 <ArrowRight aria-hidden="true" strokeWidth={1.8} />
-                <LinkPendingOverlay />
               </Link>
             </div>
           </div>

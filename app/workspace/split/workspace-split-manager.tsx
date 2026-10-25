@@ -218,7 +218,7 @@ export function WorkspaceSplitManager({
         feedback={isNarrow && isDayOpen ? null : feedback}
         onSelectSplit={requestSelectSplit}
         onCreateSplit={() => void state.createSplit()}
-        onRenameSplit={(name) => void state.renameSplit(name)}
+        onRenameSplit={(name) => state.renameSplit(name)}
         onActivateSplit={() => void state.activateSplit(state.split.id ?? "")}
         onCopySplit={() => void state.copySplit()}
         onDeleteSplit={requestDeleteSplit}
@@ -284,7 +284,7 @@ export function WorkspaceSplitManager({
         onCancel={() => setIsMoveWorkoutsOpen(false)}
         onSave={(orderedWeekdays) => {
           setIsMoveWorkoutsOpen(false);
-          void state.saveDayOrder(orderedWeekdays);
+          state.applyDayOrder(orderedWeekdays);
         }}
       />
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useTransition, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -44,9 +44,7 @@ export function BackButton({
 
   return (
     <Link href={fallbackHref} prefetch={true} className={className} onClick={handleClick} aria-busy={isPending}>
-      {isPending
-        ? <Loader2 className={`${iconClassName} animate-spin`} aria-hidden="true" />
-        : <ArrowLeft className={iconClassName} strokeWidth={1.9} />}
+      <ArrowLeft className={iconClassName} strokeWidth={1.9} />
       {showLabel ? <span>{label}</span> : null}
     </Link>
   );

@@ -134,7 +134,7 @@ The references supply structure, not fabricated data: compact activity calendars
 
 ## Preserve intent across view and loading boundaries
 
-Workout return context is normalized once and carried through Open, Edit, save, and Back. Loading fallbacks use the same context. Back restores the loaded browser-history entry when its URL exactly matches the intended destination; otherwise it uses the fully prefetched link. It remains a real link before hydration, and the shared boundary guards unsaved edits after hydration. Cold returns show immediate pending feedback. Successful saves still refresh route data. Page entry has no fade that delays its appearance.
+Workout return context is normalized once and carried through Open, Edit, save, and Back. Loading fallbacks use the same context. Back restores the loaded browser-history entry when its URL exactly matches the intended destination; otherwise it uses the fully prefetched link. It remains a real link before hydration, and the shared boundary guards unsaved edits after hydration. Pending returns expose a busy state while retaining the Back label and arrow. Successful saves still refresh route data. Page entry has no fade that delays its appearance.
 
 Split navigation checks every dirty folder, not only the selected one. Renaming is disabled while a save is pending. Logger actions remain fixed and visible, with Save labelled explicitly; pending saves disable repeated submission and conflicting edits.
 
@@ -150,11 +150,15 @@ The visual direction is monochrome. Home loses the day dot, unfinished-session s
 
 ## Use Transitions.dev as the motion reference
 
-The owner requested a predominantly Transitions.dev motion language instead of the prior in-house treatment. Its free recipes provide easing, timing, scales, distances, status swaps, and loading handoffs. Existing Radix and Swiper components retain lifecycle and interaction ownership; no additional animation runtime is needed.
+The owner requested a predominantly Transitions.dev motion language instead of the prior in-house treatment. Its free recipes supply easing and timing for menus, dialogs, navigation indicators, paging, resizing, and row movement. Existing Radix and Swiper components retain lifecycle and interaction ownership; no additional animation runtime is needed.
 
-The reference demonstrations are not application state machines. Current request state updates immediately, outgoing status visuals are inaccessible and transient, and loading handoffs follow real readiness rather than a mandatory pulse. Reduced-motion preferences suppress JavaScript animation as well as CSS. Editable values and recorded numbers do not blur or roll. Overlay focus remains unchanged on open and close to preserve phone keyboard behavior.
+The owner subsequently rejected the layered loading treatment. Ready content, cached days, and current status labels now render immediately. Spinner veils, readiness fades, whole-carousel reentry, and blurred outgoing status copies are removed rather than replaced with another motion system. Skeletons remain for genuinely pending data. Reduced-motion preferences suppress JavaScript animation as well as CSS. Editable values and recorded numbers do not blur or roll. Overlay focus remains unchanged on open and close to preserve phone keyboard behavior.
 
 Split draft exercise IDs must survive row moves independently of order. These IDs remain client-only because the save serializer sends exercise names and set counts, not exercise IDs. Logger height observation follows actual active-content geometry rather than every entries-array render. Route Back keeps exact-history restoration and never waits for presentation.
+
+## Keep one explicit split save boundary
+
+Rename, weekday moves, and exercise ordering update local split drafts. Apply order accepts a dialog draft; it does not persist the plan or workout. The main Save is the persistence boundary, so a rename cannot silently commit unrelated edits. Saved snapshots and dirty keys remain per split. Add exercise is visible below the list, and direct row removal requires confirmation instead of a second editing mode.
 
 ## Learn personal anchor changes, retain explicit output limits
 

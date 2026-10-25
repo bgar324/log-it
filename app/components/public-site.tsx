@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { AppBrand } from "./ui";
 import { ThemeToggle } from "./theme-toggle";
-import { LinkPendingOverlay } from "./link-pending";
 import styles from "../landing.module.css";
 export function PublicHeader() {
   return (
@@ -29,7 +28,6 @@ export function PublicHeader() {
           className={`${styles.headerCta} relative`}
         >
           Register
-          <LinkPendingOverlay />
         </Link>
       </div>
     </header>

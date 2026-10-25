@@ -3,7 +3,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { styles } from "@/app/_legacy/exercises/[exerciseKey]/exercise-detail.styles";
 
 const PAGE_SIZE = 5;
@@ -53,7 +52,6 @@ export function SessionBreakdownList({ sessions }: SessionBreakdownListProps) {
                 {session.volumeLabel}
               </p>
             </div>
-            <LinkPendingOverlay />
           </Link>
         ))}
       </div>

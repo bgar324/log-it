@@ -106,7 +106,7 @@ export function IonicSplit({ data, onRefresh }: IonicSplitProps) {
               buttons: [
                 { text: "Cancel", role: "cancel" },
                 {
-                  text: "Save",
+                  text: "Apply",
                   handler: (value: { name?: string }) => {
                     const nextName = (value?.name ?? "").trim();
 
@@ -114,7 +114,7 @@ export function IonicSplit({ data, onRefresh }: IonicSplitProps) {
                       return;
                     }
 
-                    void state.renameSplit(nextName);
+                    state.renameSplit(nextName);
                   },
                 },
               ],
@@ -269,7 +269,7 @@ export function IonicSplit({ data, onRefresh }: IonicSplitProps) {
             // Our state re-renders the list, so Ionic must leave the dragged
             // node where it was.
             event.detail.complete(false);
-            void state.saveDayOrder(weekdays);
+            state.applyDayOrder(weekdays);
           }}
         >
           {state.split.days.map((day) => {

@@ -11,8 +11,6 @@ const NO_SUGGESTIONS: string[] = [];
 type ExerciseTemplateRowProps = {
   exercise: WorkoutSplitExerciseTemplate;
   searchResults: string[];
-  /** True while the list is in remove mode, which is what reveals the bin. */
-  isRemoveMode: boolean;
   /** True while a save is in flight: the row shows but nothing edits. */
   isDisabled: boolean;
   animateEntry?: boolean;
@@ -32,7 +30,6 @@ type ExerciseTemplateRowProps = {
 export function ExerciseTemplateRow({
   exercise,
   searchResults,
-  isRemoveMode,
   isDisabled,
   animateEntry = false,
   onNameChange,
@@ -90,19 +87,16 @@ export function ExerciseTemplateRow({
         <span className={splitStyles.exerciseSetsLabel}>sets</span>
       </label>
 
-      {/* Delete lives behind the list's remove mode, so a stray tap while
-          editing a name cannot drop an exercise. */}
-      {isRemoveMode ? (
-        <button
-          type="button"
-          aria-label={`Remove ${name}`}
-          className={`${splitStyles.exerciseRemoveButton} motion-insert`}
-          onClick={onRemove}
-          disabled={isDisabled}
-        >
-          <Trash2 className={splitStyles.inlineIcon} strokeWidth={1.9} />
-        </button>
-      ) : null}
+      <button
+        type="button"
+        aria-label={`Remove ${name}`}
+        className={splitStyles.exerciseRemoveButton}
+        onPointerDown={event => event.preventDefault()}
+        onClick={onRemove}
+        disabled={isDisabled}
+      >
+        <Trash2 className={splitStyles.inlineIcon} strokeWidth={1.9} />
+      </button>
     </div>
   );
 }

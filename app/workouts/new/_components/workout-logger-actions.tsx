@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowUpDown, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
-import { MotionState } from "@/app/components/motion-state";
+import { ArrowUpDown, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import { styles } from "../workout-logger.styles";
 
@@ -47,11 +46,11 @@ export function WorkoutLoggerActions({
         </button>
       ) : null}
       <button type="button" className={styles.toolSave} aria-label={submitLabel} title={submitLabel}
-        disabled={isSaving} onPointerDown={event => event.preventDefault()} onClick={onSave}>
-        <MotionState stateKey={isSaving ? "saving" : "save"}>
-          {isSaving ? <Loader2 className={styles.spinningIcon} /> : <Save className={styles.toolIcon} strokeWidth={1.9} />}
+        disabled={isSaving} aria-busy={isSaving} onPointerDown={event => event.preventDefault()} onClick={onSave}>
+        <span className="inline-flex items-center justify-center gap-[0.35rem]">
+          <Save className={styles.toolIcon} strokeWidth={1.9} />
           <span>{isSaving ? "Saving" : "Save"}</span>
-        </MotionState>
+        </span>
       </button>
     </div>
   );

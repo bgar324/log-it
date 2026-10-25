@@ -1,11 +1,6 @@
 import { actionOutline } from "@/app/components/action.styles";
 import { daySelectorStyles } from "@/app/components/day-selector.styles";
 
-// One short, purposeful entrance shared by the day content and its states, so
-// switching days reads as a change rather than a repaint. The global
-// reduced-motion rule flattens it.
-const contentEnter = "motion-page";
-
 export const historyStyles = {
   root: "flex min-w-0 flex-col gap-[0.9rem]",
 
@@ -14,7 +9,7 @@ export const historyStyles = {
   monthHeaderRow: "flex min-w-0 items-center justify-between gap-[0.6rem]",
   monthTitle:
     "m-0 min-w-0 text-[clamp(1.5rem,6vw,1.75rem)] leading-[1.15] tracking-[-0.03em] font-[540] text-[var(--text)]",
-  monthTitleMotion: `inline-block ${contentEnter}`,
+  monthTitleMotion: "inline-block",
   monthNavigation: "flex shrink-0 items-center gap-[0.25rem]",
   monthButton: daySelectorStyles.arrowButton,
   monthIcon: daySelectorStyles.arrowIcon,
@@ -28,7 +23,7 @@ export const historyStyles = {
   dayNumber: daySelectorStyles.value,
 
   // Selected day.
-  day: "flex min-w-0 flex-col gap-[0.6rem] motion-reveal-values",
+  day: "flex min-w-0 flex-col gap-[0.6rem]",
 
   sessionList: "flex min-w-0 flex-col gap-[0.6rem]",
   session:
@@ -36,8 +31,7 @@ export const historyStyles = {
   sessionHead: "flex min-w-0 items-start justify-between gap-[0.6rem]",
   sessionTitle:
     "m-0 min-w-0 text-[1.0625rem] leading-[1.25] tracking-[-0.02em] font-[560] text-[var(--text)]",
-  // `relative` positions the LinkPendingOverlay this renders inside. The
-  // negative margins keep the 44px target without padding the card open.
+  // The negative margins keep the 44px target without padding the card open.
   sessionEdit:
     `relative -mt-[0.35rem] -mr-[0.35rem] flex h-[2.75rem] w-[2.75rem] shrink-0 items-center justify-center rounded-full text-[var(--muted)] [touch-action:manipulation] transition-colors duration-[var(--ui-motion-enter)] ease-[var(--ui-motion-ease)]`,
   sessionEditIcon: "h-[1.05rem] w-[1.05rem]",
@@ -54,7 +48,7 @@ export const historyStyles = {
     "min-w-0 truncate text-[0.9375rem] text-[var(--text)] [font-variant-numeric:lining-nums_tabular-nums]",
   setDuration: "text-[0.75rem] text-[var(--muted)]",
 
-  detailState: `flex flex-col gap-[0.5rem] ${contentEnter}`,
+  detailState: "flex flex-col gap-[0.5rem]",
   detailMessage: "m-0 text-[0.8125rem] text-[var(--muted)]",
   detailRetry: `${actionOutline} self-start`,
 

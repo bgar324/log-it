@@ -15,7 +15,6 @@ import { forgetWorkoutPersonalRecords } from "@/app/workouts/workout-personal-re
 import { invalidateWorkoutDetails } from "@/app/dashboard/workout-detail-cache";
 import posthog from "posthog-js";
 import { copyTextToClipboard } from "@/lib/clipboard";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { styles } from "@/app/_legacy/workouts/[workoutId]/workout-detail.styles";
 
 type WorkoutDetailActionsProps = {
@@ -106,7 +105,6 @@ export function WorkoutDetailActions({
           onClick={event => { if (busyRef.current) event.preventDefault(); }}>
           <SquarePen className={styles.actionButtonIcon} strokeWidth={1.9} />
           <span className={styles.actionButtonLabel}>Edit workout</span>
-          <LinkPendingOverlay />
         </Link>
         <button
           type="button"
@@ -145,7 +143,6 @@ export function WorkoutDetailActions({
             >
               <SquarePen className={styles.actionButtonIcon} strokeWidth={1.9} />
               <span>Edit workout</span>
-              <LinkPendingOverlay />
             </Link>
             <button
               type="button"

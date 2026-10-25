@@ -99,8 +99,8 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - The logger metadata line shows the date and workout type. Its heading is the actual workout name with an adjacent pencil for inline editing. Existing-workout dates and types remain editable by tapping the metadata. Add set sits at the logging card's bottom. The floating plus is the only Add exercise action; the exercise ellipsis menu is removed.
 - Accounts with rest timing enabled have a Rest timer control beside Add set, not another floating circle. Presets, pause/resume, extra time, and skip use one logger-owned clock that survives exercise changes. The owner's timer remains hidden.
 - The split library opens first, without Back, an active-plan heading, or explanatory subtitle. Finder-style folder graphics show the active plan with a full monochrome fill; inactive folders are quiet outlines. Names and concise counts sit below them. A dashed New split folder is last. Activation remains in the long-press/options menu, not a card footer, and current state is also available through `aria-current`.
-- Day edits remain in the library when another folder opens. Leaving warns about any dirty split, not only the selected one. Pending saves disable renaming and other conflicting mutations.
-- The inner split editor is one mobile-first column. When a folder is open, the page header shows a Back arrow beside Splits; it returns to the folders without discarding edits. The sticky inner header contains the split name, Save, and options. History is the day-selector canon via `day-selector.styles.ts`, with wider Split buttons only for workout names. There is no Today marker or repeated weekday inside the exercise container. Exercise rows use shared list spacing and hairlines. Add exercise lives in the three-dot menu beside the workout name, not below the list. No day portal or body scroll lock.
+- Rename, weekday ordering, and exercise edits remain local until the single split Save. Drafts survive folder switches. Leaving warns about any dirty split, not only the selected one. Pending saves disable renaming and other conflicting mutations.
+- The inner split editor is one mobile-first column. When a folder is open, the page header shows a Back arrow beside Splits; it returns to the folders without discarding edits. The sticky inner header contains the split name, Save, and options. History is the day-selector canon via `day-selector.styles.ts`, with wider Split buttons only for workout names. There is no Today marker or repeated weekday inside the exercise container. Exercise rows use shared list spacing and hairlines. Add exercise is visible below the list; reorder sits beside the workout name; row removal opens confirmation. There is no Day options menu, remove mode, day portal, or day-editor body scroll lock.
 
 ### Shared controls and feedback
 
@@ -110,6 +110,7 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 - Exercise suggestions complete a tap on pointer release, even if input blur has already closed the list. Dragging, canceled gestures, and unmounting the picker component cancel selection. Selection preserves the name field's focus and existing set values.
 - Menus and dialogs retain outgoing content for their actual exit animation, then unmount. Outgoing content is immediately inert. Do not add per-page exit timers.
 - Feedback belongs beside the affected control, not in floating toasts. Pending controls state progress; updated visible data or return navigation confirms ordinary saves. Errors persist until retry, dismissal, or a relevant state change. Logger errors sit above its fixed action rows without covering Save or the pager, and explicit recovery actions remain clickable.
+- Navigation links retain their label and icon during pending navigation, without spinner veils. Back and Save icons remain stable; saves use plain pending text and a disabled, busy state rather than rotating icons. Ready content and current status labels render in place without blur, crossfades, or outgoing copies. Credential Cancel and section switching clear drafts; request failures preserve them for retry.
 - Profile and Settings use rows with focused editing dialogs. Destructive actions remain distinct and confirmed. A preference write uses saved profile values, never another form's unsaved draft.
 - Data rows do not gain hover-only affordances. Numeric fields have no native steppers. Selects use the shared inset caret.
 - Tailwind arbitrary values must be literal strings. State variants such as `aria-pressed:` and `data-selected:` must win through selector specificity, not class-string order.
@@ -134,11 +135,11 @@ The logger has a visible Finish action, an exercise switcher, and an active set 
 | Menus | Origin-aware scale `.97` to `1`, 250ms in; `.99` exit over 150ms |
 | Dialogs | Scale `.96` to `1`, 250ms in and 150ms out; Radix retains presence |
 | Tabs and exercise paging | 250ms smooth-out; the dock moves a real pill with `transform` |
-| Split folder/editor | 8px directional entry over 250ms; 3px blur only on noneditable content |
-| Save and rest-action state | 150ms, 4px vertical text/icon swap with 2px blur; semantic state changes immediately |
+| Split folder/editor | Immediate content; no entry fade, slide, or blur |
+| Save and rest-action state | Immediate current label and icon; no text swap animation |
 | Card and sidebar sizing | 300ms, with one geometry owner per container |
 | Reorder | Commit immediately, then interpolate stable keyed rows; a later move interrupts the current one |
-| Loading | 1s opacity pulse; static tiny calendar dots; readiness triggers a 400ms reveal, not a timer |
+| Loading | 1s skeleton opacity pulse; static tiny calendar dots; ready content appears immediately |
 
 Do not blur editable values, roll weights/reps/rest digits, wait for a skeleton cycle, or delay Back/save cleanup for animation. Reduced motion cancels JavaScript movement as well as CSS movement. Active charts and their tooltips render without data-reveal animation. Theme palette interpolation must not override component transition properties.
 
@@ -195,4 +196,4 @@ Other facts worth knowing before editing here:
 
 - Below 52rem, all surfaces suppress focus outlines and box-shadow rings, including native input focus. Focus behavior is unchanged; desktop focus-visible indicators remain. The global override intentionally takes precedence over component focus styles.
 - **What remains because it is interaction rather than semantics:** `[touch-action:manipulation]`, pointer capture where direct manipulation still requires it, body scroll locks, `Escape`-to-close, scrim click-to-dismiss, `tabIndex={-1}` on invisible scrim buttons, and the 44px/16px phone minimums.
-- **Move workouts is the reorder canon.** Weekday and exercise ordering use the same shared dialog: select an item, choose its destination, then Save order. Selected rows offer Deselect and other rows offer Move here. No drag handles or pointer-capture reordering.
+- **Move workouts is the reorder canon.** Weekday and exercise ordering use the same shared dialog: select an item, choose its destination, then Apply order. This edits the parent draft, not the server; the main Save persists it. Selected rows offer Deselect and other rows offer Move here. No drag handles or pointer-capture reordering.

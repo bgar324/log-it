@@ -83,7 +83,6 @@ export const styles = {
   todayNote: "m-0 text-[0.9375rem] text-[var(--muted)]",
   todayActionRow:
     "mt-[0.72rem] flex flex-col gap-[0.5rem] min-[620px]:flex-row min-[620px]:items-center",
-  // `relative` positions the LinkPendingOverlay these render inside.
   todayAction: `${actionFilled} relative`,
   todayQuietAction: `${actionQuiet} relative`,
   todayLogged:

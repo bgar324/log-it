@@ -22,8 +22,6 @@ export const dataListStyles = {
   statLineMuted: "m-[0.1rem_0_0] text-[0.875rem] text-[var(--muted)]",
   list: "mt-[0.5rem] flex flex-col",
   row: `flex min-w-0 items-baseline justify-between gap-[0.75rem] border-b ${hairline} py-[0.62rem] last:border-b-0 last:pb-0`,
-  // A row-shaped `<Link>`, so it keeps the row's own geometry; `relative`
-  // positions the pending overlay these render inside.
   rowLink:
     "relative cursor-pointer text-inherit no-underline transition-[color] duration-150",
   rowMain: "flex min-w-0 flex-col gap-[0.12rem]",

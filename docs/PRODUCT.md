@@ -8,7 +8,7 @@ The approved training interface is available to every authenticated user. Public
 
 Home is personal and plan-first. History browses recorded days. There is no separate Analysis page. Existing per-exercise detail graphs remain available; no replacement Home graph has been added. The logger shows one exercise at a time without requiring set completion. Saved splits use folders with separate Open and Set active actions.
 
-Motion follows Transitions.dev across menus, confirmations, navigation indicators, Split folders, row movement, save feedback, and loading. It explains changes without delaying actions. Inputs and recorded numbers remain readable; reduced motion preserves identical state and behavior. Logger Back and save navigation do not wait for an exit animation.
+Motion follows Transitions.dev for menus, confirmations, navigation indicators, row movement, and resizing. Ready content and current status labels appear immediately, without blur or entry fades. Navigation links do not cover their labels with spinner overlays. Inputs and recorded numbers remain readable; reduced motion preserves identical state and behavior. Logger Back and save navigation do not wait for an exit animation.
 
 ## Dormant Nova workspace
 
@@ -41,6 +41,7 @@ Ionic account, nutrition, split, history, and progress screens use the existing 
 - Users register and sign in with username/password credentials.
 - First name, last name, email, username, preferred weight unit, public profile setting, and avatar are profile-level user data.
 - The profile view is one list: identity (tappable avatar, name with a pencil that opens an edit dialog, `@username`, join month, public/private state), an account section of rows (email, password), and a bordered red danger zone holding account deletion. The edit dialog covers first name, last name, username, and profile visibility. Email and password changes open inline from their row; both require the current password. Account deletion is confirmed in a modal by typing the account username, is permanent, and removes all workouts, splits, and nutrition data.
+- Canceling an email or password change, or switching between them, clears the credential draft and restores the saved email. Failed requests retain entered values for retry.
 - Usernames are editable and validated by one shared rule (`lib/username.ts`, 3–24 letters, numbers, or underscores). The server rejects duplicates and relies on the unique index for the race. Changing a username changes the `/u/[username]` public URL; the previous one stops resolving.
 - Sign-out lives in Profile and remains in the desktop sidebar. It is absent from the phone bottom bar and respects the existing navigation boundary.
 - A chosen profile photo applies immediately rather than waiting for a separate save.
@@ -96,8 +97,8 @@ Ionic account, nutrition, split, history, and progress screens use the existing 
 - Duplicate weekdays are rejected by split payload normalization.
 - The owner Split view opens with the saved-folder library. Opening a folder goes directly to its inline editor; it never activates the split. Back returns to the folders without discarding local edits.
 - The inner editor has the split name, one Save action, and a horizontally scrollable day selector. Phone and desktop use the same single-editor flow: no intermediate week overview, separate day screen, or full-screen day modal.
-- Split options retain rename, activation, copy, deletion, discard, and day reordering. Day reordering uses fixed weekday slots and deliberate source/destination selection; Save order persists the reordered plan. Ordinary day edits use the one split Save action. Pending saves disable conflicting edits.
-- Exercise rows keep editable names and labelled numeric set counts, separated by quiet hairlines. Add exercise, reordering, and the explicit remove mode live in the three-dot Day options menu beside the workout name. The menu remains available for empty training days. Removing an exercise is only available after entering remove mode. Split weekday moves, Split exercise order, and logger exercise order share one select-then-destination dialog with Cancel and Save order.
+- Split options retain rename, activation, copy, deletion, discard, and day reordering. Rename and all ordering changes edit the local plan; only the main Save persists them. Day reordering uses fixed weekday slots and deliberate source/destination selection. Pending saves disable conflicting edits.
+- Exercise rows keep editable names and labelled numeric set counts, separated by quiet hairlines. Add exercise is visible below the list on training days, including empty ones. A reorder control sits beside the workout name. Each row exposes removal with confirmation instead of a separate editing mode. Split weekday moves, Split exercise order, and logger exercise order share one select-then-destination dialog with Cancel and Apply order; the parent Save persists the accepted order.
 - Split exercises have display names, slugs, set targets, and one-based ordering.
 - Saving a split replaces existing split days/exercises for that split.
 - Deleting the active split activates the most recently updated remaining split when one exists.

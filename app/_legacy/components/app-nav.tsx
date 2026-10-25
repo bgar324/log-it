@@ -26,7 +26,6 @@ import {
 } from "react";
 import { toViewHref } from "@/app/_legacy/dashboard/dashboard-client.shared";
 import type { DashboardView } from "@/app/dashboard/dashboard-types";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
 import {
   type PostHogUser,
   useIdentifyPostHogUser,
@@ -210,7 +209,6 @@ export function AppTabBar({
       >
         <House className={navStyles.tabIcon} strokeWidth={1.9} />
         <span className={navStyles.tabLabel}>{HOME_TAB.label}</span>
-        <LinkPendingOverlay />
       </Link>
 
       <Link
@@ -219,7 +217,6 @@ export function AppTabBar({
         aria-label="Log workout"
       >
         <Plus className={navStyles.tabActionIcon} strokeWidth={2} />
-        <LinkPendingOverlay />
       </Link>
 
       <Link
@@ -231,7 +228,6 @@ export function AppTabBar({
       >
         <EndTabIcon className={navStyles.tabIcon} strokeWidth={1.9} />
         <span className={navStyles.tabLabel}>{endTab.label}</span>
-        <LinkPendingOverlay />
       </Link>
     </nav>
   );

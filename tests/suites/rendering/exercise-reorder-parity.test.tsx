@@ -72,7 +72,7 @@ for (const source of ["split", "logger"] as const) {
       await mounted.click(button("Select Bench press from position 1 to move"));
       await mounted.click(button("Move Bench press to position 3"));
       assert.equal(saved, null, "choosing a destination must not save the parent yet");
-      await mounted.click(button("Save order"));
+      await mounted.click(button("Apply order"));
       assert.deepEqual(saved, source === "split" ? [2, 3, 1] : ["row", "raise", "bench"]);
     } finally { mounted.unmount(); }
   });

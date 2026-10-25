@@ -7,7 +7,6 @@ import { usePacificDay } from "@/app/hooks/use-pacific-day";
 import { ArrowRight, ArrowUpRight, Check, Play } from "lucide-react";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
 import { toDatabaseDateFromInput } from "@/lib/workout-utils";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { MonthlyActivityCalendar } from "@/app/components/activity-calendar";
 import { useStoredWorkoutDraft } from "@/app/workouts/new/_hooks/use-stored-workout-draft";
 import { formatWorkoutLoggerDateLabel } from "@/app/workouts/new/workout-logger.formatters";
@@ -103,7 +102,6 @@ export function DashboardOverviewView({ overview, todayPlan, greetingName, weigh
           <Link href={primary.href} className={styles.primary} data-completed={Boolean(completed) && !draft}>
             <span>{primary.label}</span>
             {completed && !draft ? <Check size={19} strokeWidth={1.8} /> : <Play size={17} strokeWidth={1.8} />}
-            <LinkPendingOverlay />
           </Link>
           {!hasPlan && !todayPlan.isRestDay && !completed && !draft ? (
             <button type="button" className={styles.quiet} onClick={() => onNavigateToView("split")}>Set up a split <ArrowRight size={16} /></button>

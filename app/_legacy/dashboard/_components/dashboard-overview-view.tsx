@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { WorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
 import type { DashboardClientData, DashboardView } from "@/app/dashboard/dashboard-types";
 import { countLabel } from "@/app/_legacy/dashboard/dashboard-client.shared";
@@ -60,18 +59,15 @@ export function DashboardOverviewView({
           ) : todayPlan.isRestDay ? (
             <Link href="/workouts/new?from=dashboard" className={styles.todayQuietAction}>
               Log an unscheduled workout
-              <LinkPendingOverlay />
             </Link>
           ) : hasSplit ? (
             <Link href="/workouts/new?from=dashboard" className={styles.todayAction}>
               {actionLabel}
-              <LinkPendingOverlay />
             </Link>
           ) : (
             <>
               <Link href="/workouts/new?from=dashboard" className={styles.todayAction}>
                 Log a workout
-                <LinkPendingOverlay />
               </Link>
               <button
                 type="button"

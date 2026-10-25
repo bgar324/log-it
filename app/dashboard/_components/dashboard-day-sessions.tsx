@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { Pencil } from "lucide-react";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
-import { MotionReveal } from "@/app/components/motion-reveal";
 import type { WeightUnit } from "@/lib/weight-unit";
 import { workoutReturnQueryForDay } from "@/app/workouts/workout-return";
 import { WorkoutPersonalRecords } from "@/app/workouts/workout-personal-records";
@@ -38,7 +36,6 @@ export function DashboardDaySessions({ day, weightUnit, userId }: DashboardDaySe
               <h3 className={historyStyles.sessionTitle}>
                 <Link href={`/workouts/${workout.id}${returnQuery}`} className="relative -my-3 inline-block min-w-11 py-3 [touch-action:manipulation]" aria-label={`Open ${workout.title}`}>
                   {workout.title}
-                  <LinkPendingOverlay />
                 </Link>
               </h3>
               <Link
@@ -51,19 +48,19 @@ export function DashboardDaySessions({ day, weightUnit, userId }: DashboardDaySe
                   className={historyStyles.sessionEditIcon}
                   strokeWidth={1.9}
                 />
-                <LinkPendingOverlay />
               </Link>
             </header>
             <WorkoutPersonalRecords userId={userId} workoutId={workout.id} weightUnit={weightUnit} />
 
-            <MotionReveal loading={!details[workout.id] || details[workout.id].status === "loading"} label="session details">
+            <div aria-busy={!details[workout.id] || details[workout.id].status === "loading"}>
+            {!details[workout.id] || details[workout.id].status === "loading" ? <span role="status" className="sr-only">Loading session details…</span> : null}
             <SessionDetail
               state={details[workout.id]}
               exerciseCount={workout.exerciseCount}
               setCount={workout.setCount}
               onRetry={() => retry(workout.id)}
             />
-            </MotionReveal>
+            </div>
           </article>
         ))}
       </div>

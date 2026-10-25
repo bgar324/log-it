@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AppNavUser } from "@/app/components/app-nav";
-import { MotionReveal } from "@/app/components/motion-reveal";
 import { useIdentifyPostHogUser } from "@/app/hooks/use-posthog-user";
 import { SplitManager } from "./split-manager";
 import { VIEW_TITLES, toViewHref } from "./dashboard-client.shared";
@@ -603,7 +602,8 @@ export function DashboardClient({
       }
     >
       {activeView === "dashboard" ? (
-        <MotionReveal key="dashboard" className={viewClassName} loading={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("dashboard")} label="home">
+        <div key="dashboard" className={viewClassName} aria-busy={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("dashboard")}>
+          {!workspaceEnabled && activeViewIsLoading && !loadedViews.has("dashboard") ? <span role="status" className="sr-only">Loading home…</span> : null}
           {activeViewError ? (
             <ViewError message={activeViewError} onRetry={() => void loadViewData("dashboard", { showError: true, showLoading: true })} />
           ) : activeViewIsLoading && !loadedViews.has("dashboard") ? (
@@ -619,11 +619,12 @@ export function DashboardClient({
               onNavigateToView={navigateToView}
             />
           )}
-        </MotionReveal>
+        </div>
       ) : null}
 
       {activeView === "workouts" ? (
-        <MotionReveal key="workouts" className={viewClassName} loading={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("workouts")} label="history">
+        <div key="workouts" className={viewClassName} aria-busy={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("workouts")}>
+          {!workspaceEnabled && activeViewIsLoading && !loadedViews.has("workouts") ? <span role="status" className="sr-only">Loading history…</span> : null}
           <WorkoutsView
             workoutMonths={dashboardData.workoutMonths}
             asOfDate={dashboardData.overview.asOfDate}
@@ -651,7 +652,7 @@ export function DashboardClient({
               })
             }
           />
-        </MotionReveal>
+        </div>
       ) : null}
 
       {workspaceEnabled && activeView === "progress" ? (
@@ -669,7 +670,8 @@ export function DashboardClient({
       ) : null}
 
       {activeView === "nutrition" ? (
-        <MotionReveal key="nutrition" className={viewClassName} loading={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("nutrition")} label="nutrition">
+        <div key="nutrition" className={viewClassName} aria-busy={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("nutrition")}>
+          {!workspaceEnabled && activeViewIsLoading && !loadedViews.has("nutrition") ? <span role="status" className="sr-only">Loading nutrition…</span> : null}
           {activeViewError ? (
             <ViewError message={activeViewError} onRetry={() => void loadViewData("nutrition", { showError: true, showLoading: true })} />
           ) : activeViewIsLoading && !loadedViews.has("nutrition") ? (
@@ -681,11 +683,12 @@ export function DashboardClient({
               onNutritionChange={handleNutritionChange}
             />
           )}
-        </MotionReveal>
+        </div>
       ) : null}
 
       {activeView === "split" ? (
-        <MotionReveal key="split" className={viewClassName} loading={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("split")} label="splits">
+        <div key="split" className={viewClassName} aria-busy={!workspaceEnabled && activeViewIsLoading && !loadedViews.has("split")}>
+          {!workspaceEnabled && activeViewIsLoading && !loadedViews.has("split") ? <span role="status" className="sr-only">Loading splits…</span> : null}
           <section className={workspaceEnabled ? "min-w-0" : styles.plainSection}>
             {activeViewError ? (
               <ViewError message={activeViewError} onRetry={() => void loadViewData("split", { showError: true, showLoading: true })} />
@@ -700,7 +703,7 @@ export function DashboardClient({
               />
             )}
           </section>
-        </MotionReveal>
+        </div>
       ) : null}
 
       {activeView === "profile" ? (

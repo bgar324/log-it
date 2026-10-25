@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useReducedMotion } from "@/app/hooks/use-reduced-motion";
 import type SwiperInstance from "swiper";
 import { A11y } from "swiper/modules";
@@ -31,7 +31,6 @@ export function WorkoutLoggerExerciseCarousel({
   const index = Math.max(0, entries.findIndex(entry => entry.exercise.id === focusedId));
   // Only structural changes remount Swiper; typing never resets its position.
   const identity = entries.map(entry => entry.exercise.id).join("\0");
-  const [initialIdentity] = useState(identity);
 
   useLayoutEffect(() => {
     const swiper = swiperRef.current;
@@ -78,7 +77,7 @@ export function WorkoutLoggerExerciseCarousel({
   return (
     <Swiper
       key={identity}
-      className={`${styles.exerciseCarousel}${identity !== initialIdentity ? " motion-insert" : ""}`}
+      className={styles.exerciseCarousel}
       data-exercise-carousel="true"
       style={{ touchAction: "auto" }}
       modules={modules}

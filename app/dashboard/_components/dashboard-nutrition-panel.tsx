@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Loader2, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import posthog from "posthog-js";
@@ -358,13 +358,10 @@ export function DashboardNutritionPanel({
             type="button"
             className={styles.nutritionSaveButton}
             disabled={isSaving}
+            aria-busy={isSaving}
             onClick={handleSave}
           >
-            {isSaving ? (
-              <Loader2 className={`${styles.nutritionButtonIcon} animate-spin`} />
-            ) : (
-              <Save className={styles.nutritionButtonIcon} />
-            )}
+            <Save className={styles.nutritionButtonIcon} />
             {isSaving ? "Saving..." : "Save"}
           </button>
         </div>

@@ -143,8 +143,7 @@ test("the inline day editor edits the selected day and switches days in place", 
     "3",
   );
 
-  await mounted.click(mounted.all('button[aria-label="Day options"]')[0]);
-  await mounted.click(menuRow("Add exercise")!);
+  await mounted.click(mounted.findByText("button", "Add exercise")!);
   await mounted.click(tuesday);
 
   assert.deepEqual(calls, ["add", "day:TUESDAY"]);
@@ -152,40 +151,36 @@ test("the inline day editor edits the selected day and switches days in place", 
   mounted.unmount();
 });
 
-/**
- * Day-menu rows are portalled to the body by Radix, so they are not inside the
- * render container the other queries walk.
- */
-function menuRow(needle: string) {
-  return Array.from(document.body.querySelectorAll("button")).find((node) =>
-    (node.textContent ?? "").replace(/\s+/g, " ").includes(needle),
-  ) as HTMLButtonElement | undefined;
+function dialogButton(label: string) {
+  const button = Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="dialog"] button'))
+    .find(node => node.textContent?.trim() === label);
+  assert.ok(button);
+  return button;
 }
 
-test("removing an exercise stays behind the day menu's edit mode", async () => {
-  const removed: number[] = [];
-  const mounted = await render(
-    createElement(
-      SplitEditor,
-      buildProps({ onRemoveExercise: (index) => removed.push(index) }),
-    ),
-  );
-
-  assert.equal(mounted.all('button[aria-label^="Remove "]').length, 0);
-
-  await mounted.click(mounted.all('button[aria-label="Day options"]')[0]);
-  await mounted.click(menuRow("Edit exercises")!);
-
-  const remove = mounted.all('button[aria-label="Remove Cable fly"]')[0];
-  assert.ok(remove);
-  await mounted.click(remove);
-  assert.deepEqual(removed, [1]);
-
-  // Leaving the mode is one tap and it hides the bins again.
-  await mounted.click(mounted.findByText("button", "Done editing")!);
-  assert.equal(mounted.all('button[aria-label^="Remove "]').length, 0);
-
-  mounted.unmount();
+test("removing an exercise requires confirmation and Cancel preserves it", async () => {
+  function EditableDay() {
+    const [day, setDay] = useState(DAYS[0]);
+    return <SplitEditor {...buildProps({
+      day,
+      onRemoveExercise: index => setDay(current => ({
+        ...current,
+        exercises: current.exercises.filter((_, position) => position !== index),
+      })),
+    })} />;
+  }
+  const mounted = await render(<EditableDay />);
+  try {
+    const remove = mounted.all('button[aria-label="Remove Cable fly"]')[0];
+    await mounted.click(remove);
+    assert.equal(mounted.all('input[aria-label="Exercise name"]').length, 2);
+    await mounted.click(dialogButton("Cancel"));
+    assert.equal(mounted.all('input[aria-label="Exercise name"]').length, 2);
+    await mounted.click(remove);
+    await mounted.click(dialogButton("Delete"));
+    assert.deepEqual(mounted.all('input[aria-label="Exercise name"]').map(node =>
+      node instanceof HTMLInputElement ? node.value : null), ["Bench press"]);
+  } finally { mounted.unmount(); }
 });
 
 test("a rest day keeps its exercises and says what saving will drop", async () => {
@@ -209,17 +204,14 @@ test("an empty day offers reordering only once there is something to reorder", a
   );
 
   assert.ok(mounted.text().includes("No exercises yet."));
-  assert.equal(mounted.findByText("button", "Add exercise"), undefined);
-  await mounted.click(mounted.all('button[aria-label="Day options"]')[0]);
-  assert.ok(menuRow("Add exercise"));
-  assert.equal(menuRow("Reorder exercises")?.disabled, true);
-  await mounted.click(mounted.all('button[aria-label="Day options"]')[0]);
+  assert.ok(mounted.findByText("button", "Add exercise"));
+  const emptyReorder = mounted.container.querySelector<HTMLButtonElement>('button[aria-label="Reorder exercises"]');
+  assert.equal(emptyReorder?.disabled, true);
 
   await mounted.rerender(
     createElement(SplitEditor, buildProps({ day: DAYS[0] })),
   );
-  await mounted.click(mounted.all('button[aria-label="Day options"]')[0]);
-  const reorder = menuRow("Reorder exercises");
+  const reorder = mounted.container.querySelector<HTMLButtonElement>('button[aria-label="Reorder exercises"]');
   assert.ok(reorder);
   assert.equal(reorder.disabled, false);
 
@@ -239,8 +231,8 @@ test("a pending save freezes every edit in the day editor", async () => {
   assert.ok(frozen.includes("Workout name"));
   assert.ok(frozen.includes("Exercise name"));
   assert.ok(frozen.includes("Sets for Bench press"));
-  await mounted.click(mounted.all('button[aria-label="Day options"]')[0]);
-  assert.equal(menuRow("Add exercise")?.disabled, true);
+  assert.equal((mounted.findByText("button", "Add exercise") as HTMLButtonElement).disabled, true);
+  assert.equal((mounted.all('button[aria-label="Remove Cable fly"]')[0] as HTMLButtonElement).disabled, true);
   // Switching days is not an edit, so it stays available while saving.
   assert.equal(
     (mounted.all('button[aria-label="Tuesday: Pull"]')[0] as HTMLButtonElement)

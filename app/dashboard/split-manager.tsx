@@ -15,7 +15,6 @@ import { useRouter } from "next/navigation";
 import { DeleteConfirmDialog } from "@/app/components/delete-confirm-dialog";
 import { InlineFeedback, type Feedback } from "@/app/components/inline-feedback";
 import { useWorkspaceUnsavedChanges } from "@/app/components/workspace-navigation";
-import { MotionState } from "@/app/components/motion-state";
 import {
   useSplitLibraryState,
   type SplitLibraryNoticeTone,
@@ -126,6 +125,8 @@ export function SplitManager({
     !state.hasUnsavedChanges &&
     !state.isSaving;
   const isRenaming = renameDraft?.key === selectedKey;
+  const pendingName = isRenaming ? renameDraft?.value.trim() : undefined;
+  const hasChanges = state.hasUnsavedChanges || Boolean(pendingName && pendingName !== state.split.name.trim());
 
   function startRename(target: WorkoutSplitTemplate) {
     if (state.isSaving) return;
@@ -157,7 +158,8 @@ export function SplitManager({
       return;
     }
 
-    void state.renameSplit(nextName, target);
+    state.renameSplit(nextName, target);
+    return { ...target, name: nextName };
   }
 
   function cancelRename() {
@@ -220,7 +222,6 @@ export function SplitManager({
   if (isLibraryOpen) {
     return (
       <div ref={layoutRef}>
-      <div className="motion-page" data-direction="back" key="library">
       <InlineFeedback feedback={feedback} className="mb-4" />
       <SplitLibrary
         splits={state.splits}
@@ -234,7 +235,6 @@ export function SplitManager({
         onDelete={requestDeleteSplit}
         onCreate={() => void state.createSplit()}
       />
-      </div>
       {deleteDialog}
       </div>
     );
@@ -278,13 +278,14 @@ export function SplitManager({
             type="button"
             aria-label="Save split"
             className={splitStyles.planSaveButton}
-            onClick={() => void state.saveSplit()}
-            disabled={state.isSaving || isRenaming || !state.hasUnsavedChanges}
+            onPointerDown={event => event.preventDefault()}
+            onClick={() => void state.saveSplit(commitRename() ?? state.split)}
+            disabled={state.isSaving || !hasChanges}
           >
-            <MotionState stateKey={state.isSaving ? "saving" : state.hasUnsavedChanges ? "save" : "saved"}>
-              {!state.isSaving && !state.hasUnsavedChanges ? <Check className="motion-check size-4" aria-hidden="true" /> : null}
-              {state.isSaving ? "Saving..." : state.hasUnsavedChanges ? "Save" : "Saved"}
-            </MotionState>
+            <span className="inline-flex items-center justify-center gap-[0.35rem]">
+              {!state.isSaving && !hasChanges ? <Check className="size-4" aria-hidden="true" /> : null}
+              {state.isSaving ? "Saving..." : hasChanges ? "Save" : "Saved"}
+            </span>
           </button>
           <SplitActionMenu label="Split options">
             {(close) => (
@@ -408,7 +409,7 @@ export function SplitManager({
         ) : null}
       </section>
 
-      <div key={selectedKey} className="motion-page" data-editable>
+      <div key={selectedKey}>
       <SplitEditor
         key={`${selectedKey}:${state.selectedDay.weekday}`}
         day={state.selectedDay}
@@ -433,7 +434,7 @@ export function SplitManager({
         open={isReorderDaysOpen}
         onCancel={() => setIsReorderDaysOpen(false)}
         onSave={(orderedWeekdays) => {
-          void state.saveDayOrder(orderedWeekdays);
+          state.applyDayOrder(orderedWeekdays);
           setIsReorderDaysOpen(false);
         }}
       />

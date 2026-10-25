@@ -150,9 +150,6 @@ export const styles = {
   exerciseMenuDangerItem: actionMenuRowDanger,
   icon: "h-4 w-4 shrink-0 stroke-current",
   compareHint: "mt-[-0.1rem] text-[0.9375rem] leading-[1.5] text-[var(--muted)]",
-  spinningIcon:
-    "h-[1.05rem] w-[1.05rem] shrink-0 stroke-current animate-[spin_0.85s_linear_infinite]",
-
   // Compact rows keep all touch targets at least 44px tall.
   setsStack: "-ml-3 flex flex-col gap-2 overflow-x-visible py-[2px]",
   setRowGroup: "flex flex-col gap-[0.15rem]",

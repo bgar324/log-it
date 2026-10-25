@@ -32,6 +32,17 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
   const [emailFeedback, setEmailFeedback] = useState<Feedback | null>(null);
   const [passwordFeedback, setPasswordFeedback] = useState<Feedback | null>(null);
 
+  function toggleSection(section: "email" | "password") {
+    setEmailValue(currentEmail);
+    setEmailPassword("");
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setEmailFeedback(null);
+    setPasswordFeedback(null);
+    setOpenSection(openSection === section ? null : section);
+  }
+
   async function handleEmailSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (emailPending) return;
@@ -107,10 +118,7 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
           type="button"
           className={styles.accountRowAction}
           disabled={emailPending || passwordPending}
-          onClick={() => {
-            setEmailFeedback(null);
-            setOpenSection(openSection === "email" ? null : "email");
-          }}
+          onClick={() => toggleSection("email")}
         >
           {openSection === "email" ? "Cancel" : "Change"}
         </button>
@@ -158,10 +166,7 @@ export function DashboardAccountSettings({ currentEmail }: DashboardAccountSetti
           type="button"
           className={styles.accountRowAction}
           disabled={emailPending || passwordPending}
-          onClick={() => {
-            setPasswordFeedback(null);
-            setOpenSection(openSection === "password" ? null : "password");
-          }}
+          onClick={() => toggleSection("password")}
         >
           {openSection === "password" ? "Cancel" : "Change"}
         </button>

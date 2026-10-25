@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { formatWeightWithUnit, type WeightUnit } from "@/lib/weight-unit";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
 import type { WorkoutTableRow } from "@/app/_legacy/dashboard/dashboard-client.shared";
 import { styles } from "@/app/_legacy/dashboard/dashboard.styles";
 import { DashboardMetricHeader } from "@/app/_legacy/dashboard/_components/dashboard-metric-header";
@@ -74,7 +73,6 @@ export function DashboardWorkoutList({
               maximumFractionDigits: 0,
             })}
           </span>
-          <LinkPendingOverlay />
         </Link>
       ))}
     </div>

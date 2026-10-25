@@ -62,18 +62,18 @@ export async function verifyMotion(page, { origin, sessionToken, artifactDir }) 
 
     await go("/dashboard?view=split");
     await page.waitForSelector('button[data-split-folder][aria-current="true"]');
-    const folderFrames = await sample('[data-editable].motion-page', () => page.click('button[data-split-folder][aria-current="true"]'));
-    assert.ok(changing(folderFrames, "transform"), "folder opening must animate");
-    assert.ok(folderFrames.every(frame => frame.filter === "none"), "editable values must not blur");
-    record("split-forward-without-field-blur", { frames: folderFrames });
+    const folderFrames = await sample('[aria-label="Day editor"]', () => page.click('button[data-split-folder][aria-current="true"]'));
+    assert.ok(folderFrames.length > 0);
+    assert.ok(folderFrames.every(frame => frame.opacity === 1 && frame.filter === "none"), "ready editor must remain fully visible");
+    record("split-opens-without-reentry", { frames: folderFrames });
     const menuFrames = await sample('.auth-popover-content[data-state="open"]', () => page.click('button[aria-label="Split options"]'));
     assert.ok(changing(menuFrames, "opacity"), "menu entry must animate");
     record("reference-origin-menu", { frames: menuFrames });
     await page.keyboard.press("Escape");
     await pause(180);
-    const backFrames = await sample('.motion-page[data-direction="back"]', () => page.click('header button[aria-label="Back to splits"]'));
-    assert.ok(changing(backFrames, "transform"), "folder back must animate in the opposite direction");
-    record("split-back", { frames: backFrames });
+    const backFrames = await sample('[aria-label="Saved splits"]', () => page.click('header button[aria-label="Back to splits"]'));
+    assert.ok(backFrames.length > 0 && backFrames.every(frame => frame.opacity === 1 && frame.filter === "none"));
+    record("split-back-without-reentry", { frames: backFrames });
 
     await go(editHref);
     await page.waitForSelector('[data-exercise-active="true"] input[aria-label="Set 1 reps"]');
@@ -120,12 +120,11 @@ export async function verifyMotion(page, { origin, sessionToken, artifactDir }) 
     assert.equal(await page.$eval(repsSelector, node => node.value), reps);
     record("reduced-motion-interrupts-paging", interrupted);
 
-    const saveFrames = await sample('[aria-label="Workout actions"] .motion-state-enter', () => page.click('button[aria-label="Save changes"]'), 650);
+    const saveFrames = await sample('[aria-label="Workout actions"] button[aria-label="Save changes"]', () => page.click('button[aria-label="Save changes"]'), 650);
     await page.waitForFunction(() => document.body.textContent.includes("Motion verification blocked this write."));
     assert.equal(await page.$eval(repsSelector, node => node.value), reps);
     assert.ok(writes.some(write => write.path === "/api/workouts" && write.method === "PUT"));
-    assert.ok(changing(saveFrames, "filter"), "save feedback must use the reference text swap");
-    assert.equal(await page.$('[aria-label="Workout actions"] .motion-state-exit'), null, "old status must leave the layout");
+    assert.ok(saveFrames.every(frame => frame.filter === "none"), "save state must not blur");
     record("save-error-keeps-values", { frames: saveFrames });
 
     for (const width of [390, 1440]) {
@@ -136,7 +135,7 @@ export async function verifyMotion(page, { origin, sessionToken, artifactDir }) 
         await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
         await page.click('button[data-split-folder][aria-current="true"]');
         await pause(50);
-        const reduced = await page.$eval('[data-editable].motion-page', node => ({ animation: getComputedStyle(node).animationName, filter: getComputedStyle(node).filter, overflow: document.documentElement.scrollWidth > innerWidth }));
+        const reduced = await page.$eval('[aria-label="Day editor"]', node => ({ animation: getComputedStyle(node).animationName, filter: getComputedStyle(node).filter, overflow: document.documentElement.scrollWidth > innerWidth }));
         assert.equal(reduced.animation, "none");
         assert.equal(reduced.filter, "none");
         assert.equal(reduced.overflow, false);

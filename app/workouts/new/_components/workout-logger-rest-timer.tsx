@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Pause, Play, Plus, SkipForward, Timer } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
-import { MotionState } from "@/app/components/motion-state";
 import {
   REST_PRESETS_SECONDS,
   formatRestClock,
@@ -43,12 +42,12 @@ export function WorkoutLoggerRestTimer({ timer }: { timer: RestTimer }) {
         {timer.isRunning ? (
           <>
             <button type="button" className={styles.jumpRow} onClick={timer.togglePause}>
-              <MotionState stateKey={timer.isPaused ? "paused" : "running"}>
+              <span className="inline-flex items-center justify-center gap-[0.35rem]">
                 {timer.isPaused
                   ? <Play className={styles.icon} strokeWidth={1.9} />
                   : <Pause className={styles.icon} strokeWidth={1.9} />}
                 <span className={styles.jumpRowName}>{timer.isPaused ? "Resume rest" : "Pause rest"}</span>
-              </MotionState>
+              </span>
             </button>
             <button type="button" className={styles.jumpRow} onClick={() => timer.addSeconds(30)}>
               <Plus className={styles.icon} strokeWidth={1.9} />

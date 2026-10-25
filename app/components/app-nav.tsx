@@ -13,7 +13,6 @@ import Link from "next/link";
 import { createContext, useContext, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { toViewHref } from "@/app/dashboard/dashboard-client.shared";
 import type { DashboardView } from "@/app/dashboard/dashboard-types";
-import { LinkPendingOverlay } from "@/app/components/link-pending";
 import { type PostHogUser, useIdentifyPostHogUser } from "@/app/hooks/use-posthog-user";
 import { navStyles } from "./app-nav.styles";
 import { useHeaderAvatar } from "./workspace-design-context";
@@ -138,7 +137,6 @@ export function AppTabBar({ activeView, onNavigate, benEnabled = false }: {
             onClick={viewClickHandler(onNavigate, item.view)}
           >
             <Icon className={navStyles.tabIcon} strokeWidth={1.9} />
-            <LinkPendingOverlay />
           </Link>
         );
       })}

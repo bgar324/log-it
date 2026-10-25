@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState } from "react";
 import { LegacyDialog } from "@/app/components/ui/legacy-dialog";
 import { useReorderMotion } from "@/app/hooks/use-reorder-motion";
-import { MotionState } from "@/app/components/motion-state";
 import { reorderItems } from "@/lib/workout-utils";
 import { moveReorderStyles as styles } from "./move-reorder-dialog.styles";
 
@@ -58,11 +57,9 @@ function MoveReorderContent<Id extends ReorderId>({ kind, items, slotLabels, onC
     <>
       <h2 className={styles.title}>Move {kind}s</h2>
       <p aria-live="polite" className={styles.body}>
-        <MotionState stateKey={selected ? String(selected.id) : "none"}>
           {selected
             ? `${selected.title} selected. Choose a ${kind === "workout" ? "day" : "position"}.`
             : `Choose ${kind === "exercise" ? "an" : "a"} ${kind} to move.`}
-        </MotionState>
       </p>
       <div ref={listRef} aria-label={kind === "workout" ? "Weekly workout order" : "Exercise order"} className={styles.list}>
         {orderedIds.map((id, index) => {
@@ -100,7 +97,7 @@ function MoveReorderContent<Id extends ReorderId>({ kind, items, slotLabels, onC
       </div>
       <div className={styles.actions}>
         <button type="button" className={styles.secondaryButton} onClick={onCancel}>Cancel</button>
-        <button type="button" className={styles.primaryButton} onClick={() => onSave(orderedIds)}>Save order</button>
+        <button type="button" className={styles.primaryButton} onClick={() => onSave(orderedIds)}>Apply order</button>
       </div>
     </>
   );
