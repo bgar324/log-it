@@ -59,3 +59,15 @@ test("loading and errors do not show stale guidance as current", async () => {
     assert.equal(retries, 1);
   } finally { mounted.unmount(); }
 });
+
+test("an exercise without recorded sets or suggestions leaves no guidance container", async () => {
+  const props = { exercise, weightUnit: "LB" as const, onRetry: () => {} };
+  const mounted = await render(<WorkoutLoggerGuidance {...props} insightState={{ status: "ready", data: insight }} />);
+  try {
+    assert.ok(mounted.container.querySelector('[aria-label="Exercise guidance"]'));
+    await mounted.rerender(<WorkoutLoggerGuidance {...props} insightState={{ status: "ready", data: { ...insight, lastSession: null, prediction: null } }} />);
+    assert.equal(mounted.container.childElementCount, 0);
+    await mounted.rerender(<WorkoutLoggerGuidance {...props} insightState={{ status: "ready", data: { ...insight, lastSession: null } }} />);
+    assert.ok(mounted.container.querySelector("table"));
+  } finally { mounted.unmount(); }
+});

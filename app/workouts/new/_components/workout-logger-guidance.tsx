@@ -11,6 +11,10 @@ type GuidanceProps = Pick<WorkoutLoggerExerciseEntry, "exercise" | "insightState
 
 export function WorkoutLoggerGuidance({ exercise, insightState, weightUnit, onRetry }: GuidanceProps) {
   if (!exercise.name.trim() || !insightState || insightState.status === "idle") return null;
+  if (insightState.status === "ready" && insightState.data && !insightState.data.lastSession) {
+    const prediction = insightState.data.prediction;
+    if (!prediction || prediction.confidence === "low" || prediction.predictedSets.length === 0) return null;
+  }
   return (
     <div aria-busy={insightState.status === "loading"}>
       {insightState.status === "loading" ? <span role="status" className="sr-only">Loading exercise guidance…</span> : null}
@@ -34,11 +38,6 @@ function GuidanceContent({ exercise, insightState, weightUnit, onRetry }: Guidan
   const { lastSession, prediction } = insightState.data;
   const reliable = prediction?.confidence === "medium" || prediction?.confidence === "high";
   const suggested = reliable ? prediction.predictedSets : [];
-  if (!lastSession && suggested.length === 0) {
-    return <section aria-label="Exercise guidance" className={styles.guidance}>
-      <p className={styles.guidanceNote}>No previous session recorded for this exercise.</p>
-    </section>;
-  }
   const rows = Math.max(exercise.sets.length, lastSession?.sets.length ?? 0);
   const showSet = (set: { weightLb: number | null; reps: number; durationSeconds?: number | null }) =>
     formatLoggedSetSnapshot(set, weightUnit).replace(" x ", " × ");
